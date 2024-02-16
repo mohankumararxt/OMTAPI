@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OMT.DataAccess\OMT.DataAccess.csproj" />
+    <ProjectReference Include="..\OMT.DTO\OMT.DTO.csproj" />
+  </ItemGroup>
+
+</Project>

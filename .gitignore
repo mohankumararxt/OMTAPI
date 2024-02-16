@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/OMT.APIHost/bin
+/OMT.APIHost/obj
+/OMT.APIHost/Properties/PublishProfiles
+/OMT.Authorization/bin
+/OMT.Authorization/obj
+/OMT.DataAccess/bin
+/OMT.DataAccess/obj
+/OMT.DataService/bin
+/OMT.DataService/obj
+/OMT.DTO/bin
+/OMT.DTO/obj
