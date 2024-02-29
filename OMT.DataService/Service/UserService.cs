@@ -20,7 +20,7 @@ namespace OMT.DataService.Service
 
             try
             {
-                string existingUserCheck = _oMTDataContext.UserProfile.Where(x => x.Email ==  createUserDTO.Email).Select(_ => _.Email).FirstOrDefault();
+                string existingUserCheck = _oMTDataContext.UserProfile.Where(x => x.Email == createUserDTO.Email).Select(_ => _.Email).FirstOrDefault();
                 if (existingUserCheck != null)
                 {
                     resultDTO.IsSuccess = false;
@@ -49,6 +49,31 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "User Created Successfully.";
                     resultDTO.IsSuccess = true;
                 }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetUserList()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            { 
+                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.Is_Active).Select(_  => new UserListResponseDTO
+                {
+                    Email = _.Email,
+                    FirstName = _.FirstName,
+                    LastName = _.LastName,
+                    UserId = _.UserId,
+                    UserName = (_.FirstName??"") +' ' + (_.LastName?? "") +'(' + _.Email + ')'
+                }).ToList();
+                resultDTO.Data = userListResponseDTOs;
             }
             catch (Exception ex)
             {

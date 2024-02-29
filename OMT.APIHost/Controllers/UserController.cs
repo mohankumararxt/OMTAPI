@@ -11,7 +11,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class UserController : BaseController
     {
         private readonly IUserService _userService;
@@ -29,6 +29,13 @@ namespace OMT.APIHost.Controllers
             //int userid = this.UserId;
             ResultDTO result = _userService.CreateUser(createUserDTO);
             return result;
+        }
+
+        [HttpGet]
+        [Route("list")]
+        public ResultDTO GetUserList()
+        {
+            return _userService.GetUserList();
         }
     }
 }

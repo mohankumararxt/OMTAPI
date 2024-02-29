@@ -16,6 +16,7 @@ namespace OMT.DTO
         public string Token { get; set; }
         public DateTime TokenExpiry { get; set; }
         public int? RoleId { get; set; }
+        public string? Role { get; set; }
         public LoginResponseDTO() { }
 
 
