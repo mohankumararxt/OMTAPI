@@ -10,6 +10,8 @@ namespace OMT.DataAccess.Context
         public DbSet<Teams> Teams { get; set; }
         public DbSet<TeamAssociation> User_Association { get; set; }
         public DbSet<UserProfile> UserProfile { get; set; }
+        public DbSet<SkillSet> SkillSet { get; set; }
+
         public override int SaveChanges()
         {
             return base.SaveChanges();
