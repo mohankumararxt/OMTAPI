@@ -8,7 +8,6 @@ namespace OMT.DataService.Service
     public class TeamsService : ITeamsService
     {
         private readonly OMTDataContext _oMTDataContext;
-
         public TeamsService(OMTDataContext oMTDataContext)
         {
             _oMTDataContext = oMTDataContext;

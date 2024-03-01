@@ -12,6 +12,10 @@ namespace OMT.DataAccess.Context
         public DbSet<UserProfile> UserProfile { get; set; }
         public DbSet<SkillSet> SkillSet { get; set; }
 
+        public DbSet<UserSkillSet> User_SkillSet { get; set; }
+
+
+
         public override int SaveChanges()
         {
             return base.SaveChanges();
