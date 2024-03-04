@@ -21,7 +21,7 @@ namespace OMT.APIHost.Controllers
         }
 
         /// <summary>
-        /// Get list of skill sets of the user
+        /// Get list of all skill sets of the user
         /// </summary>
         /// <returns>Return user skill sets</returns>
         [HttpGet]
