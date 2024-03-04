@@ -24,16 +24,18 @@ namespace OMT.DataService.Service
             try
             {
                 string encryptedPassword = Encryption.EncryptPlainTextToCipherText(loginRequestDTO.Password);
-                LoginResponseDTO loginResponseDTO = _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword)
-                    .Select(_ => new LoginResponseDTO()
-                    {
-                        Email = _.Email,
-                        FirstName = _.FirstName,
-                        Mobile = _.Mobile,
-                        OrganizationId = _.OrganizationId,
-                        UserId = _.UserId,
-                        RoleId = _.RoleId
-                    }).FirstOrDefault();
+                LoginResponseDTO loginResponseDTO = (from up in _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword)
+                                                    join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                    select new LoginResponseDTO()
+                                                    {
+                                                        Email = up.Email,
+                                                        FirstName = up.FirstName,
+                                                        Mobile = up.Mobile,
+                                                        OrganizationId = up.OrganizationId,
+                                                        UserId = up.UserId,
+                                                        RoleId = up.RoleId,
+                                                        Role = r.RoleName
+                                                    }).FirstOrDefault();
 
                 if (loginResponseDTO != null)
                 {

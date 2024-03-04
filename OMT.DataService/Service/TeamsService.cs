@@ -20,11 +20,11 @@ namespace OMT.DataService.Service
         /// <returns></returns>
         public ResultDTO CreateTeams(TeamsCreateDTO createTeamsDTO)
         {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
             try
             {
-                string existingTeamName = _oMTDataContext.Teams.Where(x => x.TeamName == createTeamsDTO.TeamName).Select(_ => _.TeamName).FirstOrDefault();
+                string existingTeamName = _oMTDataContext.Teams.Where(x => x.TeamName == createTeamsDTO.TeamName && x.IsActive).Select(_ => _.TeamName).FirstOrDefault();
                 if (existingTeamName != null)
                 {
                     resultDTO.IsSuccess = false;
@@ -43,6 +43,8 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                     resultDTO.Message = "Teams Created Successfully.";
                     resultDTO.IsSuccess = true;
+
+                    resultDTO.Data = GetTeamsList().Data;
                 }
             }
             catch (Exception ex)
@@ -78,6 +80,7 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                     resultDTO.Message = "Teams Deleted Successfully.";
                     resultDTO.IsSuccess = true;
+                    resultDTO.Data = GetTeamsList().Data;
                 }
             }
             catch (Exception ex)

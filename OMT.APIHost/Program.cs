@@ -5,6 +5,7 @@ using OMT.Authorization;
 using OMT.DataAccess.Context;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
+using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                          {
                              Console.WriteLine("OnTokenValidated: " + context.SecurityToken);
 
-                             var customClaimTypes = new List<string>() { "FirstName", "OrganizationId", "UserId","RoleId" };
+                             var customClaimTypes = new List<string>() { "FirstName","Email", "OrganizationId", "UserId","RoleId" };
                              var userClaims = context.Principal.Claims.Where(_ => customClaimTypes.Contains(_.Type)).ToList();
 
                              IOptions<JwtAuthSettings> authSettings = Options.Create<JwtAuthSettings>(new JwtAuthSettings()
@@ -65,6 +66,8 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeamsService, TeamsService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<ITemplateService, TemplateService>();
+
 builder.Services.AddScoped<ISkillSetService, SkillSetService>();
 builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
 builder.Services.AddDbContext<OMTDataContext>(options =>

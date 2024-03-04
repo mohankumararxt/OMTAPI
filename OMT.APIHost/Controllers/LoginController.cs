@@ -33,9 +33,10 @@ namespace OMT.APIHost.Controllers
             {
                 Dictionary<string, string> claims = new Dictionary<string, string>();
 
+                claims.Add("FirstName", result.Data.FirstName);
                 claims.Add("Email", loginRequestDTO.Email);
-                claims.Add("UserId", Convert.ToString(result.Data.UserId));
                 claims.Add("OrganizationId", Convert.ToString(result.Data.OrganizationId));
+                claims.Add("UserId", Convert.ToString(result.Data.UserId));
                 claims.Add("RoleId", Convert.ToString(result.Data.RoleId));
                 var token = new JwtTokenBuilder(_authSettings).AddClaims(claims).Build();
                 result.Data.Token = token.Value;
