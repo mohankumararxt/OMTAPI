@@ -67,6 +67,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
+                    resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Team Association is not found";
                 }

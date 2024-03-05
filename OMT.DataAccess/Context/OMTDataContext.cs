@@ -11,7 +11,7 @@ namespace OMT.DataAccess.Context
         public DbSet<TeamAssociation> TeamAssociation { get; set; }
         public DbSet<UserProfile> UserProfile { get; set; }
         public DbSet<SkillSet> SkillSet { get; set; }
-        public DbSet<UserSkillSet> User_SkillSet { get; set; }
+        public DbSet<UserSkillSet> UserSkillSet { get; set; }
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
         public override int SaveChanges()

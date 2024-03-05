@@ -26,7 +26,7 @@ namespace OMT.DataService.Service
             try
             {
               List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
-                                                                   join uss in _oMTDataContext.User_SkillSet on up.UserId equals uss.UserId
+                                                                   join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                    join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                    where up.UserId == userid && up.Is_Active == true && uss.IsActive == true
                                                                    select new UserSkillSetResponseDTO
@@ -34,6 +34,7 @@ namespace OMT.DataService.Service
                                                                          UserSkillSetId = uss.UserSkillSetId,
                                                                          SkillSetName = ss.SkillSetName,
                                                                          SkillSetId = uss.SkillSetId,
+                                                                         Percentage = uss.Percentage
                                                                    }).ToList();
 
                 resultDTO.IsSuccess = true;
@@ -49,13 +50,13 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO AddUserSkillSet(int skillsetid, int userid)
+        public ResultDTO AddUserSkillSet(UserSkillSetCreateDTO userSkillSetCreateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
 
             try
             {
-                var existing_UserSkillSetId = _oMTDataContext.User_SkillSet.Where(x => x.UserId == userid && x.SkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+                var existing_UserSkillSetId = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.SkillSetId == userSkillSetCreateDTO.SkillSetId && x.IsActive && x.Percentage == userSkillSetCreateDTO.Percentage).FirstOrDefault();
 
                 if(existing_UserSkillSetId != null)
                 {
@@ -68,12 +69,13 @@ namespace OMT.DataService.Service
                     UserSkillSet userSkillSet = new UserSkillSet()
                     {
                         UserId = userid,
-                        SkillSetId = skillsetid,
+                        SkillSetId = userSkillSetCreateDTO.SkillSetId,
+                        Percentage = userSkillSetCreateDTO.Percentage,
                         IsActive = true,
                         CreatedDate = DateTime.Now
                     };
 
-                    _oMTDataContext.User_SkillSet.Add(userSkillSet);
+                    _oMTDataContext.UserSkillSet.Add(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Your skill set has been added succcessfully";
@@ -93,12 +95,12 @@ namespace OMT.DataService.Service
 
             try
             {
-                UserSkillSet? userSkillSet = _oMTDataContext.User_SkillSet.Where(x => x.UserSkillSetId == userskillsetId && x.IsActive).FirstOrDefault();
+                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserSkillSetId == userskillsetId && x.IsActive).FirstOrDefault();
                 
                 if (userSkillSet != null)
                 {
                     userSkillSet.IsActive = false;
-                    _oMTDataContext.User_SkillSet.Update(userSkillSet);
+                    _oMTDataContext.UserSkillSet.Update(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Skill set deleted successfully";
@@ -115,7 +117,6 @@ namespace OMT.DataService.Service
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
-
             }
             return resultDTO;
         }
@@ -126,19 +127,20 @@ namespace OMT.DataService.Service
 
             try
             {
-                UserSkillSet? userSkillSet = _oMTDataContext.User_SkillSet.Find(userskillSetResponseDTO.UserSkillSetId);
+                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Find(userskillSetResponseDTO.UserSkillSetId);
                 if (userSkillSet != null)
                 {
                     userSkillSet.SkillSetId = userskillSetResponseDTO.SkillSetId;
-                    _oMTDataContext.User_SkillSet.Update(userSkillSet);
+                    userSkillSet.Percentage = userskillSetResponseDTO .Percentage;
+                    _oMTDataContext.UserSkillSet.Update(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Your skill set has been updated successfully";
                     resultDTO.Data = userSkillSet;
                 }
-
                 else 
                 {
+                    resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Selected skill set doesnt exist in your profile";
                 }
@@ -149,7 +151,6 @@ namespace OMT.DataService.Service
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
-                
             }
             return resultDTO;
         }

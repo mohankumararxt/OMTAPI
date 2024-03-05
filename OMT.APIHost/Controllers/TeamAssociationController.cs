@@ -6,6 +6,9 @@ using OMT.DTO;
 
 namespace OMT.APIHost.Controllers
 {
+    /// <summary>
+    /// TeamAssociationController handles api's for associating users with teams
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -21,7 +24,7 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Get list of all team associations
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The function returns list of teams and the users associated with it</returns>
         [HttpGet]
         [Route("list")]
         public ResultDTO GetTeamAssociationList()
@@ -32,8 +35,8 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Add new team association
         /// </summary>
-        /// <param name="teamAssociationCreateDTO"></param>
-        /// <returns></returns>
+        /// <param name="teamAssociationCreateDTO">TeamAssociationCreateDTO</param>
+        /// <returns>Returns success message after addition of team association</returns>
         [HttpPost]
         [Route("new")]
         public ResultDTO AddTeamAssociation([FromBody]TeamAssociationCreateDTO teamAssociationCreateDTO)
@@ -44,8 +47,8 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Delete a team association
         /// </summary>
-        /// <param name="associationid"></param>
-        /// <returns></returns>
+        /// <param name="associationid">Association Id</param>
+        /// <returns>Returns success message after deletion of team association</returns>
         [HttpDelete]
         [Route("delete/{associationid:int}")]
         public ResultDTO DeleteTeamAssociation(int associationid)
@@ -56,8 +59,8 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Get list of all team associations by team id
         /// </summary>
-        /// <param name="teamid"></param>
-        /// <returns></returns>
+        /// <param name="teamid">Team Id</param>
+        /// <returns>Returns list of users under the selected team</returns>
         [HttpGet]
         [Route("list/{teamid:int}")]
         public ResultDTO GetTeamAssociationListByTeamId(int teamid)

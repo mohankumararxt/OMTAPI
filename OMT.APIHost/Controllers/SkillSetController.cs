@@ -6,6 +6,9 @@ using OMT.DTO;
 
 namespace OMT.APIHost.Controllers
 {
+    /// <summary>
+    /// SkillSetController handles api's for skill sets
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -17,7 +20,10 @@ namespace OMT.APIHost.Controllers
             _skillsetService = skillsetService;
         }
 
-
+        /// <summary>
+        /// Get list of all skill sets
+        /// </summary>
+        /// <returns>Returns a list of skill sets</returns>
         [HttpGet]
         [Route("list")]
         public ResultDTO GetSkillSetList()
@@ -26,6 +32,11 @@ namespace OMT.APIHost.Controllers
             //return skillsetlist;
         }
 
+        /// <summary>
+        /// Add a new skill set
+        /// </summary>
+        /// <param name="skillSetCreateDTO">SkillSetCreateDTO</param>
+        /// <returns>Returns success message after addition of skill set</returns>
         [HttpPost]
         [Route("new")]
 
@@ -36,7 +47,11 @@ namespace OMT.APIHost.Controllers
 
         }
 
-
+        /// <summary>
+        /// Delete a skill set
+        /// </summary>
+        /// <param name="skillsetId"> SkillSet Id</param>
+        /// <returns>Returns success message after deletion of skill set</returns>
         [HttpDelete]
         [Route("delete/{skillsetId:int}")]
 
@@ -45,10 +60,13 @@ namespace OMT.APIHost.Controllers
             return _skillsetService.DeleteSkillSet(skillsetId);
         }
 
-
+        /// <summary>
+        /// Update a skill set
+        /// </summary>
+        /// <param name="skillSetResponseDTO">SkillSetResponseDTO</param>
+        /// <returns>Returns updated skill set</returns>
         [HttpPut]
         [Route("update")]
-
         public ResultDTO Update([FromBody]SkillSetResponseDTO skillSetResponseDTO)
         {
             return _skillsetService.UpdateSkillSet(skillSetResponseDTO);

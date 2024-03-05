@@ -23,7 +23,7 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Get list of all skill sets of the user
         /// </summary>
-        /// <returns>Return user skill sets</returns>
+        /// <returns>Returns list of all user's skill sets</returns>
         [HttpGet]
         [Route("list")]
         public ResultDTO GetUserSkillSetList()
@@ -35,22 +35,22 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Add skill set for user
         /// </summary>
-        /// <param name="skillsetid"></param>
-        /// <returns>Return success message after addition of user skill set</returns>
+        ///<param name="userSkillSetCreate">UserSkillSetCreateDTO</param>
+        /// <returns>Returns success message after addition of user skill set</returns>
         [HttpPost]
         [Route("new")]
-        public ResultDTO AddUserSkillSet([FromBody] int skillsetid)
+        public ResultDTO AddUserSkillSet([FromBody] UserSkillSetCreateDTO userSkillSetCreateDTO)
         {
             var userid = UserId;
-            ResultDTO resultDTO = _userSkillSetService.AddUserSkillSet(skillsetid, userid);
+            ResultDTO resultDTO = _userSkillSetService.AddUserSkillSet(userSkillSetCreateDTO, userid);
             return resultDTO;
         }
 
         /// <summary>
         /// Delete skill set of the user
         /// </summary>
-        /// <param name="userskillsetId"></param>
-        /// <returns>Return success message after deletion of user skill set</returns>
+        /// <param name="userskillsetId">UserSkillSet Id</param>
+        /// <returns>Returns success message after deletion of user skill set</returns>
         [HttpDelete]
         [Route("delete/{userskillsetId:int}")]
         public ResultDTO DeleteUserSkillSet(int userskillsetId)
@@ -62,8 +62,8 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Update skill set of user
         /// </summary>
-        /// <param name="userskillSetResponseDTO"></param>
-        /// <returns>Return updated user skill set</returns>
+        /// <param name="userskillSetResponseDTO">UserSkillSetResponseDTO</param>
+        /// <returns>Returns updated user skill set</returns>
         [HttpPut]
         [Route("update")]
         public ResultDTO UpdateUserSkillSet([FromBody]UserSkillSetResponseDTO userskillSetResponseDTO)
