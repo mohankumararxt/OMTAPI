@@ -67,6 +67,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeamsService, TeamsService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<ITemplateService, TemplateService>();
+builder.Services.AddScoped<ITeamAssociationService, TeamAssociationService>();
 
 builder.Services.AddScoped<ISkillSetService, SkillSetService>();
 builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();

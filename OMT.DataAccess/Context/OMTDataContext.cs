@@ -8,14 +8,10 @@ namespace OMT.DataAccess.Context
         public DbSet<Organization> Organization { get; set; }
         public DbSet<Roles> Roles { get; set; }
         public DbSet<Teams> Teams { get; set; }
-        public DbSet<TeamAssociation> User_Association { get; set; }
+        public DbSet<TeamAssociation> TeamAssociation { get; set; }
         public DbSet<UserProfile> UserProfile { get; set; }
         public DbSet<SkillSet> SkillSet { get; set; }
-
         public DbSet<UserSkillSet> User_SkillSet { get; set; }
-
-
-
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
         public override int SaveChanges()
