@@ -3,15 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
-using OMT.DataService.Utility;
 using OMT.DTO;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OMT.DataService.Service
 {
@@ -29,7 +22,10 @@ namespace OMT.DataService.Service
 
             //using (var dbContextTransaction = _oMTDataContext.Database.BeginTransaction())
             //{
-                try
+            try
+            {
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x=>x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
+                if (skillSet != null)
                 {
                     TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SystemOfRecordId == createTemplateDTO.SystemofRecordId && x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
                     if (template != null)
@@ -50,6 +46,7 @@ namespace OMT.DataService.Service
                                     ColumnAliasName = templateColumns.ColumnName.Replace(" ", "_"),
                                     ColumnName = templateColumns.ColumnName,
                                     ColumnDataType = templateColumns.ColumnDataType,
+                                    IsDuplicateCheck = templateColumns.IsDuplicateCheck,
                                 };
                                 _oMTDataContext.TemplateColumns.Add(newtemplateColumns);
                             }
@@ -82,19 +79,61 @@ namespace OMT.DataService.Service
                             throw new InvalidOperationException("Stored Procedure call failed.");
                         }
                         // Commit transaction
-                       // dbContextTransaction.Commit();
+                        // dbContextTransaction.Commit();
 
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Rollback transaction
-                   // dbContextTransaction.Rollback();
                     resultDTO.IsSuccess = false;
-                    resultDTO.StatusCode = "500";
-                    resultDTO.Message = ex.Message;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset not exists.";
                 }
+            }
+            catch (Exception ex)
+            {
+                // Rollback transaction
+                // dbContextTransaction.Rollback();
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
             //}
+            return resultDTO;
+        }
+
+        public ResultDTO DeleteTemplate(int SkillSetId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            { 
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x=>x.SkillSetId == SkillSetId && x.IsActive).FirstOrDefault();
+                if (skillSet != null)
+                {
+                    List<TemplateColumns> columns = _oMTDataContext.TemplateColumns.Where(x=>x.SkillSetId ==  skillSet.SkillSetId).ToList();
+                    _oMTDataContext.TemplateColumns.RemoveRange(columns);
+                    _oMTDataContext.SaveChanges();
+
+                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                    using SqlConnection connection = new(connectionstring);
+                    using SqlCommand command = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.Text,
+                        CommandText = "Drop table " + skillSet.SkillSetName
+                    };
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    resultDTO.Message = "Template Deleted Successfully";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
             return resultDTO;
         }
     }

@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using OMT.Authorization;
 using OMT.DataService.Interface;
-using OMT.DataService.Service;
 using OMT.DTO;
 
 namespace OMT.APIHost.Controllers

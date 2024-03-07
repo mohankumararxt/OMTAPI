@@ -169,7 +169,7 @@ namespace OMT.DataService.Service
                 {
                     List<TeamsResponseDTO> teamsList = _oMTDataContext.Teams.Where(x=>(x.TeamName.Contains(teamname) || x.Description.Contains(teamname)) && x.IsActive).Select(_=> new TeamsResponseDTO() { Description=_.Description, TeamId=_.TeamId, TeamName=_.TeamName }).ToList();
                     
-                    if (teamsList != null)
+                    if (teamsList != null && teamsList.Count >0)
                     {
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = $"Team Details found with keyword {teamname}";

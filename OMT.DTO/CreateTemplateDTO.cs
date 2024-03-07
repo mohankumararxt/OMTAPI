@@ -24,5 +24,7 @@ namespace OMT.DTO
     {
         public string ColumnName { get; set; }
         public string ColumnDataType { get; set; }
+        public bool IsDuplicateCheck { get; set; }
+
     }
 }

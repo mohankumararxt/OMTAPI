@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using OMT.DataAccess.Entities;
+﻿using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
 

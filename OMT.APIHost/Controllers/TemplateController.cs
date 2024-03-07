@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
@@ -8,7 +7,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class TemplateController : ControllerBase
     {
         private readonly ITemplateService _templateService;
@@ -24,6 +23,13 @@ namespace OMT.APIHost.Controllers
         {
             ResultDTO resultDTO = _templateService.CreateTemplate(createTemplateDTO);
             return resultDTO;
+        }
+
+        [HttpDelete]
+        [Route("delete/{skillsetid:int}")]
+        public ResultDTO DeleteTemplate(int skillsetid)
+        {
+            return _templateService.DeleteTemplate(skillsetid);
         }
     }
 }

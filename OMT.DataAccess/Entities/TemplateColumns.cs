@@ -12,5 +12,6 @@ namespace OMT.DataAccess.Entities
         public string ColumnName { get; set; }
         public string ColumnAliasName { get; set; }
         public string ColumnDataType { get; set; }
+        public bool IsDuplicateCheck { get; set; }
     }
 }
