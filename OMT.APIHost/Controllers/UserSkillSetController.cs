@@ -65,10 +65,10 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns updated user skill set</returns>
         [HttpPut]
         [Route("update")]
-        public ResultDTO UpdateUserSkillSet([FromBody]UserSkillSetResponseDTO userskillSetResponseDTO)
+        public ResultDTO UpdateUserSkillSet([FromBody] UserSkillSetUpdateDTO userSkillSetUpdateDTO)
         {
             var userid = UserId;
-            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userskillSetResponseDTO, userid);
+            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO, userid);
             return resultDTO;
         }
     }

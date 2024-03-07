@@ -128,39 +128,26 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateUserSkillSet(UserSkillSetResponseDTO userskillSetResponseDTO, int userid)
+        public ResultDTO UpdateUserSkillSet(UserSkillSetUpdateDTO userSkillSetUpdateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
 
             try
             {
-                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Find(userskillSetResponseDTO.UserSkillSetId);
+                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Find(userSkillSetUpdateDTO.UserSkillSetId);
                 if (userSkillSet != null)
                 {
-                    userSkillSet.SkillSetId = userskillSetResponseDTO.SkillSetId;
-                    userSkillSet.Percentage = userskillSetResponseDTO.Percentage;
-                    userSkillSet.IsPrimary = userskillSetResponseDTO.IsPrimary;
-                    if (userskillSetResponseDTO.IsPrimary == true)
+                    userSkillSet.SkillSetId = userSkillSetUpdateDTO.SkillSetId;
+                    userSkillSet.Percentage = userSkillSetUpdateDTO.Percentage;
+                    userSkillSet.IsPrimary = userSkillSetUpdateDTO.IsPrimary;
+                    if (userSkillSetUpdateDTO.IsPrimary == true)
                     {
-                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userid && x.IsActive).First();
+                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userid && x.IsActive).FirstOrDefault();
                         if (existing_IsPrimary != null)
                         {
                             existing_IsPrimary.IsPrimary = false;
                             _oMTDataContext.UserSkillSet.Update(existing_IsPrimary);
                             _oMTDataContext.SaveChanges();
-                            _oMTDataContext.UserSkillSet.Update(userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Your skill set has been updated successfully";
-                            resultDTO.Data = userSkillSet;
-                        }
-                        else
-                        {
-                            _oMTDataContext.UserSkillSet.Update(userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Your skill set has been updated successfully";
-                            resultDTO.Data = userSkillSet;
                         }
                     }
                     _oMTDataContext.UserSkillSet.Update(userSkillSet);
