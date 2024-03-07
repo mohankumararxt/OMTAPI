@@ -14,6 +14,7 @@ namespace OMT.DataAccess.Context
         public DbSet<UserSkillSet> UserSkillSet { get; set; }
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
+        public DbSet<SystemofRecord> SystemofRecord { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

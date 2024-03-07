@@ -29,7 +29,6 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetSkillSetList()
         {
             return _skillsetService.GetSkillSetList();
-            //return skillsetlist;
         }
 
         /// <summary>
