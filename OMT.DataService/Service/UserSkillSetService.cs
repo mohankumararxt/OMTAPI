@@ -78,26 +78,14 @@ namespace OMT.DataService.Service
                             existing_IsPrimary.IsPrimary = false;
                             _oMTDataContext.UserSkillSet.Update(existing_IsPrimary);
                             _oMTDataContext.SaveChanges();
-                            _oMTDataContext.UserSkillSet.Update(userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Your skill set has been added successfully";
-                        }
-                        else
-                        {
-                            _oMTDataContext.UserSkillSet.Add(userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Your skill set has been added succcessfully";
                         }
                     }
-                    else
-                    {
-                        _oMTDataContext.UserSkillSet.Add(userSkillSet);
-                        _oMTDataContext.SaveChanges();
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Your skill set has been added succcessfully";
-                    }
+
+                    _oMTDataContext.UserSkillSet.Add(userSkillSet);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Your skill set has been added succcessfully";
+
                 }
             }
             catch (Exception ex)
