@@ -31,7 +31,7 @@ namespace OMT.DataService.Service
             //{
                 try
                 {
-                    Template template = _oMTDataContext.Template.Where(x => x.IsActive && x.TemplateName.ToLower().Trim() == createTemplateDTO.TemplateName.ToLower().Trim()).FirstOrDefault();
+                    TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SystemOfRecordId == createTemplateDTO.SystemofRecordId && x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
                     if (template != null)
                     {
                         resultDTO.IsSuccess = false;
@@ -41,23 +41,12 @@ namespace OMT.DataService.Service
                     {
                         if (createTemplateDTO.TemplateColumns.Any())
                         {
-                            Template newtemplate = new Template()
-                            {
-                                TemplateName = createTemplateDTO.TemplateName,
-                                TemplateAliasName = createTemplateDTO.TemplateName.Replace(" ", "_"),
-                                CreatedDate = DateTime.Now,
-                                IsActive = true
-                            };
-                            _oMTDataContext.Template.Add(newtemplate);
-                            _oMTDataContext.SaveChanges();
-                            int TemplateId = 0;
-                            TemplateId = newtemplate.TemplateId;
-
                             foreach (TemplateColumnDTO templateColumns in createTemplateDTO.TemplateColumns)
                             {
                                 TemplateColumns newtemplateColumns = new TemplateColumns()
                                 {
-                                    TemplateId = TemplateId,
+                                    SkillSetId = createTemplateDTO.SkillsetId,
+                                    SystemOfRecordId = createTemplateDTO.SystemofRecordId,
                                     ColumnAliasName = templateColumns.ColumnName.Replace(" ", "_"),
                                     ColumnName = templateColumns.ColumnName,
                                     ColumnDataType = templateColumns.ColumnDataType,
@@ -76,7 +65,7 @@ namespace OMT.DataService.Service
                             CommandType = CommandType.StoredProcedure,
                             CommandText = "CreateTemplate"
                         };
-                        command.Parameters.AddWithValue("@TemplateName", createTemplateDTO.TemplateName);
+                        command.Parameters.AddWithValue("@SkillsetId", createTemplateDTO.SkillsetId);
                         SqlParameter returnValue = new()
                         {
                             ParameterName = "@RETURN_VALUE",

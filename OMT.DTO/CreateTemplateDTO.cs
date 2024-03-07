@@ -8,7 +8,8 @@ namespace OMT.DTO
 {
     public class CreateTemplateDTO
     {
-        public string TemplateName { get; set; }
+        public int SkillsetId { get; set; }
+        public int SystemofRecordId { get; set; }
         public List<TemplateColumnDTO> TemplateColumns { get; set; }
 
         public CreateTemplateDTO()
