@@ -72,6 +72,8 @@ builder.Services.AddScoped<IRolesService, RolesService>();
 
 builder.Services.AddScoped<ISkillSetService, SkillSetService>();
 builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
+builder.Services.AddScoped<ICommonService, CommonService>();
+
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
