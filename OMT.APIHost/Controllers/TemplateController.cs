@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.Text.Json.Nodes;
 
 namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+   // [Authorize]
     public class TemplateController : ControllerBase
     {
         private readonly ITemplateService _templateService;
@@ -31,5 +32,20 @@ namespace OMT.APIHost.Controllers
         {
             return _templateService.DeleteTemplate(skillsetid);
         }
+
+        [HttpPost]
+        [Route("upload")]
+        public ResultDTO UploadData([FromBody] UploadTemplateDTO uploadTemplateDTO)
+        {
+            return _templateService.UploadData(uploadTemplateDTO);
+        }
+
+        [HttpPost]
+        [Route("validate")]
+        public ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO)
+        {
+            return _templateService.ValidateData(uploadTemplateDTO);
+        }
+
     }
 }

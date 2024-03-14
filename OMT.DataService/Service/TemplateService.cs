@@ -1,10 +1,12 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace OMT.DataService.Service
 {
@@ -127,6 +129,176 @@ namespace OMT.DataService.Service
                     command.ExecuteNonQuery();
                     resultDTO.Message = "Template Deleted Successfully";
                 }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        
+        public ResultDTO UploadData(UploadTemplateDTO uploadTemplateDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                if (skillSet != null)
+                {
+                    TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).FirstOrDefault();
+                    if (template != null)
+                    {
+                        string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                        using SqlConnection connection = new(connectionstring);
+                        using SqlCommand command = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.StoredProcedure,
+                            CommandText = "InsertData"
+                        };
+                        command.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
+                        command.Parameters.AddWithValue("@jsonData", uploadTemplateDTO.JsonData);
+
+                        SqlParameter returnValue = new()
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+                        command.Parameters.Add(returnValue);
+
+                        connection.Open();
+                        command.ExecuteNonQuery();
+
+                        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Order uploaded successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Template doesnt exist for the given skillsetid,please create one to upload";
+                    }
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset does not exist.";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200"};
+            try
+            {
+                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                if (skillSet != null)
+                {
+                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).ToList();
+                    if (template.Count >0)
+                    {
+                        string tablename = skillSet.SkillSetName;
+
+                        List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnName).ToList();
+                       
+                        //parse json data
+                        JObject jsondata = JObject.Parse(uploadTemplateDTO.JsonData);
+                        JArray recordsarray = jsondata.Value<JArray>("Records");    
+
+                        //sql query
+                        string isDuplicateColumns = string.Join(",", listofColumns);
+                        string defaultColumns = "UserId, Status, CompletionDate, StartTime, EndTime";
+
+                        string sql = $"SELECT {isDuplicateColumns}, {defaultColumns} FROM {tablename} WHERE ";
+                        foreach(JObject records in recordsarray)
+                        {
+                            string query = "(";
+                            foreach(string columnname in listofColumns)
+                            {
+                                string columndata = records.Value<string>(columnname);
+                                query += $"[{columnname}] = '{columndata}' AND ";
+                            }
+
+                            query = query.Substring(0, query.Length - 5);
+                            query += ") OR ";
+
+                            sql += query;
+                        }
+
+                        sql = sql.Substring(0, sql.Length - 4);
+                        
+                        //execute sql query to fetch records from table
+                        List<IDictionary<string,object>> DuplicateRecords = new List<IDictionary<string,object>>();
+                        
+                        string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                        using SqlConnection connection = new(connectionstring);
+                        using SqlCommand command = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.Text,
+                            CommandText = sql
+                        };
+                        connection.Open();
+
+                        SqlDataReader reader = command.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            IDictionary<string,object> record = new Dictionary<string,object>();
+                            for(int i = 0; i <reader.FieldCount; i++)
+                            {
+                                string colname = reader.GetName(i);
+                                object colvalue = reader.GetValue(i);
+                                record[colname] = colvalue;
+                            }
+                            DuplicateRecords.Add(record);
+                        }
+
+                        if (DuplicateRecords.Count > 0)
+                        {
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Data = DuplicateRecords;
+                            resultDTO.Message = "Duplicate records found,please verify before uploading";
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = true ;
+                            resultDTO.Message = "No dulpicate records found, proceed to upload";
+                        }
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Template doesn't exist for the given skillsetid,please create one to upload";
+                    }
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset does not exist.";
+                }
+
             }
             catch (Exception ex)
             {

@@ -1,4 +1,5 @@
 ﻿using OMT.DTO;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace OMT.DataService.Interface
 {
@@ -6,5 +7,7 @@ namespace OMT.DataService.Interface
     {
         ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO);
         ResultDTO DeleteTemplate(int SkillSetId);
+        ResultDTO UploadData(UploadTemplateDTO uploadTemplateDTO);
+        ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO);
     }
 }
