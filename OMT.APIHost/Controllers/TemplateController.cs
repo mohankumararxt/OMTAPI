@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TemplateController : ControllerBase
+    public class TemplateController : BaseController
     {
         private readonly ITemplateService _templateService;
         public TemplateController(ITemplateService templateService)
@@ -34,17 +34,25 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPost]
-        [Route("upload")]
-        public ResultDTO UploadData([FromBody] UploadTemplateDTO uploadTemplateDTO)
+        [Route("uploadOrders")]
+        public ResultDTO UploadOrders([FromBody] UploadTemplateDTO uploadTemplateDTO)
         {
-            return _templateService.UploadData(uploadTemplateDTO);
+            return _templateService.UploadOrders(uploadTemplateDTO);
         }
 
         [HttpPost]
-        [Route("validate")]
-        public ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO)
+        [Route("validateOrders")]
+        public ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO)
         {
-            return _templateService.ValidateData(uploadTemplateDTO);
+            return _templateService.ValidateOrders(uploadTemplateDTO);
+        }
+
+        [HttpPost]
+        [Route("getOrders")]
+        public ResultDTO GetOrders()
+        {
+            var userid = UserId;
+            return _templateService.GetOrders(userid);
         }
 
     }
