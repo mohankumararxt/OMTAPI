@@ -247,32 +247,28 @@ namespace OMT.DataService.Service
 
                         //execute sql query to fetch records from table
                         List<IDictionary<string, object>> DuplicateRecords = new List<IDictionary<string, object>>();
-
+                        
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
-                        using SqlCommand command = new()
-                        {
-                            Connection = connection,
-                            CommandType = CommandType.Text,
-                            CommandText = sql
-                        };
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(sql, connection);
+
+                        DataSet dataset = new DataSet();
                         connection.Open();
 
-                        SqlDataReader reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            IDictionary<string, object> record = new Dictionary<string, object>();
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                string colname = reader.GetName(i);
-                                object colvalue = reader.GetValue(i);
-                                record[colname] = colvalue;
-                            }
-                            DuplicateRecords.Add(record);
-                        }
+                        dataAdapter.Fill(dataset);
 
-                        if (DuplicateRecords.Count > 0)
+                        DataTable datatable = dataset.Tables[0];
+                        foreach (DataRow dr in datatable.Rows)
+                        {
+                            IDictionary<string, object> duprecord = new Dictionary<string, object>();
+                            foreach (DataColumn col in datatable.Columns)
+                            {
+                                duprecord[col.ColumnName] = dr[col.ColumnName];
+                            }
+                            DuplicateRecords.Add(duprecord);
+                        }
+                        if(DuplicateRecords.Count > 0)
                         {
                             resultDTO.IsSuccess = true;
                             resultDTO.Data = DuplicateRecords;
@@ -357,8 +353,7 @@ namespace OMT.DataService.Service
                     
                     int? teamleadid = _oMTDataContext.TeamAssociation.Where(x => x.UserId == userid).Select(_ => _.TeamId).FirstOrDefault();
 
-                    // TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).FirstOrDefault();
-                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
+                     List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
                     if (template.Count > 0)
                     {
                         List<string> listofColumns = template.Select(_ => _.ColumnName).ToList();
