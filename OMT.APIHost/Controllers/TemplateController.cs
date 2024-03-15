@@ -55,5 +55,11 @@ namespace OMT.APIHost.Controllers
             return _templateService.GetOrders(userid);
         }
 
+        [HttpGet]
+        [Route("list")]
+        public ResultDTO GetTemplateList()
+        {
+            return _templateService.GetTemplateList();
+        }
     }
 }

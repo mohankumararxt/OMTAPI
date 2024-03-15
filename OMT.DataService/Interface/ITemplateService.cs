@@ -10,5 +10,6 @@ namespace OMT.DataService.Interface
         ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO);
         ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO);
         ResultDTO GetOrders(int userid);
+        ResultDTO GetTemplateList();
     }
 }
