@@ -9,5 +9,6 @@ namespace OMT.DataService.Interface
         ResultDTO DeleteTemplate(int SkillSetId);
         ResultDTO UploadData(UploadTemplateDTO uploadTemplateDTO);
         ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO);
+        ResultDTO GetTemplateList();
     }
 }

@@ -47,5 +47,11 @@ namespace OMT.APIHost.Controllers
             return _templateService.ValidateData(uploadTemplateDTO);
         }
 
+        [HttpGet]
+        [Route("list")]
+        public ResultDTO GetTemplateList()
+        {
+            return _templateService.GetTemplateList();
+        }
     }
 }

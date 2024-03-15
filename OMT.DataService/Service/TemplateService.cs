@@ -17,7 +17,6 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -26,7 +25,7 @@ namespace OMT.DataService.Service
             //{
             try
             {
-                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x=>x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
                 if (skillSet != null)
                 {
                     TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SystemOfRecordId == createTemplateDTO.SystemofRecordId && x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
@@ -103,16 +102,15 @@ namespace OMT.DataService.Service
             //}
             return resultDTO;
         }
-
         public ResultDTO DeleteTemplate(int SkillSetId)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
-            { 
-                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x=>x.SkillSetId == SkillSetId && x.IsActive).FirstOrDefault();
+            {
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == SkillSetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
-                    List<TemplateColumns> columns = _oMTDataContext.TemplateColumns.Where(x=>x.SkillSetId ==  skillSet.SkillSetId).ToList();
+                    List<TemplateColumns> columns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
                     _oMTDataContext.TemplateColumns.RemoveRange(columns);
                     _oMTDataContext.SaveChanges();
 
@@ -138,8 +136,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
-        
         public ResultDTO UploadData(UploadTemplateDTO uploadTemplateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -204,35 +200,34 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO ValidateData(UploadTemplateDTO uploadTemplateDTO)
         {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200"};
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
                     List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).ToList();
-                    if (template.Count >0)
+                    if (template.Count > 0)
                     {
                         string tablename = skillSet.SkillSetName;
 
                         List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnName).ToList();
-                       
+
                         //parse json data
                         JObject jsondata = JObject.Parse(uploadTemplateDTO.JsonData);
-                        JArray recordsarray = jsondata.Value<JArray>("Records");    
+                        JArray recordsarray = jsondata.Value<JArray>("Records");
 
                         //sql query
                         string isDuplicateColumns = string.Join(",", listofColumns);
                         string defaultColumns = "UserId, Status, CompletionDate, StartTime, EndTime";
 
                         string sql = $"SELECT {isDuplicateColumns}, {defaultColumns} FROM {tablename} WHERE ";
-                        foreach(JObject records in recordsarray)
+                        foreach (JObject records in recordsarray)
                         {
                             string query = "(";
-                            foreach(string columnname in listofColumns)
+                            foreach (string columnname in listofColumns)
                             {
                                 string columndata = records.Value<string>(columnname);
                                 query += $"[{columnname}] = '{columndata}' AND ";
@@ -245,10 +240,10 @@ namespace OMT.DataService.Service
                         }
 
                         sql = sql.Substring(0, sql.Length - 4);
-                        
+
                         //execute sql query to fetch records from table
-                        List<IDictionary<string,object>> DuplicateRecords = new List<IDictionary<string,object>>();
-                        
+                        List<IDictionary<string, object>> DuplicateRecords = new List<IDictionary<string, object>>();
+
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
@@ -263,8 +258,8 @@ namespace OMT.DataService.Service
                         SqlDataReader reader = command.ExecuteReader();
                         while (reader.Read())
                         {
-                            IDictionary<string,object> record = new Dictionary<string,object>();
-                            for(int i = 0; i <reader.FieldCount; i++)
+                            IDictionary<string, object> record = new Dictionary<string, object>();
+                            for (int i = 0; i < reader.FieldCount; i++)
                             {
                                 string colname = reader.GetName(i);
                                 object colvalue = reader.GetValue(i);
@@ -281,7 +276,7 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            resultDTO.IsSuccess = true ;
+                            resultDTO.IsSuccess = true;
                             resultDTO.Message = "No dulpicate records found, proceed to upload";
                         }
                     }
@@ -297,6 +292,42 @@ namespace OMT.DataService.Service
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
                     resultDTO.Message = "Skillset does not exist.";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+        public ResultDTO GetTemplateList()
+        {
+
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<TemplateListDTO> templateList = new List<TemplateListDTO>();    
+
+                List<SkillSet> skillSets = (from ss in _oMTDataContext.SkillSet
+                                            join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
+                                            select ss).Distinct().ToList();
+                List<TemplateColumns> templatecolumns = _oMTDataContext.TemplateColumns.ToList();
+
+                if(skillSets.Count > 0 ) { 
+                    foreach(SkillSet skillset in skillSets)
+                    {
+                        TemplateListDTO templateListDTO = new TemplateListDTO();
+                        templateListDTO.SkillsetId = skillset.SkillSetId;
+                        templateListDTO.SkillSetName = skillset.SkillSetName;
+                        templateListDTO.SystemofRecordId = skillset.SystemofRecordId;
+                        templateListDTO.TemplateColumns = templatecolumns.Where(x => x.SkillSetId == skillset.SkillSetId).
+                                                            Select(_ => new TemplateColumnDTO() { ColumnDataType = _.ColumnDataType, ColumnName = _.ColumnName, IsDuplicateCheck = _.IsDuplicateCheck }).ToList();
+                        templateList.Add(templateListDTO);
+                    }
+                    resultDTO.Data = templateList;
                 }
 
             }
