@@ -8,6 +8,7 @@ using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
 using System.Dynamic;
+using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace OMT.DataService.Service
@@ -225,7 +226,7 @@ namespace OMT.DataService.Service
 
                         //sql query
                         string isDuplicateColumns = string.Join(",", listofColumns);
-                        string defaultColumns = "UserId, Status, CompletionDate, StartTime, EndTime";
+                        string defaultColumns = "UserId,Status,CompletionDate,StartTime,EndTime";
 
                         string sql = $"SELECT {isDuplicateColumns}, {defaultColumns} FROM {tablename} WHERE ";
                         foreach (JObject records in recordsarray)
@@ -246,8 +247,6 @@ namespace OMT.DataService.Service
                         sql = sql.Substring(0, sql.Length - 4);
 
                         //execute sql query to fetch records from table
-                        List<IDictionary<string, object>> DuplicateRecords = new List<IDictionary<string, object>>();
-                        
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
@@ -259,19 +258,17 @@ namespace OMT.DataService.Service
                         dataAdapter.Fill(dataset);
 
                         DataTable datatable = dataset.Tables[0];
-                        foreach (DataRow dr in datatable.Rows)
-                        {
-                            IDictionary<string, object> duprecord = new Dictionary<string, object>();
-                            foreach (DataColumn col in datatable.Columns)
-                            {
-                                duprecord[col.ColumnName] = dr[col.ColumnName];
-                            }
-                            DuplicateRecords.Add(duprecord);
-                        }
-                        if(DuplicateRecords.Count > 0)
+
+                        //query dt to get records
+                        var querydt = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        if (querydt.Count > 0)
                         {
                             resultDTO.IsSuccess = true;
-                            resultDTO.Data = DuplicateRecords;
+                            resultDTO.Data = querydt;
                             resultDTO.Message = "Duplicate records found,please verify before uploading";
                         }
                         else
@@ -340,92 +337,173 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        //public ResultDTO GetOrders(int userid)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).
+        //            OrderByDescending(x => x.IsPrimary).ThenByDescending(x => x.Percentage).FirstOrDefault();
+        //        if (userSkillSet != null)
+        //        {
+        //            SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == userSkillSet.SkillSetId).FirstOrDefault();
+
+        //            int? teamleadid = _oMTDataContext.TeamAssociation.Where(x => x.UserId == userid).Select(_ => _.TeamId).FirstOrDefault();
+
+        //            List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
+        //            if (template.Count > 0)
+        //            {
+        //                List<string> listofColumns = template.Select(_ => _.ColumnName).ToList();
+        //                string Columns = string.Join(",", listofColumns);
+        //                int Id = 0;
+
+        //                string sql = $"SELECT TOP 1 * FROM {skillset.SkillSetName} WHERE UserId IS NULL ORDER BY Id";
+
+        //                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+        //                using SqlConnection connection = new(connectionstring);
+
+        //                connection.Open();
+
+        //                using (SqlCommand checkorders = connection.CreateCommand())
+        //                {
+        //                    checkorders.CommandText = sql;
+
+        //                    using (SqlDataReader reader = checkorders.ExecuteReader())
+        //                    {
+        //                        if (reader.Read())
+        //                        {
+        //                            //get the id of the fetched order from the table
+        //                            Id = reader.GetInt32(reader.GetOrdinal("Id"));
+        //                        }
+        //                    }
+        //                }
+        //                if (Id != 0)
+        //                {
+        //                    using (SqlCommand updateorder = connection.CreateCommand())
+        //                    {
+        //                        updateorder.CommandText = $"UPDATE {skillset.SkillSetName} SET UserId = @UserId, Status = @Status, TeamLeadId = @TeamLeadId, SystemofRecordId = @SystemofRecordId, SkillSetId = @SkillSetId WHERE Id = {Id}";
+        //                        updateorder.Parameters.AddWithValue("@UserId", userid);
+        //                        updateorder.Parameters.AddWithValue("@Status", 1);
+        //                        updateorder.Parameters.AddWithValue("@TeamLeadId", teamleadid);
+        //                        updateorder.Parameters.AddWithValue("@SystemofRecordId", skillset.SystemofRecordId);
+        //                        updateorder.Parameters.AddWithValue("@SkillSetId", skillset.SkillSetId);
+        //                        updateorder.ExecuteNonQuery();
+        //                    }
+        //                }
+        //                if (Id == 0)
+        //                {
+        //                    resultDTO.IsSuccess = false;
+        //                    resultDTO.Message = "Orders not available";
+        //                    resultDTO.StatusCode = "404";
+        //                }
+
+        //                using (SqlCommand getupdatedorder = connection.CreateCommand())
+        //                {
+        //                    getupdatedorder.CommandText = $"SELECT Id, {Columns} FROM {skillset.SkillSetName} WHERE Id = {Id}";
+        //                    using (SqlDataReader sqlDataReader = getupdatedorder.ExecuteReader())
+        //                    {
+
+        //                        dynamic order = new ExpandoObject();
+        //                        while (sqlDataReader.Read())
+        //                        {
+        //                            for (int i = 0; i < sqlDataReader.FieldCount; i++)
+        //                            {
+        //                                string colname = sqlDataReader.GetName(i);
+        //                                object colvalue = sqlDataReader.GetValue(i);
+        //                                ((IDictionary<string, object>)order)[colname] = colvalue;
+        //                            }
+        //                        }
+
+        //                        if (order != null)
+        //                        {
+        //                            object updorder = order;
+        //                            resultDTO.IsSuccess = true;
+        //                            resultDTO.Data = updorder;
+        //                            resultDTO.Message = "Your order";
+        //                        }
+        //                    }
+        //                }
+
+        //            }
+        //            else
+        //            {
+        //                resultDTO.IsSuccess = false;
+        //                resultDTO.StatusCode = "404";
+        //                resultDTO.Message = "Template doesnt exist";
+        //            }
+        //        }
+        //        else
+        //        {
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.Message = "something went wrong.";
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
+
         public ResultDTO GetOrders(int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && (x.IsPrimary || !_oMTDataContext.UserSkillSet.Any(x => x.UserId == userid && x.IsPrimary))).
-                    OrderByDescending(x => x.IsPrimary).ThenByDescending(x => x.Percentage).FirstOrDefault();
-                if (userSkillSet != null)
+                UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).OrderByDescending(x => x.IsPrimary).ThenByDescending(x => x.Percentage).FirstOrDefault();
+                if(userSkillSet != null)
                 {
                     SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == userSkillSet.SkillSetId).FirstOrDefault();
-                    
-                    int? teamleadid = _oMTDataContext.TeamAssociation.Where(x => x.UserId == userid).Select(_ => _.TeamId).FirstOrDefault();
 
-                     List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
-                    if (template.Count > 0)
+                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
+                    if(template.Count > 0)
                     {
-                        List<string> listofColumns = template.Select(_ => _.ColumnName).ToList();
-                        string Columns = string.Join(",", listofColumns);
-                        int Id = 0;
+                        string updatedOrder = "";
 
-                        string sql = $"SELECT TOP 1 * FROM {skillset.SkillSetName} WHERE UserId IS NULL ORDER BY Id";
-                       
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
-                       
+                        using SqlCommand command = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.StoredProcedure,
+                            CommandText = "GetOrders"
+                        };
+                        command.Parameters.AddWithValue("@userid",userid);
+
+                        //output param to get the record
+                        SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
+                        outputParam.Direction = ParameterDirection.Output;
+                        command.Parameters.Add(outputParam);
+
+                        SqlParameter returnValue = new()
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+                        command.Parameters.Add(returnValue);
+
                         connection.Open();
+                        command.ExecuteNonQuery();
 
-                        using (SqlCommand checkorders = connection.CreateCommand())
-                        {
-                            checkorders.CommandText = sql;
+                        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
 
-                            using (SqlDataReader reader = checkorders.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    //get the id of the fetched order from the table
-                                    Id = reader.GetInt32(reader.GetOrdinal("Id"));
-                                }
-                            }
-                        }
-                        if (Id != 0)
+                        if (returnCode != 1)
                         {
-                            using (SqlCommand updateorder = connection.CreateCommand())
-                            {
-                                    updateorder.CommandText = $"UPDATE {skillset.SkillSetName} SET UserId = @UserId, Status = @Status, TeamLeadId = @TeamLeadId, SystemofRecordId = @SystemofRecordId, SkillSetId = @SkillSetId WHERE Id = {Id}";
-                                    updateorder.Parameters.AddWithValue("@UserId", userid);
-                                    updateorder.Parameters.AddWithValue("@Status", 1);
-                                    updateorder.Parameters.AddWithValue("@TeamLeadId", teamleadid);
-                                    updateorder.Parameters.AddWithValue("@SystemofRecordId", skillset.SystemofRecordId);
-                                    updateorder.Parameters.AddWithValue("@SkillSetId", skillset.SkillSetId);
-                                    updateorder.ExecuteNonQuery();
-                            }
-                        }
-                        if(Id == 0)
-                        {
-                                resultDTO.IsSuccess = false;
-                                resultDTO.Message = "Orders not available";
-                                resultDTO.StatusCode = "404";
+                            throw new InvalidOperationException("Stored Procedure call failed.");
                         }
 
-                        using (SqlCommand getupdatedorder = connection.CreateCommand())
+                        updatedOrder = command.Parameters["@updatedrecord"].Value.ToString();
+                        if (updatedOrder != null)
                         {
-                            getupdatedorder.CommandText = $"SELECT Id, {Columns} FROM {skillset.SkillSetName} WHERE Id = {Id}";
-                            using (SqlDataReader sqlDataReader = getupdatedorder.ExecuteReader())
-                            {
-
-                                dynamic order = new ExpandoObject();
-                                while (sqlDataReader.Read())
-                                {
-                                    for (int i = 0; i < sqlDataReader.FieldCount; i++)
-                                    {
-                                        string colname = sqlDataReader.GetName(i);
-                                        object colvalue = sqlDataReader.GetValue(i);
-                                        ((IDictionary<string, object>)order)[colname] = colvalue;
-                                    }
-                                }
-
-                                if (order != null)
-                                {
-                                    object updorder = order;
-                                    resultDTO.IsSuccess = true;
-                                    resultDTO.Data = updorder;
-                                    resultDTO.Message = "Your order";
-                                }
-                            }
+                            resultDTO.Data = updatedOrder;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Order assigned successfully";
                         }
 
                     }
@@ -440,9 +518,8 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
-                    resultDTO.Message = "something went wrong.";
+                    resultDTO.Message = "You dont have any skillsets in your profile.";
                 }
-
             }
             catch (Exception ex)
             {
@@ -452,5 +529,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
     }
 }
