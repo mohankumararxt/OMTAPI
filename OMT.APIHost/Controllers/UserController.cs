@@ -35,5 +35,13 @@ namespace OMT.APIHost.Controllers
         {
             return _userService.GetUserList();
         }
+
+        [HttpDelete]
+        [Route("delete/{userid:int}")]
+
+        public ResultDTO DeleteUser(int userid) 
+        {
+            return _userService.DeleteUser(userid);
+        }
     }
 }

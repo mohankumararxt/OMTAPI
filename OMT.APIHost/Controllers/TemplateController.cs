@@ -47,7 +47,7 @@ namespace OMT.APIHost.Controllers
             return _templateService.ValidateOrders(uploadTemplateDTO);
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("getOrders")]
         public ResultDTO GetOrders()
         {
@@ -60,6 +60,14 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetTemplateList()
         {
             return _templateService.GetTemplateList();
+        }
+
+        [HttpPut]
+        [Route("updateOrderStatus")]
+        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
+        {
+            var userid = UserId;
+            return _templateService.UpdateOrderStatus(updateOrderStatusDTO,userid);
         }
     }
 }

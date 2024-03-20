@@ -23,7 +23,7 @@ namespace OMT.DataService.Service
                 List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
                                                                      join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                      join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                     where up.UserId == userid && up.Is_Active == true && uss.IsActive == true
+                                                                     where up.UserId == userid && up.IsActive == true && uss.IsActive == true
                                                                      select new UserSkillSetResponseDTO
                                                                      {
                                                                          UserSkillSetId = uss.UserSkillSetId,

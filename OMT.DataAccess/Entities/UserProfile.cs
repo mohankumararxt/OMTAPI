@@ -14,7 +14,7 @@ namespace OMT.DataAccess.Entities
         public string Password { get; set; }
         public int? RoleId { get; set; }
         public bool Is_Verified { get; set; }
-        public bool Is_Active { get; set; }
+        public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? Last_Login { get; set; }
 
