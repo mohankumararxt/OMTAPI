@@ -6,5 +6,6 @@ namespace OMT.DataService.Interface
     {
         ResultDTO CreateUser(CreateUserDTO createUserDTO);
         ResultDTO GetUserList();
+        ResultDTO DeleteUser(int userid);
     }
 }

@@ -32,7 +32,7 @@ namespace OMT.DataService.Service
                     UserProfile userProfile = new UserProfile()
                     {
                         Is_Verified = false,
-                        Is_Active = true,
+                        IsActive = true,
                         FirstName = createUserDTO.FirstName,
                         LastName = createUserDTO.LastName,
                         CreatedDate = DateTime.Now,
@@ -59,13 +59,45 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        public ResultDTO DeleteUser(int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x =>x.UserId == userid && x.IsActive).FirstOrDefault();
+
+                if (user != null)
+                {
+                    user.IsActive = false;
+                    _oMTDataContext.UserProfile.Update(user);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.Message = "User Deleted Successfully.";
+                    resultDTO.IsSuccess = true;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+
+        }
+
         public ResultDTO GetUserList()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
             try
             { 
-                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.Is_Active).Select(_  => new UserListResponseDTO
+                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.IsActive).Select(_  => new UserListResponseDTO
                 {
                     Email = _.Email,
                     FirstName = _.FirstName,

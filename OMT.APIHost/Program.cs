@@ -73,6 +73,7 @@ builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<ISkillSetService, SkillSetService>();
 builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
 builder.Services.AddScoped<ICommonService, CommonService>();
+builder.Services.AddScoped<IProcessStatusService, ProcessStatusService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

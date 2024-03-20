@@ -460,7 +460,7 @@ namespace OMT.DataService.Service
                     List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
                     if(template.Count > 0)
                     {
-                        string updatedOrder = "";
+                        string updatedOrder;
 
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
@@ -496,13 +496,18 @@ namespace OMT.DataService.Service
                         }
 
                         updatedOrder = command.Parameters["@updatedrecord"].Value.ToString();
-                        if (updatedOrder != null)
+                        if (string.IsNullOrWhiteSpace(updatedOrder))
+                        {
+                            resultDTO.Data = "";
+                           
+                        }
+                        else
                         {
                             resultDTO.Data = updatedOrder;
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Order assigned successfully";
+                            
                         }
-
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Order assigned successfully";
                     }
                     else
                     {
@@ -527,5 +532,20 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO, int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+            try
+            {
+               
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
