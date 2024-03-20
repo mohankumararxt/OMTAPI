@@ -77,7 +77,7 @@ namespace OMT.DataService.Service
                         command.ExecuteNonQuery();
 
                         int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
+                        resultDTO.Message = "Template Added Successfully.";
                         if (returnCode != 1)
                         {
                             throw new InvalidOperationException("Stored Procedure call failed.");
@@ -139,7 +139,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -204,7 +203,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -449,7 +447,6 @@ namespace OMT.DataService.Service
         //    }
         //    return resultDTO;
         //}
-
         public ResultDTO GetOrders(int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
