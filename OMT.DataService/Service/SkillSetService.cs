@@ -103,6 +103,35 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetSkillSetListById(int skillsetId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
+                                                             join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
+                                                             where ss.IsActive == true && ss.SkillSetId == skillsetId
+                                                             select new SkillSetResponseDTO
+                                                             {
+                                                                 SkillSetName = ss.SkillSetName,
+                                                                 SkillSetId = ss.SkillSetId,
+                                                                 Threshold = ss.Threshold,
+                                                                 SystemofRecordName = sor.SystemofRecordName,
+                                                                 SystemofRecordId = ss.SystemofRecordId,
+                                                             }).ToList();
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of SkillSets";
+                resultDTO.Data = ListofSkillSets;
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
         public ResultDTO UpdateSkillSet(SkillSetResponseDTO skillSetResponseDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
