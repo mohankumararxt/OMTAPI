@@ -31,6 +31,17 @@ namespace OMT.APIHost.Controllers
         }
 
         /// <summary>
+        /// Get list of skill sets by Skillset Id
+        /// </summary>
+        /// <returns>Returns a list of skill sets</returns>
+        [HttpGet]
+        [Route("list/{skillsetId:int}")]
+        public ResultDTO GetSkillSetListById(int skillsetId)
+        {
+            return _skillsetService.GetSkillSetListById(skillsetId);
+        }
+
+        /// <summary>
         /// Add a new skill set
         /// </summary>
         /// <param name="skillSetCreateDTO">SkillSetCreateDTO</param>
