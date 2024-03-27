@@ -533,12 +533,155 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO, int userid)
+        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
+                SkillSet? skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).FirstOrDefault();
+              
+                string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks WHERE Id = @ID";
                
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+               using (SqlCommand command = connection.CreateCommand())
+               { 
+                    command.CommandText = sql1;
+                    command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
+                    command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
+                    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    command.ExecuteNonQuery();
+               }
+               resultDTO.Message = "Order status has been updated successfully";
+               resultDTO.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string columns = "Id,SkillSetId,Status,StartTime,EndTime";
+
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                if (agentCompletedOrdersDTO.SkillSetId == null )
+                {
+                    List<string> tablenames = (from us in _oMTDataContext.UserSkillSet 
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive
+                                               && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).ToList();
+
+                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
+                    foreach(string tablename in tablenames)
+                    {
+                        var query1 = (from ss in _oMTDataContext.SkillSet
+                                     join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                     where ss.SkillSetName == tablename && ps.Status == "Completed"
+                                     select new
+                                     {
+                                         Id = ps.Id
+                                     }).FirstOrDefault();
+
+                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE UserId = @userid AND Status = {query1.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+                       
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery ;
+                        command.Parameters.AddWithValue("@userid", agentCompletedOrdersDTO.UserId);
+                        command.Parameters.AddWithValue("@FromDate", agentCompletedOrdersDTO.FromDate);
+                        command.Parameters.AddWithValue("@ToDate", agentCompletedOrdersDTO.ToDate);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+                        
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt1);
+
+                    }
+                    if (allCompletedRecords.Count > 0)
+                    {
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+                else
+                {
+                   var query = (from ss in _oMTDataContext.SkillSet
+                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                 where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Completed"
+                                 select new
+                                 {
+                                     SkillSetName = ss.SkillSetName,
+                                     SystemofRecordId = ss.SystemofRecordId,
+                                     Id = ps.Id
+                                 }).FirstOrDefault();
+
+                    string sql = $"SELECT {columns} FROM {query.SkillSetName} WHERE UserId = @userid AND Status = {query.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sql;
+                    sqlCommand.Parameters.AddWithValue("@userid",agentCompletedOrdersDTO.UserId);
+                    sqlCommand.Parameters.AddWithValue("@FromDate", agentCompletedOrdersDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", agentCompletedOrdersDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+                    
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column])).ToList();
+                    if (querydt2.Count > 0)
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = querydt2;
+                        resultDTO.Message = "Completed orders fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+
+                }
             }
             catch (Exception ex)
             {

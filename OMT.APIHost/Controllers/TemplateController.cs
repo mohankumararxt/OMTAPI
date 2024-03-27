@@ -66,8 +66,16 @@ namespace OMT.APIHost.Controllers
         [Route("updateOrderStatus")]
         public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
         {
-            var userid = UserId;
-            return _templateService.UpdateOrderStatus(updateOrderStatusDTO,userid);
+            //var userid = UserId;
+            return _templateService.UpdateOrderStatus(updateOrderStatusDTO);
         }
+
+        [HttpGet]
+        [Route("GetAgentCompletedOrders")]
+        public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
+        {
+            return _templateService.AgentCompletedOrders(agentCompletedOrdersDTO);
+        }
+
     }
 }
