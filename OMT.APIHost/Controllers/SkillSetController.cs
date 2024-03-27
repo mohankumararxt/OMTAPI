@@ -35,10 +35,10 @@ namespace OMT.APIHost.Controllers
         /// </summary>
         /// <returns>Returns a list of skill sets</returns>
         [HttpGet]
-        [Route("list/{skillsetId:int}")]
-        public ResultDTO GetSkillSetListById(int skillsetId)
+        [Route("list/{sorid:int}")]
+        public ResultDTO GetSkillSetListBySORId(int sorid)
         {
-            return _skillsetService.GetSkillSetListById(skillsetId);
+            return _skillsetService.GetSkillSetListBySORId(sorid);
         }
 
         /// <summary>

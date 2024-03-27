@@ -19,6 +19,7 @@
         public string ColumnName { get; set; }
         public string ColumnDataType { get; set; }
         public bool IsDuplicateCheck { get; set; }
+        public bool IsGetOrderColumn { get; set; }
 
     }
 }
