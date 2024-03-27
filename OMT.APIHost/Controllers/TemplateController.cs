@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+   // [Authorize]
     public class TemplateController : BaseController
     {
         private readonly ITemplateService _templateService;
@@ -75,6 +75,13 @@ namespace OMT.APIHost.Controllers
         public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
         {
             return _templateService.AgentCompletedOrders(agentCompletedOrdersDTO);
+        }
+
+        [HttpGet]
+        [Route("GetTeamCompletedOrders")]
+        public ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO)
+        {
+            return _templateService.TeamCompletedOrders(teamCompletedOrdersDTO);
         }
 
     }

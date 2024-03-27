@@ -10,6 +10,6 @@ namespace OMT.DTO
     {
         public int SkillsetId { get; set; }
         public string JsonData { get; set; }
-
+        public bool IsPriority { get; set; }
     }
 }

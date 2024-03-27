@@ -178,6 +178,15 @@ namespace OMT.DataService.Service
                         {
                             throw new InvalidOperationException("Stored Procedure call failed.");
                         }
+                        else
+                        {
+                            if(uploadTemplateDTO.IsPriority)
+                            {
+                                SkillSetPriority skillSetPriority = new SkillSetPriority() { CreatedDate = DateTime.Now, IsComplete = false, SkillSetId = uploadTemplateDTO.SkillsetId};
+                                _oMTDataContext.SkillSetPriority.Add(skillSetPriority);
+                                _oMTDataContext.SaveChanges();
+                            }
+                        }
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
@@ -469,7 +478,7 @@ namespace OMT.DataService.Service
                         {
                             Connection = connection,
                             CommandType = CommandType.StoredProcedure,
-                            CommandText = "GetOrders"
+                            CommandText = "GetOrder"
                         };
                         command.Parameters.AddWithValue("@userid",userid);
 
@@ -498,16 +507,19 @@ namespace OMT.DataService.Service
                         updatedOrder = command.Parameters["@updatedrecord"].Value.ToString();
                         if (string.IsNullOrWhiteSpace(updatedOrder))
                         {
-                            resultDTO.Data = "";
-                           
+                            //resultDTO.Data = "";
+                            resultDTO.StatusCode = "404";
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "No more oders for now, please come back again";
                         }
                         else
                         {
                             resultDTO.Data = updatedOrder;
-                            
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Order assigned successfully";
+
                         }
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Order assigned successfully";
+                       
                     }
                     else
                     {
@@ -539,7 +551,7 @@ namespace OMT.DataService.Service
             {
                 SkillSet? skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).FirstOrDefault();
               
-                string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks WHERE Id = @ID";
+                string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
                
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
@@ -551,6 +563,8 @@ namespace OMT.DataService.Service
                     command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
                     command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
                     command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    command.Parameters.AddWithValue("@EndTime",updateOrderStatusDTO.EndTime);
+                    command.Parameters.AddWithValue("@CompletionDate", updateOrderStatusDTO.EndTime);
                     command.ExecuteNonQuery();
                }
                resultDTO.Message = "Order status has been updated successfully";
@@ -672,6 +686,133 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Data = querydt2;
                         resultDTO.Message = "Completed orders fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string columns = "Id,UserId,SkillSetId,Status,StartTime,EndTime";
+
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                if(teamCompletedOrdersDTO.SkillSetId != null)
+                {
+                    var query = (from ss in _oMTDataContext.SkillSet
+                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                 where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Completed"
+                                 select new
+                                 {
+                                     SkillSetName = ss.SkillSetName,
+                                     SystemofRecordId = ss.SystemofRecordId,
+                                     Id = ps.Id
+                                 }).FirstOrDefault();
+
+                    string sql1 = $"SELECT {columns} FROM {query.SkillSetName} WHERE TeamLeadId = @Teamid AND Status = {query.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sql1;
+                    sqlCommand.Parameters.AddWithValue("@Teamid", teamCompletedOrdersDTO.TeamId);
+                    sqlCommand.Parameters.AddWithValue("@FromDate", teamCompletedOrdersDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", teamCompletedOrdersDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column])).ToList();
+                    if (querydt2.Count > 0)
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = querydt2;
+                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+                else
+                {
+                    List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
+                                               where ta.TeamId == teamCompletedOrdersDTO.TeamId 
+                                               join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).Distinct().ToList();
+
+                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
+                    foreach (string tablename in tablenames)
+                    {
+                        var query1 = (from ss in _oMTDataContext.SkillSet
+                                      join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                      where ss.SkillSetName == tablename && ps.Status == "Completed"
+                                      select new
+                                      {
+                                          Id = ps.Id
+                                      }).FirstOrDefault();
+
+                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE TeamLeadId = @Teamid AND Status = {query1.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@Teamid", teamCompletedOrdersDTO.TeamId);
+                        command.Parameters.AddWithValue("@FromDate", teamCompletedOrdersDTO.FromDate);
+                        command.Parameters.AddWithValue("@ToDate", teamCompletedOrdersDTO.ToDate);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt1);
+
+                    }
+                    if (allCompletedRecords.Count > 0)
+                    {
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
+                        resultDTO.IsSuccess = true;
                     }
                     else
                     {

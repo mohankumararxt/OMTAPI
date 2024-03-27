@@ -13,5 +13,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetTemplateList();
         ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);
         ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO);
+        ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
     }
 }

@@ -16,6 +16,7 @@ namespace OMT.DataAccess.Context
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
         public DbSet<SystemofRecord> SystemofRecord { get; set; }
         public DbSet<ProcessStatus> ProcessStatus { get; set; } 
+        public DbSet<SkillSetPriority> SkillSetPriority { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
