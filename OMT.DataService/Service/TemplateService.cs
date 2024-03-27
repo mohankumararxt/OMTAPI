@@ -51,6 +51,7 @@ namespace OMT.DataService.Service
                                     ColumnName = templateColumns.ColumnName,
                                     ColumnDataType = templateColumns.ColumnDataType,
                                     IsDuplicateCheck = templateColumns.IsDuplicateCheck,
+                                    IsGetOrderColumn = templateColumns.IsGetOrderColumn,
                                 };
                                 _oMTDataContext.TemplateColumns.Add(newtemplateColumns);
                             }

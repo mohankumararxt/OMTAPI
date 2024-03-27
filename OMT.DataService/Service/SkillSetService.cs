@@ -104,14 +104,14 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO GetSkillSetListById(int skillsetId)
+        public ResultDTO GetSkillSetListBySORId(int sorid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
                                                              join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
-                                                             where ss.IsActive == true && ss.SkillSetId == skillsetId
+                                                             where ss.IsActive == true && sor.SystemofRecordId == sorid
                                                              select new SkillSetResponseDTO
                                                              {
                                                                  SkillSetName = ss.SkillSetName,

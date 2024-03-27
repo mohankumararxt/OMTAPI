@@ -13,5 +13,6 @@ namespace OMT.DataAccess.Entities
         public string ColumnAliasName { get; set; }
         public string ColumnDataType { get; set; }
         public bool IsDuplicateCheck { get; set; }
+        public bool IsGetOrderColumn { get; set; }
     }
 }
