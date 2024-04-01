@@ -41,7 +41,8 @@ namespace OMT.DataService.Service
                         OrganizationId = createUserDTO.OrganizationId,
                         Password = encryptedPassword,
                         Last_Login = null,
-                        RoleId = createUserDTO.RoleId
+                        RoleId = createUserDTO.RoleId,
+                        EmployeeId = createUserDTO.EmployeeId
                     };
 
                     _oMTDataContext.UserProfile.Add(userProfile);
@@ -100,6 +101,7 @@ namespace OMT.DataService.Service
                 List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.IsActive).Select(_  => new UserListResponseDTO
                 {
                     Email = _.Email,
+                    EmployeeId = _.EmployeeId,
                     FirstName = _.FirstName,
                     LastName = _.LastName,
                     UserId = _.UserId,

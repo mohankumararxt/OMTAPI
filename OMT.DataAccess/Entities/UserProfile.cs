@@ -17,6 +17,7 @@ namespace OMT.DataAccess.Entities
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? Last_Login { get; set; }
+        public string EmployeeId { get; set; }
 
     }
 }
