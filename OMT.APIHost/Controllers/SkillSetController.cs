@@ -80,5 +80,13 @@ namespace OMT.APIHost.Controllers
         {
             return _skillsetService.UpdateSkillSet(skillSetResponseDTO);
         }
+
+        [HttpGet]
+        [Route("GetListofStatenames/{skillsetid:int}")]
+
+        public ResultDTO GetStatenameList(int skillsetid)
+        {
+            return _skillsetService.GetStatenameList(skillsetid);
+        }
     }
 }

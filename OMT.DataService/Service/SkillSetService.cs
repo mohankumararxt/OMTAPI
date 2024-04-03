@@ -132,6 +132,35 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetStatenameList(int skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<HardStatenameDTO> hardStatename = (from shs in _oMTDataContext.SkillSetHardStates
+                                                        join ss in _oMTDataContext.SkillSet on shs.SkillSetId equals ss.SkillSetId
+                                                        where shs.SkillSetId == skillsetid && shs.IsActive == true
+                                                        select new HardStatenameDTO
+                                                        {
+                                                            //SkillSetId = ss.SkillSetId,
+                                                            //SkillSetName = ss.SkillSetName,
+                                                            HardstateName = shs.StateName,
+                                                        }).ToList();
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Statenames";
+                resultDTO.Data = hardStatename;
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
         public ResultDTO UpdateSkillSet(SkillSetResponseDTO skillSetResponseDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
@@ -164,5 +193,7 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+
     }
 }

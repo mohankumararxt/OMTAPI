@@ -30,7 +30,9 @@ namespace OMT.DataService.Service
                                                                          SkillSetName = ss.SkillSetName,
                                                                          SkillSetId = uss.SkillSetId,
                                                                          Percentage = uss.Percentage,
-                                                                         IsPrimary = uss.IsPrimary
+                                                                         IsPrimary = uss.IsPrimary,
+                                                                         IsHardStateUser = uss.IsHardStateUser,
+                                                                         HardStateName = uss.HardStateName,
                                                                      }).ToList();
 
                 resultDTO.IsSuccess = true;
@@ -68,8 +70,10 @@ namespace OMT.DataService.Service
                         Percentage = userSkillSetCreateDTO.Percentage,
                         IsPrimary = userSkillSetCreateDTO.IsPrimary,
                         IsActive = true,
-                        CreatedDate = DateTime.Now
-                    };
+                        CreatedDate = DateTime.Now,
+                        IsHardStateUser = userSkillSetCreateDTO.IsHardStateUser,
+                        HardStateName = userSkillSetCreateDTO.HardStateName != null ? string.Join(",", userSkillSetCreateDTO.HardStateName) : null,
+                };
                     if (userSkillSetCreateDTO.IsPrimary == true)
                     {
                         var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsPrimary == true && x.IsActive).FirstOrDefault();
@@ -140,6 +144,8 @@ namespace OMT.DataService.Service
                     userSkillSet.SkillSetId = userSkillSetUpdateDTO.SkillSetId;
                     userSkillSet.Percentage = userSkillSetUpdateDTO.Percentage;
                     userSkillSet.IsPrimary = userSkillSetUpdateDTO.IsPrimary;
+                    userSkillSet.IsHardStateUser = userSkillSetUpdateDTO.IsHardStateUser;
+                    userSkillSet.HardStateName = userSkillSetUpdateDTO.HardStateName != null ? string.Join(",", userSkillSetUpdateDTO.HardStateName) : null;
                     if (userSkillSetUpdateDTO.IsPrimary == true)
                     {
                         var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userid && x.IsActive).FirstOrDefault();

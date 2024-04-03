@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+   // [Authorize]
     public class TemplateController : BaseController
     {
         private readonly ITemplateService _templateService;
@@ -42,9 +42,9 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("validateOrders")]
-        public ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO)
+        public ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO)
         {
-            return _templateService.ValidateOrders(uploadTemplateDTO);
+            return _templateService.ValidateOrders(validateorderDTO);
         }
 
         [HttpGet]

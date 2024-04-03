@@ -12,4 +12,10 @@ namespace OMT.DTO
         public string JsonData { get; set; }
         public bool IsPriority { get; set; }
     }
+
+    public class ValidateOrderDTO
+    {
+        public int SkillsetId { get; set; }
+        public string JsonData { get; set; }
+    }
 }

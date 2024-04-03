@@ -12,5 +12,7 @@ namespace OMT.DTO
         public int SkillSetId { get; set; }
         public bool IsPrimary { get; set; }
         public int Percentage { get; set; }
+        public bool IsHardStateUser { get; set; }
+        public List<string>? HardStateName { get; set; }
     }
 }

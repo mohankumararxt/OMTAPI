@@ -213,15 +213,15 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-        public ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO)
+        public ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == validateorderDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
-                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).ToList();
+                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == validateorderDTO.SkillsetId).ToList();
                     if (template.Count > 0)
                     {
                         string tablename = skillSet.SkillSetName;
@@ -229,7 +229,7 @@ namespace OMT.DataService.Service
                         List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnName).ToList();
 
                         //parse json data
-                        JObject jsondata = JObject.Parse(uploadTemplateDTO.JsonData);
+                        JObject jsondata = JObject.Parse(validateorderDTO.JsonData);
                         JArray recordsarray = jsondata.Value<JArray>("Records");
 
                         //sql query

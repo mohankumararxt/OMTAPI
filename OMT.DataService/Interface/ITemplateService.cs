@@ -8,7 +8,7 @@ namespace OMT.DataService.Interface
         ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO);
         ResultDTO DeleteTemplate(int SkillSetId);
         ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO);
-        ResultDTO ValidateOrders(UploadTemplateDTO uploadTemplateDTO);
+        ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO);
         ResultDTO GetOrders(int userid);
         ResultDTO GetTemplateList();
         ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);
