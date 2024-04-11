@@ -84,5 +84,12 @@ namespace OMT.APIHost.Controllers
             return _templateService.TeamCompletedOrders(teamCompletedOrdersDTO);
         }
 
+        [HttpGet]
+        [Route("GetDefaultColumnNames/{systemofrecordid:int}")]
+        public ResultDTO GetDefaultColumnNames(int systemofrecordid)
+        {
+            return _templateService.GetDefaultColumnNames(systemofrecordid);
+        }
+
     }
 }

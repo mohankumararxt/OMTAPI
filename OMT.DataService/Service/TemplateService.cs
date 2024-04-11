@@ -68,6 +68,7 @@ namespace OMT.DataService.Service
                             CommandText = "CreateTemplate"
                         };
                         command.Parameters.AddWithValue("@SkillsetId", createTemplateDTO.SkillsetId);
+                        command.Parameters.AddWithValue("@SystemofRecordId", createTemplateDTO.SystemofRecordId);
                         SqlParameter returnValue = new()
                         {
                             ParameterName = "@RETURN_VALUE",
@@ -225,24 +226,33 @@ namespace OMT.DataService.Service
                     if (template.Count > 0)
                     {
                         string tablename = skillSet.SkillSetName;
+                        
+                        List<string> listofcolumns1 = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsDuplicateCheck).Select(_ => _.DefaultColumnName).ToList();
+                        List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnAliasName).ToList();
 
-                        List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnName).ToList();
+                        List<string> combinedList = listofcolumns1.Concat(listofColumns).ToList();
 
                         //parse json data
                         JObject jsondata = JObject.Parse(validateorderDTO.JsonData);
                         JArray recordsarray = jsondata.Value<JArray>("Records");
 
                         //sql query
-                        string isDuplicateColumns = string.Join(",", listofColumns);
+                        string isDuplicateColumns1 = listofcolumns1 != null ? string.Join(",", listofcolumns1) : "";
+                        string isDuplicateColumns = listofColumns != null ? string.Join(",", listofColumns) : "";
+
+                        // Combine the strings, ensuring that if any of them is null, it's selected without a comma
+                        string combinedString = (isDuplicateColumns1 != "" && isDuplicateColumns != "") ? isDuplicateColumns1 + "," + isDuplicateColumns : isDuplicateColumns1 + isDuplicateColumns;
+
                         string defaultColumns = "UserId,Status,CompletionDate,StartTime,EndTime";
 
-                        string sql = $"SELECT {isDuplicateColumns}, {defaultColumns} FROM {tablename} WHERE ";
+                        string sql = $"SELECT {combinedString}, {defaultColumns} FROM {tablename} WHERE ";
                         foreach (JObject records in recordsarray)
                         {
                             string query = "(";
-                            foreach (string columnname in listofColumns)
+                            foreach (string columnname in combinedList)
                             {
                                 string columndata = records.Value<string>(columnname);
+                                
                                 query += $"[{columnname}] = '{columndata}' AND ";
                             }
 
@@ -812,6 +822,35 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "404";
                     }
 
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetDefaultColumnNames(int systemofrecordid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<DefaultTemplateColumnsDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == systemofrecordid).Select(_ => new DefaultTemplateColumnsDTO() { DefaultColumnName = _.DefaultColumnName}).ToList();
+               
+                if (defaultTemplateColumns.Count > 0)
+                {
+                    resultDTO.Data = defaultTemplateColumns;
+                    resultDTO.Message = "Default columns are successfully fetched";
+                    resultDTO.IsSuccess = true;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Default columns doesnt exist for the specified systemofrecordid";
+                    resultDTO.StatusCode = "404";
                 }
             }
             catch (Exception ex)

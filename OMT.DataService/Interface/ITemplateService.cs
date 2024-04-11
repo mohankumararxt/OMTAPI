@@ -14,5 +14,6 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);
         ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO);
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
+        ResultDTO GetDefaultColumnNames(int systemofrecordid);
     }
 }
