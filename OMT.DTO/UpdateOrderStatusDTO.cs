@@ -12,9 +12,6 @@ namespace OMT.DTO
         public int StatusId { get; set;}
         public string? Remarks { get; set;}
         public int SkillSetId { get; set;}
-       // public DateTime? CompletionDate { get; set;}
-        public DateTime? EndTime { get;set;}
-        
-
+      
     }
 }

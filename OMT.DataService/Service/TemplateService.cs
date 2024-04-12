@@ -575,6 +575,8 @@ namespace OMT.DataService.Service
               
                 string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
                
+                DateTime dateTime = DateTime.Now;
+
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
@@ -585,8 +587,8 @@ namespace OMT.DataService.Service
                     command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
                     command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
                     command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                    command.Parameters.AddWithValue("@EndTime",updateOrderStatusDTO.EndTime);
-                    command.Parameters.AddWithValue("@CompletionDate", updateOrderStatusDTO.EndTime);
+                    command.Parameters.AddWithValue("@EndTime", dateTime);
+                    command.Parameters.AddWithValue("@CompletionDate", dateTime);
                     command.ExecuteNonQuery();
                }
                resultDTO.Message = "Order status has been updated successfully";
