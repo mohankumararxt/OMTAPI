@@ -6,6 +6,7 @@ using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
@@ -338,8 +339,28 @@ namespace OMT.DataService.Service
                         templateListDTO.SkillsetId = skillset.SkillSetId;
                         templateListDTO.SkillSetName = skillset.SkillSetName;
                         templateListDTO.SystemofRecordId = skillset.SystemofRecordId;
-                        templateListDTO.TemplateColumns = templatecolumns.Where(x => x.SkillSetId == skillset.SkillSetId).
+                        List<TemplateColumnDTO> TemplateColumns = templatecolumns.Where(x => x.SkillSetId == skillset.SkillSetId).
                                                             Select(_ => new TemplateColumnDTO() { ColumnDataType = _.ColumnDataType, ColumnName = _.ColumnName, IsDuplicateCheck = _.IsDuplicateCheck }).ToList();
+
+                        List<DefaultTemplateColumnlistDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns
+                                                                                    .Where(x => x.SystemOfRecordId == skillset.SystemofRecordId)
+                                                                                    .Select(_ => new DefaultTemplateColumnlistDTO()
+                                                                                    {
+                                                                                        DataType = _.DataType,
+                                                                                        DefaultColumnName = _.DefaultColumnName,
+                                                                                        IsDuplicateCheck = _.IsDuplicateCheck
+                                                                                    }).ToList();
+                       
+                        var finalcolumns = TemplateColumns.
+                                            Concat(defaultTemplateColumns.
+                                            Select(dc => new TemplateColumnDTO
+                                            {
+                                                ColumnDataType =dc.DataType,
+                                                ColumnName = dc.DefaultColumnName,
+                                                IsDuplicateCheck = dc.IsDuplicateCheck
+                                            })).ToList();
+
+                        templateListDTO.TemplateColumns = finalcolumns;
                         templateList.Add(templateListDTO);
                     }
                     resultDTO.Data = templateList;

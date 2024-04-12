@@ -31,6 +31,7 @@ namespace OMT.DataService.Service
                                                                     SystemofRecordName = sor.SystemofRecordName,
                                                                     Status = ps.Status,
                                                                     SystemofRecordId = ps.SystemOfRecordId,
+                                                                    StatusId = ps.Id
                                                                }).ToList();
 
                 resultDTO.IsSuccess = true;
