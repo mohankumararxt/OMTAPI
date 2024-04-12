@@ -37,7 +37,7 @@ namespace OMT.APIHost.Controllers
                 claims.Add("UserId", Convert.ToString(result.Data.UserId));
                 claims.Add("RoleId", Convert.ToString(result.Data.RoleId));
                 var token = new JwtTokenBuilder(_authSettings).AddClaims(claims).Build();
-                result.Data.Token = token.Value;
+                result.Data.Token = "Bearer " + token.Value;
                 result.Data.TokenExpiry = token.ValidTo;
 
             }
