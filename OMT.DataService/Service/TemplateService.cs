@@ -346,7 +346,7 @@ namespace OMT.DataService.Service
                                                                                     .Where(x => x.SystemOfRecordId == skillset.SystemofRecordId)
                                                                                     .Select(_ => new DefaultTemplateColumnlistDTO()
                                                                                     {
-                                                                                        DataType = _.DataType,
+                                                                                        DataType = _.DefaultColumnName == "IsPriority" ? "bit" : _.DataType,
                                                                                         DefaultColumnName = _.DefaultColumnName,
                                                                                         IsDuplicateCheck = _.IsDuplicateCheck
                                                                                     }).ToList();
@@ -385,6 +385,8 @@ namespace OMT.DataService.Service
 
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
+
+                //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
 
                 List<UserSkillSet> userskillsetlist = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).ToList();
                 List<UserSkillSet> hardstateid = userskillsetlist.Where(x => x.IsHardStateUser && x.IsPrimary).ToList();
@@ -574,9 +576,9 @@ namespace OMT.DataService.Service
                 SkillSet? skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).FirstOrDefault();
               
                 string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
-               
-                DateTime dateTime = DateTime.Now;
 
+                 DateTime dateTime = DateTime.Now;
+               
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
