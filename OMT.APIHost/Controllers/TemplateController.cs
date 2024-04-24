@@ -42,7 +42,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("validateOrders")]
-        public ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO)
+        public ResultDTO ValidateOrders([FromBody] ValidateOrderDTO validateorderDTO)
         {
             return _templateService.ValidateOrders(validateorderDTO);
         }
@@ -64,22 +64,22 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("updateOrderStatus")]
-        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
+        public ResultDTO UpdateOrderStatus([FromBody] UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             //var userid = UserId;
             return _templateService.UpdateOrderStatus(updateOrderStatusDTO);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAgentCompletedOrders")]
-        public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
+        public ResultDTO AgentCompletedOrders([FromBody] AgentCompletedOrdersDTO agentCompletedOrdersDTO)
         {
             return _templateService.AgentCompletedOrders(agentCompletedOrdersDTO);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetTeamCompletedOrders")]
-        public ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO)
+        public ResultDTO TeamCompletedOrders([FromBody] TeamCompletedOrdersDTO teamCompletedOrdersDTO)
         {
             return _templateService.TeamCompletedOrders(teamCompletedOrdersDTO);
         }
