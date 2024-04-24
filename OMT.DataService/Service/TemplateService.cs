@@ -387,127 +387,99 @@ namespace OMT.DataService.Service
                 connection.Open();
 
                 //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
+                List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                           where us.UserId == userid && us.IsActive
+                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                           select ss.SkillSetName).ToList();
 
-                List<UserSkillSet> userskillsetlist = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).ToList();
-                List<UserSkillSet> hardstateid = userskillsetlist.Where(x => x.IsHardStateUser && x.IsPrimary).ToList();
-                if (hardstateid.Count > 0)
+                List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+
+                foreach (string tablename in tablenames)
                 {
-                    string uporder;
-                    using SqlCommand command = new()
-                    {
-                        Connection = connection,
-                        CommandType = CommandType.StoredProcedure,
-                        CommandText = "GetOrderByHardstate"
-                    };
-                    command.Parameters.AddWithValue("@userid", userid);
-                    //output param to get the record
-                    SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
-                    outputParam.Direction = ParameterDirection.Output;
-                    command.Parameters.Add(outputParam);
+                    string query = $"select * from {tablename} where UserId = @UserId and (Status IS NULL OR Status = '')";
 
-                    SqlParameter returnValue = new()
-                    {
-                        ParameterName = "@RETURN_VALUE",
-                        Direction = ParameterDirection.ReturnValue
-                    };
-                    command.Parameters.Add(returnValue);
-                    command.ExecuteNonQuery();
+                    using SqlCommand command = connection.CreateCommand();
+                    command.CommandText = query;
+                    command.Parameters.AddWithValue("@UserId", userid);
 
-                    int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
-                    if (returnCode != 1)
-                    {
-                        throw new InvalidOperationException("Stored Procedure call failed.");
-                    }
+                    DataSet dataset = new DataSet();
 
-                    uporder = command.Parameters["@updatedrecord"].Value.ToString();
-                    if (!string.IsNullOrWhiteSpace(uporder))
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    var querydt1 = datatable.AsEnumerable()
+                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                        column => column.ColumnName,
+                                        column => row[column])).ToList();
+
+                    noStatusRecords.AddRange(querydt1);
+
+                }
+
+                if (noStatusRecords.Count > 0)
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "You have pending order status update,can't get fresh orders until you have updated the status for all the orders";
+                    resultDTO.StatusCode = "404";
+                }
+
+                else
+                {
+                    List<UserSkillSet> userskillsetlist = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).ToList();
+                    List<UserSkillSet> hardstateid = userskillsetlist.Where(x => x.IsHardStateUser && x.IsPrimary).ToList();
+                    if (hardstateid.Count > 0)
                     {
-                        resultDTO.Data = uporder;
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Order assigned successfully";
+                        string uporder;
+                        using SqlCommand command = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.StoredProcedure,
+                            CommandText = "GetOrderByHardstate"
+                        };
+                        command.Parameters.AddWithValue("@userid", userid);
+                        //output param to get the record
+                        SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
+                        outputParam.Direction = ParameterDirection.Output;
+                        command.Parameters.Add(outputParam);
+
+                        SqlParameter returnValue = new()
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+                        command.Parameters.Add(returnValue);
+                        command.ExecuteNonQuery();
+
+                        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+
+                        uporder = command.Parameters["@updatedrecord"].Value.ToString();
+                        if (!string.IsNullOrWhiteSpace(uporder))
+                        {
+                            resultDTO.Data = uporder;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Order assigned successfully";
+                        }
+                        else
+                        {
+                            callSPbyPrimary(userid, resultDTO, connection);
+                        }
                     }
                     else
                     {
                         callSPbyPrimary(userid, resultDTO, connection);
+
                     }
                 }
-                else
-                {
-
-                    //List<SkillSetPriority> skillSetPriority = _oMTDataContext.SkillSetPriority.Where(x => x.IsComplete == false).ToList();
-                    //if (skillSetPriority.Count != 0)
-                    //{
-
-                    //    List<int> skillsetids = skillSetPriority.Select(x => x.SkillSetId).ToList();
-                    //    List<UserSkillSet> userskillset = userskillsetlist.Where(x => x.UserId == userid && x.IsActive && skillsetids.Contains(x.SkillSetId)).ToList();
-
-                    //    if (userskillset.Count != 0)
-                    //    {
-                    //        string uporder;
-                    //        using SqlCommand command = new()
-                    //        {
-                    //            Connection = connection,
-                    //            CommandType = CommandType.StoredProcedure,
-                    //            CommandText = "GetOrderByPriority"
-                    //        };
-                    //        command.Parameters.AddWithValue("@userid", userid);
-                    //        //output param to get the record
-                    //        SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
-                    //        outputParam.Direction = ParameterDirection.Output;
-                    //        command.Parameters.Add(outputParam);
-
-                    //        SqlParameter returnValue = new()
-                    //        {
-                    //            ParameterName = "@RETURN_VALUE",
-                    //            Direction = ParameterDirection.ReturnValue
-                    //        };
-                    //        command.Parameters.Add(returnValue);
-
-
-                    //        command.ExecuteNonQuery();
-
-                    //        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
-                    //        if (returnCode != 1)
-                    //        {
-                    //            throw new InvalidOperationException("Stored Procedure call failed.");
-                    //        }
-
-                    //        uporder = command.Parameters["@updatedrecord"].Value.ToString();
-                    //        if (!string.IsNullOrWhiteSpace(uporder))
-                    //        {
-                    //            resultDTO.Data = uporder;
-                    //            resultDTO.IsSuccess = true;
-                    //            resultDTO.Message = "Order assigned successfully";
-                    //        }
-                    //        else
-                    //        {
-                    //            callSPbyPrimary(userid, resultDTO, connection);
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                            callSPbyPrimary(userid, resultDTO, connection);
-                    //    }
-                   // }
-                    //else
-                    //{
-                    //    UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsActive).OrderByDescending(x => x.IsPrimary).ThenByDescending(x => x.Percentage).FirstOrDefault();
-                    //    if (userSkillSet != null)
-                    //    {
-                    //        SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == userSkillSet.SkillSetId).FirstOrDefault();
-
-                    //        List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillset.SkillSetId).ToList();
-                    //        if (template.Count > 0)
-                    //        {
-                    //            callSPbyPrimary(userid, resultDTO, connection);
-                    //        }
-
-                    //    }
-
-                    //}
-                }
+             
             }
             catch (Exception ex)
             {
@@ -636,7 +608,7 @@ namespace OMT.DataService.Service
                                          Id = ps.Id
                                      }).FirstOrDefault();
 
-                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE UserId = @userid AND Status = {query1.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE UserId = @userid AND Status = {query1.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
                        
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery ;

@@ -18,6 +18,18 @@ namespace OMT.DataAccess.Context
         public DbSet<ProcessStatus> ProcessStatus { get; set; } 
         public DbSet<SkillSetHardStates> SkillSetHardStates { get; set; }
         public DbSet<DefaultTemplateColumns> DefaultTemplateColumns { get; set; }
+        public DbSet<BusinessGroup> BusinessGroup { get; set; }
+        public DbSet<ProductDescription> ProductDescription { get; set; }
+        public DbSet<ResWareProductDescriptions> ResWareProductDescriptions { get; set; }
+        public DbSet<ResWareProductDescriptionMap> ResWareProductDescriptionMap { get; set; }
+        public DbSet<ProcessType> ProcessType { get; set; }
+        public DbSet<SourceType> SourceType { get; set; }
+        public DbSet<Business> Business { get; set; }
+        public DbSet<Customer> Customer { get; set; }
+        public DbSet<Workflowstatus> Workflowstatus { get; set; }
+        public DbSet<WorkflowstatusMap> WorkflowstatusMap { get; set; }
+        public DbSet<InvoiceJointResware> InvoiceJointResware { get; set; }
+        public DbSet<InvoiceJointSci> InvoiceJointSci { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
