@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
@@ -582,8 +583,6 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                string columns = "Id,SkillSetId,Status,StartTime,EndTime";
-
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                 using SqlConnection connection = new(connectionstring);
@@ -600,16 +599,13 @@ namespace OMT.DataService.Service
                     List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
                     foreach(string tablename in tablenames)
                     {
-                        var query1 = (from ss in _oMTDataContext.SkillSet
-                                     join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                     where ss.SkillSetName == tablename && ps.Status == "Completed"
-                                     select new
-                                     {
-                                         Id = ps.Id
-                                     }).FirstOrDefault();
-
-                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE UserId = @userid AND Status = {query1.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
                        
+                        string sqlquery = $"SELECT t.OrderId,t.CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
+                                          $"FROM {tablename} t " +
+                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                          $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery ;
                         command.Parameters.AddWithValue("@userid", agentCompletedOrdersDTO.UserId);
@@ -648,17 +644,15 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                   var query = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Completed"
-                                 select new
-                                 {
-                                     SkillSetName = ss.SkillSetName,
-                                     SystemofRecordId = ss.SystemofRecordId,
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
+                   
+                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql = $"SELECT {columns} FROM {query.SkillSetName} WHERE UserId = @userid AND Status = {query.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                    string sql = $"SELECT t.OrderId,t.CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
+                                          $"FROM {skillSet.SkillSetName} t " +
+                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                          $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sql;
@@ -708,7 +702,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                string columns = "Id,UserId,SkillSetId,Status,StartTime,EndTime";
+               // string columns = "Id,UserId,SkillSetId,Status,StartTime,EndTime";
 
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
@@ -717,17 +711,16 @@ namespace OMT.DataService.Service
 
                 if(teamCompletedOrdersDTO.SkillSetId != null)
                 {
-                    var query = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Completed"
-                                 select new
-                                 {
-                                     SkillSetName = ss.SkillSetName,
-                                     SystemofRecordId = ss.SystemofRecordId,
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
+                    
+                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql1 = $"SELECT {columns} FROM {query.SkillSetName} WHERE TeamLeadId = @Teamid AND Status = {query.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                    string sql1 = $"SELECT up.FirstName as UserName,t.OrderId,t.CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
+                                          $"FROM {skillSet.SkillSetName} t " +
+                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                          $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                          $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sql1;
@@ -773,15 +766,14 @@ namespace OMT.DataService.Service
                     List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
                     foreach (string tablename in tablenames)
                     {
-                        var query1 = (from ss in _oMTDataContext.SkillSet
-                                      join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                      where ss.SkillSetName == tablename && ps.Status == "Completed"
-                                      select new
-                                      {
-                                          Id = ps.Id
-                                      }).FirstOrDefault();
+                       
+                        string sqlquery = $"SELECT up.FirstName as UserName,t.OrderId,t.CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
+                                          $"FROM {tablename} t " +
+                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                          $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                          $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
-                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE TeamLeadId = @Teamid AND Status = {query1.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
