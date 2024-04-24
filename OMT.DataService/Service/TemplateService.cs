@@ -658,7 +658,7 @@ namespace OMT.DataService.Service
                                      Id = ps.Id
                                  }).FirstOrDefault();
 
-                    string sql = $"SELECT {columns} FROM {query.SkillSetName} WHERE UserId = @userid AND Status = {query.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+                    string sql = $"SELECT {columns} FROM {query.SkillSetName} WHERE UserId = @userid AND Status = {query.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sql;
@@ -727,7 +727,7 @@ namespace OMT.DataService.Service
                                      Id = ps.Id
                                  }).FirstOrDefault();
 
-                    string sql1 = $"SELECT {columns} FROM {query.SkillSetName} WHERE TeamLeadId = @Teamid AND Status = {query.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+                    string sql1 = $"SELECT {columns} FROM {query.SkillSetName} WHERE TeamLeadId = @Teamid AND Status = {query.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sql1;
@@ -781,7 +781,7 @@ namespace OMT.DataService.Service
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE TeamLeadId = @Teamid AND Status = {query1.Id} AND CompletionDate BETWEEN @FromDate AND @ToDate";
+                        string sqlquery = $"SELECT {columns} FROM {tablename} WHERE TeamLeadId = @Teamid AND Status = {query1.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
