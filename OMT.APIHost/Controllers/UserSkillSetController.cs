@@ -68,7 +68,7 @@ namespace OMT.APIHost.Controllers
         public ResultDTO UpdateUserSkillSet([FromBody] UserSkillSetUpdateDTO userSkillSetUpdateDTO)
         {
             var userid = UserId;
-            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO, userid);
+            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO);
             return resultDTO;
         }
     }

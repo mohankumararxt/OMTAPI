@@ -7,6 +7,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetUserSkillSetList(int userid);
         ResultDTO AddUserSkillSet(UserSkillSetCreateDTO userSkillSetCreateDTO);
         ResultDTO DeleteUserSkillSet(int userskillsetId);
-        ResultDTO UpdateUserSkillSet(UserSkillSetUpdateDTO userSkillSetUpdateDTO, int userid);
+        ResultDTO UpdateUserSkillSet(UserSkillSetUpdateDTO userSkillSetUpdateDTO);
     }
 }
