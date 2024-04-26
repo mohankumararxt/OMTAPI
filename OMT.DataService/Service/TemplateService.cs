@@ -600,7 +600,7 @@ namespace OMT.DataService.Service
                     foreach(string tablename in tablenames)
                     {
                        
-                        string sqlquery = $"SELECT t.OrderId,t.CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
+                        string sqlquery = $"SELECT t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
                                           $"FROM {tablename} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -647,7 +647,7 @@ namespace OMT.DataService.Service
                    
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql = $"SELECT t.OrderId,t.CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
+                    string sql = $"SELECT t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
                                           $"FROM {skillSet.SkillSetName} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -714,7 +714,7 @@ namespace OMT.DataService.Service
                     
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql1 = $"SELECT up.FirstName as UserName,t.OrderId,t.CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
+                    string sql1 = $"SELECT up.FirstName as UserName,t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
                                           $"FROM {skillSet.SkillSetName} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -767,7 +767,7 @@ namespace OMT.DataService.Service
                     foreach (string tablename in tablenames)
                     {
                        
-                        string sqlquery = $"SELECT up.FirstName as UserName,t.OrderId,t.CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
+                        string sqlquery = $"SELECT up.FirstName as UserName,t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
                                           $"FROM {tablename} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
