@@ -48,13 +48,13 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO AddUserSkillSet(UserSkillSetCreateDTO userSkillSetCreateDTO, int userid)
+        public ResultDTO AddUserSkillSet(UserSkillSetCreateDTO userSkillSetCreateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
 
             try
             {
-                var existing_UserSkillSetId = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.SkillSetId == userSkillSetCreateDTO.SkillSetId && x.IsActive).FirstOrDefault();
+                var existing_UserSkillSetId = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userSkillSetCreateDTO.UserId && x.SkillSetId == userSkillSetCreateDTO.SkillSetId && x.IsActive).FirstOrDefault();
 
                 if (existing_UserSkillSetId != null)
                 {
@@ -65,7 +65,7 @@ namespace OMT.DataService.Service
                 {
                     UserSkillSet userSkillSet = new UserSkillSet()
                     {
-                        UserId = userid,
+                        UserId = userSkillSetCreateDTO.UserId,
                         SkillSetId = userSkillSetCreateDTO.SkillSetId,
                         Percentage = userSkillSetCreateDTO.Percentage,
                         IsPrimary = userSkillSetCreateDTO.IsPrimary,
@@ -76,7 +76,7 @@ namespace OMT.DataService.Service
                 };
                     if (userSkillSetCreateDTO.IsPrimary == true)
                     {
-                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userid && x.IsPrimary == true && x.IsActive).FirstOrDefault();
+                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.UserId == userSkillSetCreateDTO.UserId && x.IsPrimary == true && x.IsActive).FirstOrDefault();
                         if (existing_IsPrimary != null)
                         {
                             existing_IsPrimary.IsPrimary = false;
@@ -132,7 +132,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateUserSkillSet(UserSkillSetUpdateDTO userSkillSetUpdateDTO, int userid)
+        public ResultDTO UpdateUserSkillSet(UserSkillSetUpdateDTO userSkillSetUpdateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
 
@@ -148,7 +148,7 @@ namespace OMT.DataService.Service
                     userSkillSet.HardStateName = userSkillSetUpdateDTO.HardStateName != null ? string.Join(",", userSkillSetUpdateDTO.HardStateName) : null;
                     if (userSkillSetUpdateDTO.IsPrimary == true)
                     {
-                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userid && x.IsActive).FirstOrDefault();
+                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userSkillSetUpdateDTO.UserId && x.IsActive).FirstOrDefault();
                         if (existing_IsPrimary != null)
                         {
                             existing_IsPrimary.IsPrimary = false;

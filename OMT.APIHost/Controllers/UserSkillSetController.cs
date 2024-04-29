@@ -41,7 +41,7 @@ namespace OMT.APIHost.Controllers
         public ResultDTO AddUserSkillSet([FromBody] UserSkillSetCreateDTO userSkillSetCreateDTO)
         {
             var userid = UserId;
-            ResultDTO resultDTO = _userSkillSetService.AddUserSkillSet(userSkillSetCreateDTO, userid);
+            ResultDTO resultDTO = _userSkillSetService.AddUserSkillSet(userSkillSetCreateDTO);
             return resultDTO;
         }
 
@@ -68,7 +68,7 @@ namespace OMT.APIHost.Controllers
         public ResultDTO UpdateUserSkillSet([FromBody] UserSkillSetUpdateDTO userSkillSetUpdateDTO)
         {
             var userid = UserId;
-            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO, userid);
+            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO);
             return resultDTO;
         }
     }

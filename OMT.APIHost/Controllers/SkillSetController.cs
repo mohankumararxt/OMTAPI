@@ -82,7 +82,7 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpGet]
-        [Route("GetListofStatenames/{skillsetid:int}")]
+        [Route("GetListofHardStatenames/{skillsetid:int}")]
 
         public ResultDTO GetStatenameList(int skillsetid)
         {

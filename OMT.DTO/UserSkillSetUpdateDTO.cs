@@ -8,6 +8,7 @@ namespace OMT.DTO
 {
     public class UserSkillSetUpdateDTO
     {
+        public int UserId { get; set; }
         public int UserSkillSetId { get; set; }
         public int SkillSetId { get; set; }
         public bool IsPrimary { get; set; }

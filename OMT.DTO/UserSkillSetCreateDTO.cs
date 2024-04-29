@@ -2,6 +2,7 @@
 {
     public class UserSkillSetCreateDTO
     {
+        public int UserId { get; set; }
         public int SkillSetId { get; set; }
         public int Percentage { get; set; }
         public bool IsPrimary { get; set; }
