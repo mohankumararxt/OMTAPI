@@ -20,11 +20,11 @@ namespace OMT.DataService.Service
 
             try
             {
-                string existingUserCheck = _oMTDataContext.UserProfile.Where(x => x.Email == createUserDTO.Email && x.EmployeeId == createUserDTO.EmployeeId).Select(_ => _.Email).FirstOrDefault();
+                string existingUserCheck = _oMTDataContext.UserProfile.Where(x => x.Email == createUserDTO.Email || x.EmployeeId == createUserDTO.EmployeeId).Select(_ => _.Email).FirstOrDefault();
                 if (existingUserCheck != null)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "The user already exists. Please try to login with your credentials.";
+                    resultDTO.Message = "Email Id or Employee Id already exists. Please try to add user with valid details.";
                 }
                 else
                 {
