@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33209.295
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMT.APIHost", "OMT.APIHost\OMT.APIHost.csproj", "{6ADAA4B6-C83A-48E9-BC7E-15292E6980DD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.APIHost", "OMT.APIHost\OMT.APIHost.csproj", "{6ADAA4B6-C83A-48E9-BC7E-15292E6980DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMT.Authorization", "OMT.Authorization\OMT.Authorization.csproj", "{14579D1E-E41E-45F3-AA2D-F81526D1BD0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.Authorization", "OMT.Authorization\OMT.Authorization.csproj", "{14579D1E-E41E-45F3-AA2D-F81526D1BD0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMT.DataAccess", "OMT.DataAccess\OMT.DataAccess.csproj", "{79E1D2DA-200D-4F86-99CE-DD08A001DB76}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DataAccess", "OMT.DataAccess\OMT.DataAccess.csproj", "{79E1D2DA-200D-4F86-99CE-DD08A001DB76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMT.DataService", "OMT.DataService\OMT.DataService.csproj", "{407DD5E1-B403-4929-BC2E-CA681A8655D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DataService", "OMT.DataService\OMT.DataService.csproj", "{407DD5E1-B403-4929-BC2E-CA681A8655D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OMT.DTO", "OMT.DTO\OMT.DTO.csproj", "{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DTO", "OMT.DTO\OMT.DTO.csproj", "{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyInvoiceGenerator", "DailyInvoiceGenerator\DailyInvoiceGenerator.csproj", "{2431CEE4-B6E2-47AE-B881-96022AE8A431}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
