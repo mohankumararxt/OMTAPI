@@ -111,7 +111,7 @@ namespace OMT.DataService.Service
             {
                 List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
                                                              join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
-                                                             where ss.IsActive == true && sor.SystemofRecordId == sorid
+                                                             where ss.IsActive == true && sor.SystemofRecordId == sorid && sor.IsActive
                                                              select new SkillSetResponseDTO
                                                              {
                                                                  SkillSetName = ss.SkillSetName,
@@ -120,9 +120,20 @@ namespace OMT.DataService.Service
                                                                  SystemofRecordName = sor.SystemofRecordName,
                                                                  SystemofRecordId = ss.SystemofRecordId,
                                                              }).ToList();
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of SkillSets";
-                resultDTO.Data = ListofSkillSets;
+
+                if(ListofSkillSets.Count > 0 )
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of SkillSets";
+                    resultDTO.Data = ListofSkillSets;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Skill sets not found for the given SystemofRecordId";
+                    resultDTO.StatusCode = "404";
+                }
+               
             }
             catch (Exception ex)
             {
@@ -140,16 +151,28 @@ namespace OMT.DataService.Service
             {
                 List<HardStatenameDTO> hardStatename = (from shs in _oMTDataContext.SkillSetHardStates
                                                         join ss in _oMTDataContext.SkillSet on shs.SkillSetId equals ss.SkillSetId
-                                                        where shs.SkillSetId == skillsetid && shs.IsActive == true
+                                                        where shs.SkillSetId == skillsetid && shs.IsActive && ss.IsActive
                                                         select new HardStatenameDTO
                                                         {
                                                             //SkillSetId = ss.SkillSetId,
                                                             //SkillSetName = ss.SkillSetName,
                                                             HardstateName = shs.StateName,
                                                         }).ToList();
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of Statenames";
-                resultDTO.Data = hardStatename;
+
+                if(hardStatename.Count > 0 )
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Statenames";
+                    resultDTO.Data = hardStatename;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Hardstate Names not found for the given SystemofRecordId";
+                    resultDTO.StatusCode = "404";
+                }
+
+
 
             }
             catch (Exception ex)

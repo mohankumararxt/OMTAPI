@@ -17,27 +17,42 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId && x.TeamId == teamAssociationCreateDTO.TeamId).FirstOrDefault();
-                if (existing_TeamAssociationId != null)
+                var isactive = _oMTDataContext.UserProfile.Any(up => up.IsActive && up.UserId == teamAssociationCreateDTO.UserId) && 
+                                _oMTDataContext.Teams.Any(t => t.TeamId == teamAssociationCreateDTO.TeamId && t.IsActive);
+
+                if (isactive)
                 {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected Team Association already exists";
+                    var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId && x.TeamId == teamAssociationCreateDTO.TeamId).FirstOrDefault();
+
+                    if (existing_TeamAssociationId != null)
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Selected Team Association already exists";
+                    }
+                    else
+                    {
+                        TeamAssociation teamAssociation = new TeamAssociation()
+                        {
+                            UserId = teamAssociationCreateDTO.UserId,
+                            TeamId = teamAssociationCreateDTO.TeamId,
+                            ThresholdCount = teamAssociationCreateDTO.ThresholdCount,
+                            Description = teamAssociationCreateDTO.Description,
+                            CreatedDate = DateTime.Now
+                        };
+                        _oMTDataContext.TeamAssociation.Add(teamAssociation);
+                        _oMTDataContext.SaveChanges();
+                        resultDTO.Message = "Team association has been added successfully";
+                        resultDTO.IsSuccess = true;
+                    }
                 }
                 else
                 {
-                    TeamAssociation teamAssociation = new TeamAssociation()
-                    {
-                        UserId = teamAssociationCreateDTO.UserId,
-                        TeamId = teamAssociationCreateDTO.TeamId,
-                        ThresholdCount = teamAssociationCreateDTO.ThresholdCount,
-                        Description = teamAssociationCreateDTO.Description,
-                        CreatedDate = DateTime.Now
-                    };
-                    _oMTDataContext.TeamAssociation.Add(teamAssociation);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.Message = "Team association has been added successfully";
-                    resultDTO.IsSuccess = true;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User or team not found";
                 }
+
+                 
             }
             catch (Exception ex)
             {
@@ -111,7 +126,7 @@ namespace OMT.DataService.Service
                 List<TeamAssociationResponseDTO> ListofTeamAssociations = (from up in _oMTDataContext.UserProfile
                                                                            join ta in _oMTDataContext.TeamAssociation on up.UserId equals ta.UserId
                                                                            join t in _oMTDataContext.Teams on ta.TeamId equals t.TeamId
-                                                                           where ta.TeamId == teamid
+                                                                           where ta.TeamId == teamid && t.IsActive && t.TeamId == teamid
                                                                            select new TeamAssociationResponseDTO()
                                                                            {
                                                                                FirstName = up.FirstName,
@@ -121,9 +136,20 @@ namespace OMT.DataService.Service
                                                                                AssociationId = ta.AssociationId
 
                                                                            }).ToList();
-                resultDTO.Data = ListofTeamAssociations;
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of Team Associations";
+
+                if(ListofTeamAssociations.Count > 0)
+                {
+                    resultDTO.Data = ListofTeamAssociations;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Team Associations";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "List of Team Associations not found";
+                }
+                
             }
             catch (Exception ex)
             {
