@@ -14,30 +14,59 @@ namespace OMT.DataService.Service
             _oMTDataContext = oMTDataContext;
         }
 
-        public ResultDTO GetUserSkillSetList(int userid)
+        public ResultDTO GetUserSkillSetList(int? userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
             try
             {
-                List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
-                                                                     join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
-                                                                     join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                     where up.UserId == userid && up.IsActive == true && uss.IsActive == true
-                                                                     select new UserSkillSetResponseDTO
-                                                                     {
-                                                                         UserSkillSetId = uss.UserSkillSetId,
-                                                                         SkillSetName = ss.SkillSetName,
-                                                                         SkillSetId = uss.SkillSetId,
-                                                                         Percentage = uss.Percentage,
-                                                                         IsPrimary = uss.IsPrimary,
-                                                                         IsHardStateUser = uss.IsHardStateUser,
-                                                                         HardStateName = uss.HardStateName,
-                                                                     }).ToList();
+                if (userid == null)
+                {
+                    List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
+                                                                         join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
+                                                                         join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                         where up.IsActive == true && uss.IsActive == true
+                                                                         select new UserSkillSetResponseDTO
+                                                                         {
+                                                                             UserName = up.FirstName,
+                                                                             UserSkillSetId = uss.UserSkillSetId,
+                                                                             SkillSetName = ss.SkillSetName,
+                                                                             SkillSetId = uss.SkillSetId,
+                                                                             Percentage = uss.Percentage,
+                                                                             IsPrimary = uss.IsPrimary,
+                                                                             IsHardStateUser = uss.IsHardStateUser,
+                                                                             HardStateName = uss.HardStateName,
 
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of User_SkillSets";
-                resultDTO.Data = listofuserskillsets;
+                                                                         }).ToList();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of User_SkillSets";
+                    resultDTO.Data = listofuserskillsets;
+                }
+                else
+                {
+                    List<UserSkillSetResponseDTO> listofuserskillsets1 = (from up in _oMTDataContext.UserProfile
+                                                                         join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
+                                                                         join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                         where up.UserId == userid && up.IsActive == true && uss.IsActive == true
+                                                                         select new UserSkillSetResponseDTO
+                                                                         {
+                                                                             UserName = up.FirstName,
+                                                                             UserSkillSetId = uss.UserSkillSetId,
+                                                                             SkillSetName = ss.SkillSetName,
+                                                                             SkillSetId = uss.SkillSetId,
+                                                                             Percentage = uss.Percentage,
+                                                                             IsPrimary = uss.IsPrimary,
+                                                                             IsHardStateUser = uss.IsHardStateUser,
+                                                                             HardStateName = uss.HardStateName,
+
+                                                                         }).ToList();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of User_SkillSets";
+                    resultDTO.Data = listofuserskillsets1;
+                }
+               
             }
             catch (Exception ex)
             {

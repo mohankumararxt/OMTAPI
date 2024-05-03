@@ -20,15 +20,14 @@ namespace OMT.APIHost.Controllers
         }
 
         /// <summary>
-        /// Get list of all skill sets of the user
+        /// Get list of skill sets of users
         /// </summary>
-        /// <returns>Returns list of all user's skill sets</returns>
+        /// <returns>Returns list of user's skill sets</returns>
         [HttpGet]
-        [Route("list")]
-        public ResultDTO GetUserSkillSetList()
+        [Route("list/{userid:int?}")]
+        public ResultDTO GetUserSkillSetList(int? userid)
         {
-            var userid = UserId;
-            return _userSkillSetService.GetUserSkillSetList(userid);
+           return _userSkillSetService.GetUserSkillSetList(userid);
         }
 
         /// <summary>
@@ -40,7 +39,6 @@ namespace OMT.APIHost.Controllers
         [Route("new")]
         public ResultDTO AddUserSkillSet([FromBody] UserSkillSetCreateDTO userSkillSetCreateDTO)
         {
-            var userid = UserId;
             ResultDTO resultDTO = _userSkillSetService.AddUserSkillSet(userSkillSetCreateDTO);
             return resultDTO;
         }
@@ -67,7 +65,6 @@ namespace OMT.APIHost.Controllers
         [Route("update")]
         public ResultDTO UpdateUserSkillSet([FromBody] UserSkillSetUpdateDTO userSkillSetUpdateDTO)
         {
-            var userid = UserId;
             ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO);
             return resultDTO;
         }
