@@ -22,12 +22,12 @@ namespace OMT.DataService.Service
 
                 if (isactive)
                 {
-                    var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId && x.TeamId == teamAssociationCreateDTO.TeamId).FirstOrDefault();
+                    var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId ).FirstOrDefault();
 
                     if (existing_TeamAssociationId != null)
                     {
                         resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Selected Team Association already exists";
+                        resultDTO.Message = "User already assigned in a team";
                     }
                     else
                     {
