@@ -29,6 +29,7 @@ namespace OMT.DataService.Service
                                                                          select new UserSkillSetResponseDTO
                                                                          {
                                                                              UserName = up.FirstName,
+                                                                             UserId = uss.UserId,
                                                                              UserSkillSetId = uss.UserSkillSetId,
                                                                              SkillSetName = ss.SkillSetName,
                                                                              SkillSetId = uss.SkillSetId,
@@ -52,6 +53,7 @@ namespace OMT.DataService.Service
                                                                          select new UserSkillSetResponseDTO
                                                                          {
                                                                              UserName = up.FirstName,
+                                                                             UserId = uss.UserId,
                                                                              UserSkillSetId = uss.UserSkillSetId,
                                                                              SkillSetName = ss.SkillSetName,
                                                                              SkillSetId = uss.SkillSetId,
