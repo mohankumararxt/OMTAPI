@@ -1,17 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Dynamic;
-using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace OMT.DataService.Service
 {
@@ -702,8 +696,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-               // string columns = "Id,UserId,SkillSetId,Status,StartTime,EndTime";
-
+              
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                 using SqlConnection connection = new(connectionstring);
@@ -850,5 +843,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
     }
 }

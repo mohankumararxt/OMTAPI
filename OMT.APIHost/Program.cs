@@ -5,7 +5,6 @@ using OMT.Authorization;
 using OMT.DataAccess.Context;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
-using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +73,7 @@ builder.Services.AddScoped<ISkillSetService, SkillSetService>();
 builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
 builder.Services.AddScoped<ICommonService, CommonService>();
 builder.Services.AddScoped<IProcessStatusService, ProcessStatusService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

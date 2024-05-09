@@ -1,12 +1,8 @@
 ﻿using Microsoft.Azure.WebJobs;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
-using System.Data.SqlClient;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace DailyInvoiceGenerator
 {
@@ -23,10 +19,6 @@ namespace DailyInvoiceGenerator
             {
                 config.UseDevelopmentSettings();
             }
-
-            var host = new JobHost(config);
-            // The following code ensures that the WebJob will be running continuously
-           // host.RunAndBlock();
 
             //call method to exceute invoice storeprocedure
             callInvoiceSp();

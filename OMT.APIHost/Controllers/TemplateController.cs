@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
-using System.Text.Json.Nodes;
 
 namespace OMT.APIHost.Controllers
 {

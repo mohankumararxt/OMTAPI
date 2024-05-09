@@ -1,7 +1,10 @@
-﻿namespace OMT.DataAccess.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace OMT.DataAccess.Entities
 {
     public class UserSkillSet
     {
+        [Key]
         public int UserSkillSetId { get; set; }
         public int UserId { get; set; }
         public int SkillSetId { get; set; }

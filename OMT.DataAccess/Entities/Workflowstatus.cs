@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OMT.DataAccess.Entities
 {
@@ -12,6 +7,8 @@ namespace OMT.DataAccess.Entities
         [Key]
         public int WorkflowstatusId { get; set; }
         public string WorkflowstatusName { get; set;}
+        public string WorkflowstatusAlias { get; set; }
         public bool IsActive { get; set; }
     }
 }
+    

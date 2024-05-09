@@ -1,7 +1,10 @@
-﻿namespace OMT.DataAccess.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace OMT.DataAccess.Entities
 {
     public class SystemofRecord
     {
+        [Key]
         public int SystemofRecordId { get; set; }
         public string SystemofRecordName { get; set; }
         public bool IsActive { get; set; }

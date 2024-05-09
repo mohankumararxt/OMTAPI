@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OMT.DataAccess.Entities
 {
@@ -16,6 +11,7 @@ namespace OMT.DataAccess.Entities
         public int BusinessGroupId { get; set; }
         public int ProcessTypeId { get; set; }
         public int SourceTypeId { get; set; }
-        public int CostCenterId { get; set; }
+        public int CostCenterId { get; set; }   
+        public int TotalOrderFeesId { get; set; }
     }
 }

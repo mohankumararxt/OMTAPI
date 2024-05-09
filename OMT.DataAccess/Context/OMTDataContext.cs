@@ -27,9 +27,11 @@ namespace OMT.DataAccess.Context
         public DbSet<Business> Business { get; set; }
         public DbSet<Customer> Customer { get; set; }
         public DbSet<Workflowstatus> Workflowstatus { get; set; }
-        public DbSet<WorkflowstatusMap> WorkflowstatusMap { get; set; }
+        public DbSet<TotalOrderFees> TotalOrderFees { get; set; }
         public DbSet<InvoiceJointResware> InvoiceJointResware { get; set; }
         public DbSet<InvoiceJointSci> InvoiceJointSci { get; set; }
+        public DbSet<CostCenter> CostCenter { get; set; }
+        public DbSet<InvoiceDump> InvoiceDump { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

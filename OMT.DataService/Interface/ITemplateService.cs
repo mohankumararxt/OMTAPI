@@ -1,5 +1,4 @@
 ﻿using OMT.DTO;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace OMT.DataService.Interface
 {
@@ -15,5 +14,6 @@ namespace OMT.DataService.Interface
         ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO);
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
         ResultDTO GetDefaultColumnNames(int systemofrecordid);
+        
     }
 }
