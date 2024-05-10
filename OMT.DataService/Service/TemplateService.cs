@@ -844,5 +844,97 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        public ResultDTO GetPendingOrderDetails(int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
+               List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                           where us.UserId == userid && us.IsActive 
+                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                           select ss.SkillSetName).ToList();
+                
+                List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+
+                foreach (string tablename in tablenames)
+                {
+                    
+                    var columns1 = (from ss in _oMTDataContext.SkillSet
+                                    join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    select dt.ColumnAliasName).ToList();
+
+                    var columns2 = (from ss in _oMTDataContext.SkillSet 
+                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                   select dt.DefaultColumnName).ToList();
+
+                    var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
+                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+
+                    string query = $@"
+                                    SELECT TOP 1 
+                                        {selectedColumns},
+                                        t2.SkillSetName AS SkillSetName, 
+                                        t3.SystemOfRecordName AS SystemOfRecordName
+                                    FROM 
+                                        [{tablename}] AS t1
+                                    LEFT JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
+                                    LEFT JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
+                                    WHERE 
+                                        UserId = @UserId 
+                                        AND (Status IS NULL OR Status = '')";
+
+                    using SqlCommand command = connection.CreateCommand();
+                    command.CommandText = query;
+                    command.Parameters.AddWithValue("@UserId", userid);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    var querydt1 = datatable.AsEnumerable()
+                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                        column => column.ColumnName,
+                                        column => row[column])).ToList();
+
+                    noStatusRecords.AddRange(querydt1);
+
+                }
+
+                if (noStatusRecords.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Please update the status of this order";
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Data = noStatusRecords;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "No more orders to update status";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }

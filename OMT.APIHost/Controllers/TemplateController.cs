@@ -90,5 +90,13 @@ namespace OMT.APIHost.Controllers
             return _templateService.GetDefaultColumnNames(systemofrecordid);
         }
 
+        [HttpGet]
+        [Route("GetPendingOrderDetails")]
+        public ResultDTO GetPendingOrderDetails()
+        {
+            var userid = UserId;
+
+            return _templateService.GetPendingOrderDetails(userid);
+        }
     }
 }
