@@ -31,7 +31,7 @@ namespace OMT.DataService.Service
                 {
                     if (getinvoiceDTO.SystemofRecordId == 1)
                     {
-                        var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate >= getinvoiceDTO.StartDate && x.CompletionDate <= getinvoiceDTO.EndDate).
+                        var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).
                                                                       Select(_ => new SciInvoiceDTO()
                                                                       {
                                                                           InvoiceDumpId = _.InvoiceDumpId,
@@ -64,7 +64,7 @@ namespace OMT.DataService.Service
                     }
                     else if (getinvoiceDTO.SystemofRecordId == 2)
                     {
-                        var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate >= getinvoiceDTO.StartDate && x.CompletionDate <= getinvoiceDTO.EndDate).
+                        var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).
                                                                       Select(_ => new ReswareInvoiceDTO()
                                                                       {
                                                                           InvoiceDumpId = _.InvoiceDumpId,
