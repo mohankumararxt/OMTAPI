@@ -119,7 +119,7 @@ namespace OMT.DataService.Service
                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Your skill set has been added succcessfully";
+                    resultDTO.Message = "User skill set has been added succcessfully";
 
                 }
             }
