@@ -19,7 +19,7 @@ namespace OMT.DataService.Service
             try
             {
                 string encryptedPassword = Encryption.EncryptPlainTextToCipherText(loginRequestDTO.Password);
-                LoginResponseDTO loginResponseDTO = (from up in _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword)
+                LoginResponseDTO loginResponseDTO = (from up in _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword && x.IsActive)
                                                     join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
                                                     select new LoginResponseDTO()
                                                     {
