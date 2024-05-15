@@ -17,3 +17,4 @@
 /OMT.APIHost/OMT.APIHost.csproj.user
 /DailyInvoiceGenerator/bin/Debug
 /DailyInvoiceGenerator/obj
+/DailyInvoiceGenerator/bin/Release/net472
