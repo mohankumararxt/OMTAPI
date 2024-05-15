@@ -57,7 +57,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<OrganizationListDTO> orgDTOObj = _context.Organization.Where(x=>x.IsActive).Select(_ => new OrganizationListDTO() {  OrganizationId=_.OrganizationId, Description=_.Description,OrganizationName=_.OrganizationName } ) .ToList();
+                List<OrganizationListDTO> orgDTOObj = _context.Organization.Where(x=>x.IsActive).OrderBy(x => x.OrganizationName).Select(_ => new OrganizationListDTO() {  OrganizationId=_.OrganizationId, Description=_.Description,OrganizationName=_.OrganizationName } ) .ToList();
                 if (orgDTOObj != null)
                 {
                     resultDTO.IsSuccess = true;
@@ -66,9 +66,9 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    resultDTO.IsSuccess = true;
+                    resultDTO.IsSuccess = false;
                     resultDTO.Data = orgDTOObj;
-                    resultDTO.Message = "Oraganization object is empty";
+                    resultDTO.Message = "Organization object is empty";
                 }
             }
             catch (Exception ex)

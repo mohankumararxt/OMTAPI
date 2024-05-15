@@ -37,6 +37,7 @@ namespace OMT.APIHost.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [Route("list")]
         public ResultDTO GetTeamsList()
         {
             return _teamsService.GetTeamsList();

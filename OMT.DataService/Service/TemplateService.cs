@@ -320,11 +320,12 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<TemplateListDTO> templateList = new List<TemplateListDTO>();    
+                List<TemplateListDTO> templateList = new List<TemplateListDTO>();
 
                 List<SkillSet> skillSets = (from ss in _oMTDataContext.SkillSet
                                             join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
-                                            select ss).Distinct().ToList();
+                                            select ss).Distinct().OrderBy(ss => ss.SkillSetName).ToList();
+
                 List<TemplateColumns> templatecolumns = _oMTDataContext.TemplateColumns.ToList();
 
                 if(skillSets.Count > 0 ) { 

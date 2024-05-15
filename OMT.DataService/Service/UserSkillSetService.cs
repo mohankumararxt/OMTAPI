@@ -26,6 +26,7 @@ namespace OMT.DataService.Service
                                                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                          where up.IsActive == true && uss.IsActive == true
+                                                                         orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
                                                                              UserName = up.FirstName,
@@ -37,7 +38,6 @@ namespace OMT.DataService.Service
                                                                              IsPrimary = uss.IsPrimary,
                                                                              IsHardStateUser = uss.IsHardStateUser,
                                                                              HardStateName = uss.HardStateName,
-
                                                                          }).ToList();
 
                     resultDTO.IsSuccess = true;
@@ -50,6 +50,7 @@ namespace OMT.DataService.Service
                                                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                          where up.UserId == userid && up.IsActive == true && uss.IsActive == true
+                                                                         orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
                                                                              UserName = up.FirstName,

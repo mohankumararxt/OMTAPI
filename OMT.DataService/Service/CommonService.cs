@@ -17,7 +17,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<SystemofRecordResponseDTO> orgDTOObj = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(_ => new SystemofRecordResponseDTO() { SystemofRecordId = _.SystemofRecordId, SystemofRecordName = _.SystemofRecordName}).ToList();
+                List<SystemofRecordResponseDTO> orgDTOObj = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(_ => new SystemofRecordResponseDTO() { SystemofRecordId = _.SystemofRecordId, SystemofRecordName = _.SystemofRecordName}).OrderBy(x => x.SystemofRecordName).ToList();
                 if (orgDTOObj != null)
                 {
                     resultDTO.IsSuccess = true;

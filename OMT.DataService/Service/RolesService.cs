@@ -82,7 +82,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<RolesResponseDTO> ListofRoles = _oMTDataContext.Roles.Where(x => x.IsActive).Select(_ => new RolesResponseDTO() { RoleId = _.RoleId, RoleName = _.RoleName }).ToList();
+                List<RolesResponseDTO> ListofRoles = _oMTDataContext.Roles.Where(x => x.IsActive).OrderBy(x => x.RoleName).Select(_ => new RolesResponseDTO() { RoleId = _.RoleId, RoleName = _.RoleName }).ToList();
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Roles";
                 resultDTO.Data = ListofRoles;

@@ -83,6 +83,7 @@ namespace OMT.DataService.Service
                List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
                                                              join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
                                                              where ss.IsActive == true
+                                                             orderby ss.SkillSetName
                                                              select new SkillSetResponseDTO
                                                              {
                                                                  SkillSetName = ss.SkillSetName,
@@ -112,6 +113,7 @@ namespace OMT.DataService.Service
                 List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
                                                              join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
                                                              where ss.IsActive == true && sor.SystemofRecordId == sorid && sor.IsActive
+                                                             orderby ss.SkillSetName
                                                              select new SkillSetResponseDTO
                                                              {
                                                                  SkillSetName = ss.SkillSetName,

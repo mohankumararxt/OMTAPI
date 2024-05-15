@@ -31,8 +31,9 @@ namespace OMT.DataService.Service
                 {
                     if (getinvoiceDTO.SystemofRecordId == 1)
                     {
-                        var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).
-                                                                      Select(_ => new SciInvoiceDTO()
+                        var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
+                                                                      .OrderBy(x => x.CompletionDate)
+                                                                      .Select(_ => new SciInvoiceDTO()
                                                                       {
                                                                           InvoiceDumpId = _.InvoiceDumpId,
                                                                           SkillSet = _.SkillSet,
@@ -64,8 +65,9 @@ namespace OMT.DataService.Service
                     }
                     else if (getinvoiceDTO.SystemofRecordId == 2)
                     {
-                        var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).
-                                                                      Select(_ => new ReswareInvoiceDTO()
+                        var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
+                                                                      .OrderBy(x => x.CompletionDate)
+                                                                      .Select(_ => new ReswareInvoiceDTO()
                                                                       {
                                                                           InvoiceDumpId = _.InvoiceDumpId,
                                                                           SkillSet = _.SkillSet,

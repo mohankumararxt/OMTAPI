@@ -21,6 +21,7 @@ namespace OMT.DataService.Service
                 List<ProcessStatusResponseDTO> listofstatus = (from sor in _oMTDataContext.SystemofRecord
                                                                join ps in _oMTDataContext.ProcessStatus on sor.SystemofRecordId equals ps.SystemOfRecordId
                                                                where ps.IsActive == true && ps.SystemOfRecordId == systemofrecordid
+                                                               orderby ps.Status
                                                                select new ProcessStatusResponseDTO
                                                                {
                                                                     SystemofRecordName = sor.SystemofRecordName,

@@ -98,7 +98,7 @@ namespace OMT.DataService.Service
 
             try
             { 
-                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.IsActive).Select(_  => new UserListResponseDTO
+                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.IsActive).OrderBy(x => x.FirstName).Select(_  => new UserListResponseDTO
                 {
                     Email = _.Email,
                     EmployeeId = _.EmployeeId,

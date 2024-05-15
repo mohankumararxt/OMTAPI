@@ -134,7 +134,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<TeamsResponseDTO> ListofTeams = _oMTDataContext.Teams.Where(x => x.IsActive).Select(_ => new TeamsResponseDTO() { Description = _.Description, TeamId = _.TeamId, TeamName = _.TeamName }).ToList();
+                List<TeamsResponseDTO> ListofTeams = _oMTDataContext.Teams.Where(x => x.IsActive).OrderBy(x => x.TeamName).Select(_ => new TeamsResponseDTO() { Description = _.Description, TeamId = _.TeamId, TeamName = _.TeamName }).ToList();
                 resultDTO.Data = ListofTeams;
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Teams";
@@ -167,7 +167,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    List<TeamsResponseDTO> teamsList = _oMTDataContext.Teams.Where(x=>(x.TeamName.Contains(teamname) || x.Description.Contains(teamname)) && x.IsActive).Select(_=> new TeamsResponseDTO() { Description=_.Description, TeamId=_.TeamId, TeamName=_.TeamName }).ToList();
+                    List<TeamsResponseDTO> teamsList = _oMTDataContext.Teams.Where(x=>(x.TeamName.Contains(teamname) || x.Description.Contains(teamname)) && x.IsActive).OrderBy(x => x.TeamName).Select(_=> new TeamsResponseDTO() { Description=_.Description, TeamId=_.TeamId, TeamName=_.TeamName }).ToList();
                     
                     if (teamsList != null && teamsList.Count >0)
                     {
