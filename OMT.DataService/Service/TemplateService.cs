@@ -885,7 +885,8 @@ namespace OMT.DataService.Service
                                         t2.SkillSetName AS SkillSetName, 
                                         t1.SkillSetId,
                                         t3.SystemOfRecordName AS SystemOfRecordName,
-                                        t1.SystemOfRecordId
+                                        t1.SystemOfRecordId,
+                                        t1.Id
                                     FROM 
                                         [{tablename}] AS t1
                                     LEFT JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
