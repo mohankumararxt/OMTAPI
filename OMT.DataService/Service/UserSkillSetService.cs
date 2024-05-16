@@ -173,23 +173,33 @@ namespace OMT.DataService.Service
                 UserSkillSet? userSkillSet = _oMTDataContext.UserSkillSet.Find(userSkillSetUpdateDTO.UserSkillSetId);
                 if (userSkillSet != null)
                 {
+                    bool isUpdatingCurrentPrimary = userSkillSet.IsPrimary && userSkillSetUpdateDTO.IsPrimary;
+
+                    // If the current skill set is primary and we're updating to be primary, do not unmark it
+                    if (userSkillSetUpdateDTO.IsPrimary && !isUpdatingCurrentPrimary)
+                    {
+                        // Find existing primary skill set for the user
+                        var existingPrimary = _oMTDataContext.UserSkillSet
+                            .Where(x => x.IsPrimary && x.UserId == userSkillSetUpdateDTO.UserId && x.IsActive)
+                            .FirstOrDefault();
+
+                        if (existingPrimary != null && existingPrimary.UserSkillSetId != userSkillSet.UserSkillSetId)
+                        {
+                            existingPrimary.IsPrimary = false;
+                            _oMTDataContext.UserSkillSet.Update(existingPrimary);
+                        }
+                    }
+
+                    // Update the current skill set with the new values
                     userSkillSet.SkillSetId = userSkillSetUpdateDTO.SkillSetId;
                     userSkillSet.Percentage = userSkillSetUpdateDTO.Percentage;
                     userSkillSet.IsPrimary = userSkillSetUpdateDTO.IsPrimary;
                     userSkillSet.IsHardStateUser = userSkillSetUpdateDTO.IsHardStateUser;
                     userSkillSet.HardStateName = userSkillSetUpdateDTO.HardStateName != null ? string.Join(",", userSkillSetUpdateDTO.HardStateName) : null;
-                    if (userSkillSetUpdateDTO.IsPrimary == true)
-                    {
-                        var existing_IsPrimary = _oMTDataContext.UserSkillSet.Where(x => x.IsPrimary == true && x.UserId == userSkillSetUpdateDTO.UserId && x.IsActive).FirstOrDefault();
-                        if (existing_IsPrimary != null)
-                        {
-                            existing_IsPrimary.IsPrimary = false;
-                            _oMTDataContext.UserSkillSet.Update(existing_IsPrimary);
-                            _oMTDataContext.SaveChanges();
-                        }
-                    }
+
                     _oMTDataContext.UserSkillSet.Update(userSkillSet);
                     _oMTDataContext.SaveChanges();
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Your skill set has been updated successfully";
                     resultDTO.Data = userSkillSet;
@@ -198,7 +208,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected skill set doesnt exist in your profile";
+                    resultDTO.Message = "Selected skill set doesn't exist in your profile";
                 }
 
             }
