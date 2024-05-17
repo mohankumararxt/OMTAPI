@@ -339,7 +339,7 @@ namespace OMT.DataService.Service
                                                             Select(_ => new TemplateColumnDTO() { ColumnDataType = _.ColumnDataType, ColumnName = _.ColumnName, IsDuplicateCheck = _.IsDuplicateCheck }).ToList();
 
                         List<DefaultTemplateColumnlistDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns
-                                                                                    .Where(x => x.SystemOfRecordId == skillset.SystemofRecordId)
+                                                                                    .Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.IsDefOnlyColumn)
                                                                                     .Select(_ => new DefaultTemplateColumnlistDTO()
                                                                                     {
                                                                                         DataType = _.DefaultColumnName == "IsPriority" ? "bit" : _.DataType,
@@ -821,7 +821,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<DefaultTemplateColumnsDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == systemofrecordid).Select(_ => new DefaultTemplateColumnsDTO() { DefaultColumnName = _.DefaultColumnName}).ToList();
+                List<DefaultTemplateColumnsDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == systemofrecordid && x.IsDefOnlyColumn).Select(_ => new DefaultTemplateColumnsDTO() { DefaultColumnName = _.DefaultColumnName}).ToList();
                
                 if (defaultTemplateColumns.Count > 0)
                 {
