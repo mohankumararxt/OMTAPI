@@ -7,5 +7,6 @@
         public int? ThresholdCount { get; set; }
         public string Description { get; set; }
         public int AssociationId { get; set; }
+        public string UserName { get; set; }
     }
 }
