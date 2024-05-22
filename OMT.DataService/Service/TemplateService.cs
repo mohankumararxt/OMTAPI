@@ -78,7 +78,7 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "Template Added Successfully.";
                         if (returnCode != 1)
                         {
-                            throw new InvalidOperationException("Stored Procedure call failed.");
+                            throw new InvalidOperationException("Error encountered while creating template,please try again");
                         }
                         // Commit transaction
                         // dbContextTransaction.Commit();
@@ -231,16 +231,22 @@ namespace OMT.DataService.Service
                         // Combine the strings, ensuring that if any of them is null, it's selected without a comma
                         string combinedString = (isDuplicateColumns1 != "" && isDuplicateColumns != "") ? isDuplicateColumns1 + "," + isDuplicateColumns : isDuplicateColumns1 + isDuplicateColumns;
 
-                        string defaultColumns = "UserId,Status,CompletionDate,StartTime,EndTime";
+                        string sql = $"SELECT CASE WHEN t.UserId IS NULL THEN '' ELSE CONCAT(up.FirstName, ' ', up.LastName, '(',up.EmployeeId, ')') END AS UserName, {combinedString}, " +
+                                     $"ISNULL(ps.Status, '') AS Status, " +
+                                     $"ISNULL(CONVERT(VARCHAR(10), t.CompletionDate, 120), '') AS CompletionDate, " +
+                                     $"ISNULL(CONVERT(VARCHAR(19), t.StartTime, 120), '') AS StartTime, " +
+                                     $"ISNULL(CONVERT(VARCHAR(19), t.EndTime, 120), '') AS EndTime " +
+                                     $"FROM {tablename} t " +
+                                     $"LEFT JOIN UserProfile up ON t.UserId = up.UserId " +
+                                     $"LEFT JOIN ProcessStatus ps ON t.Status = ps.Id AND t.SystemOfRecordId = ps.SystemOfRecordId WHERE ";
 
-                        string sql = $"SELECT {combinedString}, {defaultColumns} FROM {tablename} WHERE ";
                         foreach (JObject records in recordsarray)
                         {
                             string query = "(";
                             foreach (string columnname in combinedList)
                             {
                                 string columndata = records.Value<string>(columnname);
-                                
+
                                 query += $"[{columnname}] = '{columndata}' AND ";
                             }
 
@@ -252,7 +258,7 @@ namespace OMT.DataService.Service
 
                         sql = sql.Substring(0, sql.Length - 4);
 
-                        //execute sql query to fetch records from table
+                       //execute sql query to fetch records from table
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
@@ -273,8 +279,13 @@ namespace OMT.DataService.Service
 
                         if (querydt.Count > 0)
                         {
+                            ValidationResponseDTO validationResponseDTO = new ValidationResponseDTO()
+                            {
+                                DuplicateCheckColumns = combinedString,
+                                DuplicateOrders = querydt
+                            };
                             resultDTO.IsSuccess = true;
-                            resultDTO.Data = querydt;
+                            resultDTO.Data = validationResponseDTO;
                             resultDTO.Message = "Duplicate records found,please verify before uploading";
                         }
                         else
@@ -316,6 +327,7 @@ namespace OMT.DataService.Service
 
                 List<SkillSet> skillSets = (from ss in _oMTDataContext.SkillSet
                                             join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
+                                            where ss.IsActive == true
                                             select ss).Distinct().OrderBy(ss => ss.SkillSetName).ToList();
 
                 List<TemplateColumns> templatecolumns = _oMTDataContext.TemplateColumns.ToList();
