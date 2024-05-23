@@ -106,6 +106,7 @@ namespace OMT.DataService.Service
                                                                                Description = ta.Description,
                                                                                ThresholdCount = ta.ThresholdCount,
                                                                                AssociationId = ta.AssociationId,
+                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") + '(' + up.Email + ')'
                                                                            }).ToList();
                 resultDTO.Data = ListofTeamAssociations;
                 resultDTO.IsSuccess = true;
@@ -135,8 +136,8 @@ namespace OMT.DataService.Service
                                                                                TeamName = t.TeamName,
                                                                                Description = ta.Description,
                                                                                ThresholdCount = ta.ThresholdCount,
-                                                                               AssociationId = ta.AssociationId
-
+                                                                               AssociationId = ta.AssociationId,
+                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") + '(' + up.Email + ')'
                                                                            }).ToList();
 
                 if(ListofTeamAssociations.Count > 0)

@@ -2,7 +2,6 @@
 {
     public class SciInvoiceDTO
     {
-        public int InvoiceDumpId { get; set; }
         public string SystemOfRecord { get; set; }
         public string SkillSet { get; set; }
         public string Customer { get; set; }

@@ -35,7 +35,6 @@ namespace OMT.DataService.Service
                                                                       .OrderBy(x => x.CompletionDate)
                                                                       .Select(_ => new SciInvoiceDTO()
                                                                       {
-                                                                          InvoiceDumpId = _.InvoiceDumpId,
                                                                           SkillSet = _.SkillSet,
                                                                           SystemOfRecord = _.SystemOfRecord,
                                                                           OrderId = _.OrderId,
@@ -69,7 +68,6 @@ namespace OMT.DataService.Service
                                                                       .OrderBy(x => x.CompletionDate)
                                                                       .Select(_ => new ReswareInvoiceDTO()
                                                                       {
-                                                                          InvoiceDumpId = _.InvoiceDumpId,
                                                                           SkillSet = _.SkillSet,
                                                                           SystemOfRecord = _.SystemOfRecord,
                                                                           OrderId = _.OrderId,

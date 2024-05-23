@@ -78,7 +78,7 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "Template Added Successfully.";
                         if (returnCode != 1)
                         {
-                            throw new InvalidOperationException("Stored Procedure call failed.");
+                            throw new InvalidOperationException("Error encountered while creating template,please try again");
                         }
                         // Commit transaction
                         // dbContextTransaction.Commit();
@@ -174,17 +174,9 @@ namespace OMT.DataService.Service
 
                         if (returnCode != 1)
                         {
-                            throw new InvalidOperationException("Stored Procedure call failed.");
+                            throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                         }
-                        //else
-                        //{
-                        //    if(uploadTemplateDTO.IsPriority)
-                        //    {
-                        //        SkillSetPriority skillSetPriority = new SkillSetPriority() { CreatedDate = DateTime.Now, IsComplete = false, SkillSetId = uploadTemplateDTO.SkillsetId};
-                        //        _oMTDataContext.SkillSetPriority.Add(skillSetPriority);
-                        //        _oMTDataContext.SaveChanges();
-                        //    }
-                        //}
+                       
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
@@ -239,16 +231,22 @@ namespace OMT.DataService.Service
                         // Combine the strings, ensuring that if any of them is null, it's selected without a comma
                         string combinedString = (isDuplicateColumns1 != "" && isDuplicateColumns != "") ? isDuplicateColumns1 + "," + isDuplicateColumns : isDuplicateColumns1 + isDuplicateColumns;
 
-                        string defaultColumns = "UserId,Status,CompletionDate,StartTime,EndTime";
+                        string sql = $"SELECT CASE WHEN t.UserId IS NULL THEN '' ELSE CONCAT(up.FirstName, ' ', up.LastName, '(',up.EmployeeId, ')') END AS UserName, {combinedString}, " +
+                                     $"ISNULL(ps.Status, '') AS Status, " +
+                                     $"ISNULL(CONVERT(VARCHAR(10), t.CompletionDate, 120), '') AS CompletionDate, " +
+                                     $"ISNULL(CONVERT(VARCHAR(19), t.StartTime, 120), '') AS StartTime, " +
+                                     $"ISNULL(CONVERT(VARCHAR(19), t.EndTime, 120), '') AS EndTime " +
+                                     $"FROM {tablename} t " +
+                                     $"LEFT JOIN UserProfile up ON t.UserId = up.UserId " +
+                                     $"LEFT JOIN ProcessStatus ps ON t.Status = ps.Id AND t.SystemOfRecordId = ps.SystemOfRecordId WHERE ";
 
-                        string sql = $"SELECT {combinedString}, {defaultColumns} FROM {tablename} WHERE ";
                         foreach (JObject records in recordsarray)
                         {
                             string query = "(";
                             foreach (string columnname in combinedList)
                             {
                                 string columndata = records.Value<string>(columnname);
-                                
+
                                 query += $"[{columnname}] = '{columndata}' AND ";
                             }
 
@@ -260,7 +258,7 @@ namespace OMT.DataService.Service
 
                         sql = sql.Substring(0, sql.Length - 4);
 
-                        //execute sql query to fetch records from table
+                       //execute sql query to fetch records from table
                         string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                         using SqlConnection connection = new(connectionstring);
@@ -281,8 +279,13 @@ namespace OMT.DataService.Service
 
                         if (querydt.Count > 0)
                         {
+                            ValidationResponseDTO validationResponseDTO = new ValidationResponseDTO()
+                            {
+                                DuplicateCheckColumns = combinedString,
+                                DuplicateOrders = querydt
+                            };
                             resultDTO.IsSuccess = true;
-                            resultDTO.Data = querydt;
+                            resultDTO.Data = validationResponseDTO;
                             resultDTO.Message = "Duplicate records found,please verify before uploading";
                         }
                         else
@@ -324,6 +327,7 @@ namespace OMT.DataService.Service
 
                 List<SkillSet> skillSets = (from ss in _oMTDataContext.SkillSet
                                             join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
+                                            where ss.IsActive == true
                                             select ss).Distinct().OrderBy(ss => ss.SkillSetName).ToList();
 
                 List<TemplateColumns> templatecolumns = _oMTDataContext.TemplateColumns.ToList();
@@ -595,7 +599,13 @@ namespace OMT.DataService.Service
                     foreach(string tablename in tablenames)
                     {
                        
-                        string sqlquery = $"SELECT t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
+                        string sqlquery = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
+                                          $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                          $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                          $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                          $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                          $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                          $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
                                           $"FROM {tablename} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -642,11 +652,17 @@ namespace OMT.DataService.Service
                    
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql = $"SELECT t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as skillset, ps.Status as Status " +
-                                          $"FROM {skillSet.SkillSetName} t " +
-                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                          $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                    string sql = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
+                                 $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                 $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                 $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                 $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                 $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                 $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                 $"FROM {skillSet.SkillSetName} t " +
+                                 $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                 $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                 $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
@@ -708,12 +724,18 @@ namespace OMT.DataService.Service
                     
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql1 = $"SELECT up.FirstName as UserName,t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
-                                          $"FROM {skillSet.SkillSetName} t " +
-                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                          $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                          $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                                  $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                  $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                  $"FROM {skillSet.SkillSetName} t " +
+                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                  $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
@@ -760,8 +782,14 @@ namespace OMT.DataService.Service
                     List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
                     foreach (string tablename in tablenames)
                     {
-                       
-                        string sqlquery = $"SELECT up.FirstName as UserName,t.OrderId,CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate,ss.SkillSetName as SkillSet,ps.Status as Status " +
+
+                        string sqlquery = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                                          $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                          $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                          $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                          $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                          $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                          $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
                                           $"FROM {tablename} t " +
                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +

@@ -29,7 +29,7 @@ namespace OMT.DataService.Service
                                                                          orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
-                                                                             UserName = up.FirstName,
+                                                                             UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") + '(' + up.Email + ')',
                                                                              UserId = uss.UserId,
                                                                              UserSkillSetId = uss.UserSkillSetId,
                                                                              SkillSetName = ss.SkillSetName,
@@ -53,7 +53,7 @@ namespace OMT.DataService.Service
                                                                          orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
-                                                                             UserName = up.FirstName,
+                                                                             UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") + '(' + up.Email + ')',
                                                                              UserId = uss.UserId,
                                                                              UserSkillSetId = uss.UserSkillSetId,
                                                                              SkillSetName = ss.SkillSetName,
