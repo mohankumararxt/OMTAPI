@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.Reflection.Metadata.Ecma335;
 
 namespace OMT.APIHost.Controllers
 {
@@ -105,6 +106,14 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetComplexOrdersDetails([FromBody] ComplexOrdersRequestDTO complexOrdersRequestDTO)
         {
             return _templateService.GetComplexOrdersDetails(complexOrdersRequestDTO);
+        }
+
+        [HttpPut]
+        [Route("ReleaseOrder")]
+
+        public ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO)
+        {
+            return _templateService.ReleaseOrder(releaseOrderDTO);
         }
     }
 }

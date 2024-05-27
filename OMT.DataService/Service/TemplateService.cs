@@ -6,6 +6,7 @@ using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace OMT.DataService.Service
 {
@@ -1000,7 +1001,7 @@ namespace OMT.DataService.Service
 
                         if (tablename.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {tablename.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1012,7 +1013,7 @@ namespace OMT.DataService.Service
 
                         else if (tablename.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {tablename.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1066,7 +1067,7 @@ namespace OMT.DataService.Service
                         string sqlquery ="";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {skillset.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1078,7 +1079,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {skillset.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1147,7 +1148,7 @@ namespace OMT.DataService.Service
                         string sqlquery = "";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, 
+                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
                                         ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
                                         ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
@@ -1159,7 +1160,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, 
+                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
                                         ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
                                         ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
@@ -1217,7 +1218,7 @@ namespace OMT.DataService.Service
 
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
                                         CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1228,7 +1229,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
                                          CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                          FROM {skillset.SkillSetName} t 
                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1272,6 +1273,81 @@ namespace OMT.DataService.Service
                     }
                 }
 
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                foreach (var order in releaseOrderDTO.Orders)
+                {
+                    if (order.TryGetValue("skillset", out var skillSetName))
+                    {
+                        // Fetch the corresponding SkillSet based on SkillSetName
+                        SkillSet skillSet = _oMTDataContext.SkillSet.FirstOrDefault(x => x.SkillSetName == skillSetName.ToString());
+
+                        if (skillSet != null)
+                        {
+                            if (order.TryGetValue("OrderId", out var orderId) && order.TryGetValue("UserId", out var userId) && order.TryGetValue("Remarks",out var remarks))
+                            {
+                                string sqlquery = $@"
+                                UPDATE {skillSet.SkillSetName} 
+                                SET UserId = NULL, 
+                                Status = NULL, 
+                                Remarks = NULL, 
+                                CompletionDate = NULL, 
+                                StartTime = NULL, 
+                                EndTime = NULL, 
+                                TeamLeadId = NULL, 
+                                SkillSetId = NULL, 
+                                SystemOfRecordId = NULL
+                                WHERE OrderId = @OrderId and UserId = @UserId and Remarks = @Remarks";
+
+                                using SqlCommand command = connection.CreateCommand();
+                                command.CommandText = sqlquery;
+                                command.Parameters.AddWithValue("@OrderId", orderId.ToString());
+                                command.Parameters.AddWithValue("@UserId", userId.ToString());
+                                command.Parameters.AddWithValue("@Remarks", remarks.ToString());
+
+                                command.ExecuteNonQuery();
+                                resultDTO.Message = "Order has been released back to queue successfully";
+                                resultDTO.IsSuccess = true;
+                            }
+                            else
+                            {
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Something went wrong";
+                                resultDTO.StatusCode = "404";
+                            }
+                                
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Skillset not found";
+                            resultDTO.StatusCode = "404";
+                        }
+
+                    }
+                    else
+                    {
+                        throw new Exception("Skillset key not found in order.");
+                    }
+                }
             }
             catch (Exception ex)
             {
