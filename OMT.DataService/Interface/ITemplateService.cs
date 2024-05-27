@@ -15,6 +15,7 @@ namespace OMT.DataService.Interface
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
         ResultDTO GetDefaultColumnNames(int systemofrecordid);
         ResultDTO GetPendingOrderDetails(int userid);
+        ResultDTO GetComplexOrdersDetails(ComplexOrdersRequestDTO complexOrdersRequestDTO);
         
     }
 }

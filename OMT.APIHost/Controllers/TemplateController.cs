@@ -98,5 +98,13 @@ namespace OMT.APIHost.Controllers
 
             return _templateService.GetPendingOrderDetails(userid);
         }
+
+        [HttpPost]
+        [Route("GetComplexOrdersDetails")]
+
+        public ResultDTO GetComplexOrdersDetails([FromBody] ComplexOrdersRequestDTO complexOrdersRequestDTO)
+        {
+            return _templateService.GetComplexOrdersDetails(complexOrdersRequestDTO);
+        }
     }
 }

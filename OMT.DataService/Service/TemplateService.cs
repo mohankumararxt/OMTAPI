@@ -968,5 +968,318 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetComplexOrdersDetails(ComplexOrdersRequestDTO complexOrdersRequestDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                List<Dictionary<string, object>> ComplexRecords = new List<Dictionary<string, object>>();
+
+                if (complexOrdersRequestDTO.SkillsetId == null && complexOrdersRequestDTO.UserId == null)
+                {
+                    List<SkillSet> tablenames = (from ss in _oMTDataContext.SkillSet
+                                                 join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
+                                                 join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
+                                                 where ss.IsActive == true
+                                                 select new SkillSet
+                                                 {
+                                                     SkillSetName = ss.SkillSetName,
+                                                     SystemofRecordId = ss.SystemofRecordId
+                                                 }
+                                            ).Distinct().ToList();
+
+                    foreach (SkillSet tablename in tablenames)
+                    {
+                        string sqlquery = "";
+
+                        if (tablename.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 5";
+                        }
+
+                        else if (tablename.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 9";
+
+                        }
+
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                            DataSet dataset = new DataSet();
+
+                            dataAdapter.Fill(dataset);
+
+                            DataTable datatable = dataset.Tables[0];
+
+                            //query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                          .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                              column => column.ColumnName,
+                                              column => row[column])).ToList();
+
+                            ComplexRecords.AddRange(querydt1);
+                        
+                    }
+
+                    if (ComplexRecords.Count > 0)
+                    {
+                        resultDTO.Data = ComplexRecords;
+                        resultDTO.Message = "Complex orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Complex orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+                else if(complexOrdersRequestDTO.SkillsetId != null && complexOrdersRequestDTO.UserId == null)
+                {
+                    SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == complexOrdersRequestDTO.SkillsetId && x.IsActive).FirstOrDefault();
+
+                    if (skillset != null)
+                    {
+                        string sqlquery ="";
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 5";
+
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 9";
+                        }
+
+
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                            DataSet dataset = new DataSet();
+
+                            dataAdapter.Fill(dataset);
+
+                            DataTable datatable = dataset.Tables[0];
+
+                            //query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                          .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                              column => column.ColumnName,
+                                              column => row[column])).ToList();
+
+                            ComplexRecords.AddRange(querydt1);
+                        
+
+                        if (ComplexRecords.Count > 0)
+                        {
+                            resultDTO.Data = ComplexRecords;
+                            resultDTO.Message = "Complex orders fetched successfully";
+                            resultDTO.IsSuccess = true;
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Complex orders not found";
+                            resultDTO.StatusCode = "404";
+                        }
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Skillset not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+                else if (complexOrdersRequestDTO.SkillsetId == null && complexOrdersRequestDTO.UserId != null)
+                {
+                    List<SkillSet> skillset2 = (from us in _oMTDataContext.UserSkillSet
+                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                where us.UserId == complexOrdersRequestDTO.UserId && us.IsActive
+                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                select new SkillSet
+                                                {
+                                                    SkillSetName = ss.SkillSetName,
+                                                    SystemofRecordId = ss.SystemofRecordId
+                                                }).Distinct().ToList();
+
+                    foreach (SkillSet skillset in skillset2)
+                    {
+                        string sqlquery = "";
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, 
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
+                                        ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status = 5 and t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, 
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
+                                        ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status = 9 and t.UserId = @UserId";
+                        }
+                        
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        DataSet dataset = new DataSet();
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        // Query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                column => column.ColumnName,
+                                column => row[column]))
+                            .ToList();
+
+                        ComplexRecords.AddRange(querydt1);
+                    }
+
+                    if (ComplexRecords.Count > 0)
+                    {
+                        resultDTO.Data = ComplexRecords;
+                        resultDTO.Message = "Complex orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Complex orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+
+                else if (complexOrdersRequestDTO.SkillsetId != null && complexOrdersRequestDTO.UserId != null)
+                {
+                    SkillSet? skillset = _oMTDataContext.SkillSet
+                                        .Where(x => x.SkillSetId == complexOrdersRequestDTO.SkillsetId && x.IsActive)
+                                        .FirstOrDefault();
+
+                    if (skillset != null)
+                    {
+                        string sqlquery = "";
+
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                                        CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status = 5 AND t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                                         CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                         FROM {skillset.SkillSetName} t 
+                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                         INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                         INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                         INNER JOIN UserProfile up on up.UserId = t.UserId
+                                         WHERE t.Status = 9 AND t.UserId = @UserId";
+                        }
+
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        DataSet dataset = new DataSet();
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        // Query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                column => column.ColumnName,
+                                column => row[column]))
+                            .ToList();
+
+                        ComplexRecords.AddRange(querydt1);
+
+                        if (ComplexRecords.Count > 0)
+                        {
+                            resultDTO.Data = ComplexRecords;
+                            resultDTO.Message = "Complex orders fetched successfully";
+                            resultDTO.IsSuccess = true;
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Complex orders not found";
+                            resultDTO.StatusCode = "404";
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
