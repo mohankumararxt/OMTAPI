@@ -1001,7 +1001,7 @@ namespace OMT.DataService.Service
 
                         if (tablename.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {tablename.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1013,7 +1013,7 @@ namespace OMT.DataService.Service
 
                         else if (tablename.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {tablename.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1067,7 +1067,7 @@ namespace OMT.DataService.Service
                         string sqlquery ="";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {skillset.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1079,7 +1079,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {skillset.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1148,7 +1148,7 @@ namespace OMT.DataService.Service
                         string sqlquery = "";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
+                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,
                                         ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
                                         ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
@@ -1160,7 +1160,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,
                                         ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
                                         ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
@@ -1218,7 +1218,7 @@ namespace OMT.DataService.Service
 
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
                                         CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                         FROM {skillset.SkillSetName} t 
                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1229,7 +1229,7 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
                                          CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                          FROM {skillset.SkillSetName} t 
                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
@@ -1285,7 +1285,7 @@ namespace OMT.DataService.Service
 
         public ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO)
         {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
@@ -1348,6 +1348,299 @@ namespace OMT.DataService.Service
                         throw new Exception("Skillset key not found in order.");
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO TimeExceededOrders(TimeExceededOrdersDTO timeExceededOrdersDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                List<Dictionary<string, object>> TExceededRecords = new List<Dictionary<string, object>>();
+
+                if (timeExceededOrdersDTO.SkillsetId == null && timeExceededOrdersDTO.UserId == null)
+                {
+                    List<SkillSet> tablenames = (from ss in _oMTDataContext.SkillSet
+                                                 join tc in _oMTDataContext.TemplateColumns on ss.SkillSetId equals tc.SkillSetId
+                                                 join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
+                                                 where ss.IsActive == true
+                                                 select new SkillSet
+                                                 {
+                                                     SkillSetName = ss.SkillSetName,
+                                                     SystemofRecordId = ss.SystemofRecordId
+                                                 }
+                                           ).Distinct().ToList();
+
+                    foreach (SkillSet tablename in tablenames)
+                    {
+                        string sqlquery = "";
+
+                        if (tablename.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3";
+                        }
+
+                        else if (tablename.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3";
+
+                        }
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        TExceededRecords.AddRange(querydt1);
+
+                    }
+
+                    if (TExceededRecords.Count > 0)
+                    {
+                        resultDTO.Data = TExceededRecords;
+                        resultDTO.Message = "Time Exceeded orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Time Exceeded orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+
+                }
+
+                else if (timeExceededOrdersDTO.SkillsetId == null && timeExceededOrdersDTO.UserId != null)
+                {
+                    List<SkillSet> skillset2 = (from us in _oMTDataContext.UserSkillSet
+                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                where us.UserId == timeExceededOrdersDTO.UserId && us.IsActive
+                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                select new SkillSet
+                                                {
+                                                    SkillSetName = ss.SkillSetName,
+                                                    SystemofRecordId = ss.SystemofRecordId
+                                                }).Distinct().ToList();
+
+                    foreach (SkillSet skillset in skillset2)
+                    {
+                        string sqlquery = "";
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3 and t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3 and t.UserId = @UserId";
+                        }
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        TExceededRecords.AddRange(querydt1);
+
+                    }
+
+                    if (TExceededRecords.Count > 0)
+                    {
+                        resultDTO.Data = TExceededRecords;
+                        resultDTO.Message = "Time Exceeded orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Time Exceeded orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+
+
+                }
+
+                else if (timeExceededOrdersDTO.SkillsetId != null && timeExceededOrdersDTO.UserId == null)
+                {
+                    SkillSet? skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == timeExceededOrdersDTO.SkillsetId && x.IsActive).FirstOrDefault();
+
+                    if (skillset != null)
+                    {
+                        string sqlquery = "";
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3";
+
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3";
+                        }
+
+
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        TExceededRecords.AddRange(querydt1);
+
+
+                        if (TExceededRecords.Count > 0)
+                        {
+                            resultDTO.Data = TExceededRecords;
+                            resultDTO.Message = "Time Exceeded orders fetched successfully";
+                            resultDTO.IsSuccess = true;
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Time Exceeded orders not found";
+                            resultDTO.StatusCode = "404";
+                        }
+                    }
+                }
+                else if (timeExceededOrdersDTO.SkillsetId != null && timeExceededOrdersDTO.UserId != null)
+                {
+                    SkillSet? skillset = _oMTDataContext.SkillSet
+                                        .Where(x => x.SkillSetId == timeExceededOrdersDTO.SkillsetId && x.IsActive)
+                                        .FirstOrDefault();
+
+                    if (skillset != null)
+                    {
+                        string sqlquery = "";
+
+                        if (skillset.SystemofRecordId == 1)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3 AND t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 2)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                                         FROM {skillset.SkillSetName} t 
+                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                         INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                         INNER JOIN UserProfile up on up.UserId = t.UserId
+                                         WHERE t.Status IS NULL and t.Completiondate IS NULL and DATEDIFF(minute, t.StartTime, GETDATE()) > 3 AND t.UserId = @UserId";
+                        }
+
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        DataSet dataset = new DataSet();
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        // Query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                column => column.ColumnName,
+                                column => row[column]))
+                            .ToList();
+
+                        TExceededRecords.AddRange(querydt1);
+
+                        if (TExceededRecords.Count > 0)
+                        {
+                            resultDTO.Data = TExceededRecords;
+                            resultDTO.Message = "Time Exceeded orders fetched successfully";
+                            resultDTO.IsSuccess = true;
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Time Exceeded orders not found";
+                            resultDTO.StatusCode = "404";
+                        }
+                    }
+                }
+
             }
             catch (Exception ex)
             {

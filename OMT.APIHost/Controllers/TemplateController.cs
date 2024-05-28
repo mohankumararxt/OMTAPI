@@ -115,5 +115,12 @@ namespace OMT.APIHost.Controllers
         {
             return _templateService.ReleaseOrder(releaseOrderDTO);
         }
+
+        [HttpPost]
+        [Route("TimeExceededOrders")]
+        public ResultDTO TimeExceededOrders([FromBody] TimeExceededOrdersDTO timeExceededOrdersDTO)
+        {
+            return _templateService.TimeExceededOrders(timeExceededOrdersDTO);
+        }
     }
 }
