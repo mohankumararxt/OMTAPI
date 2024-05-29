@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
@@ -7,6 +8,7 @@ using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace OMT.DataService.Service
 {
@@ -1643,6 +1645,168 @@ namespace OMT.DataService.Service
 
             }
             catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == replaceOrdersDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                if (skillSet != null)
+                {
+                    List<TemplateColumns> template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == replaceOrdersDTO.SkillsetId).ToList();
+                    if(template.Count > 0)
+                    {
+                        string tablename = skillSet.SkillSetName;
+
+                        List<string> listofcolumns1 = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsDuplicateCheck).Select(_ => _.DefaultColumnName).ToList();
+                        List<string> listofColumns = template.Where(x => x.IsDuplicateCheck).Select(_ => _.ColumnAliasName).ToList();
+
+                        List<string> combinedList = listofcolumns1.Concat(listofColumns).ToList();
+
+                        //parse json data
+                        JObject jsondata = JObject.Parse(replaceOrdersDTO.JsonData);
+                        JArray recordsarray = jsondata.Value<JArray>("Records");
+
+                        string isDuplicateColumns1 = listofcolumns1 != null ? string.Join(",", listofcolumns1) : "";
+                        string isDuplicateColumns = listofColumns != null ? string.Join(",", listofColumns) : "";
+
+                        // Combine the strings, ensuring that if any of them is null, it's selected without a comma
+                        string combinedString = (isDuplicateColumns1 != "" && isDuplicateColumns != "") ? isDuplicateColumns1 + "," + isDuplicateColumns : isDuplicateColumns1 + isDuplicateColumns;
+
+                        string sql = $"SELECT * "+
+                                    $"FROM {tablename} t " +
+                                    $"WHERE UserID IS NULL AND ";
+
+                        foreach (JObject records in recordsarray)
+                        {
+                            string query = "(";
+                            foreach (string columnname in combinedList)
+                            {
+                                string columndata = records.Value<string>(columnname);
+
+                                query += $"[{columnname}] = '{columndata}' AND ";
+                            }
+
+                            query = query.Substring(0, query.Length - 5);
+                            query += ") OR ";
+
+                            sql += query;
+                        }
+
+                        sql = sql.Substring(0, sql.Length - 4);
+
+                        //execute sql query to fetch records from table
+                        string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                        using SqlConnection connection = new(connectionstring);
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(sql, connection);
+
+                        DataSet dataset = new DataSet();
+                        connection.Open();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        List<JObject> recordsToInsert = new List<JObject>();
+
+                        if (querydt.Count > 0 )
+                        {
+                            string deleteSql = $"DELETE FROM {tablename} WHERE UserId IS NULL AND ";
+
+                            foreach (var record in querydt)
+                            {
+                                string deleteQuery = "(";
+                                foreach (string columnname in combinedList)
+                                {
+                                    string columndata = record[columnname].ToString();
+
+                                    deleteQuery += $"[{columnname}] = '{columndata}' AND ";
+                                }
+
+                                deleteQuery = deleteQuery.Substring(0, deleteQuery.Length - 5);
+                                deleteQuery += ") OR ";
+
+                                deleteSql += deleteQuery;
+                            }
+
+                            deleteSql = deleteSql.Substring(0, deleteSql.Length - 4);
+
+                            using SqlCommand deleteCommand = new SqlCommand(deleteSql, connection);
+                            deleteCommand.ExecuteNonQuery();
+
+                            foreach (JObject records in recordsarray)
+                            {
+                                bool recordExists = querydt.Any(existingRecord =>
+                                    combinedList.All(column => records.Value<string>(column) == existingRecord[column].ToString()));
+
+                                if (recordExists)
+                                {
+                                    recordsToInsert.Add(records);
+                                }
+                            }
+
+                            if (recordsToInsert.Count > 0)
+                            {
+                                // Create the new JSON object with "Records" key
+                                JObject recordsObject = new JObject();
+                                recordsObject["Records"] = JArray.FromObject(recordsToInsert);
+
+                                // Serialize the records to a JSON string
+                                string jsonToInsert = recordsObject.ToString();
+
+                                using SqlCommand cmd = new SqlCommand("InsertData", connection);
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
+                                cmd.Parameters.AddWithValue("@jsonData", jsonToInsert);
+
+                                SqlParameter returnValue = new()
+                                {
+                                    ParameterName = "@RETURN_VALUE",
+                                    Direction = ParameterDirection.ReturnValue
+                                };
+
+                                cmd.Parameters.Add(returnValue);
+
+                                cmd.ExecuteNonQuery();
+
+                                int returnCode = (int)cmd.Parameters["@RETURN_VALUE"].Value;
+
+                                if (returnCode != 1)
+                                {
+                                    throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
+                                }
+
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "Orders replaced successfully";
+                            }
+
+                        }
+                        
+                    }
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset does not exist.";
+                }
+            }
+            catch (Exception ex)    
             {
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";

@@ -18,6 +18,8 @@ namespace OMT.DataService.Interface
         ResultDTO GetComplexOrdersDetails(ComplexOrdersRequestDTO complexOrdersRequestDTO);
         ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO);
         ResultDTO TimeExceededOrders(TimeExceededOrdersDTO timeExceededOrdersDTO);
-        
+        ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO);
+
+
     }
 }

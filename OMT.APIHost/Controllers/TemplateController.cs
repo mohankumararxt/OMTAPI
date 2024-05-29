@@ -122,5 +122,12 @@ namespace OMT.APIHost.Controllers
         {
             return _templateService.TimeExceededOrders(timeExceededOrdersDTO);
         }
+
+        [HttpPost]
+        [Route("ReplaceOrders")]
+        public ResultDTO ReplaceOrders([FromBody] ReplaceOrdersDTO replaceOrdersDTO)
+        {
+            return _templateService.ReplaceOrders(replaceOrdersDTO);
+        }
     }
 }
