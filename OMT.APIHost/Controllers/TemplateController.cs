@@ -123,6 +123,14 @@ namespace OMT.APIHost.Controllers
             return _templateService.TimeExceededOrders(timeExceededOrdersDTO);
         }
 
+        [HttpGet]
+        [Route("GetTemplateColumnNames/{skillsetid:int}")]
+        public ResultDTO GetTemplateColumnNames(int skillsetid)
+        {
+            return _templateService.GetTemplateColumns(skillsetid);
+        }
+
+
         [HttpPost]
         [Route("ReplaceOrders")]
         public ResultDTO ReplaceOrders([FromBody] ReplaceOrdersDTO replaceOrdersDTO)

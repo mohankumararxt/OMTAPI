@@ -21,5 +21,8 @@ namespace OMT.DataService.Interface
         ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO);
 
 
+        ResultDTO GetTemplateColumns(int skillsetId);
+
+
     }
 }
