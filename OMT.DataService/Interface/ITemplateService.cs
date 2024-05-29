@@ -19,8 +19,6 @@ namespace OMT.DataService.Interface
         ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO);
         ResultDTO TimeExceededOrders(TimeExceededOrdersDTO timeExceededOrdersDTO);
         ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO);
-
-
         ResultDTO GetTemplateColumns(int skillsetId);
 
 

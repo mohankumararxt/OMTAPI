@@ -1675,11 +1675,7 @@ namespace OMT.DataService.Service
                 resultDTO.Data = finalcolumns;
 
             }
-            catch (Exception ex)
-                    }
-                }
 
-            }
             catch (Exception ex)
             {
                 resultDTO.IsSuccess = false;
