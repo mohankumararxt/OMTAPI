@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
+using OMT.DataService.Service;
 using OMT.DTO;
 
 namespace OMT.APIHost.Controllers
@@ -67,6 +68,30 @@ namespace OMT.APIHost.Controllers
         {
             ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSet(userSkillSetUpdateDTO);
             return resultDTO;
+        }
+
+        /// <summary>
+        /// Get list of users and their skillsets for the selected teamid and sor id
+        /// </summary>
+        /// <param name="updateUserSkillsetListDTO">UpdateUserSkillsetListDTO</param>
+        /// <returns>Returns list of users and their rspective skillset informations</returns>
+        [HttpPost]
+        [Route("UpdateUserSkillsetList")]
+        public ResultDTO UpdateUserSkillsetList([FromBody] UpdateUserSkillsetListDTO updateUserSkillsetListDTO)
+        {
+            return _userSkillSetService.UpdateUserSkillsetList(updateUserSkillsetListDTO);
+        }
+
+        /// <summary>
+        /// Bulk update of users skill sets
+        /// </summary>
+        /// <param name="bulkUserSkillsetUpdateDTO">BulkUserSkillsetUpdateDTO</param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("BulkUserSkillsetUpdate")]
+        public ResultDTO BulkUpdate(BulkUserSkillsetUpdateDTO bulkUserSkillsetUpdateDTO)
+        {
+            return _userSkillSetService.BulkUpdate(bulkUserSkillsetUpdateDTO);
         }
     }
 }

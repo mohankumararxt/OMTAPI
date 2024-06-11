@@ -20,7 +20,9 @@ namespace OMT.DataService.Interface
         ResultDTO TimeExceededOrders(TimeExceededOrdersDTO timeExceededOrdersDTO);
         ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO);
         ResultDTO GetTemplateColumns(int skillsetId);
-
-
+        ResultDTO RejectOrder(RejectOrderDTO rejectOrderDTO);
+        ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
+        ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
+        
     }
 }

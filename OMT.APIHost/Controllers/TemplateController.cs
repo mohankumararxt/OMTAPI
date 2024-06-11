@@ -17,7 +17,6 @@ namespace OMT.APIHost.Controllers
             _templateService = templateService;
         }
 
-
         [HttpPost]
         [Route("new")]
         public ResultDTO CreateTemplate([FromBody] CreateTemplateDTO createTemplateDTO)
@@ -130,12 +129,33 @@ namespace OMT.APIHost.Controllers
             return _templateService.GetTemplateColumns(skillsetid);
         }
 
-
         [HttpPost]
         [Route("ReplaceOrders")]
         public ResultDTO ReplaceOrders([FromBody] ReplaceOrdersDTO replaceOrdersDTO)
         {
             return _templateService.ReplaceOrders(replaceOrdersDTO);
         }
+
+        [HttpPut]
+        [Route("RejectOrder")]
+        public ResultDTO RejectOrder([FromBody] RejectOrderDTO rejectOrderDTO)
+        {
+            return _templateService.RejectOrder(rejectOrderDTO);
+        }
+
+        [HttpPut]
+        [Route("AssignOrderToUser")]
+        public ResultDTO AssignOrderToUser([FromBody] AssignOrderToUserDTO assignOrderToUserDTO)
+        {
+            return _templateService.AssignOrderToUser(assignOrderToUserDTO);
+        }
+
+        [HttpPost]
+        [Route("DeleteOrders")]
+        public ResultDTO DeleteOrders([FromBody] DeleteOrderDTO deleteOrderDTO)
+        {
+            return _templateService.DeleteOrders(deleteOrderDTO);
+        }
+
     }
 }
