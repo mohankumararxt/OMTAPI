@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
@@ -344,7 +345,7 @@ namespace OMT.DataService.Service
                         templateListDTO.SkillSetName = skillset.SkillSetName;
                         templateListDTO.SystemofRecordId = skillset.SystemofRecordId;
                         List<TemplateColumnDTO> TemplateColumns = templatecolumns.Where(x => x.SkillSetId == skillset.SkillSetId).
-                                                            Select(_ => new TemplateColumnDTO() { ColumnDataType = _.ColumnDataType, ColumnName = _.ColumnName, IsDuplicateCheck = _.IsDuplicateCheck }).ToList();
+                                                            Select(_ => new TemplateColumnDTO() { ColumnDataType = _.ColumnDataType, ColumnName = _.ColumnAliasName, IsDuplicateCheck = _.IsDuplicateCheck }).ToList();
 
                         List<DefaultTemplateColumnlistDTO> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns
                                                                                     .Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.IsDefOnlyColumn)
@@ -416,7 +417,7 @@ namespace OMT.DataService.Service
                     string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
                     string query = $@"
-                                    SELECT TOP 1 
+                                    SELECT 
                                         {selectedColumns},
                                         t2.SkillSetName AS SkillSetName, 
                                         t1.SkillSetId,
@@ -432,10 +433,8 @@ namespace OMT.DataService.Service
                                         UserId = @UserId 
                                         AND (Status IS NULL OR Status = '')
                                     ORDER BY 
-	                                    t1.StartTime ASC;";
+	                                    t1.IsPriority DESC,t1.StartTime ASC;";
                     
-
-                    //string query = $"select * from {tablename} where UserId = @UserId and (Status IS NULL OR Status = '')";
 
                     using SqlCommand command = connection.CreateCommand();
                     command.CommandText = query;
@@ -461,7 +460,8 @@ namespace OMT.DataService.Service
                 if (noStatusRecords.Count > 0)
                 {
                     var orderedRecords = noStatusRecords
-                         .OrderBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                         .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                         .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
                          .First();
 
                     orderedRecords.Remove("StartTime");
@@ -985,7 +985,7 @@ namespace OMT.DataService.Service
                     string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
                     string query = $@"
-                                    SELECT TOP 1 
+                                    SELECT 
                                         {selectedColumns},
                                         t2.SkillSetName AS SkillSetName, 
                                         t1.SkillSetId,
@@ -1001,7 +1001,7 @@ namespace OMT.DataService.Service
                                         UserId = @UserId 
                                         AND (Status IS NULL OR Status = '')
                                     ORDER BY 
-	                                    t1.StartTime ASC;";
+	                                     t1.ispriority DESC,t1.StartTime ASC;";
 
                     using SqlCommand command = connection.CreateCommand();
                     command.CommandText = query;
@@ -1027,7 +1027,8 @@ namespace OMT.DataService.Service
                 if (noStatusRecords.Count > 0)
                 {
                     var orderedRecords = noStatusRecords
-                         .OrderBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                         .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                         .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
                          .First();
 
                     orderedRecords.Remove("StartTime");
@@ -1463,46 +1464,68 @@ namespace OMT.DataService.Service
                                                  select new SkillSet
                                                  {
                                                      SkillSetName = ss.SkillSetName,
+                                                     SkillSetId = ss.SkillSetId,
                                                      SystemofRecordId = ss.SystemofRecordId,
                                                  }
-                                           ).Distinct().ToList();
+                                                 ).Distinct().ToList();
 
                     foreach (SkillSet tablename in tablenames)
                     {
+                        List<string> hs = _oMTDataContext.Timeline.Where(x => x.SkillSetId == tablename.SkillSetId && x.IsHardState && x.IsActive).Select(_ => _.Hardstatename).ToList();
+                        
                         string sqlquery = "";
 
                         if (tablename.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {tablename.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                          AND (
+                                                (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
                         else if (tablename.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {tablename.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                          AND (
+                                                (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                 AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                 OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                 AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -1546,45 +1569,67 @@ namespace OMT.DataService.Service
                                                 select new SkillSet
                                                 {
                                                     SkillSetName = ss.SkillSetName,
+                                                    SkillSetId = ss.SkillSetId,
                                                     SystemofRecordId = ss.SystemofRecordId,
                                                 }).Distinct().ToList();
 
                     foreach (SkillSet skillset in skillset2)
                     {
+                        List<string> hs = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillset.SkillSetId && x.IsHardState && x.IsActive).Select(_ => _.Hardstatename).ToList();
+                       
                         string sqlquery = "";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                        CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken,
-                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken,
+                                                ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
                                         FROM {skillset.SkillSetName} t 
-                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                        INNER JOIN UserProfile up on up.UserId = t.UserId
-                                        INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                        WHERE t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                        OR
-                                        (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                            AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                        INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN 
+                                                 UserProfile up on up.UserId = t.UserId
+                                        INNER JOIN 
+                                                 Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                        WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                        AND (
+                                            (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                             AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                   OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                             OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                             AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                        CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken,
-                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken,
+                                                ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
                                         FROM {skillset.SkillSetName} t 
-                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                        INNER JOIN UserProfile up on up.UserId = t.UserId
-                                        INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                        WHERE t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                        OR
-                                        (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                            AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                        INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN 
+                                                 SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN 
+                                                  UserProfile up on up.UserId = t.UserId
+                                        INNER JOIN 
+                                                  Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                        WHERE 
+                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                        AND (
+                                            (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                            AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                 OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                            OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                            AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
                         command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -1626,40 +1671,61 @@ namespace OMT.DataService.Service
 
                     if (skillset != null)
                     {
+                        List<string> hs = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillset.SkillSetId && x.IsHardState && x.IsActive).Select(_ => _.Hardstatename).ToList();
+                        
                         string sqlquery = "";
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {skillset.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime 
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                          AND (
+                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {skillset.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                          AND (
+                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -1700,40 +1766,61 @@ namespace OMT.DataService.Service
 
                     if (skillset != null)
                     {
+                        List<string> hs = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillset.SkillSetId && x.IsHardState && x.IsActive).Select(_ => _.Hardstatename).ToList();
+                        
                         string sqlquery = "";
 
                         if (skillset.SystemofRecordId == 1)
                         {
-                            sqlquery = $@"SELECT t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {skillset.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                          AND (
+                                              (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                               AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                               OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                               AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
-                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
-                                          CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
                                           FROM {skillset.SkillSetName} t 
-                                          INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
-                                          INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
-                                          INNER JOIN UserProfile up on up.UserId = t.UserId
-                                          INNER JOIN Timeline tl on ss.SkillSetId = tl.SkillSetId
-                                          WHERE t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId and ( (tl.hardstatename <> '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN ('PA', 'MI', 'CO', 'NY') AND t.PropertyState = tl.Hardstatename)
-                                          OR
-                                          (tl.hardstatename = '' AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime
-			                              AND t.PropertyState not IN ('PA', 'MI', 'CO', 'NY')))";
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                          AND (
+                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
                         command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
                         DataSet dataset = new DataSet();
@@ -1784,7 +1871,7 @@ namespace OMT.DataService.Service
                 List<TemplateListDTO> templateList = new List<TemplateListDTO>();
 
 
-                List<string> templatecolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetId).Select(_ => _.ColumnName).ToList();
+                List<string> templatecolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetId).Select(_ => _.ColumnAliasName).ToList();
 
                 List<string> defaultTemplateColumns = (from dt in _oMTDataContext.DefaultTemplateColumns
                                                        join ss in _oMTDataContext.SkillSet on dt.SystemOfRecordId equals ss.SystemofRecordId
@@ -2044,7 +2131,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = $"No of orders rejected successfully : {successfulupdate.Count}. The following orders could not be rejected:\n";
                                         foreach (var updateInfo in failedupdates)
                                         {
-                                            resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated with their account.\n";
+                                            resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
                                         }
                     resultDTO.StatusCode = "200";
                 }
@@ -2054,7 +2141,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "Rejection failed. The following orders could not be rejected:\n";
                                          foreach (var updateInfo in failedupdates)
                                          {
-                                             resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated with their account.\n";
+                                             resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
                                          }
                     resultDTO.StatusCode = "404";
                 }
