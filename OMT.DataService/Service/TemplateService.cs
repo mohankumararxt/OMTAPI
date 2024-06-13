@@ -592,28 +592,75 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
-                SkillSet? skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).FirstOrDefault();
-
-                string sql1 = $"UPDATE {skillset.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
-
-                DateTime dateTime = DateTime.Now;
-
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                using (SqlCommand command = connection.CreateCommand())
+                string table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => _.SkillSetName).FirstOrDefault();
+
+                var exist = (from tc in _oMTDataContext.TemplateColumns
+                             join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
+                             where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && tc.SkillSetId == updateOrderStatusDTO.SkillSetId
+                             select new 
+                             {
+                                 SkillSetName =   ss.SkillSetName
+                             }).FirstOrDefault();
+
+                if ( exist != null )
                 {
-                    command.CommandText = sql1;
-                    command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
-                    command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
-                    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                    command.Parameters.AddWithValue("@EndTime", dateTime);
-                    command.Parameters.AddWithValue("@CompletionDate", dateTime);
-                    command.ExecuteNonQuery();
+                    string sql = $"SELECT * FROM {exist.SkillSetName} WHERE Id = @Id";
+
+                    using SqlCommand cmd = connection.CreateCommand();
+                    
+                    cmd.CommandText = sql;
+                    cmd.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    cmd.ExecuteNonQuery();
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(cmd);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    var querydt1 = datatable.AsEnumerable()
+                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                        column => column.ColumnName,
+                                        column => row[column])).ToList();
+                    
+                    if ( querydt1.Count > 0 ) 
+                    {
+                        string sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
+
+                        DateTime dateTime = DateTime.Now;
+
+                        using (SqlCommand command = connection.CreateCommand())
+                        {
+                            command.CommandText = sql1;
+                            command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
+                            command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
+                            command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                            command.Parameters.AddWithValue("@EndTime", dateTime);
+                            command.Parameters.AddWithValue("@CompletionDate", dateTime);
+                            command.ExecuteNonQuery();
+                        }
+                        resultDTO.Message = "Order status has been updated successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Sorry, this order doesnt exist, you can't update the status anymore.";
+                    }
                 }
-                resultDTO.Message = "Order status has been updated successfully";
-                resultDTO.IsSuccess = true;
+                else
+                {
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = $"Sorry, the template '{table}' doesnt exist, you can't update the status for this order anymore.";
+                }
             }
             catch (Exception ex)
             {
