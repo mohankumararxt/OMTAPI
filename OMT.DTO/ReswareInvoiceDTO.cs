@@ -12,7 +12,7 @@
         public string CompletionDate { get; set; }
         public string CustomerId { get; set; }
         public string OrderId { get; set; }
-        public string State { get; set; }
+        public string PropertyState { get; set; }
         public string County { get; set; }
         public string ProductDescription { get; set; }
     }

@@ -80,7 +80,7 @@ namespace OMT.DataService.Service
                                                                           CustomerId = _.CustomerId,
                                                                           TotalOrderFees = _.TotalOrderFees,
                                                                           ProductDescription = _.ProductDescription,
-                                                                          State = _.State,
+                                                                          PropertyState = _.PropertyState,
                                                                       }).ToList();
 
                         if (invoiceDump2.Count > 0)
