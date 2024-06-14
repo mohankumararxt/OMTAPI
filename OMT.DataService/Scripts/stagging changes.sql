@@ -34,13 +34,13 @@
 
 --insert into timeline values(4,'',3,0,1)
 --insert into timeline values(5,'',12,0,1)
---insert into timeline values(6,'',10,0,1)
+
 
 --insert into timeline values(8,'',4,0,1)
---insert into timeline values(9,'',10,0,1)
+
 --insert into timeline values(13,'',10,0,1)
---insert into timeline values(14,'',5,0,1)
---insert into timeline values(16,'',5,0,1)
+
+
 --insert into timeline values(77,'',4,0,1)
 
 --insert into timeline values(78,'PA',4,1,1)
@@ -93,4 +93,7 @@
 
 --insert into InvoiceJointResware values(2,13,4,5,2,4,3)
 
---check file
+--update InvoiceJointResware set processtypeid = 5 where skillsetid = 8 or skillsetid = 83 
+
+--update InvoiceJointResware set processtypeid = 7 where skillsetid = 82 or skillsetid = 87
+
