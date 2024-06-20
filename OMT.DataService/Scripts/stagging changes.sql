@@ -66,7 +66,7 @@
 
 --update defaulttemplatecolumns set defaultcolumnname = 'PropertyState' where id = 19        -- instead of state 
 
---- add column IsHardState to timeline table
+
 ---update timeline set ishardstate = 0 where timelineid between 19 and 38
 --update timeline set ishardstate = 0 where timelineid between 5 and 6
 --update timeline set ishardstate = 0 where timelineid between 11 and 14
@@ -96,4 +96,44 @@
 --update InvoiceJointResware set processtypeid = 5 where skillsetid = 8 or skillsetid = 83 
 
 --update InvoiceJointResware set processtypeid = 7 where skillsetid = 82 or skillsetid = 87
+
+-----------------------------------------------------------------------------
+--create table InvoiceSkillSet
+--(
+--InvoiceSkillSetId int IDENTITY(1,1) primary key,
+--SkillSetName nvarchar(100) null,
+--MergeSkillSets nvarchar(20) null,
+--CompareSkillSets nvarchar(20) null,
+--OperationType int null,
+--ShowInInvoice bit not null DEFAULT 1,
+--Description nvarchar(100) null,
+--IsActive bit not null DEFAULT 1
+--SystemofRecordId int null
+--)
+
+--insert into InvoiceSkillSet values('AVR_Verify & QC','81','82',1,1,'Get common from both tables',1,2)
+--insert into InvoiceSkillSet values('AVR_QC','82','81',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
+--insert into InvoiceSkillSet values('DR_Verify/Keyed Verify & QC','86,85','87',1,1,'Get common from both tables',1,2)
+--insert into InvoiceSkillSet values('DR_QC','87','86,85',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
+
+--update invoiceskillset set SystemofRecordId = 2 
+
+--ALTER TABLE invoiceskillset
+--ADD CONSTRAINT fk_invoiceskillset
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--ALTER TABLE INVOICEDUMP
+--ADD OrderFees NVARCHAR(50)
+--ALTER TABLE INVOICEDUMP
+--ADD AOLFees NVARCHAR(50)
+--ALTER TABLE INVOICEDUMP
+--ADD CopyFees NVARCHAR(50)
+--ALTER TABLE INVOICEDUMP
+--ADD CertifiedCopyFees NVARCHAR(50)
+
+
+
+--execute invoice sp in stagging -- done check if update with ordrfees colmns
 

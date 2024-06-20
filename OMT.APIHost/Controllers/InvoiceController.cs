@@ -24,5 +24,13 @@ namespace OMT.APIHost.Controllers
         {
             return _invoiceService.GetInvoice(getinvoiceDTO);
         }
+
+        [HttpGet]
+        [Route("GetInvoiceSkillSetList/{sorid:int}")]
+
+        public ResultDTO GetInvoiceSkillSetList(int sorid)
+        {
+            return _invoiceService.GetInvoiceSkillSetList(sorid);
+        }
     }
 }

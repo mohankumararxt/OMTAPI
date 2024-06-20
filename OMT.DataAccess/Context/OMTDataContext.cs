@@ -33,6 +33,7 @@ namespace OMT.DataAccess.Context
         public DbSet<CostCenter> CostCenter { get; set; }
         public DbSet<InvoiceDump> InvoiceDump { get; set; }
         public DbSet<Timeline> Timeline { get; set; }
+        public DbSet<InvoiceSkillSet> InvoiceSkillSet { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

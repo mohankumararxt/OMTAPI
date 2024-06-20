@@ -18,10 +18,16 @@ namespace OMT.DataAccess.Entities
         public string CostCenter { get; set; }
         public string ProcessType { get; set; }
         public string SourceType { get; set; }
-        public string Customer { get; set; }
+        public string Customer { get; set; }    
         public string Business { get; set; }
         public string Workflowstatus { get; set; }
         public string TotalOrderFees { get; set; }
         public string ProductDescription { get; set; }
+        public string OrderFees { get; set; }
+        public string AOLFees { get; set; }
+        public string CopyFees { get; set; }
+        public string CertifiedCopyFees { get; set; }
+       
+        
     }
 }
