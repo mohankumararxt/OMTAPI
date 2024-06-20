@@ -333,19 +333,28 @@ namespace OMT.DataService.Service
                                                                          SystemofRecordId = ss.SystemofRecordId,
                                                                      }).ToList();
 
-                List<InvoiceSkillSetResponseDTO> ListofSkillSets2 = (from inv in _oMTDataContext.InvoiceSkillSet
-                                                                     join sor in _oMTDataContext.SystemofRecord on inv.SystemofRecordId equals sor.SystemofRecordId
-                                                                     join ss in _oMTDataContext.SkillSet on inv.SkillSetName equals ss.SkillSetName into ssJoin
-                                                                     from subSS in ssJoin.DefaultIfEmpty()
-                                                                     where inv.ShowInInvoice == true && subSS == null && sor.SystemofRecordId == sorid
-                                                                             orderby inv.SkillSetName
-                                                                     select new InvoiceSkillSetResponseDTO
-                                                                     {
-                                                                         SkillSetName = inv.SkillSetName,
-                                                                         SkillSetId = 0,
-                                                                         SystemofRecordName = sor.SystemofRecordName,
-                                                                         SystemofRecordId = sor.SystemofRecordId,
-                                                                     }).ToList();
+                int skillsetidcounter = -1;
+
+               var rawlist = (from inv in _oMTDataContext.InvoiceSkillSet
+                              join sor in _oMTDataContext.SystemofRecord on inv.SystemofRecordId equals sor.SystemofRecordId
+                              join ss in _oMTDataContext.SkillSet on inv.SkillSetName equals ss.SkillSetName into ssJoin
+                              from subSS in ssJoin.DefaultIfEmpty()
+                              where inv.ShowInInvoice == true && subSS == null && sor.SystemofRecordId == sorid
+                              orderby inv.SkillSetName
+                              select new 
+                              {
+                                  SkillSetName = inv.SkillSetName,
+                                  SystemofRecordName = sor.SystemofRecordName,
+                                  SystemofRecordId = sor.SystemofRecordId,
+                              }).ToList();
+
+                List<InvoiceSkillSetResponseDTO> ListofSkillSets2 = rawlist.Select(x => new InvoiceSkillSetResponseDTO
+                                                                    {
+                                                                        SkillSetName = x.SkillSetName,
+                                                                        SkillSetId = skillsetidcounter--,
+                                                                        SystemofRecordId = x.SystemofRecordId,
+                                                                        SystemofRecordName = x.SystemofRecordName,
+                                                                    }).ToList();
 
                 var ListofSkillSets = ListofSkillSets1.Union(ListofSkillSets2).OrderBy(s => s.SkillSetName).ToList();
 
