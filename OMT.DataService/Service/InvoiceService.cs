@@ -218,7 +218,7 @@ namespace OMT.DataService.Service
                                                       // SkillSet = getinvoiceDTO.SkillSetName,
                                                        SystemOfRecord = cmn1.SystemOfRecord,
                                                        OrderId = cmn1.OrderId,
-                                                       ProcessType = cmn1.ProcessType,
+                                                       ProcessType = "Verify-PP",
                                                        CompletionDate = cmn1.CompletionDate.ToString("MM/dd/yyyy"),
                                                        SourceType = cmn1.SourceType,
                                                        BusinessGroup = cmn1.BusinessGroup,
