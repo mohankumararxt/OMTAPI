@@ -2175,20 +2175,20 @@ namespace OMT.DataService.Service
                 if (successfulupdate.Count > 0 && failedupdates.Count > 0)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = $"No of orders rejected successfully : {successfulupdate.Count}. The following orders could not be rejected:\n";
+                    resultDTO.Message = $"No of orders rejected successfully : {successfulupdate.Count}. \nThe following orders could not be rejected:\n";
                                         foreach (var updateInfo in failedupdates)
                                         {
-                                            resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
+                                            resultDTO.Message += $"- OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
                                         }
                     resultDTO.StatusCode = "200";
                 }
                 else if (successfulupdate.Count <= 0 && failedupdates.Count > 0)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Rejection failed. The following orders could not be rejected:\n";
+                    resultDTO.Message = "Rejection failed. \nThe following orders could not be rejected:\n";
                                          foreach (var updateInfo in failedupdates)
                                          {
-                                             resultDTO.Message += $"OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
+                                             resultDTO.Message += $"- OrderId {updateInfo["OrderId"]} for {updateInfo["Username"]} could not be rejected because {updateInfo["SkillSetName"]} is no longer associated.\n";
                                          }
                     resultDTO.StatusCode = "404";
                 }

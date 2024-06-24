@@ -16,6 +16,7 @@
 -----------add 5 skillsets for resware(Equity_Automation_Typing,Equity_Automation_TIQ,Automation_Review_Typing,AVR_Automation_Review,DR_Automation_Review)
 ---change in hardstate and timeline table remove 7 and add 78
 
+
 --------------------check timeline for skillsets
 --insert into timeline values(1,'PA',15,1,1)
 --insert into timeline values(1,'MI',15,1,1)
@@ -107,7 +108,7 @@
 --OperationType int null,
 --ShowInInvoice bit not null DEFAULT 1,
 --Description nvarchar(100) null,
---IsActive bit not null DEFAULT 1
+--IsActive bit not null DEFAULT 1,
 --SystemofRecordId int null
 --)
 
@@ -116,7 +117,7 @@
 --insert into InvoiceSkillSet values('DR_Verify/Keyed Verify & QC','86,85','87',1,1,'Get common from both tables',1,2)
 --insert into InvoiceSkillSet values('DR_QC','87','86,85',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
 
---update invoiceskillset set SystemofRecordId = 2 
+
 
 --ALTER TABLE invoiceskillset
 --ADD CONSTRAINT fk_invoiceskillset
@@ -137,3 +138,9 @@
 
 --execute invoice sp in stagging -- done check if update with ordrfees colmns
 
+--insert into ResWareProductDescriptions values('Assignment Verification Report',1)
+--insert into ResWareProductDescriptionMap values(68,8)
+
+--update InvoiceSkillSet set MergeSkillSets = '82', CompareSkillSets = '81' where invoiceskillsetid = 1
+
+--update InvoiceSkillSet set MergeSkillSets = '87', CompareSkillSets = '86,85' where invoiceskillsetid = 3
