@@ -112,11 +112,13 @@
 --SystemofRecordId int null
 --)
 
---insert into InvoiceSkillSet values('AVR_Verify & QC','81','82',1,1,'Get common from both tables',1,2)
+--insert into InvoiceSkillSet values('AVR_Verify & QC','82','81',1,1,'Get common from both tables',1,2)
 --insert into InvoiceSkillSet values('AVR_QC','82','81',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
---insert into InvoiceSkillSet values('DR_Verify/Keyed Verify & QC','86,85','87',1,1,'Get common from both tables',1,2)
+--insert into InvoiceSkillSet values('DR_Verify/Keyed Verify & QC','87','86,85',1,1,'Get common from both tables',1,2)
 --insert into InvoiceSkillSet values('DR_QC','87','86,85',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
-
+--insert into InvoiceSkillSet values('AVR_Verify','81','82',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
+--insert into InvoiceSkillSet values('DR_Verify','86','87',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
+--insert into InvoiceSkillSet values('DR_Keyed_Verify','','87',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
 
 
 --ALTER TABLE invoiceskillset

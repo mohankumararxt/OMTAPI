@@ -234,7 +234,7 @@ namespace OMT.DataService.Service
                                                        CopyFees = cmn1.CopyFees,
                                                     }).OrderBy(x => x.CompletionDate).ToList();
 
-                                if (invoiceDump2 != null)
+                                if (invoiceDump2.Count > 0)
                                 {
                                     resultDTO.IsSuccess = true;
                                     resultDTO.Message = "Invoice details fetched successfully";
@@ -244,7 +244,7 @@ namespace OMT.DataService.Service
                                 else
                                 {
                                     resultDTO.IsSuccess = false;
-                                    resultDTO.Message = "Invoice details doesnt exist for the specified details";
+                                    resultDTO.Message = "Invoice details not found for the specified details";
                                     resultDTO.StatusCode = "404";
                                 }
                             }
@@ -282,7 +282,7 @@ namespace OMT.DataService.Service
                                                         CopyFees = cmn1.CopyFees,
                                                     }).OrderBy(x => x.CompletionDate).ToList();
 
-                                if (invoiceDump2 != null)
+                                if (invoiceDump2.Count > 0)
                                 {
                                     resultDTO.IsSuccess = true;
                                     resultDTO.Message = "Invoice details fetched successfully";
@@ -292,7 +292,7 @@ namespace OMT.DataService.Service
                                 else
                                 {
                                     resultDTO.IsSuccess = false;
-                                    resultDTO.Message = "Invoice details doesnt exist for the specified details";
+                                    resultDTO.Message = "Invoice details not found for the specified details";
                                     resultDTO.StatusCode = "404";
                                 }
                             }
