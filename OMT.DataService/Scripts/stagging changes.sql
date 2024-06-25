@@ -144,3 +144,5 @@
 --update InvoiceSkillSet set MergeSkillSets = '82', CompareSkillSets = '81' where invoiceskillsetid = 1
 
 --update InvoiceSkillSet set MergeSkillSets = '87', CompareSkillSets = '86,85' where invoiceskillsetid = 3
+
+
