@@ -118,7 +118,7 @@
 --insert into InvoiceSkillSet values('DR_QC','87','86,85',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
 --insert into InvoiceSkillSet values('AVR_Verify','81','82',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
 --insert into InvoiceSkillSet values('DR_Verify','86','87',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
---insert into InvoiceSkillSet values('DR_Keyed_Verify','','87',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
+--insert into InvoiceSkillSet values('DR_Keyed_Verify','85','87',2,0,'Compare skillsets and show non duplicate from first skillset',1,2)
 
 
 --ALTER TABLE invoiceskillset

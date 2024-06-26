@@ -74,6 +74,7 @@ builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
 builder.Services.AddScoped<ICommonService, CommonService>();
 builder.Services.AddScoped<IProcessStatusService, ProcessStatusService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IProductDescriptionService, ProductDescriptionService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
