@@ -148,13 +148,13 @@ namespace OMT.DataService.Service
                     _oMTDataContext.UserSkillSet.Update(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Skill set deleted successfully";
+                    resultDTO.Message = "User Skillset deleted successfully";
                 }
                 else
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected Skill set is not found in your profile";
+                    resultDTO.Message = "Selected Skill set is not found in the profile";
                 }
             }
             catch (Exception ex)
@@ -203,14 +203,14 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
 
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Your skill set has been updated successfully";
+                    resultDTO.Message = "User skillset has been updated successfully";
                     resultDTO.Data = userSkillSet;
                 }
                 else
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected skill set doesn't exist in your profile";
+                    resultDTO.Message = "Selected skill set doesn't exist in the profile";
                 }
 
             }
