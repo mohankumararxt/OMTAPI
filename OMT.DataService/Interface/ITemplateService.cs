@@ -15,6 +15,14 @@ namespace OMT.DataService.Interface
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
         ResultDTO GetDefaultColumnNames(int systemofrecordid);
         ResultDTO GetPendingOrderDetails(int userid);
+        ResultDTO GetComplexOrdersDetails(ComplexOrdersRequestDTO complexOrdersRequestDTO);
+        ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO);
+        ResultDTO TimeExceededOrders(TimeExceededOrdersDTO timeExceededOrdersDTO);
+        ResultDTO ReplaceOrders(ReplaceOrdersDTO replaceOrdersDTO);
+        ResultDTO GetTemplateColumns(int skillsetId);
+        ResultDTO RejectOrder(RejectOrderDTO rejectOrderDTO);
+        ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
+        ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
         
     }
 }

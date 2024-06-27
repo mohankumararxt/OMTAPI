@@ -1,11 +1,10 @@
 ﻿namespace OMT.DTO
 {
-    public class GetInvoiceDTO
+    public class InvoiceSkillSetResponseDTO
     {
         public int SkillSetId { get; set; }
         public string SkillSetName { get; set; }
         public int SystemofRecordId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public string? SystemofRecordName { get; set; }
     }
 }

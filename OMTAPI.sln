@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DataService", "OMT.Data
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DTO", "OMT.DTO\OMT.DTO.csproj", "{62792F53-F1D9-4FAF-ACEB-36CB77B7DF02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyInvoiceGenerator", "DailyInvoiceGenerator\DailyInvoiceGenerator.csproj", "{2431CEE4-B6E2-47AE-B881-96022AE8A431}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DailyInvoiceGenerator", "DailyInvoiceGenerator\DailyInvoiceGenerator.csproj", "{2431CEE4-B6E2-47AE-B881-96022AE8A431}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

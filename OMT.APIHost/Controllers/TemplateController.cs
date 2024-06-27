@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.Reflection.Metadata.Ecma335;
 
 namespace OMT.APIHost.Controllers
 {
@@ -15,7 +16,6 @@ namespace OMT.APIHost.Controllers
         {
             _templateService = templateService;
         }
-
 
         [HttpPost]
         [Route("new")]
@@ -98,5 +98,64 @@ namespace OMT.APIHost.Controllers
 
             return _templateService.GetPendingOrderDetails(userid);
         }
+
+        [HttpPost]
+        [Route("GetComplexOrdersDetails")]
+
+        public ResultDTO GetComplexOrdersDetails([FromBody] ComplexOrdersRequestDTO complexOrdersRequestDTO)
+        {
+            return _templateService.GetComplexOrdersDetails(complexOrdersRequestDTO);
+        }
+
+        [HttpPut]
+        [Route("ReleaseOrder")]
+
+        public ResultDTO ReleaseOrder(ReleaseOrderDTO releaseOrderDTO)
+        {
+            return _templateService.ReleaseOrder(releaseOrderDTO);
+        }
+
+        [HttpPost]
+        [Route("TimeExceededOrders")]
+        public ResultDTO TimeExceededOrders([FromBody] TimeExceededOrdersDTO timeExceededOrdersDTO)
+        {
+            return _templateService.TimeExceededOrders(timeExceededOrdersDTO);
+        }
+
+        [HttpGet]
+        [Route("GetTemplateColumnNames/{skillsetid:int}")]
+        public ResultDTO GetTemplateColumnNames(int skillsetid)
+        {
+            return _templateService.GetTemplateColumns(skillsetid);
+        }
+
+        [HttpPost]
+        [Route("ReplaceOrders")]
+        public ResultDTO ReplaceOrders([FromBody] ReplaceOrdersDTO replaceOrdersDTO)
+        {
+            return _templateService.ReplaceOrders(replaceOrdersDTO);
+        }
+
+        [HttpPut]
+        [Route("RejectOrder")]
+        public ResultDTO RejectOrder([FromBody] RejectOrderDTO rejectOrderDTO)
+        {
+            return _templateService.RejectOrder(rejectOrderDTO);
+        }
+
+        [HttpPut]
+        [Route("AssignOrderToUser")]
+        public ResultDTO AssignOrderToUser([FromBody] AssignOrderToUserDTO assignOrderToUserDTO)
+        {
+            return _templateService.AssignOrderToUser(assignOrderToUserDTO);
+        }
+
+        [HttpPost]
+        [Route("DeleteOrders")]
+        public ResultDTO DeleteOrders([FromBody] DeleteOrderDTO deleteOrderDTO)
+        {
+            return _templateService.DeleteOrders(deleteOrderDTO);
+        }
+
     }
 }

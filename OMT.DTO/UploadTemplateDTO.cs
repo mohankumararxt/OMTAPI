@@ -4,7 +4,7 @@
     {
         public int SkillsetId { get; set; }
         public string JsonData { get; set; }
-        public bool IsPriority { get; set; }
+       
     }
 
     public class ValidateOrderDTO
