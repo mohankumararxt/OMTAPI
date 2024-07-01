@@ -78,6 +78,12 @@ namespace OMT.DataService.Service
                     teamsObj.IsActive = false;
                     _oMTDataContext.Teams.Update(teamsObj);
                     _oMTDataContext.SaveChanges();
+
+                    var teamasso = _oMTDataContext.TeamAssociation.Where(x => x.TeamId == teamId).ToList();
+
+                    _oMTDataContext.TeamAssociation.RemoveRange(teamasso);
+                    _oMTDataContext.SaveChanges();
+
                     resultDTO.Message = "Teams Deleted Successfully.";
                     resultDTO.IsSuccess = true;
                     resultDTO.Data = GetTeamsList().Data;
