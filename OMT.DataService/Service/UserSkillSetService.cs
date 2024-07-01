@@ -299,6 +299,7 @@ namespace OMT.DataService.Service
                             resultDTO.StatusCode = "404";
                             resultDTO.IsSuccess = false;
                             resultDTO.Message = "User Skillset details not found";
+                            resultDTO.Data = userSkillsetDetailsList;
                     }
                    
                 }
