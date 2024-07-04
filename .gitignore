@@ -18,3 +18,5 @@
 /DailyInvoiceGenerator/bin/Debug
 /DailyInvoiceGenerator/obj
 /DailyInvoiceGenerator/bin/Release/net472
+/DailyInvoiceGenerator/Properties/PublishProfiles
+/DailyInvoiceGenerator/DailyInvoiceGenerator.csproj.user
