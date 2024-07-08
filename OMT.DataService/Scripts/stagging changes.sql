@@ -148,3 +148,8 @@
 --update InvoiceSkillSet set MergeSkillSets = '87', CompareSkillSets = '86,85' where invoiceskillsetid = 3
 
 
+--truncate table userskillset
+--truncate table templatecolumns
+--delete from skillset where skillsetid >90
+--truncate table teamassociation
+--delete from userprofile where userid >126

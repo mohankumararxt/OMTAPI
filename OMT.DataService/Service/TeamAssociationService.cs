@@ -98,6 +98,7 @@ namespace OMT.DataService.Service
                 List<TeamAssociationResponseDTO> ListofTeamAssociations = (from up in _oMTDataContext.UserProfile
                                                                            join ta in _oMTDataContext.TeamAssociation on up.UserId equals ta.UserId
                                                                            join t in _oMTDataContext.Teams on ta.TeamId equals t.TeamId
+                                                                           where up.IsActive && t.IsActive
                                                                            orderby t.TeamName,up.FirstName
                                                                            select new TeamAssociationResponseDTO()
                                                                            {
@@ -128,7 +129,7 @@ namespace OMT.DataService.Service
                 List<TeamAssociationResponseDTO> ListofTeamAssociations = (from up in _oMTDataContext.UserProfile
                                                                            join ta in _oMTDataContext.TeamAssociation on up.UserId equals ta.UserId
                                                                            join t in _oMTDataContext.Teams on ta.TeamId equals t.TeamId
-                                                                           where ta.TeamId == teamid && t.IsActive && t.TeamId == teamid
+                                                                           where ta.TeamId == teamid && t.IsActive && t.TeamId == teamid && up.IsActive
                                                                            orderby up.FirstName
                                                                            select new TeamAssociationResponseDTO()
                                                                            {

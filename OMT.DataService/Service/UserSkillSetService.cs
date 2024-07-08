@@ -27,7 +27,7 @@ namespace OMT.DataService.Service
                     List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
                                                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                         where up.IsActive == true && uss.IsActive == true
+                                                                         where up.IsActive == true && uss.IsActive == true && ss.IsActive == true
                                                                          orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
@@ -51,7 +51,7 @@ namespace OMT.DataService.Service
                     List<UserSkillSetResponseDTO> listofuserskillsets1 = (from up in _oMTDataContext.UserProfile
                                                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                         where up.UserId == userid && up.IsActive == true && uss.IsActive == true
+                                                                         where up.UserId == userid && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
                                                                          orderby up.FirstName, ss.SkillSetName
                                                                          select new UserSkillSetResponseDTO
                                                                          {
@@ -148,13 +148,13 @@ namespace OMT.DataService.Service
                     _oMTDataContext.UserSkillSet.Update(userSkillSet);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Skill set deleted successfully";
+                    resultDTO.Message = "User Skillset deleted successfully";
                 }
                 else
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected Skill set is not found in your profile";
+                    resultDTO.Message = "Selected Skill set is not found in the profile";
                 }
             }
             catch (Exception ex)
@@ -203,14 +203,14 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
 
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Your skill set has been updated successfully";
+                    resultDTO.Message = "User skillset has been updated successfully";
                     resultDTO.Data = userSkillSet;
                 }
                 else
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Selected skill set doesn't exist in your profile";
+                    resultDTO.Message = "Selected skill set doesn't exist in the profile";
                 }
 
             }
@@ -230,7 +230,7 @@ namespace OMT.DataService.Service
             {
                 if (updateUserSkillsetListDTO.TeamId != null && updateUserSkillsetListDTO.SystemOfRecordId != null)
                 {
-                    List<SkillSet> skillSet = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && x.IsActive).ToList();
+                    List<SkillSet> skillSet = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && x.IsActive).OrderBy(x => x.SkillSetName).ToList();
 
                     var users = (from te in _oMTDataContext.Teams
                                  join ta in _oMTDataContext.TeamAssociation on te.TeamId equals ta.TeamId
@@ -238,7 +238,7 @@ namespace OMT.DataService.Service
                                  join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                  join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                  join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
-                                 where ta.TeamId == updateUserSkillsetListDTO.TeamId && sor.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && uss.IsActive && up.IsActive && te.IsActive 
+                                 where ta.TeamId == updateUserSkillsetListDTO.TeamId && sor.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && uss.IsActive && up.IsActive && te.IsActive && ss.IsActive && sor.IsActive
                                  select new 
                                  {
                                      UserId = ta.UserId,
@@ -254,7 +254,7 @@ namespace OMT.DataService.Service
                                                                           join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
                                                                           join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                           join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
-                                                                          where sor.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && uss.IsActive && up.IsActive && up.UserId == user.UserId
+                                                                          where sor.SystemofRecordId == updateUserSkillsetListDTO.SystemOfRecordId && uss.IsActive && up.IsActive && up.UserId == user.UserId && ss.IsActive && sor.IsActive
                                                                           select new UserskillsetAssociationdetailsDTO
                                                                            {
                                                                                SkillSetId = uss.SkillSetId,
@@ -288,7 +288,7 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    if (userSkillsetDetailsList != null)
+                    if (userSkillsetDetailsList.Count > 0)
                     {
                             resultDTO.Data = userSkillsetDetailsList;
                             resultDTO.IsSuccess = true;
@@ -299,6 +299,7 @@ namespace OMT.DataService.Service
                             resultDTO.StatusCode = "404";
                             resultDTO.IsSuccess = false;
                             resultDTO.Message = "User Skillset details not found";
+                            resultDTO.Data = userSkillsetDetailsList;
                     }
                    
                 }
