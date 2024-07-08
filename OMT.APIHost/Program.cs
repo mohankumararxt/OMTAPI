@@ -78,6 +78,8 @@ builder.Services.AddScoped<IProductDescriptionService, ProductDescriptionService
 builder.Services.AddScoped<IResWareProductDescriptionsService, ResWareProductDescriptionsService>();
 builder.Services.AddScoped<IBusinessGroupService, BusinessGroupService>();
 builder.Services.AddScoped<IProcessTypeService, ProcessTypeService>();
+builder.Services.AddScoped<ITotalOrderFeesService, TotalOrderFeesService>();
+builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
