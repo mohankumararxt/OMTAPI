@@ -68,6 +68,11 @@ namespace OMT.DataService.Service
                     productDescription.IsActive = false;
                     _oMTDataContext.ProductDescription.Update(productDescription);
                     _oMTDataContext.SaveChanges();
+
+                    List<ResWareProductDescriptionMap> resWareProductDescriptionMap = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.ProductDescriptionId == id).ToList();
+                    _oMTDataContext.ResWareProductDescriptionMap.RemoveRange(resWareProductDescriptionMap);
+                    _oMTDataContext.SaveChanges();
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Product Description has been deleted successfully";
                 }
