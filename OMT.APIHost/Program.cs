@@ -77,6 +77,7 @@ builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IProductDescriptionService, ProductDescriptionService>();
 builder.Services.AddScoped<IResWareProductDescriptionsService, ResWareProductDescriptionsService>();
 builder.Services.AddScoped<ITotalOrderFeesService, TotalOrderFeesService>();
+builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
