@@ -40,7 +40,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("update")]
-        public ResultDTO UpdateBusinessGroup(BusinessGroupDTO businessGroupDTO)
+        public ResultDTO UpdateBusinessGroup([FromBody] BusinessGroupDTO businessGroupDTO)
         {
             return _businessGroupService.UpdateBusinessGroup(businessGroupDTO);
         }

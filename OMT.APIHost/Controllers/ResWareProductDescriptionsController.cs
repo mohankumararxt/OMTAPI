@@ -50,7 +50,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("update")]
-        public ResultDTO UpdateResWareProductDescriptions(ResWareProductDescriptionsUpdateDTO res)
+        public ResultDTO UpdateResWareProductDescriptions([FromBody] ResWareProductDescriptionsUpdateDTO res)
         {
             return _resWareProductDescriptionsService.UpdateResWareProductDescriptions(res);
         }

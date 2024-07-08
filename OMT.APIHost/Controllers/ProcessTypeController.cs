@@ -28,7 +28,7 @@ namespace OMT.APIHost.Controllers
         [HttpPut]
         [Route("update")]
 
-        public ResultDTO UpdateProcessType(ProcessTypeDTO processTypeDTO)
+        public ResultDTO UpdateProcessType([FromBody] ProcessTypeDTO processTypeDTO)
         {
             return _processTypeService.UpdateProcessType(processTypeDTO);
         }
