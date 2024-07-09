@@ -48,36 +48,36 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteCustomer(int customerId)
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                Customer  customer = _oMTDataContext.Customer.Where(x => x.CustomerId == customerId).FirstOrDefault();
+        //public ResultDTO DeleteCustomer(int customerId)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        Customer  customer = _oMTDataContext.Customer.Where(x => x.CustomerId == customerId).FirstOrDefault();
 
-                if (customer != null)
-                {
-                    customer.IsActive = false;
-                    _oMTDataContext.Customer.Update(customer);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Customer has been deleted successfully";
-                }
-                else
-                {
-                    resultDTO.StatusCode = "404";
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Customer is not found";
-                }
-            }
-            catch (Exception ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = ex.Message;
-            }
-            return resultDTO;
-        }
+        //        if (customer != null)
+        //        {
+        //            customer.IsActive = false;
+        //            _oMTDataContext.Customer.Update(customer);
+        //            _oMTDataContext.SaveChanges();
+        //            resultDTO.IsSuccess = true;
+        //            resultDTO.Message = "Customer has been deleted successfully";
+        //        }
+        //        else
+        //        {
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.Message = "Customer is not found";
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
 
         public ResultDTO GetCustomerList()
         {

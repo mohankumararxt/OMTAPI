@@ -10,7 +10,7 @@ namespace OMT.DataService.Interface
     public interface ICustomerService
     {
         ResultDTO CreateCustomer(string customername);
-        ResultDTO DeleteCustomer(int customerId);
+      //  ResultDTO DeleteCustomer(int customerId);
         ResultDTO GetCustomerList();
         ResultDTO UpdateCustomer(CustomerDTO customerDTO);
     }

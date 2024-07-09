@@ -81,8 +81,9 @@ builder.Services.AddScoped<IProcessTypeService, ProcessTypeService>();
 builder.Services.AddScoped<ITotalOrderFeesService, TotalOrderFeesService>();
 builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 builder.Services.AddScoped<ISourceTypeService, SourceTypeService>();
-
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IBusinessService, BusinessService>();
+
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
