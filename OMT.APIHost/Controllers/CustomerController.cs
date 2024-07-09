@@ -26,13 +26,13 @@ namespace OMT.APIHost.Controllers
             return _customerService.GetCustomerList();
         }
 
-        [HttpDelete]
-        [Route("DeleteCustomer/{customerId:int}")]
+        //[HttpDelete]
+        //[Route("DeleteCustomer/{customerId:int}")]
 
-        public ResultDTO DeleteCustomer(int customerId)
-        {
-            return _customerService.DeleteCustomer(customerId);
-        }
+        //public ResultDTO DeleteCustomer(int customerId)
+        //{
+        //    return _customerService.DeleteCustomer(customerId);
+        //}
 
         [HttpPost]
         [Route("CreateCustomer")]

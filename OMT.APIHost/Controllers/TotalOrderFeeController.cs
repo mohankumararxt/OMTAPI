@@ -26,13 +26,13 @@ namespace OMT.APIHost.Controllers
             return _totalOrderFeesService.GetTotalOrderFeeList();
         }
 
-        [HttpDelete]
-        [Route("DeleteTotalOrderFee/{orderFeeid:int}")]
+        //[HttpDelete]
+        //[Route("DeleteTotalOrderFee/{orderFeeid:int}")]
 
-        public ResultDTO DeleteTotalOrderFee(int orderFeeid)
-        {
-            return _totalOrderFeesService.DeleteTotalOrderFee(orderFeeid);
-        }
+        //public ResultDTO DeleteTotalOrderFee(int orderFeeid)
+        //{
+        //    return _totalOrderFeesService.DeleteTotalOrderFee(orderFeeid);
+        //}
 
         [HttpPost]
         [Route("CreateTotalOrderFee")]
