@@ -24,12 +24,12 @@ namespace OMT.APIHost.Controllers
             return _businessGroupService.GetBusinessGroup();
         }
 
-        [HttpDelete]
-        [Route("Delete/{id:int}")]
-        public ResultDTO DeleteBusinessGroup(int id)
-        {
-            return _businessGroupService.DeleteBusinessGroup(id);
-        }
+        //[HttpDelete]
+        //[Route("Delete/{id:int}")]
+        //public ResultDTO DeleteBusinessGroup(int id)
+        //{
+        //    return _businessGroupService.DeleteBusinessGroup(id);
+        //}
 
         [HttpPost]
         [Route("new")]

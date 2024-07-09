@@ -6,7 +6,7 @@ namespace OMT.DataService.Interface
     {
         ResultDTO CreateBusinessGroup(string BusinessGroupName);
         ResultDTO UpdateBusinessGroup(BusinessGroupDTO businessGroupDTO);
-        ResultDTO DeleteBusinessGroup(int id);
+       // ResultDTO DeleteBusinessGroup(int id);
         ResultDTO GetBusinessGroup();
     }
 }

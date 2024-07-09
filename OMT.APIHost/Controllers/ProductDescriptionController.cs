@@ -20,7 +20,6 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("GetProductDescription")]
-
         public ResultDTO GetProductDescription()
         {
             return _productDescriptionService.GetProductDescription();
@@ -28,7 +27,6 @@ namespace OMT.APIHost.Controllers
 
         [HttpDelete]
         [Route("DeleteProductDescription/{id:int}")]
-
         public ResultDTO DeleteProductDescription(int id)
         {
             return _productDescriptionService.DeleteProductDescription(id);
@@ -43,7 +41,6 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("UpdateProductDescription")]
-
         public ResultDTO UpdateProductDescription([FromBody] ProductDescriptionResponseDTO productDescriptionResponseDTO)
         {
             return _productDescriptionService.UpdateProductDescription(productDescriptionResponseDTO);

@@ -12,7 +12,6 @@ namespace OMT.APIHost.Controllers
     public class ResWareProductDescriptionsController : ControllerBase
     {
         private readonly IResWareProductDescriptionsService _resWareProductDescriptionsService;
-
         public ResWareProductDescriptionsController(IResWareProductDescriptionsService resWareProductDescriptionsService)
         {
             _resWareProductDescriptionsService = resWareProductDescriptionsService;
@@ -34,8 +33,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("new")]
-
-        public ResultDTO CreateResWareProductDescriptions(ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
+        public ResultDTO CreateResWareProductDescriptions([FromBody] ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
         {
             return _resWareProductDescriptionsService.CreateResWareProductDescriptions(resWareProductDescriptionsDTO);
         }

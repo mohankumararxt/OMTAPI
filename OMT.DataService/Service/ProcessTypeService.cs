@@ -55,37 +55,37 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteProcessType(int id)
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                ProcessType Pt = _oMTDataContext.ProcessType.Where(x => x.IsActive && x.ProcessTypeId == id).FirstOrDefault();
+        //public ResultDTO DeleteProcessType(int id)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        ProcessType Pt = _oMTDataContext.ProcessType.Where(x => x.IsActive && x.ProcessTypeId == id).FirstOrDefault();
 
-                if (Pt != null)
-                {
-                    Pt.IsActive = false;
-                    _oMTDataContext.ProcessType.Update(Pt);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Process Type has been deleted successfully";
-                }
-                else
-                {
-                    resultDTO.StatusCode = "404";
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Process Type is not found";
-                }
+        //        if (Pt != null)
+        //        {
+        //            Pt.IsActive = false;
+        //            _oMTDataContext.ProcessType.Update(Pt);
+        //            _oMTDataContext.SaveChanges();
+        //            resultDTO.IsSuccess = true;
+        //            resultDTO.Message = "Process Type has been deleted successfully";
+        //        }
+        //        else
+        //        {
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.Message = "Process Type is not found";
+        //        }
 
-            }
-            catch (Exception ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = ex.Message;
-            }
-            return resultDTO;
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
 
         public ResultDTO GetProcessType()
         {

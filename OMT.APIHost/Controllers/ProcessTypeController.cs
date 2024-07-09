@@ -19,7 +19,6 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("get")]
-
         public ResultDTO GetProcessType()
         {
             return _processTypeService.GetProcessType();
@@ -27,24 +26,21 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("update")]
-
         public ResultDTO UpdateProcessType([FromBody] ProcessTypeDTO processTypeDTO)
         {
             return _processTypeService.UpdateProcessType(processTypeDTO);
         }
 
-        [HttpDelete]
-        [Route("delete/{id:int}")]
-
-        public ResultDTO DeleteProcessType(int id)
-        {
-            return _processTypeService.DeleteProcessType(id);
-        }
+        //[HttpDelete]
+        //[Route("delete/{id:int}")]
+        //public ResultDTO DeleteProcessType(int id)
+        //{
+        //    return _processTypeService.DeleteProcessType(id);
+        //}
 
         [HttpPost]
         [Route("new")]
-
-        public ResultDTO CreateProcessType(string ProcessType)
+        public ResultDTO CreateProcessType([FromBody] string ProcessType)
         {
             return _processTypeService.CreateProcessType(ProcessType);
         }

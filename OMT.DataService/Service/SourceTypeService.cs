@@ -2,41 +2,48 @@
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace OMT.DataService.Service
 {
-    public class CostCenterService : ICostCenterService
+    public class SourceTypeService : ISourceTypeService
     {
         private readonly OMTDataContext _oMTDataContext;
-        public CostCenterService(OMTDataContext oMTDataContext)
+
+        public SourceTypeService(OMTDataContext oMTDataContext)
         {
             _oMTDataContext = oMTDataContext;
         }
 
-        public ResultDTO CreateCostCenter(string CostcenterAmount)
+        public ResultDTO CreateSourceType(string SourceTypeName)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
             try
             {
-                var existing_costcenter = _oMTDataContext.CostCenter.Where(x => x.CostCenterAmount == CostcenterAmount).FirstOrDefault();
+                SourceType st = _oMTDataContext.SourceType.Where(x => x.IsActive && x.SourceTypeName == SourceTypeName).FirstOrDefault();
 
-                if (existing_costcenter != null)
+                if (st != null)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Cost Center already exists. Please try to add different Cost Center";
+                    resultDTO.Message = "Source Type already exists. Please try to add different Source Type";
                 }
                 else
                 {
-                    CostCenter costCenter = new CostCenter()
+                    SourceType sty = new SourceType()
                     {
-                         CostCenterAmount = CostcenterAmount,
+                        SourceTypeName = SourceTypeName,
+                        IsActive = true,
                     };
 
-                    _oMTDataContext.CostCenter.Add(costCenter);
+                    _oMTDataContext.SourceType.Add(sty);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Cost Center created successfully";
-
+                    resultDTO.Message = "Source Type created successfully";
                 }
             }
             catch (Exception ex)
@@ -48,26 +55,28 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        //public ResultDTO DeleteCostCenter(int costCenterId)
+        //public ResultDTO DeleteSourceType(int stid)
         //{
         //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
         //    try
         //    {
-        //        CostCenter costCenter = _oMTDataContext.CostCenter.Where(x => x.CostCenterId == costCenterId).FirstOrDefault();
+        //        SourceType st = _oMTDataContext.SourceType.Where(x => x.IsActive && x.SourceTypeId == stid).FirstOrDefault();
 
-        //        if (costCenter != null)
+        //        if (st != null)
         //        {
-        //            _oMTDataContext.CostCenter.Remove(costCenter);
+        //            st.IsActive = false;
+        //            _oMTDataContext.SourceType.Update(st);
         //            _oMTDataContext.SaveChanges();
         //            resultDTO.IsSuccess = true;
-        //            resultDTO.Message = "Cost Center has been deleted successfully";
+        //            resultDTO.Message = "Source Type has been deleted successfully";
         //        }
         //        else
         //        {
         //            resultDTO.StatusCode = "404";
         //            resultDTO.IsSuccess = false;
-        //            resultDTO.Message = "Cost Center is not found";
+        //            resultDTO.Message = "Source Type is not found";
         //        }
+
         //    }
         //    catch (Exception ex)
         //    {
@@ -78,20 +87,16 @@ namespace OMT.DataService.Service
         //    return resultDTO;
         //}
 
-        public ResultDTO GetCostCenterList()
+        public ResultDTO GetSourceType()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<CostCenter>  costCenters = _oMTDataContext.CostCenter.ToList();
+                List<SourceType> st = _oMTDataContext.SourceType.Where(x => x.IsActive).OrderBy(x => x.SourceTypeName).ToList();
 
-                if (costCenters.Count > 0)
-                {
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "List of Cost Center";
-                    resultDTO.Data = costCenters;
-                }
-
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Source Types";
+                resultDTO.Data = st;
             }
             catch (Exception ex)
             {
@@ -102,25 +107,26 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateCostCenter(UpdateCostCenterDTO updateCostCenterDTO)
+        public ResultDTO UpdateSourceType(SourceTypeDTO sourceTypeDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
-                CostCenter costCenter = _oMTDataContext.CostCenter.Where(x => x.CostCenterId == updateCostCenterDTO.CostCenterId).FirstOrDefault();
+                SourceType st = _oMTDataContext.SourceType.Find(sourceTypeDTO.SourceTypeId);
 
-                if (costCenter != null)
+                if (st != null)
                 {
-                    costCenter.CostCenterAmount = updateCostCenterDTO.CostCenterAmount;
-                    _oMTDataContext.CostCenter.Update(costCenter);
+                    st.SourceTypeName = sourceTypeDTO.SourceTypeName;
+                    _oMTDataContext.SourceType.Update(st);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Cost Center updated successfully";
+                    resultDTO.Message = "Source Type updated successfully";
+
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Cost Center not found";
+                    resultDTO.Message = "Source Type not found";
                     resultDTO.StatusCode = "404";
                 }
             }

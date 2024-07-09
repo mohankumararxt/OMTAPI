@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class CostCenterController : ControllerBase
     {
         private readonly ICostCenterService _costCenterService;
@@ -26,13 +26,13 @@ namespace OMT.APIHost.Controllers
             return _costCenterService.GetCostCenterList();
         }
 
-        [HttpDelete]
-        [Route("DeleteCostCenter/{costcenterid:int}")]
+        //[HttpDelete]
+        //[Route("DeleteCostCenter/{costcenterid:int}")]
 
-        public ResultDTO DeleteCostCenter(int costcenterid)
-        {
-            return _costCenterService.DeleteCostCenter(costcenterid);
-        }
+        //public ResultDTO DeleteCostCenter(int costcenterid)
+        //{
+        //    return _costCenterService.DeleteCostCenter(costcenterid);
+        //}
 
         [HttpPost]
         [Route("CreateCostCenter")]

@@ -55,37 +55,37 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteBusinessGroup(int id)
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                BusinessGroup businessgroup = _oMTDataContext.BusinessGroup.Where(x => x.IsActive && x.BusinessGroupId == id).FirstOrDefault();
+        //public ResultDTO DeleteBusinessGroup(int id)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        BusinessGroup businessgroup = _oMTDataContext.BusinessGroup.Where(x => x.IsActive && x.BusinessGroupId == id).FirstOrDefault();
 
-                if (businessgroup != null)
-                {
-                    businessgroup.IsActive = false;
-                    _oMTDataContext.BusinessGroup.Update(businessgroup);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Business Group has been deleted successfully";
-                }
-                else
-                {
-                    resultDTO.StatusCode = "404";
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Business Group is not found";
-                }
+        //        if (businessgroup != null)
+        //        {
+        //            businessgroup.IsActive = false;
+        //            _oMTDataContext.BusinessGroup.Update(businessgroup);
+        //            _oMTDataContext.SaveChanges();
+        //            resultDTO.IsSuccess = true;
+        //            resultDTO.Message = "Business Group has been deleted successfully";
+        //        }
+        //        else
+        //        {
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.Message = "Business Group is not found";
+        //        }
 
-            }
-            catch (Exception ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = ex.Message;
-            }
-            return resultDTO;
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
 
         public ResultDTO GetBusinessGroup()
         {

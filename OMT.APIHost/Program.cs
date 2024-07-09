@@ -80,6 +80,7 @@ builder.Services.AddScoped<IBusinessGroupService, BusinessGroupService>();
 builder.Services.AddScoped<IProcessTypeService, ProcessTypeService>();
 builder.Services.AddScoped<ITotalOrderFeesService, TotalOrderFeesService>();
 builder.Services.AddScoped<ICostCenterService, CostCenterService>();
+builder.Services.AddScoped<ISourceTypeService, SourceTypeService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

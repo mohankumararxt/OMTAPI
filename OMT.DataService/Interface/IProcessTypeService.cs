@@ -1,9 +1,4 @@
 ﻿using OMT.DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OMT.DataService.Interface
 {
@@ -11,7 +6,7 @@ namespace OMT.DataService.Interface
     {
         ResultDTO CreateProcessType(string ProcessType);
         ResultDTO UpdateProcessType(ProcessTypeDTO processTypeDTO);
-        ResultDTO DeleteProcessType(int id);
+      //  ResultDTO DeleteProcessType(int id);
         ResultDTO GetProcessType();
     }
 }

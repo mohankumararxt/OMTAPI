@@ -48,35 +48,35 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteTotalOrderFee(int orderFeeId)
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                TotalOrderFees totalOrderFees = _oMTDataContext.TotalOrderFees.Where(x => x.TotalOrderFeesId == orderFeeId).FirstOrDefault();
+        //public ResultDTO DeleteTotalOrderFee(int orderFeeId)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        TotalOrderFees totalOrderFees = _oMTDataContext.TotalOrderFees.Where(x => x.TotalOrderFeesId == orderFeeId).FirstOrDefault();
 
-                if (totalOrderFees != null)
-                {
-                    _oMTDataContext.TotalOrderFees.Remove(totalOrderFees);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Order fee has been deleted successfully";
-                }
-                else
-                {
-                    resultDTO.StatusCode = "404";
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Order fee is not found";
-                }
-            }
-            catch (Exception ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = ex.Message;
-            }
-            return resultDTO;
-        }
+        //        if (totalOrderFees != null)
+        //        {
+        //            _oMTDataContext.TotalOrderFees.Remove(totalOrderFees);
+        //            _oMTDataContext.SaveChanges();
+        //            resultDTO.IsSuccess = true;
+        //            resultDTO.Message = "Order fee has been deleted successfully";
+        //        }
+        //        else
+        //        {
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.Message = "Order fee is not found";
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
 
         public ResultDTO GetTotalOrderFeeList()
         {
