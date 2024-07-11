@@ -704,7 +704,7 @@ namespace OMT.DataService.Service
                         string sqlquery = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
                                           $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                          $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                          $"CONVERT(VARCHAR(10), t.StartedDate, 120) as CompletionDate, " +
                                           $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                           $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
                                           $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
@@ -764,7 +764,7 @@ namespace OMT.DataService.Service
                     string sql = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
                                  $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                 $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                 $"CONVERT(VARCHAR(10), t.StartedDate, 120) as CompletionDate, " +
                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
@@ -843,7 +843,7 @@ namespace OMT.DataService.Service
                     string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
                                   $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                  $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                  $"CONVERT(VARCHAR(10), t.StartedDate, 120) as CompletionDate, " +
                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                   $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
                                   $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
@@ -909,7 +909,7 @@ namespace OMT.DataService.Service
                         string sqlquery = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
                                           $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                          $"CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate, " +
+                                          $"CONVERT(VARCHAR(10), t.StartedDate, 120) as CompletionDate, " +
                                           $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                           $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
                                           $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
