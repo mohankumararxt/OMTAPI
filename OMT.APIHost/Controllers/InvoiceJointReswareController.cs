@@ -27,14 +27,14 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("new")]
-        public ResultDTO CreateInvoiceJointResware(InvoiceJointReswareCreateDTO invoiceJointReswareCreateDTO)
+        public ResultDTO CreateInvoiceJointResware([FromBody]InvoiceJointReswareCreateDTO invoiceJointReswareCreateDTO)
         {
             return _invoiceJointReswareService.CreateInvoiceJointResware(invoiceJointReswareCreateDTO);
         }
 
         [HttpPut]
         [Route("update")]
-        public ResultDTO UpdateInvoiceJointResware(InvoiceJointReswareUpdateDTO invoiceJointReswareUpdateDTO)
+        public ResultDTO UpdateInvoiceJointResware([FromBody] InvoiceJointReswareUpdateDTO invoiceJointReswareUpdateDTO)
         {
             return _invoiceJointReswareService.UpdateInvoiceJointResware(invoiceJointReswareUpdateDTO);
         }

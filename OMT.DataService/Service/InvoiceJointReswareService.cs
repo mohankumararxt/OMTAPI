@@ -76,11 +76,14 @@ namespace OMT.DataService.Service
                              orderby ss.SkillSetName
                              select new 
                              {
-                                 SystemOfRecordName = sor.SystemofRecordName,
-                                 SkillSetName = ss.SkillSetName,
-                                 BusinessGroupName = bg.BusinessGroupName,
-                                 ProcessTypeName = pt.ProcessTypeName,
-                                 SourceTypeName = st.SourceTypeName,
+                                 SkillSetId = ss.SkillSetId,
+                                 SystemOfRecordId = sor.SystemofRecordId,
+                                 InvoiceJointReswareId = ijr.InvoiceJointReswareId,
+                                 SystemOfRecord = sor.SystemofRecordName,
+                                 SkillSet = ss.SkillSetName,
+                                 BusinessGroup = bg.BusinessGroupName,
+                                 ProcessType = pt.ProcessTypeName,
+                                 SourceType = st.SourceTypeName,
                                  CostCenterAmount = cc.CostCenterAmount,
                                  TotalOrderFeesAmount = tof.TotalOrderFeesAmount 
                              }).ToList();
