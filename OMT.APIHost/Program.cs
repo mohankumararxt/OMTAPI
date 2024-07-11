@@ -83,6 +83,7 @@ builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 builder.Services.AddScoped<ISourceTypeService, SourceTypeService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBusinessService, BusinessService>();
+builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

@@ -153,3 +153,18 @@
 --delete from skillset where skillsetid >90
 --truncate table teamassociation
 --delete from userprofile where userid >126
+
+--insert into SkillSet values(2,'AVR_Automation_Typing',50,1)
+--insert into SkillSet values(2,'DR_Automation_Typing',50,1)
+
+--insert into invoicejointresware values(2,171,2,2,1,5,4)
+--insert into invoicejointresware values(2,172,3,2,1,5,4)
+
+--select * from ResWareProductDescriptions
+--select * from [dbo].[ProductDescription]
+--select * from ResWareProductDescriptionMap
+
+--insert into ResWareProductDescriptions values('Document Retrieval: MTGAllAssignModW/Data',1)
+--insert into ResWareProductDescriptionMap values(73,4)
+
+--update ResWareProductDescriptions set ResWareProductDescriptionName = 'Assignment Verification: Assignment Verification Report' where  ResWareProductDescriptionId = 68
