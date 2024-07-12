@@ -1,7 +1,10 @@
-﻿using OMT.DataAccess.Context;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.Data;
 
 namespace OMT.DataService.Service
 {
@@ -63,6 +66,81 @@ namespace OMT.DataService.Service
                     skillSet.IsActive = false;
                     _oMTDataContext.SkillSet.Update(skillSet);
                     _oMTDataContext.SaveChanges();
+
+                    // delete userskillsets associated with this skillset
+
+                    var us = _oMTDataContext.UserSkillSet.Where(x => x.SkillSetId == skillsetId && x.IsActive).ToList();
+
+                    foreach (var u in us)
+                    {
+                        u.IsActive = false;
+                        _oMTDataContext.UserSkillSet.Update(u);
+                    }
+
+                    _oMTDataContext.SaveChanges();
+
+                    //delete template
+
+                    List<TemplateColumns> columns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    _oMTDataContext.TemplateColumns.RemoveRange(columns);
+                    _oMTDataContext.SaveChanges();
+
+                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                    using SqlConnection connection = new(connectionstring);
+                    using SqlCommand command = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.Text,
+                        CommandText = "Drop table " + skillSet.SkillSetName
+                    };
+                    connection.Open();
+                    command.ExecuteNonQuery();
+
+                    // delete timeline associated with the skillset
+
+                    var tl = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillSet.SkillSetId && x.IsActive).ToList();
+
+                    foreach ( var t in tl)
+                    {
+                        t.IsActive = false;
+                        _oMTDataContext.Timeline.Update(t);
+                    }
+
+                    _oMTDataContext.SaveChanges();
+
+                    // delete SkillSetHardStates of this skillset
+
+                    var sshs = _oMTDataContext.SkillSetHardStates.Where(x => x.IsActive && x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    foreach ( var ss in sshs)
+                    {
+                        ss.IsActive = false;
+                        _oMTDataContext.SkillSetHardStates.Update(ss);
+                    }
+                    _oMTDataContext.SaveChanges();
+
+                    // delete details from joint tables
+
+                    var ijr = _oMTDataContext.InvoiceJointResware.Where(x => x.SkillSetId == skillSet.SkillSetId).FirstOrDefault();
+
+                    if (ijr != null)
+                    {
+                        _oMTDataContext.InvoiceJointResware.Remove(ijr);
+                        _oMTDataContext.SaveChanges();
+                    }
+
+                    var ijs = _oMTDataContext.InvoiceJointSci.Where(x => x.SkillSetId == skillSet.SkillSetId).FirstOrDefault();
+
+                    if (ijs != null)
+                    {
+                        _oMTDataContext.InvoiceJointSci.Remove(ijs);
+                        _oMTDataContext.SaveChanges();
+                    }
+
+
+
                     resultDTO.Message = "Skill Set has been deleted successfully";
                     resultDTO.IsSuccess = true;
                 }
