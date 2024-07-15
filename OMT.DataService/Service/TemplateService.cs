@@ -43,14 +43,14 @@ namespace OMT.DataService.Service
 
                         var keywordlist = _oMTDataContext.Keywordstable.Where(x => x.IsActive).Select(_ => _.Keywordname).ToList();
 
-                        var notallowed = createTemplateDTO.TemplateColumns.Any(x => keywordlist.Contains(x.ColumnName));
+                        var notallowed = createTemplateDTO.TemplateColumns.Any(x => keywordlist.Contains(x.ColumnName, StringComparer.OrdinalIgnoreCase));
 
-                        var matching = createTemplateDTO.TemplateColumns.Where(x => keywordlist.Contains(x.ColumnName)).Select(x => x.ColumnName).ToList();
+                        var matching = createTemplateDTO.TemplateColumns.Where(x => keywordlist.Contains(x.ColumnName, StringComparer.OrdinalIgnoreCase)).Select(x => x.ColumnName).ToList();
 
                         if (notallowed)
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Template creation doesnt accept certain keywords " + matching + "as column names. Use a different column name.";
+                            resultDTO.Message = "Template creation doesnt accept certain keywords such as " + string.Join(", ", matching) + " as column names. Use a different column name.";
                         }
 
                         else
