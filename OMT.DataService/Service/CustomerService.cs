@@ -30,6 +30,7 @@ namespace OMT.DataService.Service
                     Customer  customer = new Customer()
                     {
                         CustomerName = customername,
+                        IsActive = true,
                     };
 
                     _oMTDataContext.Customer.Add(customer);
