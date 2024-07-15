@@ -28,7 +28,7 @@ namespace OMT.DataService.Service
             //{
             try
             {
-                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == createTemplateDTO.SkillsetId && x.SystemofRecordId == createTemplateDTO.SystemofRecordId).FirstOrDefault();
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == createTemplateDTO.SkillsetId && x.SystemofRecordId == createTemplateDTO.SystemofRecordId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
                     TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SystemOfRecordId == createTemplateDTO.SystemofRecordId && x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
@@ -39,54 +39,72 @@ namespace OMT.DataService.Service
                     }
                     else
                     {
-                        if (createTemplateDTO.TemplateColumns.Any())
+                        //check if col name has any keywords
+
+                        var keywordlist = _oMTDataContext.Keywordstable.Where(x => x.IsActive).Select(_ => _.Keywordname).ToList();
+
+                        var notallowed = createTemplateDTO.TemplateColumns.Any(x => keywordlist.Contains(x.ColumnName));
+
+                        var matching = createTemplateDTO.TemplateColumns.Where(x => keywordlist.Contains(x.ColumnName)).Select(x => x.ColumnName).ToList();
+
+                        if (notallowed)
                         {
-                            foreach (TemplateColumnDTO templateColumns in createTemplateDTO.TemplateColumns)
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Template creation doesnt accept certain keywords " + matching + "as column names. Use a different column name.";
+                        }
+
+                        else
+                        {
+
+                            if (createTemplateDTO.TemplateColumns.Any())
                             {
-                                TemplateColumns newtemplateColumns = new TemplateColumns()
+                                foreach (TemplateColumnDTO templateColumns in createTemplateDTO.TemplateColumns)
                                 {
-                                    SkillSetId = createTemplateDTO.SkillsetId,
-                                    SystemOfRecordId = createTemplateDTO.SystemofRecordId,
-                                    ColumnAliasName = templateColumns.ColumnName.Replace(" ", "_"),
-                                    ColumnName = templateColumns.ColumnName,
-                                    ColumnDataType = templateColumns.ColumnDataType,
-                                    IsDuplicateCheck = templateColumns.IsDuplicateCheck,
-                                    IsGetOrderColumn = templateColumns.IsGetOrderColumn,
-                                };
-                                _oMTDataContext.TemplateColumns.Add(newtemplateColumns);
+                                    TemplateColumns newtemplateColumns = new TemplateColumns()
+                                    {
+                                        SkillSetId = createTemplateDTO.SkillsetId,
+                                        SystemOfRecordId = createTemplateDTO.SystemofRecordId,
+                                        ColumnAliasName = templateColumns.ColumnName.Replace(" ", "_"),
+                                        ColumnName = templateColumns.ColumnName,
+                                        ColumnDataType = templateColumns.ColumnDataType,
+                                        IsDuplicateCheck = templateColumns.IsDuplicateCheck,
+                                        IsGetOrderColumn = templateColumns.IsGetOrderColumn,
+                                    };
+                                    _oMTDataContext.TemplateColumns.Add(newtemplateColumns);
+                                }
+                                _oMTDataContext.SaveChanges();
                             }
-                            _oMTDataContext.SaveChanges();
+
+                            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                            using SqlConnection connection = new(connectionstring);
+                            using SqlCommand command = new()
+                            {
+                                Connection = connection,
+                                CommandType = CommandType.StoredProcedure,
+                                CommandText = "CreateTemplate"
+                            };
+                            command.Parameters.AddWithValue("@SkillsetId", createTemplateDTO.SkillsetId);
+                            command.Parameters.AddWithValue("@SystemofRecordId", createTemplateDTO.SystemofRecordId);
+                            SqlParameter returnValue = new()
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+                            command.Parameters.Add(returnValue);
+                            connection.Open();
+                            command.ExecuteNonQuery();
+
+                            int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+                            resultDTO.Message = "Template Added Successfully.";
+                            if (returnCode != 1)
+                            {
+                                throw new InvalidOperationException("Error encountered while creating template,please try again");
+                            }
+                            // Commit transaction
+                            // dbContextTransaction.Commit();
+
                         }
-
-                        string? connectionstring = _oMTDataContext.Database.GetConnectionString();
-
-                        using SqlConnection connection = new(connectionstring);
-                        using SqlCommand command = new()
-                        {
-                            Connection = connection,
-                            CommandType = CommandType.StoredProcedure,
-                            CommandText = "CreateTemplate"
-                        };
-                        command.Parameters.AddWithValue("@SkillsetId", createTemplateDTO.SkillsetId);
-                        command.Parameters.AddWithValue("@SystemofRecordId", createTemplateDTO.SystemofRecordId);
-                        SqlParameter returnValue = new()
-                        {
-                            ParameterName = "@RETURN_VALUE",
-                            Direction = ParameterDirection.ReturnValue
-                        };
-                        command.Parameters.Add(returnValue);
-                        connection.Open();
-                        command.ExecuteNonQuery();
-
-                        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-                        resultDTO.Message = "Template Added Successfully.";
-                        if (returnCode != 1)
-                        {
-                            throw new InvalidOperationException("Error encountered while creating template,please try again");
-                        }
-                        // Commit transaction
-                        // dbContextTransaction.Commit();
-
                     }
                 }
                 else
