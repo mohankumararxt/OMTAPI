@@ -157,5 +157,13 @@ namespace OMT.APIHost.Controllers
             return _templateService.DeleteOrders(deleteOrderDTO);
         }
 
+        [HttpPost]
+        [Route("SkillsetWiseReports")]
+
+        public ResultDTO SkillsetWiseReports([FromBody] SkillsetWiseReportsDTO skillsetWiseReportsDTO)
+        {
+            return _templateService.SkillsetWiseReports(skillsetWiseReportsDTO);
+        }
+
     }
 }

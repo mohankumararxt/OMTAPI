@@ -2438,6 +2438,25 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-       
+        public ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                //string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                //using SqlConnection connection = new(connectionstring);
+                //connection.Open();
+
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }

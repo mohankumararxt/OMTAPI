@@ -23,6 +23,7 @@ namespace OMT.DataService.Interface
         ResultDTO RejectOrder(RejectOrderDTO rejectOrderDTO);
         ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
         ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
+        ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO);
         
     }
 }
