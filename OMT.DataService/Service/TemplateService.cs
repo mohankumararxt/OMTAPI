@@ -50,7 +50,7 @@ namespace OMT.DataService.Service
                         if (notallowed)
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Template creation doesnt accept certain keywords such as " + string.Join(", ", matching) + " as column names. Use a different column name.";
+                            resultDTO.Message = "Template creation doesn't allow certain keywords such as " + string.Join(", ", matching) + " to be set as column names. Use different column name(s).";
                         }
 
                         else
