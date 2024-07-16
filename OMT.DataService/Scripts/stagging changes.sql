@@ -702,3 +702,7 @@
 --('WRITETEXT', 1),
 --('YEAR', 1),
 --('ZONE', 1);
+
+
+--insert into DefaultTemplateColumns values(2,'AllocationDate','Date',1,0,1,1)
+--update DefaultTemplateColumns set DefaultColumnName = 'AllocationDate' where id = 31
