@@ -858,7 +858,7 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
                                   $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
@@ -924,7 +924,7 @@ namespace OMT.DataService.Service
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        string sqlquery = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                        string sqlquery = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
                                           $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                           $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
