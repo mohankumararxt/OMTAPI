@@ -2443,10 +2443,36 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                //string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
-                //using SqlConnection connection = new(connectionstring);
-                //connection.Open();
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                //if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
+                //{
+                //    List<string> skillsetnames = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && x.IsActive).Select(_ => _.SkillSetName).ToList(); 
+                    
+                //    foreach (string skillsetname in skillsetnames)
+                //    {
+
+                //    }
+                //}
+
+                //if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId != null)
+                //{
+
+                //}
+
+                //if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId != null)
+                //{
+
+                //}
+
+                //if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId == null)
+                //{
+
+                //}
+
 
 
             }
