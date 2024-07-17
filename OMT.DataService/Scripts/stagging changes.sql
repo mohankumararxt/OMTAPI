@@ -704,5 +704,7 @@
 --('ZONE', 1);
 
 
+--insert into DefaultTemplateColumns values(1,'AllocationDate','Date',1,0,1,1)
 --insert into DefaultTemplateColumns values(2,'AllocationDate','Date',1,0,1,1)
---update DefaultTemplateColumns set DefaultColumnName = 'AllocationDate' where id = 31
+
+--update DefaultTemplateColumns set DefaultColumnName = 'AllocationDate',datatype = 'Date' where id = 31
