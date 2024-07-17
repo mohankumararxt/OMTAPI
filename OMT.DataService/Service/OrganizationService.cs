@@ -58,7 +58,7 @@ namespace OMT.DataService.Service
             try
             {
                 List<OrganizationListDTO> orgDTOObj = _context.Organization.Where(x=>x.IsActive).OrderBy(x => x.OrganizationName).Select(_ => new OrganizationListDTO() {  OrganizationId=_.OrganizationId, Description=_.Description,OrganizationName=_.OrganizationName } ) .ToList();
-                if (orgDTOObj != null)
+                if (orgDTOObj.Count > 0)
                 {
                     resultDTO.IsSuccess = true;
                     resultDTO.Data = orgDTOObj;
