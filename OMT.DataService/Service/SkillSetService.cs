@@ -93,8 +93,14 @@ namespace OMT.DataService.Service
                     {
                         Connection = connection,
                         CommandType = CommandType.Text,
-                        CommandText = "Drop table " + skillSet.SkillSetName
+                        CommandText = @"
+                                       IF OBJECT_ID(@TableName, 'U') IS NOT NULL
+                                       BEGIN
+                                           DROP TABLE [" + skillSet.SkillSetName + @"]
+                                       END"
                     };
+                    command.Parameters.AddWithValue("@TableName", skillSet.SkillSetName);
+
                     connection.Open();
                     command.ExecuteNonQuery();
 
@@ -138,8 +144,6 @@ namespace OMT.DataService.Service
                         _oMTDataContext.InvoiceJointSci.Remove(ijs);
                         _oMTDataContext.SaveChanges();
                     }
-
-
 
                     resultDTO.Message = "Skill Set has been deleted successfully";
                     resultDTO.IsSuccess = true;
