@@ -2448,31 +2448,199 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                //if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
-                //{
-                //    List<string> skillsetnames = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && x.IsActive).Select(_ => _.SkillSetName).ToList(); 
-                    
-                //    foreach (string skillsetname in skillsetnames)
-                //    {
+                List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
-                //    }
-                //}
+                if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
+                {
+                    List<string> skillsetnames = (from ss in _oMTDataContext.SkillSet
+                                                  where ss.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                  select ss.SkillSetName).ToList();
 
-                //if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId != null)
-                //{
 
-                //}
+                    foreach (string skillsetname in skillsetnames)
+                    {
+                        string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                                $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                $"FROM {skillsetname} t " +
+                                $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
-                //if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId != null)
-                //{
+                        using SqlCommand sqlCommand = connection.CreateCommand();
+                        sqlCommand.CommandText = sql1;
+                        
+                        sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
+                        sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
 
-                //}
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
 
-                //if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId == null)
-                //{
+                        DataSet dataset = new DataSet();
 
-                //}
+                        dataAdapter.Fill(dataset);
 
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt2 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt2);
+                    }
+
+                }
+
+                if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId != null)
+                {
+                    SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetWiseReportsDTO.SkillSetId && x.IsActive).FirstOrDefault();
+
+                    List<int> statusid = skillsetWiseReportsDTO.StatusId.ToList();
+                    string csStatusId = string.Join(",", statusid);
+
+                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                               $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                               $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                               $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                               $"FROM {skillset.SkillSetName} t " +
+                               $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                               $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                               $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                               $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sql1;
+
+                    sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column])).ToList();
+
+                    allCompletedRecords.AddRange(querydt2);
+
+                }
+
+                if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId != null)
+                {
+                    List<string> skillsetnames = (from ss in _oMTDataContext.SkillSet
+                                                  where ss.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                  select ss.SkillSetName).ToList();
+
+                    List<int> statusid = skillsetWiseReportsDTO.StatusId.ToList();
+                    string csStatusId = string.Join(",", statusid);
+
+                    foreach (string skillsetname in skillsetnames)
+                    {
+                        string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                                $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                $"FROM {skillsetname} t " +
+                                $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
+                        using SqlCommand sqlCommand = connection.CreateCommand();
+                        sqlCommand.CommandText = sql1;
+
+                        sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
+                        sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt2 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt2);
+                    }
+                }
+
+                if (skillsetWiseReportsDTO.SkillSetId != null && skillsetWiseReportsDTO.StatusId == null)
+                {
+                    SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetWiseReportsDTO.SkillSetId && x.IsActive).FirstOrDefault();
+
+                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName,'(',up.Email,')') as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
+                               $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                               $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                               $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                               $"FROM {skillset.SkillSetName} t " +
+                               $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                               $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                               $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                               $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sql1;
+
+                    sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column])).ToList();
+
+                    allCompletedRecords.AddRange(querydt2);
+                }
+
+                if (allCompletedRecords.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = allCompletedRecords;
+                    resultDTO.Message = "Completed orders has been fetched successfully";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Completed orders not found";
+                    resultDTO.StatusCode = "404";
+                }
 
 
             }
