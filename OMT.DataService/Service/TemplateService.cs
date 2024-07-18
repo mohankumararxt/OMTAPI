@@ -29,6 +29,11 @@ namespace OMT.DataService.Service
             try
             {
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == createTemplateDTO.SkillsetId && x.SystemofRecordId == createTemplateDTO.SystemofRecordId && x.IsActive).FirstOrDefault();
+                
+                List<string> defcol = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId ==  createTemplateDTO.SystemofRecordId).Select(x =>x.DefaultColumnName).ToList();
+
+                string dcol = string.Join(", ", defcol);
+
                 if (skillSet != null)
                 {
                     TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SystemOfRecordId == createTemplateDTO.SystemofRecordId && x.SkillSetId == createTemplateDTO.SkillsetId).FirstOrDefault();
@@ -47,15 +52,38 @@ namespace OMT.DataService.Service
 
                         var matching = createTemplateDTO.TemplateColumns.Where(x => keywordlist.Contains(x.ColumnName, StringComparer.OrdinalIgnoreCase)).Select(x => x.ColumnName).ToList();
 
-                        if (notallowed)
+                        // check if user has added default columns while creating template
+
+                        var twiceadd = createTemplateDTO.TemplateColumns.Any(x => defcol.Contains(x.ColumnName,StringComparer.OrdinalIgnoreCase));
+
+                        var matchingdefcol = createTemplateDTO.TemplateColumns.Where(x => defcol.Contains(x.ColumnName, StringComparer.OrdinalIgnoreCase)).Select(x => x.ColumnName).ToList();
+
+                        if (notallowed && twiceadd)
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Template creation doesn't allow certain keywords such as " + string.Join(", ", matching) + " to be set as column names. Use different column name(s).";
+                            resultDTO.Message = "Template creation doesn't allow certain keywords such as "
+                                                + string.Join(", ", matching)
+                                                + " to be set as column name. Use different column name(s). \n"
+                                                + "Also "
+                                                + string.Join(", ", matchingdefcol)
+                                                + " can't be added twice. It's already set as default column(s).";
+                        }
+
+                        else if (!notallowed && twiceadd)
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = string.Join(", ", matchingdefcol) + " can't be added twice. It's already set as default column(s).";
+                        }
+
+                        else if (notallowed && !twiceadd)
+                        {
+                            resultDTO.Message = "Template creation doesn't allow certain keywords such as "
+                                               + string.Join(", ", matching)
+                                               + " to be set as column name. Use different column name(s).";
                         }
 
                         else
                         {
-
                             if (createTemplateDTO.TemplateColumns.Any())
                             {
                                 foreach (TemplateColumnDTO templateColumns in createTemplateDTO.TemplateColumns)
