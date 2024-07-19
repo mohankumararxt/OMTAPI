@@ -2058,6 +2058,8 @@ namespace OMT.DataService.Service
 
                         List<JObject> recordsToInsert = new List<JObject>();
 
+                        List<JObject> recordsNotInserted = new List<JObject>();
+
                         if (querydt.Count > 0 )
                         {
                             string deleteSql = $"DELETE FROM {tablename} WHERE UserId IS NULL AND (";
@@ -2093,9 +2095,14 @@ namespace OMT.DataService.Service
                                 {
                                     recordsToInsert.Add(records);
                                 }
+
+                                else
+                                {
+                                    recordsNotInserted.Add(records);
+                                }
                             }
 
-                            if (recordsToInsert.Count > 0)
+                            if ((recordsToInsert.Count > 0 && recordsNotInserted.Count <= 0) || (recordsToInsert.Count > 0 && recordsNotInserted.Count > 0))
                             {
                                 // Create the new JSON object with "Records" key
                                 JObject recordsObject = new JObject();
@@ -2126,10 +2133,40 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
-                                resultDTO.IsSuccess = true;
-                                resultDTO.Message = "Orders replaced successfully";
+                                
                             }
 
+                            if (recordsToInsert.Count > 0 && recordsNotInserted.Count <= 0)
+                            {
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "Orders replaced successfully";
+                                resultDTO.StatusCode = "200";
+                            }
+
+                            else if (recordsToInsert.Count <= 0 && recordsNotInserted.Count > 0)
+                            {
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Order(s) couldn't be replaced because it's under process.";
+                                resultDTO.StatusCode = "200";
+                            }
+
+                            else if (recordsToInsert.Count > 0 && recordsNotInserted.Count > 0)
+                            {
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "The following order(s) couldn't be replaced because it's under process: \n";
+                                foreach (var updateInfo in recordsNotInserted)
+                                {
+                                    resultDTO.Message += $"- OrderId : {updateInfo["OrderId"]} \n";
+                                }
+                                resultDTO.StatusCode = "200";
+                            }
+
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Order(s) couldn't be replaced because it's under process";
+                            resultDTO.StatusCode = "400";
                         }
                         
                     }
