@@ -2147,7 +2147,7 @@ namespace OMT.DataService.Service
                             {
                                 resultDTO.IsSuccess = false;
                                 resultDTO.Message = "Order(s) couldn't be replaced because it's under process.";
-                                resultDTO.StatusCode = "200";
+                                resultDTO.StatusCode = "404";
                             }
 
                             else if (recordsToInsert.Count > 0 && recordsNotInserted.Count > 0)
@@ -2158,7 +2158,7 @@ namespace OMT.DataService.Service
                                 {
                                     resultDTO.Message += $"- OrderId : {updateInfo["OrderId"]} \n";
                                 }
-                                resultDTO.StatusCode = "200";
+                                resultDTO.StatusCode = "404";
                             }
 
                         }
