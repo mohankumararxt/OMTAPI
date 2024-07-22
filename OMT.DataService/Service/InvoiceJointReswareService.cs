@@ -82,10 +82,15 @@ namespace OMT.DataService.Service
                                  SystemOfRecord = sor.SystemofRecordName,
                                  SkillSet = ss.SkillSetName,
                                  BusinessGroup = bg.BusinessGroupName,
+                                 BusinessGroupId = bg.BusinessGroupId,
                                  ProcessType = pt.ProcessTypeName,
+                                 ProcessTypeId = pt.ProcessTypeId,
                                  SourceType = st.SourceTypeName,
+                                 SourceTypeId = st.SourceTypeId,
                                  CostCenterAmount = cc.CostCenterAmount,
-                                 TotalOrderFeesAmount = tof.TotalOrderFeesAmount 
+                                 CostCenterId = cc.CostCenterId,
+                                 TotalOrderFeesAmount = tof.TotalOrderFeesAmount,
+                                 TotalOrderFeesId = tof.TotalOrderFeesId,
                              }).ToList();
 
                 if (invjr != null)

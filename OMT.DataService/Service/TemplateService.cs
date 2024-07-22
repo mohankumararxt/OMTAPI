@@ -2146,14 +2146,14 @@ namespace OMT.DataService.Service
                             else if (recordsToInsert.Count <= 0 && recordsNotInserted.Count > 0)
                             {
                                 resultDTO.IsSuccess = false;
-                                resultDTO.Message = "Order(s) couldn't be replaced because it's under process.";
+                                resultDTO.Message = "Order(s) couldn't be replaced because it's under process or completed.";
                                 resultDTO.StatusCode = "404";
                             }
 
                             else if (recordsToInsert.Count > 0 && recordsNotInserted.Count > 0)
                             {
                                 resultDTO.IsSuccess = false;
-                                resultDTO.Message = "The following order(s) couldn't be replaced because it's under process: \n";
+                                resultDTO.Message = "The following order(s) couldn't be replaced because it's under process or completed: \n";
                                 foreach (var updateInfo in recordsNotInserted)
                                 {
                                     resultDTO.Message += $"- OrderId : {updateInfo["OrderId"]} \n";
@@ -2165,7 +2165,7 @@ namespace OMT.DataService.Service
                         else
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Order(s) couldn't be replaced because it's under process";
+                            resultDTO.Message = "Order(s) couldn't be replaced because it's under process or completed";
                             resultDTO.StatusCode = "404";
                         }
                         
