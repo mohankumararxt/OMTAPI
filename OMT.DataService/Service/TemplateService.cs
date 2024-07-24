@@ -459,6 +459,14 @@ namespace OMT.DataService.Service
                                     where ss.SkillSetName == tablename && dt.IsGetOrderColumn
                                     select dt.DefaultColumnName).ToList();
 
+
+                    // get date type columns 
+                    var datecol = (from ss in _oMTDataContext.SkillSet
+                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                   select dt.DefaultColumnName).ToList();
+
+
                     var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
                     string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
@@ -494,10 +502,23 @@ namespace OMT.DataService.Service
 
                     DataTable datatable = dataset.Tables[0];
 
+                    //var querydt1 = datatable.AsEnumerable()
+                    //                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                    //                    column => column.ColumnName,
+                    //                    column => row[column])).ToList();
+
                     var querydt1 = datatable.AsEnumerable()
-                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                        column => column.ColumnName,
-                                        column => row[column])).ToList();
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                  column => column.ColumnName,
+                                  column =>
+                                  {
+                                      if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                                      {
+                                          DateTime dateValue = (DateTime)row[column];
+                                          return dateValue.ToString("yyyy-MM-dd");  // Format as date string
+                                      }
+                                      return row[column];
+                                  })).ToList();
 
                     noStatusRecords.AddRange(querydt1);
 
@@ -1074,6 +1095,14 @@ namespace OMT.DataService.Service
                                     where ss.SkillSetName == tablename && dt.IsGetOrderColumn
                                     select dt.DefaultColumnName).ToList();
 
+                    // get date type columns 
+                   var datecol = (from ss in _oMTDataContext.SkillSet
+                                  join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                  where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                  select dt.DefaultColumnName).ToList();
+
+
+
                     var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
                     string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
@@ -1108,10 +1137,23 @@ namespace OMT.DataService.Service
 
                     DataTable datatable = dataset.Tables[0];
 
+                    //var querydt1 = datatable.AsEnumerable()
+                    //                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                    //                    column => column.ColumnName,
+                    //                    column => row[column])).ToList();
+
                     var querydt1 = datatable.AsEnumerable()
-                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                        column => column.ColumnName,
-                                        column => row[column])).ToList();
+                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                   column => column.ColumnName,
+                                   column =>
+                                   {
+                                       if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                                       {
+                                           DateTime dateValue = (DateTime)row[column];
+                                           return dateValue.ToString("yyyy-MM-dd");  // Format as date string
+                                       }
+                                       return row[column];
+                                   })).ToList();
 
                     noStatusRecords.AddRange(querydt1);
 
