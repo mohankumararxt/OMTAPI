@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OMT.Authorization;
 using OMT.DataAccess.Context;
+using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
 
@@ -85,6 +86,7 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareService>();
 builder.Services.AddScoped<IInvoiceJointSciService, InvoiceJointSciService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
