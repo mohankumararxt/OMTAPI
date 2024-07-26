@@ -105,7 +105,7 @@ namespace OMT.DataService.Service
                     FirstName = _.FirstName,
                     LastName = _.LastName,
                     UserId = _.UserId,
-                    UserName = (_.FirstName??"") +' ' + (_.LastName?? "") +'(' + _.Email + ')'
+                    UserName = (_.FirstName??"") +' ' + (_.LastName?? "") 
                 }).ToList();
                 resultDTO.Data = userListResponseDTOs;
             }
