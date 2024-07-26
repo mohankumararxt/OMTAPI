@@ -35,10 +35,14 @@ namespace OMT.DataService
 
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
-                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId ==  liveStatusReportDTO.SkillSetId).FirstOrDefault();
+                SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == liveStatusReportDTO.SkillSetId).FirstOrDefault();
 
                 List<Dictionary<string, object>> complreport = new List<Dictionary<string, object>>();
-                
+                List<StatusCountDTO> statusCounts = new List<StatusCountDTO>();
+                List<AgentCompletionCountDTO> agentcompCounts = new List<AgentCompletionCountDTO>();
+
+                DateTime startDateTime = DateTime.UtcNow;
+                DateTime endDateTime = DateTime.UtcNow;
 
                 if (skillSet != null)
                 {
@@ -51,103 +55,136 @@ namespace OMT.DataService
                         var starttime = _oMTDataContext.LiveReportTiming.Where(x => x.SystemOfRecordId == liveStatusReportDTO.SystemOfRecordId).Select(_ => _.StartTime).FirstOrDefault();
                         var endtime = _oMTDataContext.LiveReportTiming.Where(x => x.SystemOfRecordId == liveStatusReportDTO.SystemOfRecordId).Select(_ => _.EndTime).FirstOrDefault();
 
-                        DateTime startDateTime = startDate.Add(starttime);
-                        DateTime endDateTime = endDate.Add(endtime);
+                        startDateTime = startDate.Add(starttime);
+                        endDateTime = endDate.Add(endtime);
 
-                        using SqlCommand command = new()
+                    }
+                    else
+                    {
+                        startDateTime = Convert.ToDateTime(liveStatusReportDTO.StartTime);
+                        endDateTime = Convert.ToDateTime(liveStatusReportDTO.EndTime);
+                    }
+
+                    using SqlCommand command = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.StoredProcedure,
+                        CommandText = "GetLiveReportBySkillset"
+                    };
+                    command.Parameters.AddWithValue("@SkillSetName", skillSet.SkillSetName);
+                    command.Parameters.AddWithValue("@STARTDateTime", startDateTime);
+                    command.Parameters.AddWithValue("@EndDateTime", endDateTime);
+
+                    SqlParameter returnValue = new()
+                    {
+                        ParameterName = "@RETURN_VALUE",
+                        Direction = ParameterDirection.ReturnValue
+                    };
+                    command.Parameters.Add(returnValue);
+                    command.ExecuteNonQuery();
+
+                    int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                    if (returnCode != 1)
+                    {
+                        throw new InvalidOperationException("Something went wrong while fetching the orders.");
+                    }
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                    dataAdapter.SelectCommand = command;
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    // get unassigned order counts
+
+                    if (dataset.Tables.Count > 1)
+                    {
+                        int unasssignedcount = Convert.ToInt32(dataset.Tables[1].Rows[0][0]);
+
+                        StatusCountDTO totalStatus = new StatusCountDTO
                         {
-                            Connection = connection,
-                            CommandType = CommandType.StoredProcedure,
-                            CommandText = "GetLiveReportBySkillset"
+                            StatusName = "Not Assigned",
+                            TotalCount = unasssignedcount
                         };
-                        command.Parameters.AddWithValue("@SkillSetName", skillSet.SkillSetName);
-                        command.Parameters.AddWithValue("@STARTDateTime", startDateTime);
-                        command.Parameters.AddWithValue("@EndDateTime", endDateTime);
 
-                        SqlParameter returnValue = new()
-                        {
-                            ParameterName = "@RETURN_VALUE",
-                            Direction = ParameterDirection.ReturnValue
-                        };
-                        command.Parameters.Add(returnValue);
-                        command.ExecuteNonQuery();
+                        statusCounts.Add(totalStatus);
 
-                        int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
-                        if (returnCode != 1)
-                        {
-                            throw new InvalidOperationException("Something went wrong while fetching the orders.");
-                        }
-
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                        dataAdapter.SelectCommand = command;
-
-                        DataSet dataset = new DataSet();
-                        
-                        dataAdapter.Fill(dataset);
-
+                    }
+                    if (dataset.Tables.Count > 0)
+                    {
                         DataTable datatable = dataset.Tables[0];
 
-                        var querydt1 = datatable.AsEnumerable()
-                                     .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                         column => column.ColumnName,
-                                         column => row[column])).ToList();
+                        var listofcomporders = datatable.AsEnumerable()
+                                                         .Where(row => row["status"].ToString() != "Complex")
+                                                         .Select(row => datatable.Columns.Cast<DataColumn>()
+                                                             .ToDictionary(
+                                                                 column => column.ColumnName,
+                                                                 column => row[column]))
+                                                         .ToList();
 
-                        complreport.AddRange(querydt1);
+                        List<string> coltoremove = new List<string> { "UserId", "statusid" };
+
+                        foreach (var dictionary in listofcomporders)
+                        {
+                            foreach (var key in coltoremove)
+                            {
+                                dictionary.Remove(key);
+                            }
+                            complreport.Add(dictionary);
+                        }
+
+                        // get count of priority orders
+
+                        var filteredPriorityRows = datatable.AsEnumerable().Where(row => row.Field<bool>("IsPriority") == true);
+
+                        StatusCountDTO statusdt = new StatusCountDTO
+                        {
+                            StatusName = "Rush Order",
+                            TotalCount = filteredPriorityRows.Count()
+                        };
+
+                        statusCounts.Add(statusdt);
 
                         // get list of statusid for sorid
 
-                        var query1 = (from ss in _oMTDataContext.SystemofRecord
-                                      join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                      where ss.SystemofRecordId == liveStatusReportDTO.SystemOfRecordId
-                                      select new
-                                      {
-                                          StatusId = ps.Id,
-                                          Status = ps.Status,
+                        var ListofStatus = (from ss in _oMTDataContext.SystemofRecord
+                                            join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                            where ss.SystemofRecordId == liveStatusReportDTO.SystemOfRecordId
+                                            select new
+                                            {
+                                                StatusId = ps.Id,
+                                                Status = ps.Status,
 
-                                      }).ToList();
-
-                        List<StatusCountDTO> statusCounts = new List<StatusCountDTO>();
+                                            }).ToList();
 
                         // get order counts for each status
 
-                        foreach (var id in query1)
+                        foreach (var status in ListofStatus)
                         {
-                            var filteredRows = datatable.AsEnumerable()
-                                       .Where(row => row.Field<int>("statusid") == id.StatusId);
+                            var filteredRows = datatable.AsEnumerable().Where(row => row.Field<int>("statusid") == status.StatusId);
 
                             if (filteredRows.Any())
                             {
-                                StatusCountDTO status = new StatusCountDTO
+                                StatusCountDTO statusdto = new StatusCountDTO
                                 {
-                                    StatusName = filteredRows.First().Field<string>("Status"),
+                                    StatusName = status.Status,
                                     TotalCount = filteredRows.Count()
                                 };
 
-                                statusCounts.Add(status);
+                                statusCounts.Add(statusdto);
                             }
-                        }
-
-                        string que = $@"
-                                      SELECT COUNT(t.OrderId) 
-                                      FROM {skillSet.SkillSetName} t
-                                      WHERE t.UserId IS NULL 
-                                      AND CONVERT(DATE, CompletionDate) BETWEEN @StartDateTime AND @EndDateTime";
-
-                        using (SqlCommand command2 = new SqlCommand(que, connection))
-                        {
-                            command2.Parameters.AddWithValue("@StartDateTime", startDateTime);
-                            command2.Parameters.AddWithValue("@EndDateTime", endDateTime);
-
-                            int totalCount = (int)command2.ExecuteScalar();
-
-                            StatusCountDTO totalStatus = new StatusCountDTO
+                            else
                             {
-                                StatusName = "Not Assigned",
-                                TotalCount = totalCount
-                            };
+                                StatusCountDTO statusdto = new StatusCountDTO
+                                {
+                                    StatusName = status.Status,
+                                    TotalCount = filteredRows.Count()
+                                };
 
-                            statusCounts.Add(totalStatus);
+                                statusCounts.Add(statusdto);
+                            }
                         }
 
                         // get list of distinct users to get their order counts
@@ -157,12 +194,11 @@ namespace OMT.DataService
                                                   .Distinct()
                                                   .ToList();
 
-                        List<AgentCompletionCountDTO> agentcompCounts = new List<AgentCompletionCountDTO>();
-
                         foreach (var user in distinctUsers)
                         {
                             var filteredRows = datatable.AsEnumerable()
-                                       .Where(row => row.Field<int>("UserId") == user);
+                                         .Where(row => row["status"].ToString().ToLower().Trim() != "complex" &&
+                                          row.Field<int>("UserId") == user);
 
                             if (filteredRows.Any())
                             {
@@ -176,7 +212,6 @@ namespace OMT.DataService
                             }
                         }
 
-
                         LiveStatusReportResponseDTO liveStatusReportResponseDTO = new LiveStatusReportResponseDTO
                         {
                             StatusCount = statusCounts,
@@ -188,35 +223,8 @@ namespace OMT.DataService
                         resultDTO.IsSuccess = true;
                         resultDTO.Data = liveStatusReportResponseDTO;
                         resultDTO.Message = "Live reports fetched successfully";
-
                     }
-                    else
-                    {
-                        //using SqlCommand command = new()
-                        //{
-                        //    Connection = connection,
-                        //    CommandType = CommandType.StoredProcedure,
-                        //    CommandText = "GetLiveReportBySkillset"
-                        //};
-                        //command.Parameters.AddWithValue("@SkillSet", skillSet.SkillSetName);
-                        //command.Parameters.AddWithValue("@STARTDateTime", liveStatusReportDTO.StartTime);
-                        //command.Parameters.AddWithValue("@EndDateTime", liveStatusReportDTO.EndTime);
 
-                        //SqlParameter returnValue = new()
-                        //{
-                        //    ParameterName = "@RETURN_VALUE",
-                        //    Direction = ParameterDirection.ReturnValue
-                        //};
-                        //command.Parameters.Add(returnValue);
-
-
-                        //int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
-                        //if (returnCode != 1)
-                        //{
-                        //    throw new InvalidOperationException("Something went wrong while fetching the completion report.");
-                        //}
-                    }
                 }
 
             }
