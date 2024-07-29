@@ -764,12 +764,27 @@ namespace OMT.DataService.Service
                                       join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
                                       where ss.SkillSetName == tablename && ps.Status == "Complex"
                                       select new
-                                      {
+                                      {   SystemOfRecordId = ps.SystemOfRecordId,
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        string sqlquery = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
-                                          $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x =>x.SystemOfRecordId == query1.SystemOfRecordId && x.IsActive).Select(_ =>_.ReportColumnName).ToList();
+
+
+                        string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
+
+                        string sqlquery2 = "";
+
+                        if (reportcol.Count > 0)
+                        {
+                            foreach (string col in reportcol)
+                            {
+                                sqlquery2 += $"t.{col},";
+                            }
+                            sqlquery1 += sqlquery2;
+                        }
+                       
+                        string sqlquery = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                           $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                           $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
@@ -823,13 +838,28 @@ namespace OMT.DataService.Service
                                  where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
                                  select new
                                  {
+                                     SystemOfRecordId = ps.SystemOfRecordId,
                                      Id = ps.Id
                                  }).FirstOrDefault();
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks, " +
-                                 $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                    string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
+
+                    string sqlquery2 = "";
+
+                    if (reportcol.Count > 0)
+                    {
+                        foreach (string col in reportcol)
+                        {
+                            sqlquery2 += $"t.{col},";
+                        }
+                        sqlquery1 += sqlquery2;
+                    }
+
+                    string sql = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
@@ -907,8 +937,22 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    string sql1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
-                                  $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+
+                    string sqlquery2 = "";
+
+                    if (reportcol.Count > 0)
+                    {
+                        foreach (string col in reportcol)
+                        {
+                            sqlquery2 += $"t.{col},";
+                        }
+                        sqlquery1 += sqlquery2;
+                    }
+
+                    string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
@@ -963,6 +1007,7 @@ namespace OMT.DataService.Service
                                                select ss.SkillSetName).Distinct().ToList();
 
                     List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
+
                     foreach (string tablename in tablenames)
                     {
                         var query1 = (from ss in _oMTDataContext.SkillSet
@@ -970,21 +1015,36 @@ namespace OMT.DataService.Service
                                       where ss.SkillSetName == tablename && ps.Status == "Complex"
                                       select new
                                       {
+                                          SystemofRecordId = ps.SystemOfRecordId,
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        string sqlquery = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks, " +
-                                          $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                          $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                          $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                          $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                          $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                          $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                          $"FROM {tablename} t " +
-                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                          $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                          $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> {query1.Id} AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == query1.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                        string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+
+                        string sqlquery2 = "";
+
+                        if (reportcol.Count > 0)
+                        {
+                            foreach (string col in reportcol)
+                            {
+                                sqlquery2 += $"t.{col},";
+                            }
+                            sqlquery1 += sqlquery2;
+                        }
+
+                        string sqlquery = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                                  $"FROM {tablename} t " +
+                                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                                  $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> {query1.Id} AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
 
 
                         using SqlCommand command = connection.CreateCommand();

@@ -729,3 +729,20 @@
 -- (3,'02:00:00','02:00:00',1)
 
  --insert into ProcessStatus values(1,'Not Keyed',1)
+
+ --update LiveReportTiming set StartTime = '14:00:00',EndTime ='14:00:00'
+
+-- create table ReportColumns
+--(
+--ReportColumnsId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--ReportColumnName varchar(100) not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--ALTER TABLE ReportColumns
+--ADD CONSTRAINT fk_ReportColumns
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(2,'CustomerId',1),(2,'ResWareProductDescriptions',1)
