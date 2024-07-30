@@ -74,6 +74,7 @@ namespace OMT.DataService
                     command.Parameters.AddWithValue("@SkillSetName", skillSet.SkillSetName);
                     command.Parameters.AddWithValue("@STARTDateTime", startDateTime);
                     command.Parameters.AddWithValue("@EndDateTime", endDateTime);
+                    command.Parameters.AddWithValue("@SystemOfRecordId", liveStatusReportDTO.SystemOfRecordId);
 
                     SqlParameter returnValue = new()
                     {
