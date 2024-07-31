@@ -325,7 +325,7 @@ namespace OMT.DataService.Service
                         var querydt = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         if (querydt.Count > 0)
                         {
@@ -514,10 +514,14 @@ namespace OMT.DataService.Service
                                   {
                                       if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
                                       {
+                                          if (row[column] == DBNull.Value)
+                                          {
+                                              return "";
+                                          }
                                           DateTime dateValue = (DateTime)row[column];
                                           return dateValue.ToString("yyyy-MM-dd");  // Format as date string
                                       }
-                                      return row[column];
+                                      return row[column] == DBNull.Value ? "" : row[column];
                                   })).ToList();
 
                     noStatusRecords.AddRange(querydt1);
@@ -694,7 +698,7 @@ namespace OMT.DataService.Service
                     var querydt1 = datatable.AsEnumerable()
                                     .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                         column => column.ColumnName,
-                                        column => row[column])).ToList();
+                                        column => row[column] == DBNull.Value ? string.Empty : row[column])).ToList();
 
                     if (querydt1.Count > 0)
                     {
@@ -813,7 +817,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         allCompletedRecords.AddRange(querydt1);
 
@@ -889,7 +893,7 @@ namespace OMT.DataService.Service
                     var querydt2 = datatable.AsEnumerable()
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
-                                      column => row[column])).ToList();
+                                      column => row[column] == DBNull.Value ? "": row[column])).ToList();
                     if (querydt2.Count > 0)
                     {
                         resultDTO.IsSuccess = true;
@@ -983,7 +987,7 @@ namespace OMT.DataService.Service
                     var querydt2 = datatable.AsEnumerable()
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
-                                      column => row[column])).ToList();
+                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
                     if (querydt2.Count > 0)
                     {
                         resultDTO.IsSuccess = true;
@@ -1065,7 +1069,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         allCompletedRecords.AddRange(querydt1);
 
@@ -1209,10 +1213,14 @@ namespace OMT.DataService.Service
                                    {
                                        if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
                                        {
+                                           if (row[column] == DBNull.Value)
+                                           {
+                                               return "";
+                                           }
                                            DateTime dateValue = (DateTime)row[column];
                                            return dateValue.ToString("yyyy-MM-dd");  // Format as date string
                                        }
-                                       return row[column];
+                                       return row[column] == DBNull.Value ? "" : row[column];
                                    })).ToList();
 
                     noStatusRecords.AddRange(querydt1);
@@ -1319,7 +1327,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         ComplexRecords.AddRange(querydt1);
 
@@ -1385,7 +1393,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         ComplexRecords.AddRange(querydt1);
 
@@ -1465,8 +1473,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                             .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                 column => column.ColumnName,
-                                column => row[column]))
-                            .ToList();
+                                column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         ComplexRecords.AddRange(querydt1);
                     }
@@ -1533,8 +1540,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                             .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                 column => column.ColumnName,
-                                column => row[column]))
-                            .ToList();
+                                column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         ComplexRecords.AddRange(querydt1);
 
@@ -1734,7 +1740,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         TExceededRecords.AddRange(querydt1);
 
@@ -1838,7 +1844,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         TExceededRecords.AddRange(querydt1);
 
@@ -1934,7 +1940,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         TExceededRecords.AddRange(querydt1);
 
@@ -2027,8 +2033,7 @@ namespace OMT.DataService.Service
                         var querydt1 = datatable.AsEnumerable()
                             .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                 column => column.ColumnName,
-                                column => row[column]))
-                            .ToList();
+                                column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         TExceededRecords.AddRange(querydt1);
 
@@ -2188,7 +2193,7 @@ namespace OMT.DataService.Service
                         var querydt = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         List<JObject> recordsToInsert = new List<JObject>();
 
@@ -2576,7 +2581,7 @@ namespace OMT.DataService.Service
                         var querydt = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         List<JObject> recordsToInsert = new List<JObject>();
 
@@ -2693,7 +2698,7 @@ namespace OMT.DataService.Service
                         var querydt2 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         allCompletedRecords.AddRange(querydt2);
                     }
@@ -2750,7 +2755,7 @@ namespace OMT.DataService.Service
                     var querydt2 = datatable.AsEnumerable()
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
-                                      column => row[column])).ToList();
+                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                     allCompletedRecords.AddRange(querydt2);
 
@@ -2810,7 +2815,7 @@ namespace OMT.DataService.Service
                         var querydt2 = datatable.AsEnumerable()
                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                           column => column.ColumnName,
-                                          column => row[column])).ToList();
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                         allCompletedRecords.AddRange(querydt2);
                     }
@@ -2863,7 +2868,7 @@ namespace OMT.DataService.Service
                     var querydt2 = datatable.AsEnumerable()
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
-                                      column => row[column])).ToList();
+                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                     allCompletedRecords.AddRange(querydt2);
                 }

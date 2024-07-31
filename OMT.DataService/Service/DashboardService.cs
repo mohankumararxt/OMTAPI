@@ -126,8 +126,7 @@ namespace OMT.DataService
                                                              .Select(row => datatable.Columns.Cast<DataColumn>()
                                                                  .ToDictionary(
                                                                      column => column.ColumnName,
-                                                                     column => row[column]))
-                                                             .ToList();
+                                                                     column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
                             List<string> coltoremove = new List<string> { "UserId", "statusid" };
 
