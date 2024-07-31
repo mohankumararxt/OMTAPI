@@ -730,7 +730,7 @@
 
  --insert into ProcessStatus values(1,'Not Keyed',1)
 
- --update LiveReportTiming set StartTime = '14:00:00',EndTime ='14:00:00'
+ --update LiveReportTiming set StartTime = '19:30:00',EndTime ='19:30:00'
 
 -- create table ReportColumns
 --(
