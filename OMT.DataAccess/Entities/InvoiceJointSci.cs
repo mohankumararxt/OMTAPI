@@ -11,7 +11,7 @@ namespace OMT.DataAccess.Entities
         public int CustomerId { get; set; }
         public int BusinessId { get; set; }
         public int BusinessGroupId { get; set; }
-        public int WorkflowstatusId { get; set; }
+        //public int WorkflowstatusId { get; set; }
         public int CostCenterId { get; set; }
         public int TotalOrderFeesId { get; set; }
     }

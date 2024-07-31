@@ -34,6 +34,9 @@ namespace OMT.DataAccess.Context
         public DbSet<InvoiceDump> InvoiceDump { get; set; }
         public DbSet<Timeline> Timeline { get; set; }
         public DbSet<InvoiceSkillSet> InvoiceSkillSet { get; set; }
+        public DbSet<Keywordstable> Keywordstable { get; set; }
+        public DbSet<LiveReportTiming> LiveReportTiming { get; set; }
+        public DbSet<ReportColumns> ReportColumns { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

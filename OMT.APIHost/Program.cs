@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OMT.Authorization;
 using OMT.DataAccess.Context;
+using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
 
@@ -74,6 +75,18 @@ builder.Services.AddScoped<IUserSkillSetService, UserSkillSetService>();
 builder.Services.AddScoped<ICommonService, CommonService>();
 builder.Services.AddScoped<IProcessStatusService, ProcessStatusService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IProductDescriptionService, ProductDescriptionService>();
+builder.Services.AddScoped<IResWareProductDescriptionsService, ResWareProductDescriptionsService>();
+builder.Services.AddScoped<IBusinessGroupService, BusinessGroupService>();
+builder.Services.AddScoped<IProcessTypeService, ProcessTypeService>();
+builder.Services.AddScoped<ITotalOrderFeesService, TotalOrderFeesService>();
+builder.Services.AddScoped<ICostCenterService, CostCenterService>();
+builder.Services.AddScoped<ISourceTypeService, SourceTypeService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IBusinessService, BusinessService>();
+builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareService>();
+builder.Services.AddScoped<IInvoiceJointSciService, InvoiceJointSciService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
