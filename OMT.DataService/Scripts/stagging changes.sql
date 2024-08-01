@@ -708,3 +708,41 @@
 --insert into DefaultTemplateColumns values(2,'AllocationDate','Date',1,0,1,1)
 
 --update DefaultTemplateColumns set DefaultColumnName = 'AllocationDate',datatype = 'Date' where id = 31
+
+--create table LiveReportTiming
+--(
+--LiveReportTimingId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--StartTime time not null,
+--EndTime time not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--ALTER TABLE LiveReportTiming
+--ADD CONSTRAINT fk_LiveReportTiming
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--insert into LiveReportTiming (SystemOfRecordId,StartTime,EndTime,isactive)
+--values (1,'02:00:00','02:00:00',1),
+-- (2,'02:00:00','02:00:00',1),
+-- (3,'02:00:00','02:00:00',1)
+
+ --insert into ProcessStatus values(1,'Not Keyed',1)
+
+ --update LiveReportTiming set StartTime = '19:30:00',EndTime ='19:30:00'
+
+-- create table ReportColumns
+--(
+--ReportColumnsId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--ReportColumnName varchar(100) not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--ALTER TABLE ReportColumns
+--ADD CONSTRAINT fk_ReportColumns
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(2,'CustomerId',1),(2,'ResWareProductDescriptions',1)
