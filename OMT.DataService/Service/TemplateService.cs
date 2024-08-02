@@ -2895,5 +2895,40 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetMandatoryColumnNames(int skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                List<string> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsMandatoryColumn && x.IsActive).Select(_ =>  _.DefaultColumnName).ToList();
+                List<string> duplicatecheckcolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetid && x.IsDuplicateCheck).Select(_ =>  _.ColumnAliasName).ToList();
+
+                List<string> combinedList = defaultTemplateColumns.Concat(duplicatecheckcolumns).ToList();
+
+                if (combinedList.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = combinedList;
+                    resultDTO.Message = "Mandatory columns fetched successfully";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Mandatory columns not found";
+                    resultDTO.StatusCode = "404";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }

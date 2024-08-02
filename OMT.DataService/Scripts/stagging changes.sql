@@ -746,3 +746,6 @@
 --REFERENCES SystemOfRecord(SystemOfRecordId);
 
 --insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(2,'CustomerId',1),(2,'ResWareProductDescriptions',1)
+
+--update DefaultTemplateColumns set IsMandatoryColumn = 1 where id = 21 or id = 5 or id = 31 or id = 32
+update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 16 and 19

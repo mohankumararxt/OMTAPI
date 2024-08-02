@@ -24,6 +24,8 @@ namespace OMT.DataService.Interface
         ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
         ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
         ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO);
-        
+        ResultDTO GetMandatoryColumnNames(int skillsetid);
+
+
     }
 }
