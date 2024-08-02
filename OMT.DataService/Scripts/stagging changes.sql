@@ -748,4 +748,88 @@
 --insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(2,'CustomerId',1),(2,'ResWareProductDescriptions',1)
 
 --update DefaultTemplateColumns set IsMandatoryColumn = 1 where id = 21 or id = 5 or id = 31 or id = 32
-update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 16 and 19
+--update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 16 and 19
+--update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 1 and 3
+
+
+--update LiveReportTiming set StartTime = '17:30:00',EndTime ='17:30:00' where LiveReportTimingid = 3
+
+---------------------------------TRD CHANGES--------------------
+
+--insert into ProcessStatus (SystemofRecordId,Status,IsActive) values(3,'Completed',1),(3,'Pending',1)
+
+-- create table DocType
+--(
+--DocTypeId int IDENTITY(1,1) primary key,
+--DocumentName varchar(500) not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--insert into DocType (documentname,isactive) values('Recorded Mortgage',1),('Mortgage',1),('Recorded Release',1),('TitlePolicy',1),('Note',1),('Final Title Policy',1),('Miscellaneous',1),('Modification',1),('Power of Attorney',1),('Unrecorded Mortgage',1),('ASSIGNMENT',1),('CEMA',1),('Collateral File',1),('Non-Critical Documents - Collateral File',1),('Original Recorded Documents - Note and RMORT',1),('Rejection-Lien Release',1),('Accommodation Modification',1),('Colorado Deed of Trust',1),('POA',1),('Recorded Electronic Deed of Trust',1),('Legal Description',1),('Miscellaneous Documents',1),('Recorded Security Instrument',1),('Rejection',1),('Lien Release',1),('Lien Release Only',1),('Recorded Release Only',1)
+
+--insert into skillset (SystemofRecordId,SkillSetName,Threshold,IsActive) values (3,'NA8120114IM_TitlePolicy',100,1),
+--(3,'TH8060113IM_Final_Title Policy',100,1),
+--(3,'PG8120119PC_TitlePolicy',100,1),
+--(3,'AP8090122PC_TitlePolicy',100,1),
+--(3,'KL8040121PC_TitlePolicy',100,1),
+--(3,'CF8050115IM_TitlePolicy',100,1),
+--(3,'CI8060121PC_TitlePolicy',100,1),
+--(3,'AF8060121PC_TitlePolicy',100,1),
+--(3,'AB8030122IM_TitlePolicy',100,1),
+--(3,'CV8040121PC_TitlePolicy',100,1),
+--(3,'TM8080115IM_TitlePolicy',100,1),
+--(3,'SY8100122PC_TitlePolicy',100,1),
+--(3,'LO8040122PC_TitlePolicy',100,1),
+--(3,'PS8010122PC_TitlePolicy',100,1),
+--(3,'NA8120114IM_Recorded_Mortgage',100,1),
+--(3,'CF8050115IM_Recorded_Mortgage',100,1),
+--(3,'PG8120119PC_Recorded_Mortgage',100,1),
+--(3,'AP8090122PC_Recorded_Mortgage',100,1),
+--(3,'SY8100122PC_Recorded_Mortgage',100,1),
+--(3,'KL8040121PC_Recorded_Mortgage',100,1),
+--(3,'AF8060121PC_Recorded_Mortgage',100,1),
+--(3,'AB8030122IM_Recorded_Mortgage',100,1),
+--(3,'LO8040122PC_Recorded_Mortgage',100,1),
+--(3,'CI8060121PC_Recorded_Mortgage',100,1),
+--(3,'CV8040121PC_Recorded_Mortgage',100,1),
+--(3,'PS8010122PC_Recorded_Mortgage',100,1),
+--(3,'TM8080115IM_Recorded_Mortgage',100,1),
+--(3,'TH8060113IM_Recorded_Security_Instrument',100,1),
+--(3,'NN8040122PC_Recorded_Security_Instrument',100,1),
+--(3,'PL8110117PC_TitlePolicy',100,1),
+--(3,'PL8110117PC_Recorded_Mortgage',100,1),
+--(3,'NN8040122PC_Final_Title_Policy',100,1),
+--(3,'BA8080121PC_Recorded_Mortgage',100,1),
+--(3,'BA8080121PC_TitlePolicy',100,1),
+--(3,'PR8050118IM_Recorded_Mortgage',100,1),
+--(3,'PR8050118IM_TitlePolicy',100,1),
+--(3,'HB8100116IM_TitlePolicy',100,1),
+--(3,'HB8100116IM_Recorded_Mortgage',100,1),
+--(3,'ST8070116IM_TitlePolicy',100,1),
+--(3,'ST8070116IM_Recorded_Mortgage',100,1),
+--(3,'GM8060105PC_Recorded_Mortgage',100,1),
+--(3,'GM8060105PC_TitlePolicy',100,1),
+--(3,'DB8010324PC_Recorded_Mortgage',100,1),
+--(3,'DB8010324PC_TitlePolicy',100,1),
+--(3,'TW8090119IM_TitlePolicy',100,1),
+--(3,'TW8090119IM_Recorded_Mortgage',100,1),
+--(3,'SL8120112IM_Recorded_Release',100,1),
+--(3,'BA8050117IM_Recorded_Release',100,1),
+--(3,'FS8090112IM_Recorded_Release',100,1),
+--(3,'HN8021121IM_Recorded_Release',100,1),
+--(3,'QL8040120IM_Recorded_Release',100,1),
+--(3,'RM8080117IM_Recorded_Release',100,1),
+--(3,'SH8070117IM_Recorded_Release',100,1),
+--(3,'SM8030119IM_Recorded_Release',100,1),
+--(3,'SP8100114IM_Recorded_Release',100,1),
+--(3,'US8090119IM_Recorded_Release',100,1),
+--(3,'CC8020122PC_TitlePolicy',100,1),
+--(3,'CC8020122PC_Recorded_Mortgage',100,1)
+
+-- create table ReportColumns
+--(
+--ReportColumnsId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--ReportColumnName varchar(100) not null,
+--IsActive bit not null DEFAULT 1
+--)
