@@ -747,7 +747,7 @@
 
 --insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(2,'CustomerId',1),(2,'ResWareProductDescriptions',1)
 
---update DefaultTemplateColumns set IsMandatoryColumn = 1 where id = 21 or id = 5 or id = 31 or id = 32
+--update DefaultTemplateColumns set IsMandatoryColumn = 1 where id = 15 or id = 21 or id = 5 or id = 31 or id = 32
 --update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 16 and 19
 --update DefaultTemplateColumns set IsMandatoryColumn = 1 where id between 1 and 3
 
@@ -826,10 +826,89 @@
 --(3,'CC8020122PC_TitlePolicy',100,1),
 --(3,'CC8020122PC_Recorded_Mortgage',100,1)
 
--- create table ReportColumns
+-- create table TrdMap
 --(
---ReportColumnsId int IDENTITY(1,1) primary key,
+--TrdMapId int IDENTITY(1,1) primary key,
+--ProjectId varchar(100) not null,
+--DoctypeId int not null,
+--SkillSetId int not null,
 --SystemOfRecordId int not null,
---ReportColumnName varchar(100) not null,
+--CreatedDate datetime not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--ALTER TABLE TrdMap
+--ADD CONSTRAINT fk_TrdMapsor
+--FOREIGN KEY (SystemOfRecordId) REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--ALTER TABLE TrdMap
+--ADD CONSTRAINT fk_TrdMapss
+--FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
+
+--insert into TrdMap (ProjectId,DoctypeId,SkillSetId,SystemOfRecordId,CreatedDate,IsActive) values 
+--('NA8120114IM', 4, 202, 3, '2024-08-05 07:07:23', 1),
+--('TH8060113IM', 6, 203, 3, '2024-08-05 08:07:23', 1),
+--('PG8120119PC', 4, 204, 3, '2024-08-05 09:07:23', 1),
+--('AP8090122PC', 4, 205, 3, '2024-08-05 10:07:23', 1),
+--('KL8040121PC', 4, 206, 3, '2024-08-05 11:07:23', 1),
+--('CF8050115IM', 4, 207, 3, '2024-08-05 12:07:23', 1),
+--('CI8060121PC', 4, 208, 3, '2024-08-05 13:07:23', 1),
+--('AF8060121PC', 4, 209, 3, '2024-08-05 14:07:23', 1),
+--('AB8030122IM', 4, 210, 3, '2024-08-05 15:07:23', 1),
+--('CV8040121PC', 4, 211, 3, '2024-08-05 16:07:23', 1),
+--('TM8080115IM', 4, 212, 3, '2024-08-05 17:07:23', 1),
+--('SY8100122PC', 4, 213, 3, '2024-08-05 18:07:23', 1),
+--('LO8040122PC', 4, 214, 3, '2024-08-05 19:07:23', 1),
+--('PS8010122PC', 4, 215, 3, '2024-08-05 20:07:23', 1),
+--('NA8120114IM', 1, 216, 3, '2024-08-05 21:07:23', 1),
+--('CF8050115IM', 1, 217, 3, '2024-08-05 22:07:23', 1),
+--('PG8120119PC', 1, 218, 3, '2024-08-05 23:07:23', 1),
+--('AP8090122PC', 1, 219, 3, '2024-08-06 00:07:23', 1),
+--('SY8100122PC', 1, 220, 3, '2024-08-06 01:07:23', 1),
+--('KL8040121PC', 1, 221, 3, '2024-08-06 02:07:23', 1),
+--('AF8060121PC', 1, 222, 3, '2024-08-06 03:07:23', 1),
+--('AB8030122IM', 1, 223, 3, '2024-08-06 04:07:23', 1),
+--('LO8040122PC', 1, 224, 3, '2024-08-06 05:07:23', 1),
+--('CI8060121PC', 1, 225, 3, '2024-08-06 06:07:23', 1),
+--('CV8040121PC', 1, 226, 3, '2024-08-06 07:07:23', 1),
+--('PS8010122PC', 1, 227, 3, '2024-08-06 08:07:23', 1),
+--('TM8080115IM', 1, 228, 3, '2024-08-06 09:07:23', 1),
+--('TH8060113IM', 23, 229, 3, '2024-08-06 10:07:23', 1),
+--('NN8040122PC', 23, 230, 3, '2024-08-06 11:07:23', 1),
+--('PL8110117PC', 4, 231, 3, '2024-08-06 12:07:23', 1),
+--('PL8110117PC', 1, 232, 3, '2024-08-06 13:07:23', 1),
+--('NN8040122PC', 6, 233, 3, '2024-08-06 14:07:23', 1),
+--('BA8080121PC', 1, 234, 3, '2024-08-06 15:07:23', 1),
+--('BA8080121PC', 4, 235, 3, '2024-08-06 16:07:23', 1),
+--('PR8050118IM', 1, 236, 3, '2024-08-06 17:07:23', 1),
+--('PR8050118IM', 4, 237, 3, '2024-08-06 18:07:23', 1),
+--('HB8100116IM', 4, 238, 3, '2024-08-06 19:07:23', 1),
+--('HB8100116IM', 1, 239, 3, '2024-08-06 20:07:23', 1),
+--('ST8070116IM', 4, 240, 3, '2024-08-06 21:07:23', 1),
+--('ST8070116IM', 1, 241, 3, '2024-08-06 22:07:23', 1),
+--('GM8060105PC', 1, 242, 3, '2024-08-06 23:07:23', 1),
+--('GM8060105PC', 4, 243, 3, '2024-08-07 00:07:23', 1),
+--('DB8010324PC', 1, 244, 3, '2024-08-07 01:07:23', 1),
+--('DB8010324PC', 4, 245, 3, '2024-08-07 02:07:23', 1),
+--('TW8090119IM', 4, 246, 3, '2024-08-07 03:07:23', 1),
+--('TW8090119IM', 1, 247, 3, '2024-08-07 04:07:23', 1),
+--('SL8120112IM', 3, 248, 3, '2024-08-07 05:07:23', 1),
+--('BA8050117IM', 3, 249, 3, '2024-08-07 06:07:23', 1),
+--('FS8090112IM', 3, 250, 3, '2024-08-07 07:07:23', 1),
+--('HN8021121IM', 3, 251, 3, '2024-08-07 08:07:23', 1),
+--('QL8040120IM', 3, 252, 3, '2024-08-07 09:07:23', 1),
+--('RM8080117IM', 3, 253, 3, '2024-08-07 10:07:23', 1),
+--('SH8070117IM', 3, 254, 3, '2024-08-07 11:07:23', 1),
+--('SM8030119IM', 3, 255, 3, '2024-08-07 12:07:23', 1),
+--('SP8100114IM', 3, 256, 3, '2024-08-07 13:07:23', 1),
+--('US8090119IM', 3, 257, 3, '2024-08-07 14:07:23', 1),
+--('CC8020122PC', 4, 258, 3, '2024-08-07 15:07:23', 1),
+--('CC8020122PC', 1, 259, 3, '2024-08-07 16:07:23', 1)
+
+-- create table TrackTrdOrders
+--(
+--Id int IDENTITY(1,1) primary key,
+--TrackTrdId varchar(100) not null,
+--CreatedDate datetime not null,
 --IsActive bit not null DEFAULT 1
 --)

@@ -37,6 +37,9 @@ namespace OMT.DataAccess.Context
         public DbSet<Keywordstable> Keywordstable { get; set; }
         public DbSet<LiveReportTiming> LiveReportTiming { get; set; }
         public DbSet<ReportColumns> ReportColumns { get; set; }
+        public DbSet<DocType> DocType { get; set; }
+        public DbSet<TrdMap> TrdMap { get; set; }
+        public DbSet<TrackTrdOrders> TrackTrdOrders { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

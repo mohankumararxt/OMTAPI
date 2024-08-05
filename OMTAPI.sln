@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OMT.DTO", "OMT.DTO\OMT.DTO.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DailyInvoiceGenerator", "DailyInvoiceGenerator\DailyInvoiceGenerator.csproj", "{2431CEE4-B6E2-47AE-B881-96022AE8A431}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrdIntegrator", "TrdIntegrator\TrdIntegrator.csproj", "{27CE69A3-0B39-40FA-8BB2-1E65D0D7B382}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2431CEE4-B6E2-47AE-B881-96022AE8A431}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27CE69A3-0B39-40FA-8BB2-1E65D0D7B382}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27CE69A3-0B39-40FA-8BB2-1E65D0D7B382}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27CE69A3-0B39-40FA-8BB2-1E65D0D7B382}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27CE69A3-0B39-40FA-8BB2-1E65D0D7B382}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
