@@ -908,7 +908,19 @@
 -- create table TrackTrdOrders
 --(
 --Id int IDENTITY(1,1) primary key,
---TrackTrdId varchar(100) not null,
+--TrackTrdId int not null,
 --CreatedDate datetime not null,
 --IsActive bit not null DEFAULT 1
 --)
+
+
+--insert into DefaultTemplateColumns (SystemofRecordId,DefaultColumnName,DataType,IsActive,IsDuplicateCheck,IsGetOrderColumn,isdefonlycolumn,ismandatorycolumn) values
+--(3,'ProjectId','nvarchar(100)',1,0,1,1,1),
+--(3,'OrderId','nvarchar(100)',1,0,1,1,1),
+--(3,'DocImageDate','date',1,0,1,1,0),
+--(3,'DocType','nvarchar(100)',1,0,1,1,1),
+--(3,'HaStatus','nvarchar(100)',1,0,1,1,1),
+--(3,'WorkflowStatus','nvarchar(100)',1,0,0,1,1),
+--(3,'IsPriority','nvarchar(100)',1,0,0,1,1),
+--(3,'AllocationDate','nvarchar(100)',1,0,0,1,1)
+

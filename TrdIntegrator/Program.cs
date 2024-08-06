@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Data;
 using Npgsql;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 namespace TrdIntegrator
@@ -40,7 +42,9 @@ namespace TrdIntegrator
             {
                 connection.Open();
 
-                string query = @"select * from public.tbl_omt_orders";
+                string query = @"select oo.id,oo.referenceid as OrderId,oo.projectid as ProjectId,oo.docimagedate as DocImageDate,dc.documentname as DocType,oo.doctypeid,oo.status as HaStatus, 'Trailing Doc Review' as WorkflowStatus, 1 as IsPriority
+                                 from public.tbl_omt_orders oo
+                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid";
 
                 NpgsqlCommand command = new NpgsqlCommand(query, connection);
 
@@ -52,7 +56,7 @@ namespace TrdIntegrator
                 DataTable datatable = dataset.Tables[0];
 
                 var distinctProjectIDs = datatable.AsEnumerable()
-                                                      .Select(row => row.Field<string>("projectid"))
+                                                      .Select(row => row.Field<string>("ProjectId"))
                                                       .Distinct()
                                                       .ToList();
 
@@ -60,7 +64,7 @@ namespace TrdIntegrator
                 foreach (string projid in distinctProjectIDs)
                 {
                     var doctypeids = datatable.AsEnumerable()
-                                     .Where(row => row.Field<string>("projectid") == projid)
+                                     .Where(row => row.Field<string>("ProjectId") == projid)
                                      .Select(row => row.Field<int>("doctypeid"))
                                      .Distinct().ToList();
 
@@ -69,13 +73,13 @@ namespace TrdIntegrator
                         foreach (DataRow row1 in datatable.Rows)
                         {
                             var orderstoupload = datatable.AsEnumerable()
-                                                 .Where(row => row.Field<string>("projectid") == projid && row.Field<int>("doctypeid") == docid)
+                                                 .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
                                                  .ToList();
 
                             if (orderstoupload.Any())
                             {
 
-                                int trackid = InsertIntoSqlServer(orderstoupload.CopyToDataTable(), projid, docid);
+                                int trackid = InsertIntoSqlServer(orderstoupload, projid, docid);
                             }
                         }
                     }
@@ -85,12 +89,94 @@ namespace TrdIntegrator
             }
         }
 
-        public static int InsertIntoSqlServer(DataTable orderstoupload,string projid,int docid)
+        public static int InsertIntoSqlServer(List<DataRow> orderstoupload,string projid,int docid)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
+                connection.Open();
+
+                string query = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName 
+                                 FROM TrdMap tm
+                                 INNER JOIN TemplateColumns TC ON TC.SkillSetId = tm.SkillSetId
+                                 INNER JOIN SkillSet ss ON ss.SkillSetId = tm.SkillSetId
+                                 WHERE tm.IsActive = 1 AND tm.DoctypeId = @docid AND tm.ProjectId = @projid";
+
+                SqlCommand command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@docid", docid);
+                command.Parameters.AddWithValue("@projid", projid);
+
+                SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                DataSet dataset = new DataSet();
+
+                dataAdapter.Fill(dataset);
+
+                DataTable datatable = dataset.Tables[0];
+
+                int skillsetid = 0;
+                string SkillSetName = "";
+
+                if (datatable.Rows.Count > 0 )
+                {
+                    DataRow row = datatable.Rows[0];
+
+                    skillsetid = Convert.ToInt32(row["SkillSetId"]);
+                    SkillSetName = row["SkillSetName"].ToString();
+                }
+
+
+                List<JObject> jObjectList = orderstoupload
+                                            .Select(row =>
+                                            {
+                                                JObject jObject = new JObject();
+
+                                                foreach (DataColumn column in row.Table.Columns)
+                                                {
+                                                    jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                }
+
+                                                return jObject;
+                                            })
+                                            .ToList();
+
+
+
+                JObject recordsObject = new JObject();
+                recordsObject["Records"] = JArray.FromObject(jObjectList);
+
+                // Serialize the records to a JSON string
+                string jsonToInsert = recordsObject.ToString();
+
+                SqlCommand cmd = new SqlCommand("InsertData", connection);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
+                cmd.Parameters.AddWithValue("@jsonData", jsonToInsert);
+
+                SqlParameter returnValue = new SqlParameter
+                {
+                    ParameterName = "@RETURN_VALUE",
+                    Direction = ParameterDirection.ReturnValue
+                };
+
+                cmd.Parameters.Add(returnValue);
+
+                cmd.ExecuteNonQuery();
+
+                int returnCode = (int)cmd.Parameters["@RETURN_VALUE"].Value;
+
+                if (returnCode != 1)
+                {
+                    throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
+                }
+                else
+                {
+                    Console.WriteLine("TRD orders succesfully loaded in respective template.");
+                }
+
+
+
                 return 1;
             }
         }
