@@ -32,9 +32,10 @@ namespace TrdIntegrator
             // The following code ensures that the WebJob will be running continuously
             //host.RunAndBlock();
 
-            GetTrdOrders();
+            int idno =  GetLastId();
+            GetTrdOrders(idno);
         }
-        public static void GetTrdOrders()
+        public static void GetTrdOrders(int idno)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
 
@@ -42,11 +43,13 @@ namespace TrdIntegrator
             {
                 connection.Open();
 
-                string query = @"select oo.id,oo.referenceid as OrderId,oo.projectid as ProjectId,oo.docimagedate as DocImageDate,dc.documentname as DocType,oo.doctypeid,oo.status as HaStatus, 'Trailing Doc Review' as WorkflowStatus, 1 as IsPriority
+                string query = $@"select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing Doc Review' as ""WorkflowStatus"", 1 as ""IsPriority""
                                  from public.tbl_omt_orders oo
-                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid";
+                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
+                                 where oo.id > @idno";
 
                 NpgsqlCommand command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("idno", idno);
 
                 NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
                 DataSet dataset = new DataSet();
@@ -60,6 +63,7 @@ namespace TrdIntegrator
                                                       .Distinct()
                                                       .ToList();
 
+                List<DataRow> orderstoupload = new List<DataRow>();
 
                 foreach (string projid in distinctProjectIDs)
                 {
@@ -70,26 +74,35 @@ namespace TrdIntegrator
 
                     foreach (var docid in doctypeids)
                     {
-                        foreach (DataRow row1 in datatable.Rows)
-                        {
-                            var orderstoupload = datatable.AsEnumerable()
+                        orderstoupload = datatable.AsEnumerable()
                                                  .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
                                                  .ToList();
 
-                            if (orderstoupload.Any())
-                            {
-
-                                int trackid = InsertIntoSqlServer(orderstoupload, projid, docid);
-                            }
+                        if (orderstoupload.Any())
+                        {
+                            InsertIntoSqlServer(orderstoupload, projid, docid);
                         }
                     }
 
                 }
 
+                // get id of last record which was fetched from postgres
+
+                int idValue = 0;
+                if (datatable.Rows.Count > 0)
+                {
+                    DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+                    idValue = (int)lastRow["id"];
+                }
+
+                // call method to update the last id of trd order uploaded in trdtrack table
+
+                updateid(idValue);
+
             }
         }
 
-        public static int InsertIntoSqlServer(List<DataRow> orderstoupload,string projid,int docid)
+        public static void InsertIntoSqlServer(List<DataRow> orderstoupload,string projid,int docid)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
@@ -134,12 +147,15 @@ namespace TrdIntegrator
 
                                                 foreach (DataColumn column in row.Table.Columns)
                                                 {
-                                                    jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                    if (column.ColumnName != "id" && column.ColumnName != "doctypeid") 
+                                                    {
+                                                        jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                    }
                                                 }
 
                                                 return jObject;
                                             })
-                                            .ToList();
+                                            .ToList();  
 
 
 
@@ -175,9 +191,46 @@ namespace TrdIntegrator
                     Console.WriteLine("TRD orders succesfully loaded in respective template.");
                 }
 
+            }
+        }
 
+        public static int GetLastId()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                return 1;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 1 AND IsActive = 1";
+
+                SqlCommand cmd = new SqlCommand(sql, connection);
+                
+                connection.Open();
+
+                object result = cmd.ExecuteScalar();
+                
+                int trackTrdId = Convert.ToInt32(result);
+
+                return trackTrdId;
+            }
+        }
+        public static void updateid(int idno)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                DateTime dateTime = DateTime.Now;
+
+                string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idno,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 1";
+
+                SqlCommand cmd = new SqlCommand(sql,connection);
+                cmd.Parameters.AddWithValue("@idno", idno);
+                cmd.Parameters.AddWithValue("@dateTime", dateTime);
+
+                cmd.ExecuteNonQuery();
+
             }
         }
     }
