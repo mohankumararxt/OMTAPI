@@ -10,6 +10,7 @@ using System.Data;
 using Npgsql;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 
 namespace TrdIntegrator
@@ -71,6 +72,7 @@ namespace TrdIntegrator
                                      .Where(row => row.Field<string>("ProjectId") == projid)
                                      .Select(row => row.Field<int>("doctypeid"))
                                      .Distinct().ToList();
+                    
 
                     foreach (var docid in doctypeids)
                     {
@@ -80,13 +82,12 @@ namespace TrdIntegrator
 
                         if (orderstoupload.Any())
                         {
-                            InsertIntoSqlServer(orderstoupload, projid, docid);
+                           InsertIntoSqlServer(orderstoupload.CopyToDataTable(), projid, docid);
+                            
                         }
                     }
 
                 }
-
-                // get id of last record which was fetched from postgres
 
                 int idValue = 0;
                 if (datatable.Rows.Count > 0)
@@ -98,11 +99,10 @@ namespace TrdIntegrator
                 // call method to update the last id of trd order uploaded in trdtrack table
 
                 updateid(idValue);
-
             }
         }
 
-        public static void InsertIntoSqlServer(List<DataRow> orderstoupload,string projid,int docid)
+        public static void InsertIntoSqlServer(DataTable orderstoupload,string projid,int docid)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
@@ -110,11 +110,13 @@ namespace TrdIntegrator
             {
                 connection.Open();
 
-                string query = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName 
+                string query = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName,ss.SystemofRecordId,STRING_AGG(CASE WHEN dt.IsDuplicateCheck = 1 THEN dt.DefaultColumnName END, ', ') AS Columns 
                                  FROM TrdMap tm
                                  INNER JOIN TemplateColumns TC ON TC.SkillSetId = tm.SkillSetId
                                  INNER JOIN SkillSet ss ON ss.SkillSetId = tm.SkillSetId
-                                 WHERE tm.IsActive = 1 AND tm.DoctypeId = @docid AND tm.ProjectId = @projid";
+                                 INNER JOIN DefaultTemplateColumns dt on dt.SystemofRecordId = ss.SystemofRecordId
+                                 WHERE tm.IsActive = 1 AND tm.DoctypeId = @docid AND tm.ProjectId = @projid
+                                 GROUP BY  tm.SkillSetId,ss.SkillSetName ,ss.SystemofRecordId";
 
                 SqlCommand command = new SqlCommand(query, connection);
 
@@ -130,6 +132,7 @@ namespace TrdIntegrator
 
                 int skillsetid = 0;
                 string SkillSetName = "";
+                string duplicatecol = "";
 
                 if (datatable.Rows.Count > 0 )
                 {
@@ -137,10 +140,14 @@ namespace TrdIntegrator
 
                     skillsetid = Convert.ToInt32(row["SkillSetId"]);
                     SkillSetName = row["SkillSetName"].ToString();
+                    duplicatecol = row["Columns"].ToString();
                 }
 
+                List<string> columnsList = duplicatecol.Split(',').Select(s => s.Trim()).ToList();  // for duplicate check
 
-                List<JObject> jObjectList = orderstoupload
+                List<DataRow> dataRowList = orderstoupload.AsEnumerable().ToList();
+
+                List<JObject> jObjectList = dataRowList
                                             .Select(row =>
                                             {
                                                 JObject jObject = new JObject();
@@ -162,33 +169,92 @@ namespace TrdIntegrator
                 JObject recordsObject = new JObject();
                 recordsObject["Records"] = JArray.FromObject(jObjectList);
 
-                // Serialize the records to a JSON string
+                // Serialize the records to a JSON string - to insert into templates
                 string jsonToInsert = recordsObject.ToString();
 
-                SqlCommand cmd = new SqlCommand("InsertData", connection);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
-                cmd.Parameters.AddWithValue("@jsonData", jsonToInsert);
+                //parse json data - to validate duplicate records
+                JObject jsondata = JObject.Parse(jsonToInsert);
+                JArray recordsarray = jsondata.Value<JArray>("Records");
 
-                SqlParameter returnValue = new SqlParameter
+                // duplicate check
+
+                string duplchckquery = $"SELECT * FROM {SkillSetName} WHERE ";
+
+                foreach (JObject records in recordsarray)
                 {
-                    ParameterName = "@RETURN_VALUE",
-                    Direction = ParameterDirection.ReturnValue
-                };
+                    string dc = "(";
+                    foreach (string columnname in columnsList)
+                    {
+                        string columndata = records.Value<string>(columnname);
 
-                cmd.Parameters.Add(returnValue);
+                        dc += $"[{columnname}] = '{columndata}' AND ";
+                    }
 
-                cmd.ExecuteNonQuery();
+                    dc = dc.Substring(0, dc.Length - 5);
+                    dc += ") OR ";
 
-                int returnCode = (int)cmd.Parameters["@RETURN_VALUE"].Value;
+                    duplchckquery += dc;
+                }
 
-                if (returnCode != 1)
+                duplchckquery = duplchckquery.Substring(0, duplchckquery.Length - 4);
+
+                SqlDataAdapter dataAdapter2 = new SqlDataAdapter(duplchckquery, connection);
+
+                DataSet dataset2 = new DataSet();
+               
+                dataAdapter2.Fill(dataset2);
+
+                DataTable datatable2 = dataset2.Tables[0];
+
+                var duplicateorders = new HashSet<string>(
+                                         datatable2.AsEnumerable()
+                                         .Select(row => row.Field<string>("OrderId")));
+
+                var filteredOrders = orderstoupload.AsEnumerable()
+                                    .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
+
+                if (filteredOrders.Any())
                 {
-                    throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
+                    DataTable filteredDataTable = filteredOrders.CopyToDataTable();
+
+                    // Serialize DataTable to JSON string
+                    jsonToInsert = JsonConvert.SerializeObject(filteredDataTable, Newtonsoft.Json.Formatting.Indented);
                 }
                 else
                 {
-                    Console.WriteLine("TRD orders succesfully loaded in respective template.");
+                    jsonToInsert = "";
+                }
+
+
+                if (!string.IsNullOrEmpty(jsonToInsert))
+                {
+                    // insert into templates
+
+                    SqlCommand cmd = new SqlCommand("InsertData", connection);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
+                    cmd.Parameters.AddWithValue("@jsonData", jsonToInsert);
+
+                    SqlParameter returnValue = new SqlParameter
+                    {
+                        ParameterName = "@RETURN_VALUE",
+                        Direction = ParameterDirection.ReturnValue
+                    };
+
+                    cmd.Parameters.Add(returnValue);
+
+                    cmd.ExecuteNonQuery();
+
+                    int returnCode = (int)cmd.Parameters["@RETURN_VALUE"].Value;
+
+                    if (returnCode != 1)
+                    {
+                        throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("TRD orders succesfully loaded in respective template.");
+                    }
                 }
 
             }
@@ -213,7 +279,7 @@ namespace TrdIntegrator
                 return trackTrdId;
             }
         }
-        public static void updateid(int idno)
+        public static void updateid(int idValue)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
@@ -223,10 +289,10 @@ namespace TrdIntegrator
 
                 DateTime dateTime = DateTime.Now;
 
-                string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idno,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 1";
+                string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 1";
 
                 SqlCommand cmd = new SqlCommand(sql,connection);
-                cmd.Parameters.AddWithValue("@idno", idno);
+                cmd.Parameters.AddWithValue("@idValue", idValue);
                 cmd.Parameters.AddWithValue("@dateTime", dateTime);
 
                 cmd.ExecuteNonQuery();
