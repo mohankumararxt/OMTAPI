@@ -2,6 +2,7 @@
 {
     public class ReswareInvoiceDTO
     {
+        public string SkillSet { get; set; }
         public string CustomerId { get; set; }
         public string BusinessGroup { get; set; }
         public string SystemOfRecord { get; set; }
