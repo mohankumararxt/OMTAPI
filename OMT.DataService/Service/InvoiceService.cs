@@ -663,6 +663,12 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "200";
                         resultDTO.Data = invscitrd;
                     }
+                    else if (invres.Count == 0 || invscitrd.Count == 0) 
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Invoice details not found";
+                    }
                 }
             }
             catch (Exception ex)
