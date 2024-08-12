@@ -7,6 +7,7 @@ using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System;
 using System.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -667,7 +668,7 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                string table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => _.SkillSetName).FirstOrDefault();
+                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName,_.SystemofRecordId }).FirstOrDefault();
 
                 var exist = (from tc in _oMTDataContext.TemplateColumns
                              join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
@@ -718,6 +719,7 @@ namespace OMT.DataService.Service
                         }
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
+
                     }
                     else
                     {
@@ -730,8 +732,25 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = $"Sorry, the template '{table}' doesnt exist, you can't update the status for this order anymore.";
+                    resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
                 }
+
+                //if (table.SystemofRecordId == 3)
+                //{
+                //    string manualstatus = $"SELECT * FROM {exist.SkillSetName} WHERE HaStatus = 'Manual' OR Status = 14 WHERE Id = @ID";
+
+                //    using SqlCommand command = connection.CreateCommand();
+                //    command.CommandText = manualstatus;
+                //    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                //    command.ExecuteNonQuery();
+                    
+                //    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                //    DataSet dataset = new DataSet();
+                //    dataAdapter.Fill(dataset);
+                //    DataTable datatable = dataset.Tables[0];
+
+                //}
+
             }
             catch (Exception ex)
             {

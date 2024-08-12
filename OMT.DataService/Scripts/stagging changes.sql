@@ -1188,3 +1188,11 @@
 
 
 --chnage getinvoice sp in stg n prod
+
+--insert into ProcessStatus values (3,'Completed-Manual',1)
+
+--ALTER TABLE InvoiceDump
+--ADD UpdatedDate DATETIME DEFAULT GETDATE();
+
+--ALTER TABLE InvoiceDump
+--ADD InvoiceDeleteDate DATETIME ;
