@@ -18,7 +18,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
-//using Serilog;
+
 
 
 namespace OMT.DataService.Service
