@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+  //  [Authorize]
     public class TemplateController : BaseController
     {
         private readonly ITemplateService _templateService;
@@ -63,7 +63,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("updateOrderStatus")]
-        public ResultDTO UpdateOrderStatus([FromBody] UpdateOrderStatusDTO updateOrderStatusDTO)
+        public Task<ResultDTO> UpdateOrderStatus([FromBody] UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             //var userid = UserId;
             return _templateService.UpdateOrderStatus(updateOrderStatusDTO);

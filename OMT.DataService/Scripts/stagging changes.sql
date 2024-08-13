@@ -922,7 +922,7 @@
 --(3,'HaStatus','nvarchar(100)',1,0,1,1,1),
 --(3,'WorkflowStatus','nvarchar(100)',1,0,0,1,1),
 --(3,'IsPriority','bit default 0',1,0,1,1,1),
---(3,'AllocationDate','nvarchar(100)',1,0,0,1,0),
+--(3,'AllocationDate','Date',1,0,0,1,0),
 --(3,'UserId','int',1,0,0,0,0),
 --(3,'Status','int',1,0,0,0,0),
 --(3,'Remarks','nvarchar(1000)',1,0,0,0,0),

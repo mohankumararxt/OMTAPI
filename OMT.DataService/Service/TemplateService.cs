@@ -11,15 +11,28 @@ using System;
 using System.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics;
+using Microsoft.Extensions.Options;
+using OMT.DataService.Settings;
+//using Serilog;
+
 
 namespace OMT.DataService.Service
 {
     public class TemplateService : ITemplateService
     {
         private readonly OMTDataContext _oMTDataContext;
-        public TemplateService(OMTDataContext oMTDataContext)
+
+        private static readonly HttpClient client = new HttpClient();
+        private readonly IOptions<TrdStatusSettings> _authSettings;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
         {
             _oMTDataContext = oMTDataContext;
+            _authSettings = authSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -659,7 +672,7 @@ namespace OMT.DataService.Service
             //return updatedOrder;
         }
 
-        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
+        public async Task<ResultDTO> UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
@@ -668,7 +681,7 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName,_.SystemofRecordId }).FirstOrDefault();
+                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
 
                 var exist = (from tc in _oMTDataContext.TemplateColumns
                              join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
@@ -735,21 +748,59 @@ namespace OMT.DataService.Service
                     resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
                 }
 
-                //if (table.SystemofRecordId == 3)
-                //{
-                //    string manualstatus = $"SELECT * FROM {exist.SkillSetName} WHERE HaStatus = 'Manual' OR Status = 14 WHERE Id = @ID";
+                if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID))
+                {
+                    string manualstatus = string.Empty;
+                    int statusid = 0;
 
-                //    using SqlCommand command = connection.CreateCommand();
-                //    command.CommandText = manualstatus;
-                //    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                //    command.ExecuteNonQuery();
-                    
-                //    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                //    DataSet dataset = new DataSet();
-                //    dataAdapter.Fill(dataset);
-                //    DataTable datatable = dataset.Tables[0];
+                    if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND (ir.HaStatus = 'Manual' OR ir.Status = @statusid)";
 
-                //}
+                        statusid = 2;
+                    }
+                    else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
+
+                        statusid = 1;
+                    }
+
+
+                    using SqlCommand command = connection.CreateCommand();
+                    command.CommandText = manualstatus;
+                    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
+                    command.ExecuteNonQuery();
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
+                    dataAdapter.Fill(dataset);
+                    DataTable ms = dataset.Tables[0];
+
+
+                    if (ms.Rows.Count > 0)
+                    {
+                        DataRow row = ms.Rows[0];
+                        TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
+                        {
+                            processid = row.Field<int>("SystemOfRecordId"),
+                            projectid = row.Field<string>("ProjectID"),
+                            referenceid = row.Field<string>("OrderID"),
+                            doctypeid = row.Field<int>("DocTypeID"),
+                            value = statusid
+                        };
+
+                        // Call the REST API
+                        await CallRestApiAsync(trdStatusDTO1);
+                    }
+                }
 
             }
             catch (Exception ex)
@@ -761,6 +812,31 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        private async Task CallRestApiAsync(TrdStatusDTO trdStatusDTO)
+        {
+            var url = "https://xt-01-highlight-dev2.azurewebsites.net/api/updateorderstatus";
+
+            // Serialize the DTO to JSON
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await client.PutAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
         public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -771,7 +847,7 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                if(agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
+                if (agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
@@ -1402,7 +1478,7 @@ namespace OMT.DataService.Service
                     }
                 }
 
-                
+
             }
             catch (Exception ex)
             {
@@ -1801,26 +1877,26 @@ namespace OMT.DataService.Service
                         }
 
                         if (sqlquery != null)
-                        { 
-                             using SqlCommand command = connection.CreateCommand();
-                             command.CommandText = sqlquery;
-                             command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
+                        {
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+                            command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
 
-                             using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                             DataSet dataset = new DataSet();
-                             dataAdapter.Fill(dataset);
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                            DataSet dataset = new DataSet();
+                            dataAdapter.Fill(dataset);
 
-                             DataTable datatable = dataset.Tables[0];
+                            DataTable datatable = dataset.Tables[0];
 
-                             // Query dt to get records
-                             var querydt1 = datatable.AsEnumerable()
-                                 .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                     column => column.ColumnName,
-                                     column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                            // Query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                    column => column.ColumnName,
+                                    column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
-                             ComplexRecords.AddRange(querydt1);
+                            ComplexRecords.AddRange(querydt1);
+                        }
                     }
-                }
 
                     if (ComplexRecords.Count > 0)
                     {
@@ -2106,11 +2182,11 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if(tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2)
+                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2)
                         {
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
                         }
-                       
+
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -2244,7 +2320,7 @@ namespace OMT.DataService.Service
                         {
                             command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
                         }
-                        
+
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
                         DataSet dataset = new DataSet();
@@ -3368,8 +3444,8 @@ namespace OMT.DataService.Service
             {
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetid && x.IsActive).FirstOrDefault();
 
-                List<string> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsMandatoryColumn && x.IsActive).Select(_ =>  _.DefaultColumnName).ToList();
-                List<string> duplicatecheckcolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetid && x.IsDuplicateCheck).Select(_ =>  _.ColumnAliasName).ToList();
+                List<string> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsMandatoryColumn && x.IsActive).Select(_ => _.DefaultColumnName).ToList();
+                List<string> duplicatecheckcolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetid && x.IsDuplicateCheck).Select(_ => _.ColumnAliasName).ToList();
 
                 List<string> combinedList = defaultTemplateColumns.Concat(duplicatecheckcolumns).ToList();
 
