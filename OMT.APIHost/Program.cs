@@ -7,7 +7,7 @@ using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
 using OMT.DataService.Settings;
-using Serilog;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
