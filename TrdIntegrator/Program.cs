@@ -29,7 +29,7 @@ namespace TrdIntegrator
                 config.UseDevelopmentSettings();
             }
 
-            var host = new JobHost(config);
+           // var host = new JobHost(config);
             // The following code ensures that the WebJob will be running continuously
             //host.RunAndBlock();
 
