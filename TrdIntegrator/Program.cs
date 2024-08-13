@@ -89,7 +89,7 @@ namespace TrdIntegrator
 
                 }
 
-                int idValue = 0;
+                int idValue = idno;
                 if (datatable.Rows.Count > 0)
                 {
                     DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
