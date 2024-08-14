@@ -308,33 +308,33 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    List<SkillSet> avalskillset = new List<SkillSet> ();
+                    List<SkillSet> avalskillset = new List<SkillSet>();
 
                     var sorininv = _oMTDataContext.InvoiceSkillSet.Where(x => x.SystemofRecordId == getinvoiceDTO.SystemofRecordId).FirstOrDefault();
 
                     if (sorininv == null)
                     {
-                         avalskillset = (from ss in _oMTDataContext.SkillSet
-                                            where ss.SystemofRecordId == getinvoiceDTO.SystemofRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                            select new SkillSet
-                                            {
-                                                SkillSetName = ss.SkillSetName,
-                                                SkillSetId = ss.SkillSetId,
-                                                SystemofRecordId = ss.SystemofRecordId,
-                                            }).ToList();
+                        avalskillset = (from ss in _oMTDataContext.SkillSet
+                                        where ss.SystemofRecordId == getinvoiceDTO.SystemofRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                        select new SkillSet
+                                        {
+                                            SkillSetName = ss.SkillSetName,
+                                            SkillSetId = ss.SkillSetId,
+                                            SystemofRecordId = ss.SystemofRecordId,
+                                        }).ToList();
                     }
                     else if (sorininv != null)
                     {
                         List<SkillSet> ListofSkillSets1 = (from sor in _oMTDataContext.SystemofRecord
-                                                                             join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
-                                                                             where ss.IsActive == true && sor.SystemofRecordId == getinvoiceDTO.SystemofRecordId && sor.IsActive
-                                                                             orderby sor.SystemofRecordName, ss.SkillSetName
-                                                                             select new SkillSet
-                                                                             {
-                                                                                 SkillSetName = ss.SkillSetName,
-                                                                                 SkillSetId = ss.SkillSetId,
-                                                                                 SystemofRecordId = ss.SystemofRecordId,
-                                                                             }).ToList();
+                                                           join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
+                                                           where ss.IsActive == true && sor.SystemofRecordId == getinvoiceDTO.SystemofRecordId && sor.IsActive
+                                                           orderby sor.SystemofRecordName, ss.SkillSetName
+                                                           select new SkillSet
+                                                           {
+                                                               SkillSetName = ss.SkillSetName,
+                                                               SkillSetId = ss.SkillSetId,
+                                                               SystemofRecordId = ss.SystemofRecordId,
+                                                           }).ToList();
 
                         int skillsetidcounter = -1;
 
@@ -356,7 +356,7 @@ namespace OMT.DataService.Service
                             SkillSetName = x.SkillSetName,
                             SkillSetId = skillsetidcounter--,
                             SystemofRecordId = x.SystemofRecordId,
-                            
+
                         }).ToList();
 
                         avalskillset = ListofSkillSets1.Union(ListofSkillSets2).OrderBy(s => s.SkillSetName).ToList();
@@ -405,17 +405,9 @@ namespace OMT.DataService.Service
                                     if (invoiceDump.Count > 0)
                                     {
                                         invscitrd.AddRange(invoiceDump);
-                                        //resultDTO.IsSuccess = true;
-                                        //resultDTO.Message = "Invoice details fetched successfully";
-                                        //resultDTO.StatusCode = "200";
-                                        //resultDTO.Data = invoiceDump;
+
                                     }
-                                    //else
-                                    //{
-                                    //    resultDTO.IsSuccess = false;
-                                    //    resultDTO.Message = "Invoice details doesnt exist for the specified details";
-                                    //    resultDTO.StatusCode = "404";
-                                    //}
+
                                 }
                                 else if (getinvoiceDTO.SystemofRecordId == 2)
                                 {
@@ -445,12 +437,9 @@ namespace OMT.DataService.Service
                                     if (invoiceDump2.Count > 0)
                                     {
                                         invres.AddRange(invoiceDump2);
-                                        //resultDTO.IsSuccess = true;
-                                        //resultDTO.Message = "Invoice details fetched successfully";
-                                        //resultDTO.StatusCode = "200";
-                                        //resultDTO.Data = invoiceDump2;
+                                        
                                     }
-                                    
+
                                 }
                             }
                             else
@@ -577,17 +566,9 @@ namespace OMT.DataService.Service
                                         if (invoiceDump2.Count > 0)
                                         {
                                             invres.AddRange(invoiceDump2);
-                                            //resultDTO.IsSuccess = true;
-                                            //resultDTO.Message = "Invoice details fetched successfully";
-                                            //resultDTO.StatusCode = "200";
-                                            //resultDTO.Data = invoiceDump2;
+                                            
                                         }
-                                        //else
-                                        //{
-                                        //    resultDTO.IsSuccess = false;
-                                        //    resultDTO.Message = "Invoice details not found for the specified details";
-                                        //    resultDTO.StatusCode = "404";
-                                        //}
+                                        
                                     }
                                 }
                                 else if (isinvoiceskillset.OperationType == 2)
@@ -626,17 +607,9 @@ namespace OMT.DataService.Service
                                         if (invoiceDump2.Count > 0)
                                         {
                                             invres.AddRange(invoiceDump2);
-                                            //resultDTO.IsSuccess = true;
-                                            //resultDTO.Message = "Invoice details fetched successfully";
-                                            //resultDTO.StatusCode = "200";
-                                            //resultDTO.Data = invoiceDump2;
+                                            
                                         }
-                                        //else
-                                        //{
-                                        //    resultDTO.IsSuccess = false;
-                                        //    resultDTO.Message = "Invoice details not found for the specified details";
-                                        //    resultDTO.StatusCode = "404";
-                                        //}
+                                        
                                     }
 
                                 }
@@ -663,7 +636,7 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "200";
                         resultDTO.Data = invscitrd;
                     }
-                    else if (invres.Count == 0 || invscitrd.Count == 0) 
+                    else if (invres.Count == 0 || invscitrd.Count == 0)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.StatusCode = "404";

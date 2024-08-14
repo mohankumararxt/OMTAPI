@@ -18,6 +18,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
+using Microsoft.IdentityModel.Tokens;
 
 
 
@@ -748,7 +749,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
                 }
 
-                if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID))
+                if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
                 {
                     string manualstatus = string.Empty;
                     int statusid = 0;
@@ -758,7 +759,7 @@ namespace OMT.DataService.Service
                         manualstatus = $@"SELECT ir.*, dt.DocTypeID 
                                              FROM {exist.SkillSetName} ir
                                              INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
-                                             WHERE ir.Id = @Id AND (ir.HaStatus = 'Manual' OR ir.Status = @statusid)";
+                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
 
                         statusid = 2;
                     }
@@ -770,6 +771,15 @@ namespace OMT.DataService.Service
                                              WHERE ir.Id = @Id AND ir.Status = @statusid";
 
                         statusid = 1;
+                    }
+                    else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND ir.HaStatus = 'Manual'";
+
+                        statusid = 2;
                     }
 
 

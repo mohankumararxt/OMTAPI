@@ -1187,7 +1187,7 @@
 --(3,259,1,1,6,7,4)
 
 
---chnage getinvoice sp in stg n prod
+--chnage getinvoice ,getorder hardstate and getorder ispriprectge sp in stg n prod
 
 --insert into ProcessStatus values (3,'Completed-Manual',1)
 
@@ -1196,3 +1196,22 @@
 
 --ALTER TABLE InvoiceDump
 --ADD InvoiceDeleteDate DATETIME ;
+
+-- create table SciPendingStatusSkillsets
+--(
+--Id int IDENTITY(1,1) primary key,
+--SkillSetId int not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--ALTER TABLE SciPendingStatusSkillsets
+--ADD CONSTRAINT fk_SciPendingStatusSkillsets
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--insert into SciPendingStatusSkillsets values (1,1),
+--(2,1),
+--(3,1),
+--(4,1),
+--(77,1),
+--(78,1)
