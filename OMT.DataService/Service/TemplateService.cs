@@ -823,7 +823,7 @@ namespace OMT.DataService.Service
 
         private void CallRestApiAsync(TrdStatusDTO trdStatusDTO)
         {
-            var url = "https://xt-01-highlight-dev2.azurewebsites.net/api/updateorderstatus";
+            var url = _authSettings.Value.TrdURL;
 
             // Serialize the DTO to JSON
             try
