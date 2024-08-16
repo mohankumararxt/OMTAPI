@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PendingSciOrders")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c7549dde0c3a1409b9b4f436c5331fd587496072")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88fda174299544389e529ea949ccd2ea94d2dfa0")]
 [assembly: System.Reflection.AssemblyProductAttribute("PendingSciOrders")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PendingSciOrders")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
