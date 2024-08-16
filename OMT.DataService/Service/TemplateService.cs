@@ -28,7 +28,6 @@ namespace OMT.DataService.Service
     {
         private readonly OMTDataContext _oMTDataContext;
 
-        private static readonly HttpClient client = new HttpClient();
         private readonly IOptions<TrdStatusSettings> _authSettings;
         public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
         {
@@ -673,7 +672,7 @@ namespace OMT.DataService.Service
             //return updatedOrder;
         }
 
-        public async Task<ResultDTO> UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
+        public ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
@@ -808,7 +807,7 @@ namespace OMT.DataService.Service
                         };
 
                         // Call the REST API
-                        await CallRestApiAsync(trdStatusDTO1);
+                         CallRestApiAsync(trdStatusDTO1);
                     }
                 }
 
@@ -822,24 +821,29 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        private async Task CallRestApiAsync(TrdStatusDTO trdStatusDTO)
+        private void CallRestApiAsync(TrdStatusDTO trdStatusDTO)
         {
             var url = "https://xt-01-highlight-dev2.azurewebsites.net/api/updateorderstatus";
 
             // Serialize the DTO to JSON
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             try
             {
-                var response = await client.PutAsync(url, content);
-
-                if (response.IsSuccessStatusCode)
+                using (HttpClient client = new HttpClient())
                 {
-                    var responseData = await response.Content.ReadAsStringAsync();
+                    //client.DefaultRequestHeaders.Add("Accept", "application/json");
 
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(url);
+                    var response = client.PutAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
                 }
-
             }
             catch (Exception ex)
             {

@@ -63,7 +63,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("updateOrderStatus")]
-        public Task<ResultDTO> UpdateOrderStatus([FromBody] UpdateOrderStatusDTO updateOrderStatusDTO)
+        public ResultDTO UpdateOrderStatus([FromBody] UpdateOrderStatusDTO updateOrderStatusDTO)
         {
             //var userid = UserId;
             return _templateService.UpdateOrderStatus(updateOrderStatusDTO);

@@ -10,7 +10,7 @@ namespace OMT.DataService.Interface
         ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO);
         ResultDTO GetOrders(int userid);
         ResultDTO GetTemplateList();
-        Task<ResultDTO> UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);  //to call trd api
+        ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);  //to call trd api
         ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO);
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
         ResultDTO GetDefaultColumnNames(int systemofrecordid);
