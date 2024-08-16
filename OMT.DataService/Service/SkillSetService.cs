@@ -37,6 +37,24 @@ namespace OMT.DataService.Service
                     };
                     _oMTDataContext.SkillSet.Add(skillSet);
                     _oMTDataContext.SaveChanges();
+
+                    // add harstatenames for skillset
+
+                    //var skillsetid = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName && x.IsActive).Select(_ => _.SkillSetId).FirstOrDefault();
+
+                    //foreach (var item in skillSetCreateDTO.HardstateNames)
+                    //{
+                    //    SkillSetHardStates skillSetHardStates = new SkillSetHardStates()
+                    //    {
+                    //        SkillSetId = skillsetid,
+                    //        StateName = item,
+                    //        IsActive = true,
+                    //        CreatedDate = DateTime.Now,
+                    //    };
+                    //    _oMTDataContext.SkillSetHardStates.Add(skillSetHardStates);
+                    //    _oMTDataContext.SaveChanges() ;
+                    //}
+
                     resultDTO.Message = "SkillSet created successfully";
                     resultDTO.IsSuccess = true;
                 }

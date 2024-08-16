@@ -27,7 +27,10 @@ namespace OMT.DataAccess.Entities
         public string AOLFees { get; set; }
         public string CopyFees { get; set; }
         public string CertifiedCopyFees { get; set; }
-       
-        
+        public DateTime UpdatedDate { get; set; }
+        public DateTime InvoiceDeleteDate { get; set; }
+
+
+
     }
 }

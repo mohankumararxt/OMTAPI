@@ -6,6 +6,8 @@ using OMT.DataAccess.Context;
 using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
+using OMT.DataService.Settings;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +61,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddControllers();
 builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("AuthSettings"));
+builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -5,6 +5,6 @@
         public int SystemofRecordId { get; set; }
         public string? SkillSetName { get; set; }
         public int Threshold { get; set; }
-
+      //  public List<string> HardstateNames { get; set; }
     }
 }
