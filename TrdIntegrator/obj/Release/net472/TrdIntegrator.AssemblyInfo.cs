@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TrdIntegrator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88fda174299544389e529ea949ccd2ea94d2dfa0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ddc481b5143c994f3ce80ea2c1cbe4e0cfc2ee8b")]
 [assembly: System.Reflection.AssemblyProductAttribute("TrdIntegrator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TrdIntegrator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
