@@ -1216,4 +1216,40 @@
 --(77,1),
 --(78,1)
 
---change livereport sp
+--change livereport sp          --do in staging 
+
+--ALTER TABLE ResWareProductDescriptionMap
+--ADD SkillSetId int;
+
+--ALTER TABLE ResWareProductDescriptionMap
+--ADD CONSTRAINT fk_ResWareProductDescriptionMapSkillset
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--insert into ResWareProductDescriptions values('Assignment Verification Report',1),('Current Owner: 1 Owner - PIR',1),('Two Owner: 2 Owner - PIR',1),('Commercial Search-D2',1)
+--insert into ProductDescription values ('1 Owner - PIR',1),('2 Owner - PIR',1),('Commercial Search',1)
+
+
+--insert into ResWareProductDescriptionMap values (1,1,5),     ----------for dev
+--(2,2,5),
+--(68,8,8),
+--(116,8,8),
+--(68,8,80),
+--(116,8,80),
+--(68,8,81),
+--(116,8,81),
+--(68,8,82),
+--(116,8,82),
+--(117,23,90),
+--(118,24,90),
+--(119,25,90),
+--(15,7,90),
+--(117,23,88),
+--(118,24,88),
+--(119,25,88),
+--(15,7,88),
+--(117,23,13),
+--(118,24,13),
+--(119,25,13),
+--(15,7,13),
+--(15,7,89)

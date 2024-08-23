@@ -25,17 +25,17 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpGet]
-        [Route("maplist/{productId:int?}")]
-        public ResultDTO GetResWareProductDescriptionsMap(int? productId)
+        [Route("maplist/{skillsetId:int?}")]
+        public ResultDTO GetResWareProductDescriptionsMap(int? skillsetId)
         {
-            return _resWareProductDescriptionsService.GetResWareProductDescriptionsMap(productId);
+            return _resWareProductDescriptionsService.GetResWareProductDescriptionsMap(skillsetId);
         }
 
         [HttpPost]
         [Route("new")]
-        public ResultDTO CreateResWareProductDescriptions([FromBody] ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
+        public ResultDTO CreateResWareProductDescriptionsMap([FromBody] ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
         {
-            return _resWareProductDescriptionsService.CreateResWareProductDescriptions(resWareProductDescriptionsDTO);
+            return _resWareProductDescriptionsService.CreateResWareProductDescriptionsMap(resWareProductDescriptionsDTO);
         }
 
         [HttpDelete]
@@ -52,5 +52,14 @@ namespace OMT.APIHost.Controllers
         {
             return _resWareProductDescriptionsService.UpdateResWareProductDescriptions(res);
         }
+
+        [HttpPost]
+        [Route("CreateOnlyResWareProductDescriptions")]
+        public ResultDTO CreateOnlyResWareProductDescriptions([FromBody] ResWareProductDescriptionOnlyDTO resWareProductDescriptionOnlyDTO)
+        {
+            return _resWareProductDescriptionsService.CreateOnlyResWareProductDescriptions(resWareProductDescriptionOnlyDTO);
+        }
+
+      
     }
 }
