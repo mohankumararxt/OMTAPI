@@ -5,6 +5,7 @@
         public List<AgentCompletionCountDTO> AgentCompletedOrdersCount { get; set; }
         public List<StatusCountDTO> StatusCount { get; set; }
         public dynamic CompletionReport { get; set; }
+        public dynamic NotAssignedReport { get; set; }
 
     }
 
