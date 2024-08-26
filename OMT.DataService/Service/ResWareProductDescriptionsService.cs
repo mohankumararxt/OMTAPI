@@ -117,9 +117,7 @@ namespace OMT.DataService.Service
             try
             {
 
-                //var rpdmapexists = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == resWareProductDescriptionsDTO.SkillSetId && x.ProductDescriptionId == resWareProductDescriptionsDTO.ProductDescriptionId && resWareProductDescriptionsDTO.ResWareProductDescriptionIds.Contains(x.ResWareProductDescriptionId)).Select(x => x.ResWareProductDescriptionId).ToList();
-
-                var rpdmapexists = (from rpdm in _oMTDataContext.ResWareProductDescriptionMap
+               var rpdmapexists = (from rpdm in _oMTDataContext.ResWareProductDescriptionMap
                                     join rpd in _oMTDataContext.ResWareProductDescriptions on rpdm.ResWareProductDescriptionId equals rpd.ResWareProductDescriptionId
                                     join ss in _oMTDataContext.SkillSet on rpdm.SkillSetId equals ss.SkillSetId
                                     where rpdm.SkillSetId == resWareProductDescriptionsDTO.SkillSetId && rpdm.ProductDescriptionId == resWareProductDescriptionsDTO.ProductDescriptionId && resWareProductDescriptionsDTO.ResWareProductDescriptionIds.Contains(rpdm.ResWareProductDescriptionId)
