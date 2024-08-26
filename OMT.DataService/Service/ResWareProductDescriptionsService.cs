@@ -117,10 +117,24 @@ namespace OMT.DataService.Service
             try
             {
 
-                var rpdmapexists = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == resWareProductDescriptionsDTO.SkillSetId && x.ProductDescriptionId == resWareProductDescriptionsDTO.ProductDescriptionId && resWareProductDescriptionsDTO.ResWareProductDescriptionIds.Contains(x.ResWareProductDescriptionId)).Select(x => x.ResWareProductDescriptionId).ToList();
+                //var rpdmapexists = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == resWareProductDescriptionsDTO.SkillSetId && x.ProductDescriptionId == resWareProductDescriptionsDTO.ProductDescriptionId && resWareProductDescriptionsDTO.ResWareProductDescriptionIds.Contains(x.ResWareProductDescriptionId)).Select(x => x.ResWareProductDescriptionId).ToList();
+
+                var rpdmapexists = (from rpdm in _oMTDataContext.ResWareProductDescriptionMap
+                                    join rpd in _oMTDataContext.ResWareProductDescriptions on rpdm.ResWareProductDescriptionId equals rpd.ResWareProductDescriptionId
+                                    join ss in _oMTDataContext.SkillSet on rpdm.SkillSetId equals ss.SkillSetId
+                                    where rpdm.SkillSetId == resWareProductDescriptionsDTO.SkillSetId && rpdm.ProductDescriptionId == resWareProductDescriptionsDTO.ProductDescriptionId && resWareProductDescriptionsDTO.ResWareProductDescriptionIds.Contains(rpdm.ResWareProductDescriptionId)
+                                    select new 
+                                    {
+                                        ResWareProductDescriptionName =   rpd.ResWareProductDescriptionName,
+                                        SkillSetName =   ss.SkillSetName
+                                    }
+                                    ).ToList();
+
                 if (rpdmapexists.Any())
                 {
-                    resultDTO.Message = "The following resware product descriptions already exists for this skillset: " + string.Join(", ", rpdmapexists) + ". Please try again.";
+                    var skillSetName = rpdmapexists.First().SkillSetName;
+                    var descriptionNames = string.Join(", ", rpdmapexists.Select(x => x.ResWareProductDescriptionName));
+                    resultDTO.Message = $"The following ResWare product descriptions already exist for {skillSetName}: {descriptionNames}. Please try again.";
                     resultDTO.IsSuccess = false;
                 }
                 else
