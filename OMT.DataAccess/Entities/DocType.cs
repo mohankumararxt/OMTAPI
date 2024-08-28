@@ -8,5 +8,6 @@ namespace OMT.DataAccess.Entities
         public int DocTypeId { get; set; }
         public string DocumentName { get; set; }
         public bool IsActive { get; set; }
+        public int TrdDocTypeId { get; set; }
     }
 }
