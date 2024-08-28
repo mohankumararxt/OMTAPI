@@ -1517,7 +1517,35 @@
 --(15,7,13),
 --(15,7,89)
 
-----insert into DocType (documentname,isactive) values ('COOP',1),('Deed',1)
+
+--insert into ResWareProductDescriptionMap values  --stagging done
+--(1,1,5),
+--(2,2,5),
+--(68,8,8),
+--(83,8,8),
+--(68,8,80),
+--(83,8,80),
+--(68,8,81),
+--(83,8,81),
+--(68,8,82),
+--(83,8,82),
+--(13,5,90),
+--(14,6,90),
+--(84,10,90),
+--(15,7,90),
+--(13,5,88),
+--(14,6,88),
+--(84,10,88),
+--(15,7,88),
+--(13,5,13),
+--(14,6,13),
+--(84,10,13),
+--(15,7,13),
+--(15,7,89)
+
+
+
+--insert into DocType (documentname,isactive) values ('COOP',1),('Deed',1)
 
 --insert into skillset (SystemofRecordId,SkillSetName,Threshold,IsActive) values 
 --(3,'AB8030122IM_Miscellaneous',100,1),
@@ -1610,7 +1638,9 @@
 --ALTER TABLE DocType
 --ADD TrdDocTypeId int;
 
---insert into DocType values ('Recorded Mortgage',1,1),
+--truncate table DocType
+
+--insert into DocType values ('Recorded Mortgage',1,1),      --for dev n stag
 --('Mortgage',1,2),
 --('Recorded Release',1,3),
 --('TitlePolicy',1,4),
@@ -1641,3 +1671,4 @@
 --('Deed',1,107)
 
 --insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(3,'ProjectId',1),(3,'DocType',1),(3,'DocImageDate',1)
+--update livereporttiming set starttime = '17:30:00.0000000',endtime = '17:30:00.0000000' where livereporttimingid = 3
