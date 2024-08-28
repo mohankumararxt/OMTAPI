@@ -18,28 +18,28 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpGet]
-        [Route("list")]
+        [Route("GetResWareProductDescriptionsList")]
         public ResultDTO GetResWareProductDescriptions()
         {
             return _resWareProductDescriptionsService.GetResWareProductDescriptions();
         }
 
         [HttpGet]
-        [Route("maplist/{productId:int?}")]
-        public ResultDTO GetResWareProductDescriptionsMap(int? productId)
+        [Route("GetResWareProductDescriptionsMapList/{skillsetId:int?}")]
+        public ResultDTO GetResWareProductDescriptionsMap(int? skillsetId)
         {
-            return _resWareProductDescriptionsService.GetResWareProductDescriptionsMap(productId);
+            return _resWareProductDescriptionsService.GetResWareProductDescriptionsMap(skillsetId);
         }
 
         [HttpPost]
-        [Route("new")]
-        public ResultDTO CreateResWareProductDescriptions([FromBody] ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
+        [Route("CreateResWareProductDescriptionsMap")]
+        public ResultDTO CreateResWareProductDescriptionsMap([FromBody] ResWareProductDescriptionsDTO resWareProductDescriptionsDTO)
         {
-            return _resWareProductDescriptionsService.CreateResWareProductDescriptions(resWareProductDescriptionsDTO);
+            return _resWareProductDescriptionsService.CreateResWareProductDescriptionsMap(resWareProductDescriptionsDTO);
         }
 
         [HttpDelete]
-        [Route("delete/{rprodid:int}")]
+        [Route("DeleteResWareProductDescriptions/{rprodid:int}")]
 
         public ResultDTO DeleteResWareProductDescriptions(int rprodid)
         {
@@ -47,10 +47,19 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPut]
-        [Route("update")]
+        [Route("UpdateResWareProductDescriptions")]
         public ResultDTO UpdateResWareProductDescriptions([FromBody] ResWareProductDescriptionsUpdateDTO res)
         {
             return _resWareProductDescriptionsService.UpdateResWareProductDescriptions(res);
         }
+
+        [HttpPost]
+        [Route("CreateOnlyResWareProductDescriptions")]
+        public ResultDTO CreateOnlyResWareProductDescriptions([FromBody] ResWareProductDescriptionOnlyDTO resWareProductDescriptionOnlyDTO)
+        {
+            return _resWareProductDescriptionsService.CreateOnlyResWareProductDescriptions(resWareProductDescriptionOnlyDTO);
+        }
+
+      
     }
 }

@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OMT.DTO
+﻿namespace OMT.DTO
 {
     public class ResWareProductDescriptionsDTO
     {
+        public int SkillSetId { get; set; }
         public int ProductDescriptionId { get; set; }
-        public List<string> ResWareProductDescriptionNames { get; set; }
+        public List<int> ResWareProductDescriptionIds { get; set; }
 
     }
+
+    public class ResWareProductDescriptionOnlyDTO
+    {
+         public List<string> ResWareProductDescriptionNames { get; set; }
+    }
+
+
+
 }

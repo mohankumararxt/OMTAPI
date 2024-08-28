@@ -8,6 +8,7 @@ namespace OMT.DataAccess.Entities
         public int ResWareProductDescriptionMapId { get; set; }
         public int ResWareProductDescriptionId { get; set; }
         public int ProductDescriptionId { get; set; }
+        public int SkillSetId { get; set; }
 
     }
 }

@@ -1478,3 +1478,166 @@
 --(4,1),
 --(77,1),
 --(78,1)
+
+--change livereport sp          --do in staging 
+
+--ALTER TABLE ResWareProductDescriptionMap
+--ADD SkillSetId int;
+
+--ALTER TABLE ResWareProductDescriptionMap
+--ADD CONSTRAINT fk_ResWareProductDescriptionMapSkillset
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--insert into ResWareProductDescriptions values('Assignment Verification Report',1),('Current Owner: 1 Owner - PIR',1),('Two Owner: 2 Owner - PIR',1),('Commercial Search-D2',1)
+--insert into ProductDescription values ('1 Owner - PIR',1),('2 Owner - PIR',1),('Commercial Search',1)
+
+
+--insert into ResWareProductDescriptionMap values (1,1,5),     ----------for dev
+--(2,2,5),
+--(68,8,8),
+--(116,8,8),
+--(68,8,80),
+--(116,8,80),
+--(68,8,81),
+--(116,8,81),
+--(68,8,82),
+--(116,8,82),
+--(117,23,90),
+--(118,24,90),
+--(119,25,90),
+--(15,7,90),
+--(117,23,88),
+--(118,24,88),
+--(119,25,88),
+--(15,7,88),
+--(117,23,13),
+--(118,24,13),
+--(119,25,13),
+--(15,7,13),
+--(15,7,89)
+
+----insert into DocType (documentname,isactive) values ('COOP',1),('Deed',1)
+
+--insert into skillset (SystemofRecordId,SkillSetName,Threshold,IsActive) values 
+--(3,'AB8030122IM_Miscellaneous',100,1),
+--(3,'AP8090122PC_ASSIGNMENT',100,1),
+--(3,'BA8080121PC_CEMA',100,1),
+--(3,'BA8080121PC_COOP',100,1),
+--(3,'BA8080121PC_Deed',100,1),
+--(3,'CC8020122PC_ASSIGNMENT',100,1),
+--(3,'HB8100116IM_UnRecorded_Mortgage',100,1),
+--(3,'NA8120114IM_POA',100,1),
+--(3,'PL8110117PC_UnRecorded_Mortgage',100,1),
+--(3,'BA8080121PC_Miscellaneous',100,1),
+--(3,'DB8010324PC_Collateral_File',100,1),
+--(3,'PR8050118IM_ASSIGNMENT',100,1),
+
+
+--insert into TrdMap (ProjectId,DoctypeId,SkillSetId,SystemOfRecordId,CreatedDate,IsActive) values 
+--('AB8030122IM',7,270,3,'2024-08-27 07:07:23.000',1),
+--('AP8090122PC',11,271,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',12,272,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',108,273,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',107,274,3,'2024-08-27 07:07:23.000',1),
+--('CC8020122PC',11,275,3,'2024-08-27 07:07:23.000',1),
+--('HB8100116IM',10,276,3,'2024-08-27 07:07:23.000',1),
+--('NA8120114IM',19,277,3,'2024-08-27 07:07:23.000',1),
+--('PL8110117PC',10,278,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',7,279,3,'2024-08-27 07:07:23.000',1),
+--('DB8010324PC',13,280,3,'2024-08-27 07:07:23.000',1),
+--('PR8050118IM',11,281,3,'2024-08-27 07:07:23.000',1)
+
+
+--CREATE TABLE AB8030122IM_Miscellaneous(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE AP8090122PC_ASSIGNMENT(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE BA8080121PC_CEMA(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE BA8080121PC_COOP(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE BA8080121PC_Deed(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE CC8020122PC_ASSIGNMENT(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE HB8100116IM_UnRecorded_Mortgage(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE NA8120114IM_POA(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE PL8110117PC_UnRecorded_Mortgage(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE BA8080121PC_Miscellaneous(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE DB8010324PC_Collateral_File(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+--CREATE TABLE PR8050118IM_ASSIGNMENT(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
+
+
+--insert into TemplateColumns values 
+--(270,3,'DocType','DocType','nvarchar(200)',0,1),
+--(271,3,'DocType','DocType','nvarchar(200)',0,1),
+--(272,3,'DocType','DocType','nvarchar(200)',0,1),
+--(273,3,'DocType','DocType','nvarchar(200)',0,1),
+--(274,3,'DocType','DocType','nvarchar(200)',0,1),
+--(275,3,'DocType','DocType','nvarchar(200)',0,1),
+--(276,3,'DocType','DocType','nvarchar(200)',0,1),
+--(277,3,'DocType','DocType','nvarchar(200)',0,1),
+--(278,3,'DocType','DocType','nvarchar(200)',0,1),
+--(279,3,'DocType','DocType','nvarchar(200)',0,1),
+--(280,3,'DocType','DocType','nvarchar(200)',0,1),
+--(281,3,'DocType','DocType','nvarchar(200)',0,1),
+
+--insert into timeline values 
+--(270,' ',3,0,1),
+--(271,' ',3,0,1),
+--(272,' ',3,0,1),
+--(273,' ',3,0,1),
+--(274,' ',3,0,1),
+--(275,' ',3,0,1),
+--(276,' ',3,0,1),
+--(277,' ',3,0,1),
+--(278,' ',3,0,1),
+--(279,' ',3,0,1),
+--(280,' ',3,0,1),
+--(281,' ',3,0,1)
+
+--insert into InvoiceJointTrd values 
+--(3,270,1,1,6,7,4),
+--(3,271,1,1,6,7,4),
+--(3,272,1,1,6,7,4),
+--(3,273,1,1,6,7,4),
+--(3,274,1,1,6,7,4),
+--(3,275,1,1,6,7,4),
+--(3,276,1,1,6,7,4),
+--(3,277,1,1,6,7,4),
+--(3,278,1,1,6,7,4),
+--(3,279,1,1,6,7,4),
+--(3,280,1,1,6,7,4),
+--(3,281,1,1,6,7,4)
+
+
+
+--ALTER TABLE DocType
+--ADD TrdDocTypeId int;
+
+--insert into DocType values ('Recorded Mortgage',1,1),
+--('Mortgage',1,2),
+--('Recorded Release',1,3),
+--('TitlePolicy',1,4),
+--('Note',1,5),
+--('Final Title Policy',1,6),
+--('Miscellaneous',1,7),
+--('Modification',1,8),
+--('Power of Attorney',1,9),
+--('Unrecorded Mortgage',1,10),
+--('ASSIGNMENT',1,11),
+--('CEMA',1,12),
+--('Collateral File',1,13),
+--('Non-Critical Documents - Collateral File',1,14),
+--('Original Recorded Documents - Note and RMORT',1,15),
+--('Rejection-Lien Release',1,16),
+--('Accommodation Modification',1,17),
+--('Colorado Deed of Trust',1,18),
+--('POA',1,19),
+--('Recorded Electronic Deed of Trust',1,20),
+--('Legal Description',1,21),
+--('Miscellaneous Documents',1,22),
+--('Recorded Security Instrument',1,23),
+--('Rejection',1,24),
+--('Lien Release',1,25),
+--('Lien Release Only',1,26),
+--('Recorded Release Only',1,27),
+--('COOP',1,108),
+--('Deed',1,107)
+
+--insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(3,'ProjectId',1),(3,'DocType',1),(3,'DocImageDate',1)
