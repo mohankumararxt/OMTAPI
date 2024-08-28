@@ -137,7 +137,24 @@ namespace OMT.DataService
                                                              .Select(row => datatable.Columns.Cast<DataColumn>()
                                                                  .ToDictionary(
                                                                      column => column.ColumnName,
-                                                                     column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                                                                     column => {
+                                                                         var value = row[column];
+                                                                         if (value == DBNull.Value)
+                                                                         {
+                                                                             return ""; 
+                                                                         }
+
+                                                                         if (column.DataType == typeof(DateTime))
+                                                                         {
+                                                                             DateTime dateValue = (DateTime)value;
+                                                                             return dateValue.TimeOfDay == TimeSpan.Zero
+                                                                                 ? (object)dateValue.ToString("yyyy-MM-dd")   
+                                                                                 : (object)dateValue.ToString("yyyy-MM-dd HH:mm:ss");  
+                                                                         }
+
+                                                                         return (object)value.ToString(); 
+                                                                     }))
+                                                             .ToList();
 
                             List<string> coltoremove = new List<string> { "UserId", "statusid" };
 

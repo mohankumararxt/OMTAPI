@@ -894,7 +894,20 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    
+                                    sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -962,13 +975,13 @@ namespace OMT.DataService.Service
                 else if (agentCompletedOrdersDTO.SystemOfRecordId != null && agentCompletedOrdersDTO.SkillSetId != null)
                 {
                     var query1 = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
-                                 select new
-                                 {
-                                     SystemOfRecordId = ps.SystemOfRecordId,
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
+                                  join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                  where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
+                                  select new
+                                  {
+                                      SystemOfRecordId = ps.SystemOfRecordId,
+                                      Id = ps.Id
+                                  }).FirstOrDefault();
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
@@ -980,7 +993,20 @@ namespace OMT.DataService.Service
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery1 += $"t.{col}, ";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+
+                                sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                            }
+                            else
+                            {
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
                     }
 
@@ -1073,7 +1099,20 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+
+                                    sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -1190,7 +1229,19 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -1261,12 +1312,12 @@ namespace OMT.DataService.Service
                 else if (teamCompletedOrdersDTO.SystemOfRecordId != null && teamCompletedOrdersDTO.SkillSetId != null)
                 {
                     var query1 = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
-                                 select new
-                                 {
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
+                                  join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                  where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
+                                  select new
+                                  {
+                                      Id = ps.Id
+                                  }).FirstOrDefault();
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
@@ -1278,7 +1329,19 @@ namespace OMT.DataService.Service
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery1 += $"t.{col}, ";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                            }
+                            else
+                            {
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
                     }
 
@@ -1370,7 +1433,19 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -3161,7 +3236,21 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                                }
+                                else
+                                {
+
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -3224,7 +3313,21 @@ namespace OMT.DataService.Service
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery1 += $"t.{col}, ";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                            }
+                            else
+                            {
+
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
                     }
 
@@ -3287,7 +3390,21 @@ namespace OMT.DataService.Service
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery1 += $"t.{col}, ";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                                }
+                                else
+                                {
+
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
                         }
 
@@ -3344,7 +3461,21 @@ namespace OMT.DataService.Service
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery1 += $"t.{col}, ";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                            }
+                            else
+                            {
+
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
                     }
 

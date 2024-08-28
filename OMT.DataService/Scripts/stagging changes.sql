@@ -1376,3 +1376,5 @@
 --('Recorded Release Only',1,27),
 --('COOP',1,108),
 --('Deed',1,107)
+
+--insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(3,'ProjectId',1),(3,'DocType',1),(3,'DocImageDate',1)
