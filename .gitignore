@@ -22,3 +22,8 @@
 /DailyInvoiceGenerator
 /.gitignore
 /.gitignore
+/PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfo.cs
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfo.cs
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.csproj.AssemblyReference.cache
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfoInputs.cache
+/PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfoInputs.cache
