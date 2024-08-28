@@ -24,3 +24,7 @@
 /.gitignore
 /DailyInvoiceGenerator/Properties/PublishProfiles
 /DailyInvoiceGenerator/DailyInvoiceGenerator.csproj.user
+/PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfo.cs
+/PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfoInputs.cache
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfo.cs
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfoInputs.cache
