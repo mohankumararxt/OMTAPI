@@ -35,7 +35,7 @@ namespace DailyInvoiceGenerator
                 connection.Open();
 
                 string query = @"
-                                SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId 
+                                SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName
                                 FROM skillset SS
                                 INNER JOIN templatecolumns TC ON TC.skillsetid = SS.skillsetid
                                 WHERE SS.isactive = 1 
@@ -54,7 +54,25 @@ namespace DailyInvoiceGenerator
                         int skillSetId = Convert.ToInt32(row["SkillSetId"]);
                         int systemOfRecordId = Convert.ToInt32(row["SystemofRecordId"]);
 
+                    if (systemOfRecordId == 3)
+                    {
+                        string tabelname = row["SkillsetName"].ToString();
 
+                        DateTime utcNow = DateTime.UtcNow;
+                        DateTime yesterday = utcNow.Date.AddDays(-1).AddHours(12);
+                        DateTime today = utcNow.Date.AddHours(12);
+
+                        string updateAllocationdate = $"UPDATE {tabelname} SET AllocationDate = @yesterday WHERE CompletionDate BETWEEN @starttime AND @endtime";
+
+                        SqlCommand upaldate = new SqlCommand(updateAllocationdate, connection);
+                        upaldate.CommandType = CommandType.Text;
+                       
+                        upaldate.Parameters.AddWithValue("@yesterday", yesterday.Date);
+                        upaldate.Parameters.AddWithValue("@starttime", yesterday);
+                        upaldate.Parameters.AddWithValue("@endtime", today);
+
+                        upaldate.ExecuteNonQuery();
+                    }
                         // Call the stored procedure with parameters derived from the current row
                         using (SqlCommand spCommand = new SqlCommand("GetInvoice", connection))
                         {

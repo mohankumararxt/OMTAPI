@@ -7,18 +7,33 @@ using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System;
 using System.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics;
+using Microsoft.Extensions.Options;
+using OMT.DataService.Settings;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore.Metadata;
+
+
 
 namespace OMT.DataService.Service
 {
     public class TemplateService : ITemplateService
     {
         private readonly OMTDataContext _oMTDataContext;
-        public TemplateService(OMTDataContext oMTDataContext)
+
+        private readonly IOptions<TrdStatusSettings> _authSettings;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
         {
             _oMTDataContext = oMTDataContext;
+            _authSettings = authSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -667,11 +682,11 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                string table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => _.SkillSetName).FirstOrDefault();
+                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
 
                 var exist = (from tc in _oMTDataContext.TemplateColumns
                              join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
-                             where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && tc.SkillSetId == updateOrderStatusDTO.SkillSetId
+                             where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && tc.SkillSetId == updateOrderStatusDTO.SkillSetId && ss.IsActive
                              select new
                              {
                                  SkillSetName = ss.SkillSetName
@@ -718,6 +733,7 @@ namespace OMT.DataService.Service
                         }
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
+
                     }
                     else
                     {
@@ -730,8 +746,72 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = $"Sorry, the template '{table}' doesnt exist, you can't update the status for this order anymore.";
+                    resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
                 }
+
+                if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
+                {
+                    string manualstatus = string.Empty;
+                    int statusid = 0;
+
+                    if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
+
+                        statusid = 2;
+                    }
+                    else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
+
+                        statusid = 1;
+                    }
+                    else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
+                    {
+                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                                             FROM {exist.SkillSetName} ir
+                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                                             WHERE ir.Id = @Id AND ir.HaStatus = 'Manual'";
+
+                        statusid = 2;
+                    }
+
+
+                    using SqlCommand command = connection.CreateCommand();
+                    command.CommandText = manualstatus;
+                    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
+                    command.ExecuteNonQuery();
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
+                    dataAdapter.Fill(dataset);
+                    DataTable ms = dataset.Tables[0];
+
+
+                    if (ms.Rows.Count > 0)
+                    {
+                        DataRow row = ms.Rows[0];
+                        TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
+                        {
+                            processid = row.Field<int>("SystemOfRecordId"),
+                            projectid = row.Field<string>("ProjectID"),
+                            referenceid = row.Field<string>("OrderID"),
+                            doctypeid = row.Field<int>("DocTypeID"),
+                            value = statusid
+                        };
+
+                        // Call the REST API
+                        CallRestApiAsync(trdStatusDTO1);
+                    }
+                }
+
             }
             catch (Exception ex)
             {
@@ -742,6 +822,36 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        private void CallRestApiAsync(TrdStatusDTO trdStatusDTO)
+        {
+            var url = _authSettings.Value.TrdURL;
+
+            // Serialize the DTO to JSON
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    //client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(url);
+                    var response = client.PutAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
         public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -752,7 +862,7 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                if (agentCompletedOrdersDTO.SkillSetId == null)
+                if (agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
@@ -768,36 +878,267 @@ namespace OMT.DataService.Service
                                       join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
                                       where ss.SkillSetName == tablename && ps.Status == "Complex"
                                       select new
-                                      {   SystemOfRecordId = ps.SystemOfRecordId,
+                                      {
+                                          SystemOfRecordId = ps.SystemOfRecordId,
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x =>x.SystemOfRecordId == query1.SystemOfRecordId && x.IsActive).Select(_ =>_.ReportColumnName).ToList();
+                        SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
+
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
 
 
                         string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
-
-                        string sqlquery2 = "";
 
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery2 += $"t.{col},";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    
+                                    sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
-                            sqlquery1 += sqlquery2;
                         }
-                       
-                        string sqlquery = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                          $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                          $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                          $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                          $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                          $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                          $"FROM {tablename} t " +
-                                          $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                          $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                          $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND t.Status <> {query1.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                              $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                              $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                              $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                              $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                              $"FROM {tablename} t " +
+                                              $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                              $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                              $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
+
+                        if (query1 != null)
+                        {
+                            commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                        }
+
+                        // Conditionally append the date filter part
+                        string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                            ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                            : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+                        using SqlCommand command = connection.CreateCommand();
+
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@userid", agentCompletedOrdersDTO.UserId);
+                        command.Parameters.AddWithValue("@FromDate", agentCompletedOrdersDTO.FromDate);
+                        command.Parameters.AddWithValue("@ToDate", agentCompletedOrdersDTO.ToDate);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt1);
+
+                    }
+                    if (allCompletedRecords.Count > 0)
+                    {
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+                else if (agentCompletedOrdersDTO.SystemOfRecordId != null && agentCompletedOrdersDTO.SkillSetId != null)
+                {
+                    var query1 = (from ss in _oMTDataContext.SkillSet
+                                  join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                  where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
+                                  select new
+                                  {
+                                      SystemOfRecordId = ps.SystemOfRecordId,
+                                      Id = ps.Id
+                                  }).FirstOrDefault();
+
+                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
+
+                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                    string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
+
+                    if (reportcol.Count > 0)
+                    {
+                        foreach (string col in reportcol)
+                        {
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+
+                                sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                            }
+                            else
+                            {
+                                sqlquery1 += $"t.{col}, ";
+                            }
+                        }
+                    }
+
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                   $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                   $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                   $"FROM {skillSet.SkillSetName} t " +
+                                   $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                   $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                   $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
+
+                    if (query1 != null)
+                    {
+                        commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                    }
+
+                    // Conditionally append the date filter part
+                    string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                        ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                        : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                    // Combine everything into the final query
+                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sqlquery;
+                    sqlCommand.Parameters.AddWithValue("@userid", agentCompletedOrdersDTO.UserId);
+                    sqlCommand.Parameters.AddWithValue("@FromDate", agentCompletedOrdersDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", agentCompletedOrdersDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                    if (querydt2.Count > 0)
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = querydt2;
+                        resultDTO.Message = "Completed orders fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+                else if (agentCompletedOrdersDTO.SystemOfRecordId != null && agentCompletedOrdersDTO.SkillSetId == null)
+                {
+                    List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                               && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).ToList();
+
+                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
+                    foreach (string tablename in tablenames)
+                    {
+                        //new changes
+                        var query1 = (from ss in _oMTDataContext.SkillSet
+                                      join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                      where ss.SkillSetName == tablename && ps.Status == "Complex"
+                                      select new
+                                      {
+                                          SystemOfRecordId = ps.SystemOfRecordId,
+                                          Id = ps.Id
+                                      }).FirstOrDefault();
+
+                        SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
+
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+
+                        string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
+
+                        if (reportcol.Count > 0)
+                        {
+                            foreach (string col in reportcol)
+                            {
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+
+                                    sqlquery1 += $@"
+                                                    CASE 
+                                                        WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                        THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                        ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                    END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
+                            }
+                        }
+
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                              $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                              $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                              $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                              $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                              $"FROM {tablename} t " +
+                                              $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                              $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                              $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
+
+                        if (query1 != null)
+                        {
+                            commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                        }
+
+                        // Conditionally append the date filter part
+                        string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                            ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                            : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
@@ -835,79 +1176,7 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "404";
                     }
                 }
-                else
-                {
-                    var query = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == agentCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
-                                 select new
-                                 {
-                                     SystemOfRecordId = ps.SystemOfRecordId,
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
 
-                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
-
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
-                    string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
-
-                    string sqlquery2 = "";
-
-                    if (reportcol.Count > 0)
-                    {
-                        foreach (string col in reportcol)
-                        {
-                            sqlquery2 += $"t.{col},";
-                        }
-                        sqlquery1 += sqlquery2;
-                    }
-
-                    string sql = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                 $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                 $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                 $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                 $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                 $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                 $"FROM {skillSet.SkillSetName} t " +
-                                 $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                 $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                 $"WHERE UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' AND t.Status <> {query.Id} AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
-
-
-                    using SqlCommand sqlCommand = connection.CreateCommand();
-                    sqlCommand.CommandText = sql;
-                    sqlCommand.Parameters.AddWithValue("@userid", agentCompletedOrdersDTO.UserId);
-                    sqlCommand.Parameters.AddWithValue("@FromDate", agentCompletedOrdersDTO.FromDate);
-                    sqlCommand.Parameters.AddWithValue("@ToDate", agentCompletedOrdersDTO.ToDate);
-
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
-
-                    DataSet dataset = new DataSet();
-
-                    dataAdapter.Fill(dataset);
-
-                    DataTable datatable = dataset.Tables[0];
-
-                    //query dt to get records
-                    var querydt2 = datatable.AsEnumerable()
-                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                      column => column.ColumnName,
-                                      column => row[column] == DBNull.Value ? "": row[column])).ToList();
-                    if (querydt2.Count > 0)
-                    {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Data = querydt2;
-                        resultDTO.Message = "Completed orders fetched successfully";
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
-
-                }
             }
             catch (Exception ex)
             {
@@ -929,85 +1198,12 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                if (teamCompletedOrdersDTO.SkillSetId != null)
-                {
-                    var query = (from ss in _oMTDataContext.SkillSet
-                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                 where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
-                                 select new
-                                 {
-                                     Id = ps.Id
-                                 }).FirstOrDefault();
-
-                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
-
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
-                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
-
-                    string sqlquery2 = "";
-
-                    if (reportcol.Count > 0)
-                    {
-                        foreach (string col in reportcol)
-                        {
-                            sqlquery2 += $"t.{col},";
-                        }
-                        sqlquery1 += sqlquery2;
-                    }
-
-                    string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                  $"FROM {skillSet.SkillSetName} t " +
-                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                  $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> {query.Id} AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
-
-
-                    using SqlCommand sqlCommand = connection.CreateCommand();
-                    sqlCommand.CommandText = sql1;
-                    sqlCommand.Parameters.AddWithValue("@Teamid", teamCompletedOrdersDTO.TeamId);
-                    sqlCommand.Parameters.AddWithValue("@FromDate", teamCompletedOrdersDTO.FromDate);
-                    sqlCommand.Parameters.AddWithValue("@ToDate", teamCompletedOrdersDTO.ToDate);
-
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
-
-                    DataSet dataset = new DataSet();
-
-                    dataAdapter.Fill(dataset);
-
-                    DataTable datatable = dataset.Tables[0];
-
-                    //query dt to get records
-                    var querydt2 = datatable.AsEnumerable()
-                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                      column => column.ColumnName,
-                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-                    if (querydt2.Count > 0)
-                    {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Data = querydt2;
-                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
-                }
-                else
+                if (teamCompletedOrdersDTO.SystemOfRecordId == null && teamCompletedOrdersDTO.SkillSetId == null)
                 {
                     List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
-                                               where ta.TeamId == teamCompletedOrdersDTO.TeamId
                                                join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId
                                                select ss.SkillSetName).Distinct().ToList();
 
                     List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
@@ -1023,33 +1219,57 @@ namespace OMT.DataService.Service
                                           Id = ps.Id
                                       }).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == query1.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                        SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
+
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
-
-                        string sqlquery2 = "";
 
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery2 += $"t.{col},";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
-                            sqlquery1 += sqlquery2;
                         }
 
-                        string sqlquery = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                                  $"FROM {tablename} t " +
-                                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                                  $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> {query1.Id} AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                        string commonSqlPart =
+                            $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                            $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                            $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                            $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                            $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                            $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                            $"FROM {tablename} t " +
+                            $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                            $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                            $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                            $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
 
+                        if (query1 != null)
+                        {
+                            commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                        }
+
+                        // Conditionally append the date filter part
+                        string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                            ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                            : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
@@ -1088,6 +1308,211 @@ namespace OMT.DataService.Service
                     }
 
                 }
+
+                else if (teamCompletedOrdersDTO.SystemOfRecordId != null && teamCompletedOrdersDTO.SkillSetId != null)
+                {
+                    var query1 = (from ss in _oMTDataContext.SkillSet
+                                  join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                  where ss.SkillSetId == teamCompletedOrdersDTO.SkillSetId && ps.Status == "Complex"
+                                  select new
+                                  {
+                                      Id = ps.Id
+                                  }).FirstOrDefault();
+
+                    SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
+
+                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+
+                    if (reportcol.Count > 0)
+                    {
+                        foreach (string col in reportcol)
+                        {
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                            }
+                            else
+                            {
+                                sqlquery1 += $"t.{col}, ";
+                            }
+                        }
+                    }
+
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                      $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                      $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                      $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                      $"FROM {skillSet.SkillSetName} t " +
+                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                      $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                      $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
+
+                    if (query1 != null)
+                    {
+                        commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                    }
+
+                    string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                                                 ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                                                 : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                    // Combine everything into the final query
+                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                    using SqlCommand sqlCommand = connection.CreateCommand();
+                    sqlCommand.CommandText = sqlquery;
+                    sqlCommand.Parameters.AddWithValue("@Teamid", teamCompletedOrdersDTO.TeamId);
+                    sqlCommand.Parameters.AddWithValue("@FromDate", teamCompletedOrdersDTO.FromDate);
+                    sqlCommand.Parameters.AddWithValue("@ToDate", teamCompletedOrdersDTO.ToDate);
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlCommand);
+
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    //query dt to get records
+                    var querydt2 = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                    if (querydt2.Count > 0)
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = querydt2;
+                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+                else if (teamCompletedOrdersDTO.SystemOfRecordId != null && teamCompletedOrdersDTO.SkillSetId == null)
+                {
+                    List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
+                                               join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                               select ss.SkillSetName).Distinct().ToList();
+
+                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
+
+                    foreach (string tablename in tablenames)
+                    {
+                        var query1 = (from ss in _oMTDataContext.SkillSet
+                                      join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
+                                      where ss.SkillSetName == tablename && ps.Status == "Complex"
+                                      select new
+                                      {
+                                          SystemofRecordId = ps.SystemOfRecordId,
+                                          Id = ps.Id
+                                      }).FirstOrDefault();
+
+                        SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
+
+                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+
+                        string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+
+                        if (reportcol.Count > 0)
+                        {
+                            foreach (string col in reportcol)
+                            {
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                CASE 
+                                                    WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                    THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                    ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                END as {col}, ";
+                                }
+                                else
+                                {
+                                    sqlquery1 += $"t.{col}, ";
+                                }
+                            }
+                        }
+
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                                      $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                                      $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                                      $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                                      $"FROM {tablename} t " +
+                                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                                      $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                                      $"WHERE TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
+
+
+                        if (query1 != null)
+                        {
+                            commonSqlPart += $"AND t.Status <> {query1.Id} ";
+                        }
+
+                        // Conditionally append the date filter part
+                        string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                            ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                            : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = sqlquery;
+                        command.Parameters.AddWithValue("@Teamid", teamCompletedOrdersDTO.TeamId);
+                        command.Parameters.AddWithValue("@FromDate", teamCompletedOrdersDTO.FromDate);
+                        command.Parameters.AddWithValue("@ToDate", teamCompletedOrdersDTO.ToDate);
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        //query dt to get records
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                        allCompletedRecords.AddRange(querydt1);
+
+                    }
+                    if (allCompletedRecords.Count > 0)
+                    {
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Completed orders not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -1311,25 +1736,33 @@ namespace OMT.DataService.Service
                                             WHERE t.Status = 9";
 
                         }
+                        else if (tablename.SystemofRecordId == 3)
+                        {
+                            sqlquery = null;
+                        }
 
-                        using SqlCommand command = connection.CreateCommand();
-                        command.CommandText = sqlquery;
+                        if (sqlquery != null)
+                        {
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
 
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
-                        DataSet dataset = new DataSet();
+                            DataSet dataset = new DataSet();
 
-                        dataAdapter.Fill(dataset);
+                            dataAdapter.Fill(dataset);
 
-                        DataTable datatable = dataset.Tables[0];
+                            DataTable datatable = dataset.Tables[0];
 
-                        //query dt to get records
-                        var querydt1 = datatable.AsEnumerable()
-                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                          column => column.ColumnName,
-                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                            //query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                          .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                              column => column.ColumnName,
+                                              column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
-                        ComplexRecords.AddRange(querydt1);
+                            ComplexRecords.AddRange(querydt1);
+
+                        }
 
                     }
 
@@ -1376,38 +1809,52 @@ namespace OMT.DataService.Service
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 9";
                         }
-
-
-                        using SqlCommand command = connection.CreateCommand();
-                        command.CommandText = sqlquery;
-
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-
-                        DataSet dataset = new DataSet();
-
-                        dataAdapter.Fill(dataset);
-
-                        DataTable datatable = dataset.Tables[0];
-
-                        //query dt to get records
-                        var querydt1 = datatable.AsEnumerable()
-                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                          column => column.ColumnName,
-                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-
-                        ComplexRecords.AddRange(querydt1);
-
-
-                        if (ComplexRecords.Count > 0)
+                        else if (skillset.SystemofRecordId == 3)
                         {
-                            resultDTO.Data = ComplexRecords;
-                            resultDTO.Message = "Complex orders fetched successfully";
-                            resultDTO.IsSuccess = true;
+                            sqlquery = null;
+                        }
+
+                        if (sqlquery != null)
+                        {
+
+
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+
+                            DataSet dataset = new DataSet();
+
+                            dataAdapter.Fill(dataset);
+
+                            DataTable datatable = dataset.Tables[0];
+
+                            //query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                          .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                              column => column.ColumnName,
+                                              column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                            ComplexRecords.AddRange(querydt1);
+
+
+                            if (ComplexRecords.Count > 0)
+                            {
+                                resultDTO.Data = ComplexRecords;
+                                resultDTO.Message = "Complex orders fetched successfully";
+                                resultDTO.IsSuccess = true;
+                            }
+                            else
+                            {
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Complex orders not found";
+                                resultDTO.StatusCode = "404";
+                            }
                         }
                         else
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Complex orders not found";
+                            resultDTO.Message = "This Skillset is not associated with complex status";
                             resultDTO.StatusCode = "404";
                         }
                     }
@@ -1458,24 +1905,31 @@ namespace OMT.DataService.Service
                                         INNER JOIN UserProfile up on up.UserId = t.UserId
                                         WHERE t.Status = 9 and t.UserId = @UserId";
                         }
+                        else if (skillset.SystemofRecordId == 3)
+                        {
+                            sqlquery = null;
+                        }
 
-                        using SqlCommand command = connection.CreateCommand();
-                        command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
+                        if (sqlquery != null)
+                        {
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+                            command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
 
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                        DataSet dataset = new DataSet();
-                        dataAdapter.Fill(dataset);
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                            DataSet dataset = new DataSet();
+                            dataAdapter.Fill(dataset);
 
-                        DataTable datatable = dataset.Tables[0];
+                            DataTable datatable = dataset.Tables[0];
 
-                        // Query dt to get records
-                        var querydt1 = datatable.AsEnumerable()
-                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                column => column.ColumnName,
-                                column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                            // Query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                    column => column.ColumnName,
+                                    column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
-                        ComplexRecords.AddRange(querydt1);
+                            ComplexRecords.AddRange(querydt1);
+                        }
                     }
 
                     if (ComplexRecords.Count > 0)
@@ -1525,35 +1979,49 @@ namespace OMT.DataService.Service
                                          INNER JOIN UserProfile up on up.UserId = t.UserId
                                          WHERE t.Status = 9 AND t.UserId = @UserId";
                         }
-
-                        using SqlCommand command = connection.CreateCommand();
-                        command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
-
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                        DataSet dataset = new DataSet();
-                        dataAdapter.Fill(dataset);
-
-                        DataTable datatable = dataset.Tables[0];
-
-                        // Query dt to get records
-                        var querydt1 = datatable.AsEnumerable()
-                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                column => column.ColumnName,
-                                column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-
-                        ComplexRecords.AddRange(querydt1);
-
-                        if (ComplexRecords.Count > 0)
+                        else if (skillset.SystemofRecordId == 3)
                         {
-                            resultDTO.Data = ComplexRecords;
-                            resultDTO.Message = "Complex orders fetched successfully";
-                            resultDTO.IsSuccess = true;
+                            sqlquery = null;
+                        }
+
+                        if (sqlquery != null)
+                        {
+
+                            using SqlCommand command = connection.CreateCommand();
+                            command.CommandText = sqlquery;
+                            command.Parameters.AddWithValue("@UserId", complexOrdersRequestDTO.UserId);
+
+                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                            DataSet dataset = new DataSet();
+                            dataAdapter.Fill(dataset);
+
+                            DataTable datatable = dataset.Tables[0];
+
+                            // Query dt to get records
+                            var querydt1 = datatable.AsEnumerable()
+                                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                    column => column.ColumnName,
+                                    column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                            ComplexRecords.AddRange(querydt1);
+
+                            if (ComplexRecords.Count > 0)
+                            {
+                                resultDTO.Data = ComplexRecords;
+                                resultDTO.Message = "Complex orders fetched successfully";
+                                resultDTO.IsSuccess = true;
+                            }
+                            else
+                            {
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Complex orders not found";
+                                resultDTO.StatusCode = "404";
+                            }
                         }
                         else
                         {
                             resultDTO.IsSuccess = false;
-                            resultDTO.Message = "Complex orders not found";
+                            resultDTO.Message = "This skillset is not associated with complex status";
                             resultDTO.StatusCode = "404";
                         }
                     }
@@ -1724,9 +2192,35 @@ namespace OMT.DataService.Service
                                                  AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
+
+                        else
+                        {
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                                          FROM {tablename.SkillSetName} t 
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                                AND (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+                        }
+
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+
+                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2)
+                        {
+                            command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+                        }
+
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -1827,10 +2321,39 @@ namespace OMT.DataService.Service
                                             OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
                                             AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
+                        else
+                        {
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken,
+                                                ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN 
+                                                 UserProfile up on up.UserId = t.UserId
+                                        INNER JOIN 
+                                                 Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                        WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                        AND (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                             AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+
+                        }
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
-                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        {
+                            command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                            command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+                        }
+                        else
+                        {
+                            command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                        }
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -1922,11 +2445,35 @@ namespace OMT.DataService.Service
                                                 OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
                                                 AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
+                        else
+                        {
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                                          FROM {skillset.SkillSetName} t 
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL 
+                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+
+                        }
 
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        {
+                            command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+                        }
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
@@ -2017,11 +2564,39 @@ namespace OMT.DataService.Service
                                                 OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
                                                 AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
+                        else
+                        {
+                            sqlquery = $@"SELECT 
+                                                t.Id,t.ProjectId, t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
+                                                CONCAT((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 3600),':',((DATEDIFF(SECOND, t.StartTime, GETDATE()) / 60) % 60), ':',(DATEDIFF(SECOND, t.StartTime, GETDATE()) % 60)) as TimeTaken
+                                          FROM {skillset.SkillSetName} t 
+                                          INNER JOIN 
+                                                SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                          INNER JOIN 
+                                                SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                          INNER JOIN 
+                                                UserProfile up on up.UserId = t.UserId
+                                          INNER JOIN 
+                                                Timeline tl on ss.SkillSetId = tl.SkillSetId
+                                          WHERE 
+                                                t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
+                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
+                                               AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+
+                        }
 
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
-                        command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
-                        command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        {
+                            command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                            command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
+                        }
+                        else
+                        {
+                            command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
+                        }
 
                         using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
                         DataSet dataset = new DataSet();
@@ -2657,31 +3232,51 @@ namespace OMT.DataService.Service
                     {
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
-                        string sqlquery2 = "";
-
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery2 += $"t.{col},";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                                }
+                                else
+                                {
+
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
-                            sqlquery1 += sqlquery2;
                         }
 
-                        string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                      $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                      $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                      $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                      $"FROM {skillsetname} t " +
-                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                      $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                      $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                               $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                               $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                               $"FROM {skillsetname} t " +
+                                               $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                               $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                               $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                               $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
+
+
+
+                        string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                                                     ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                                                     : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         using SqlCommand sqlCommand = connection.CreateCommand();
-                        sqlCommand.CommandText = sql1;
+                        sqlCommand.CommandText = sqlquery;
 
                         sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
                         sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
@@ -2714,18 +3309,29 @@ namespace OMT.DataService.Service
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
-                    string sqlquery2 = "";
-
                     if (reportcol.Count > 0)
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery2 += $"t.{col},";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                            }
+                            else
+                            {
+
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
-                        sqlquery1 += sqlquery2;
                     }
 
-                    string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
@@ -2735,10 +3341,16 @@ namespace OMT.DataService.Service
                                   $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                   $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
                                   $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                  $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                                  $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
 
+                    string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                                                 ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                                                 : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                    // Combine everything into the final query
+                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
                     using SqlCommand sqlCommand = connection.CreateCommand();
-                    sqlCommand.CommandText = sql1;
+                    sqlCommand.CommandText = sqlquery;
 
                     sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
                     sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
@@ -2774,18 +3386,29 @@ namespace OMT.DataService.Service
                     {
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
-                        string sqlquery2 = "";
-
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                sqlquery2 += $"t.{col},";
+                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                                }
+                                else
+                                {
+
+                                    sqlquery1 += $"t.{col}, ";
+                                }
                             }
-                            sqlquery1 += sqlquery2;
                         }
 
-                        string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
                                       $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
@@ -2795,10 +3418,17 @@ namespace OMT.DataService.Service
                                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
                                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                      $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                                      $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
+
+                        string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                                                     ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                                                     : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                        // Combine everything into the final query
+                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         using SqlCommand sqlCommand = connection.CreateCommand();
-                        sqlCommand.CommandText = sql1;
+                        sqlCommand.CommandText = sqlquery;
 
                         sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
                         sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
@@ -2827,31 +3457,49 @@ namespace OMT.DataService.Service
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
-                    string sqlquery2 = "";
-
                     if (reportcol.Count > 0)
                     {
                         foreach (string col in reportcol)
                         {
-                            sqlquery2 += $"t.{col},";
+                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqlquery1 += $@"
+                                                  CASE 
+                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                                  END as {col}, ";
+
+                            }
+                            else
+                            {
+
+                                sqlquery1 += $"t.{col}, ";
+                            }
                         }
-                        sqlquery1 += sqlquery2;
                     }
 
-                    string sql1 = sqlquery1 + $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
-                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                  $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
-                                  $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                  $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
-                                  $"FROM {skillset.SkillSetName} t " +
-                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                  $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate";
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
+                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                                           $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
+                                           $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
+                                           $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
+                                           $"(DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken " +
+                                           $"FROM {skillset.SkillSetName} t " +
+                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                           $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                           $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
+
+                    string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
+                                              ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
+                                              : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
+
+                    // Combine everything into the final query
+                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
-                    sqlCommand.CommandText = sql1;
+                    sqlCommand.CommandText = sqlquery;
 
                     sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
                     sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
@@ -2883,6 +3531,41 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Completed orders not found";
+                    resultDTO.StatusCode = "404";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetMandatoryColumnNames(int skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                List<string> defaultTemplateColumns = _oMTDataContext.DefaultTemplateColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsMandatoryColumn && x.IsActive).Select(_ => _.DefaultColumnName).ToList();
+                List<string> duplicatecheckcolumns = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == skillsetid && x.IsDuplicateCheck).Select(_ => _.ColumnAliasName).ToList();
+
+                List<string> combinedList = defaultTemplateColumns.Concat(duplicatecheckcolumns).ToList();
+
+                if (combinedList.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = combinedList;
+                    resultDTO.Message = "Mandatory columns fetched successfully";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Mandatory columns not found";
                     resultDTO.StatusCode = "404";
                 }
 

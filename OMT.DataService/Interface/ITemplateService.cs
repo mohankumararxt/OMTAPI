@@ -10,7 +10,7 @@ namespace OMT.DataService.Interface
         ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO);
         ResultDTO GetOrders(int userid);
         ResultDTO GetTemplateList();
-        ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);
+        ResultDTO UpdateOrderStatus(UpdateOrderStatusDTO updateOrderStatusDTO);  //to call trd api
         ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO);
         ResultDTO TeamCompletedOrders(TeamCompletedOrdersDTO teamCompletedOrdersDTO);
         ResultDTO GetDefaultColumnNames(int systemofrecordid);
@@ -24,6 +24,8 @@ namespace OMT.DataService.Interface
         ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
         ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
         ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO);
-        
+        ResultDTO GetMandatoryColumnNames(int skillsetid);
+
+
     }
 }

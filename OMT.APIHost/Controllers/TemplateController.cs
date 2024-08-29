@@ -165,5 +165,12 @@ namespace OMT.APIHost.Controllers
             return _templateService.SkillsetWiseReports(skillsetWiseReportsDTO);
         }
 
+        [HttpGet]
+        [Route("GetMandatoryColumnNames/{skillsetid:int}")]
+        public ResultDTO GetMandatoryColumnNames(int skillsetid)
+        {
+            return _templateService.GetMandatoryColumnNames(skillsetid);
+        }
+
     }
 }

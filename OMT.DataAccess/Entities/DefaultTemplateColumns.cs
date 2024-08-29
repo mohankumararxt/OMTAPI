@@ -13,5 +13,6 @@ namespace OMT.DataAccess.Entities
         public bool IsDuplicateCheck { get; set; }
         public bool IsGetOrderColumn { get; set; }
         public bool IsDefOnlyColumn { get; set; }
+        public bool IsMandatoryColumn { get; set; }
     }
 }

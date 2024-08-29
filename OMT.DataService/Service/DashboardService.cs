@@ -37,6 +37,7 @@ namespace OMT.DataService
 
                 SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == liveStatusReportDTO.SkillSetId).FirstOrDefault();
 
+                List<Dictionary<string, object>> notassignedreport = new List<Dictionary<string, object>>();
                 List<Dictionary<string, object>> complreport = new List<Dictionary<string, object>>();
                 List<StatusCountDTO> statusCounts = new List<StatusCountDTO>();
                 List<AgentCompletionCountDTO> agentcompCounts = new List<AgentCompletionCountDTO>();
@@ -106,7 +107,7 @@ namespace OMT.DataService
 
                         if (dataset.Tables.Count > 1)
                         {
-                            int unasssignedcount = Convert.ToInt32(dataset.Tables[1].Rows[0][0]);
+                            int unasssignedcount = Convert.ToInt32(dataset.Tables[1].Rows.Count);     //get the no of rows
 
                             StatusCountDTO totalStatus = new StatusCountDTO
                             {
@@ -116,7 +117,17 @@ namespace OMT.DataService
 
                             statusCounts.Add(totalStatus);
 
+                            DataTable unasgnorderDT = dataset.Tables[1];
+
+                            var listofunassignedorders = unasgnorderDT.AsEnumerable()
+                                                                      .Select(row => unasgnorderDT.Columns.Cast<DataColumn>()
+                                                                      .ToDictionary(
+                                                                          column => column.ColumnName,
+                                                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                            notassignedreport.AddRange(listofunassignedorders);
                         }
+
                         if (dataset.Tables.Count > 0)
                         {
                             DataTable datatable = dataset.Tables[0];
@@ -126,7 +137,24 @@ namespace OMT.DataService
                                                              .Select(row => datatable.Columns.Cast<DataColumn>()
                                                                  .ToDictionary(
                                                                      column => column.ColumnName,
-                                                                     column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                                                                     column => {
+                                                                         var value = row[column];
+                                                                         if (value == DBNull.Value)
+                                                                         {
+                                                                             return ""; 
+                                                                         }
+
+                                                                         if (column.DataType == typeof(DateTime))
+                                                                         {
+                                                                             DateTime dateValue = (DateTime)value;
+                                                                             return dateValue.TimeOfDay == TimeSpan.Zero
+                                                                                 ? (object)dateValue.ToString("yyyy-MM-dd")   
+                                                                                 : (object)dateValue.ToString("yyyy-MM-dd HH:mm:ss");  
+                                                                         }
+
+                                                                         return (object)value.ToString(); 
+                                                                     }))
+                                                             .ToList();
 
                             List<string> coltoremove = new List<string> { "UserId", "statusid" };
 
@@ -220,7 +248,8 @@ namespace OMT.DataService
                             {
                                 StatusCount = statusCounts,
                                 AgentCompletedOrdersCount = agentcompCounts,
-                                CompletionReport = complreport
+                                CompletionReport = complreport,
+                                NotAssignedReport = notassignedreport
 
                             };
 

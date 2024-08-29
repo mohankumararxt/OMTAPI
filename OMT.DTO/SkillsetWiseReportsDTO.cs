@@ -7,5 +7,6 @@
         public List<int>? StatusId { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
+        public Dateoption DateFilter { get; set; }
     }
 }
