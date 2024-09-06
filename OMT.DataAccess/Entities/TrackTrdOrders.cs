@@ -14,5 +14,6 @@ namespace OMT.DataAccess.Entities
         public int TrackTrdId { get; set; }
         public DateTime CreatedDate { get; set; }
         public bool IsActive { get; set; }
+        public string TrdOrderType { get; set; }
     }
 }
