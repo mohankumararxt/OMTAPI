@@ -1569,6 +1569,22 @@ namespace OMT.DataService.Service
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).ToList();
 
+                //check if user has any TRD skillsets to show the getpendingorders button
+
+                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                             select ss.SkillSetName).ToList();
+
+                bool ispending = false;
+
+                if (trdskillsets.Count > 0 )
+                {
+                     ispending = true;
+                }
+                
+                // process pending orders if any for the user and send the details
                 List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
 
                 foreach (string tablename in tablenames)
@@ -1661,10 +1677,16 @@ namespace OMT.DataService.Service
 
                     orderedRecords.Remove("StartTime");
 
+                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        PendingOrder = new List<Dictionary<string, object>> { orderedRecords }
+                    };
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Please update the status of this order";
                     resultDTO.StatusCode = "200";
-                    resultDTO.Data = new List<Dictionary<string, object>> { orderedRecords };
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {

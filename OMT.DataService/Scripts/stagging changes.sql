@@ -2939,3 +2939,4 @@
 --UPDATE TrackTrdOrders set TrdOrderType = 'Normal' where id = 1
 
 --insert into TrackTrdOrders values (0,'2024-09-05 15:45:01.173',1,'Pending')
+--changes getprimaryorders and create getpendingorders sp
