@@ -2939,6 +2939,8 @@
 --UPDATE TrackTrdOrders set TrdOrderType = 'Normal' where id = 1
 
 --insert into TrackTrdOrders values (0,'2024-09-05 15:45:01.173',1,'Pending')
---changes getprimaryorders and create getpendingorders sp
+--changes getprimaryorders and create getpendingorders sp, insertdata sp
 
 --insert into defaulttemplatecolumns values(3,'IsPending','bit default 0',1,0,0,0,0)
+--update trdmap set skillsetid = 344 where trdmapid = 67
+
