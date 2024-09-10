@@ -1583,7 +1583,10 @@ namespace OMT.DataService.Service
                 {
                      ispending = true;
                 }
-                
+
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
                 // process pending orders if any for the user and send the details
                 List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
 
@@ -1670,14 +1673,14 @@ namespace OMT.DataService.Service
 
                 if (noStatusRecords.Count > 0)
                 {
-                    var orderedRecords = noStatusRecords
-                         .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
-                         .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
-                         .First();
+                    orderedRecords = noStatusRecords
+                                      .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                                      .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                                      .First();
 
                     orderedRecords.Remove("StartTime");
 
-                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,
                         PendingOrder = new List<Dictionary<string, object>> { orderedRecords }
@@ -1693,6 +1696,13 @@ namespace OMT.DataService.Service
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
                     resultDTO.Message = "No more orders to update status";
+
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        PendingOrder = null
+                    };
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
 
             }
