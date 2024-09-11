@@ -172,5 +172,13 @@ namespace OMT.APIHost.Controllers
             return _templateService.GetMandatoryColumnNames(skillsetid);
         }
 
+        [HttpGet]
+        [Route("gettrdpendingorders")]
+        public ResultDTO GetTrdPendingOrders()
+        {
+            var userid = UserId;
+            return _templateService.GetTrdPendingOrders(userid);
+        }
+
     }
 }
