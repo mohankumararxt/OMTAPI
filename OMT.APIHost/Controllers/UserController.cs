@@ -43,5 +43,13 @@ namespace OMT.APIHost.Controllers
         {
             return _userService.DeleteUser(userid);
         }
+        
+        [HttpPut]
+        [Route("UpdateByHR")]
+        public ResultDTO UpdateByHR([FromBody]UpdateUserDTO updateUserDTO)
+        {
+            return _userService.UpdateByHR(updateUserDTO);
+        }
+
     }
 }

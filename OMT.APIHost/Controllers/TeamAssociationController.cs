@@ -14,7 +14,7 @@ namespace OMT.APIHost.Controllers
     public class TeamAssociationController : ControllerBase
     {
         private readonly ITeamAssociationService _teamAssociationService;
-
+        
         public TeamAssociationController(ITeamAssociationService teamAssociationService)
         {
             _teamAssociationService = teamAssociationService;
@@ -65,6 +65,13 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetTeamAssociationListByTeamId(int teamid)
         {
             return _teamAssociationService.GetTeamAssociationByTeamId(teamid);
+        }
+
+        [HttpPut]
+        [Route("Update")]
+        public ResultDTO UpdateTeamAssociation([FromBody] UpdateTeamAssociationDTO teamAssociationDTO)
+        {
+            return _teamAssociationService.UpdateTeamAssociation(teamAssociationDTO);
         }
     }
 }
