@@ -682,6 +682,30 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                // check if user has trd skillsets
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
+                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                             where us.UserId == updateOrderStatusDTO.UserId && us.IsActive && ss.SystemofRecordId == 3
+                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                             select ss.SkillSetName).ToList();
+
+                bool ispending = false;
+
+                if (trdskillsets.Count > 0)
+                {
+                    ispending = true;
+                }
+
+                pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                {
+                    IsPending = ispending,
+                    PendingOrder = null
+                };
+
+                // check if the skillset has template 
+
                 var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
 
                 var exist = (from tc in _oMTDataContext.TemplateColumns
@@ -733,6 +757,7 @@ namespace OMT.DataService.Service
                         }
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
+                        resultDTO.Data = pendingOrdersResponseDTO;
 
                     }
                     else
@@ -740,6 +765,7 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "404";
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Sorry, this order doesnt exist, you can't update the status anymore.";
+                        resultDTO.Data = pendingOrdersResponseDTO;
                     }
                 }
                 else
@@ -747,6 +773,7 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
 
                 if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
@@ -793,7 +820,6 @@ namespace OMT.DataService.Service
                     DataSet dataset = new DataSet();
                     dataAdapter.Fill(dataset);
                     DataTable ms = dataset.Tables[0];
-
 
                     if (ms.Rows.Count > 0)
                     {
@@ -896,7 +922,7 @@ namespace OMT.DataService.Service
                             {
                                 if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    
+
                                     sqlquery1 += $@"
                                                     CASE 
                                                         WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
@@ -1579,9 +1605,9 @@ namespace OMT.DataService.Service
 
                 bool ispending = false;
 
-                if (trdskillsets.Count > 0 )
+                if (trdskillsets.Count > 0)
                 {
-                     ispending = true;
+                    ispending = true;
                 }
 
                 PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
@@ -3726,7 +3752,7 @@ namespace OMT.DataService.Service
                 {
                     var userskillsetlist = (from us in _oMTDataContext.UserSkillSet
                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                            where us.UserId == userid && us.IsActive == true && ss.SystemofRecordId == 3 
+                                            where us.UserId == userid && us.IsActive == true && ss.SystemofRecordId == 3
                                             select new
                                             {
                                                 skillsetname = ss.SkillSetName,
@@ -3734,7 +3760,7 @@ namespace OMT.DataService.Service
                                                 SystemofRecord = ss.SystemofRecordId
                                             }).ToList();
 
-                    if (userskillsetlist.Count>0)
+                    if (userskillsetlist.Count > 0)
                     {
                         string updatedOrder;
                         SqlCommand command1 = new()
