@@ -1,7 +1,6 @@
 ﻿using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
-using OMT.DataService.Service;
 using OMT.DataService.Utility;
 using OMT.DTO;
 
@@ -10,10 +9,7 @@ namespace OMT.DataService.Service
     public class UserService : IUserService
     {
         private readonly OMTDataContext _oMTDataContext;
-        
-
-        //private readonly OMTDataContext _oMTDataContext;
-        public UserService(OMTDataContext oMTDataContext) 
+        public UserService(OMTDataContext oMTDataContext)
         {
             _oMTDataContext = oMTDataContext;
         }
@@ -68,7 +64,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                UserProfile? user = _oMTDataContext.UserProfile.Where(x =>x.UserId == userid && x.IsActive).FirstOrDefault();
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == userid && x.IsActive).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -100,15 +96,15 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
             try
-            { 
-                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x=>x.IsActive).OrderBy(x => x.FirstName).Select(_  => new UserListResponseDTO
+            {
+                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x => x.IsActive).OrderBy(x => x.FirstName).Select(_ => new UserListResponseDTO
                 {
                     Email = _.Email,
                     EmployeeId = _.EmployeeId,
                     FirstName = _.FirstName,
                     LastName = _.LastName,
                     UserId = _.UserId,
-                    UserName = (_.FirstName??"") +' ' + (_.LastName?? "") 
+                    UserName = (_.FirstName ?? "") + ' ' + (_.LastName ?? "")
                 }).ToList();
                 resultDTO.Data = userListResponseDTOs;
             }
@@ -120,14 +116,12 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
-        
-        public ResultDTO UpdateByHR(UpdateUserDTO updateUserDTO)
+        public ResultDTO UpdateByHR(UpdateUserByHrDTO updateUserDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
-                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updateUserDTO.UserId && x.IsActive).FirstOrDefault(); 
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updateUserDTO.UserId && x.IsActive).FirstOrDefault();
                 if (user != null)
                 {
                     string encryptedPassword = Encryption.EncryptPlainTextToCipherText(updateUserDTO.Password);
@@ -140,7 +134,7 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "User updated successfully";
-                    
+
                 }
                 else
                 {

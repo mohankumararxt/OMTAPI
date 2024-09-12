@@ -8,7 +8,6 @@ namespace OMT.DataService.Interface
         ResultDTO DeleteTeamAssociation(int associationid);
         ResultDTO GetTeamAssociationList();
         ResultDTO GetTeamAssociationByTeamId(int teamid);
-
         ResultDTO UpdateTeamAssociation(UpdateTeamAssociationDTO updateTeamAssociationDTO); 
     }
 }

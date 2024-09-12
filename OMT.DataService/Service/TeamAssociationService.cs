@@ -164,7 +164,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        //Update
         public ResultDTO UpdateTeamAssociation(UpdateTeamAssociationDTO updateTeamAssociationDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
@@ -190,8 +189,6 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                 }
             }
-
-
 
             catch (Exception ex)
             {
