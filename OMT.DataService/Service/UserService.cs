@@ -1,6 +1,7 @@
 ﻿using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
+using OMT.DataService.Service;
 using OMT.DataService.Utility;
 using OMT.DTO;
 
@@ -9,8 +10,10 @@ namespace OMT.DataService.Service
     public class UserService : IUserService
     {
         private readonly OMTDataContext _oMTDataContext;
+        
+
         //private readonly OMTDataContext _oMTDataContext;
-        public UserService(OMTDataContext oMTDataContext)
+        public UserService(OMTDataContext oMTDataContext) 
         {
             _oMTDataContext = oMTDataContext;
         }
@@ -117,5 +120,45 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        
+        public ResultDTO UpdateByHR(UpdateUserDTO updateUserDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+            try
+            {
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updateUserDTO.UserId && x.IsActive).FirstOrDefault(); 
+                if (user != null)
+                {
+                    string encryptedPassword = Encryption.EncryptPlainTextToCipherText(updateUserDTO.Password);
+
+                    user.OrganizationId = updateUserDTO.OrganizationId;
+                    user.RoleId = updateUserDTO.RoleId;
+                    user.Password = encryptedPassword;
+                    user.Mobile = updateUserDTO.Mobile;
+                    _oMTDataContext.UserProfile.Update(user);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "User updated successfully";
+                    
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
     }
 }
+
+
