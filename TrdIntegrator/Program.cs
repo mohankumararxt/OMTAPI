@@ -38,7 +38,7 @@ namespace TrdIntegrator
             int pendingTRDidno = GetLastPendingTrdOrdersId();
             GetTrdPendingOrders(pendingTRDidno);
 
-           // BringBackLeftoutPendingOrders("sd",7);              run if new doctype orders are missed
+            // BringBackLeftoutOrders("LO8040122PC", 4);              //run if new doctype orders are missed
         }
         public static void GetTrdOrders(int normalTRDidno)
         {
@@ -215,12 +215,25 @@ namespace TrdIntegrator
 
                     DataTable DuplicatecheckDT = DuplicatecheckDS.Tables[0];
 
-                    var duplicateorders = new HashSet<string>(
-                                             DuplicatecheckDT.AsEnumerable()
-                                             .Select(row => row.Field<string>("OrderId")));
+                    //var duplicateorders = new HashSet<string>(
+                    //                         DuplicatecheckDT.AsEnumerable()
+                    //                         .Select(row => row.Field<string>("OrderId")));
+
+                    //var filteredOrders = TRDorderstoupload.AsEnumerable()
+                    //                    .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
+
+                    var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
+                                          DuplicatecheckDT.AsEnumerable()
+                                          .Select(row => (
+                                              row.Field<string>("OrderId"),
+                                              row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                                          )));
 
                     var filteredOrders = TRDorderstoupload.AsEnumerable()
-                                        .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
+                                        .Where(row => !duplicateorders.Contains((
+                                            row.Field<string>("OrderId"),
+                                            row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                                        )));
 
                     if (filteredOrders.Any())
                     {
