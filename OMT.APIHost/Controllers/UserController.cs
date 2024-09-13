@@ -51,5 +51,11 @@ namespace OMT.APIHost.Controllers
             return _userService.UpdateByHR(updateUserDTO);
         }
 
+        [HttpPut]
+        [Route("UpdatePasswordByHR")]
+        public ResultDTO UpdatePasswordByHR([FromBody] UpdateUserPasswordByHrDTO updateUserPasswordDTO)
+        {
+            return _userService.UpdatePasswordByHR(updateUserPasswordDTO);
+        }
     }
 }

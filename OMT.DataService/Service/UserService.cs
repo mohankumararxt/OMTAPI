@@ -169,8 +169,42 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+        public ResultDTO UpdatePasswordByHR(UpdateUserPasswordByHrDTO updateUserPasswordDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
 
-    }
-}
+            try
+            {
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updateUserPasswordDTO.UserId && x.IsActive).FirstOrDefault();
+
+                if (user != null)
+                {
+                    string encryptedNewPassword = Encryption.EncryptPlainTextToCipherText(updateUserPasswordDTO.NewPassword);
+                    user.Password = encryptedNewPassword;
+                    _oMTDataContext.UserProfile.Update(user);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Password updated successfully";
+                }
+                else
+                {
+                    
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+
+            return resultDTO;
+        }
+     }
+     }
+
 
 
