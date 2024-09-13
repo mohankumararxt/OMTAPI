@@ -111,13 +111,12 @@ namespace OMT.DataService.Service
                                                                   LastName = up.LastName,
                                                                   Mobile = up.Mobile,
                                                                   Email = up.Email,
-                                                                  Password = up.Password,
                                                                   RoleId = r.RoleId,
                                                                   RoleName = r.RoleName,
                                                                   EmployeeId = up.EmployeeId,
                                                               }).ToList();
-                                                             
-               if (userListResponse.Count > 0)
+
+                if (userListResponse.Count > 0)
                 {
                     resultDTO.Data = userListResponse;
                     resultDTO.IsSuccess = true;
@@ -146,11 +145,8 @@ namespace OMT.DataService.Service
                 UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updateUserDTO.UserId && x.IsActive).FirstOrDefault();
                 if (user != null)
                 {
-                    string encryptedPassword = Encryption.EncryptPlainTextToCipherText(updateUserDTO.Password);
-
                     user.OrganizationId = updateUserDTO.OrganizationId;
                     user.RoleId = updateUserDTO.RoleId;
-                    user.Password = encryptedPassword;
                     user.Mobile = updateUserDTO.Mobile;
                     _oMTDataContext.UserProfile.Update(user);
                     _oMTDataContext.SaveChanges();
