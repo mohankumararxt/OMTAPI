@@ -220,7 +220,7 @@ namespace TrdIntegrator
                     //                         .Select(row => row.Field<string>("OrderId")));
 
                     //var filteredOrders = TRDorderstoupload.AsEnumerable()
-                    //                    .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
+                    //                  .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
 
                     var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
                                           DuplicatecheckDT.AsEnumerable()
@@ -229,16 +229,78 @@ namespace TrdIntegrator
                                               row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
                                           )));
 
-                    var filteredOrders = TRDorderstoupload.AsEnumerable()
-                                        .Where(row => !duplicateorders.Contains((
-                                            row.Field<string>("OrderId"),
-                                            row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
-                                        )));
+                    IEnumerable<DataRow> filteredOrders ;
+                    IEnumerable<DataRow> orderstoreplace;
+
+                    if (duplicateorders.Count > 0)
+                    {
+                         filteredOrders = TRDorderstoupload.AsEnumerable()
+                                       .Where(row => !duplicateorders.Contains((
+                                           row.Field<string>("OrderId"),
+                                           row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                                       )));
+
+                        orderstoreplace = filteredOrders.Where(row => duplicateorders.Any(dup =>
+                                          dup.OrderId == row.Field<string>("OrderId") &&    // Match on OrderId
+                                          dup.DocImageDate != row.Field<DateTime>("DocImageDate").Date // Ensure DocImageDate is different
+                                          ));
+                    }
+                    else
+                    {
+                        filteredOrders = TRDorderstoupload.AsEnumerable();
+                        orderstoreplace = Enumerable.Empty<DataRow>();
+                    }
+
+                    
+                    if (orderstoreplace.Any())
+                    {
+                        var orderIdList = string.Join(",", orderstoreplace.Select(row => $"'{row.Field<string>("OrderId")}'"));
+
+                        string updatequery = $@"
+                                                UPDATE {SkillSetName}
+                                                SET DocImageDate = CASE OrderId
+                                                    {string.Join(Environment.NewLine, orderstoreplace.Select(row =>
+                                                       $"WHEN '{row.Field<string>("OrderId")}' THEN '{row.Field<DateTime>("DocImageDate").ToString("yyyy-MM-dd")}'"))}
+                                                END
+                                                WHERE OrderId IN ({orderIdList}) AND Status IS NULL;
+                                            ";
+
+
+                        SqlCommand updateordercommand = new SqlCommand(updatequery, connection);
+
+                        updateordercommand.ExecuteNonQuery();
+                    }
+
+                    var filteredOrdersList = filteredOrders.ToList();
+                    var updatedFilteredOrders = filteredOrders;
+
+                    if (orderstoreplace.Any())
+                    {
+                        // Remove these orders from filteredOrders
+                     updatedFilteredOrders = filteredOrdersList.Except(orderstoreplace);
+
+                    }
+                    
+                    DataTable filteredOrdersDT = new DataTable();
+
+                    if (updatedFilteredOrders.Any())
+                    {
+                        // Convert to DataTable if there are rows
+                        filteredOrdersDT = updatedFilteredOrders.CopyToDataTable();
+                    }
+                    //else
+                    //{
+                       
+                    //    filteredOrdersDT = TRDorderstoupload.Clone();
+                    //}
+
+                    
+                    filteredOrders = filteredOrdersDT.AsEnumerable();
 
                     if (filteredOrders.Any())
                     {
                         var recordsList = filteredOrders
-                                          .Select(row => TRDorderstoupload.Columns
+                                          .Select(row => filteredOrdersDT.Columns
                                               .Cast<DataColumn>()
                                               .ToDictionary(col => col.ColumnName, col => row[col]))
                                           .ToList();
