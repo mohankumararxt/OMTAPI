@@ -88,7 +88,6 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
-
         }
 
         public ResultDTO GetUserList()
@@ -97,16 +96,39 @@ namespace OMT.DataService.Service
 
             try
             {
-                List<UserListResponseDTO> userListResponseDTOs = _oMTDataContext.UserProfile.Where(x => x.IsActive).OrderBy(x => x.FirstName).Select(_ => new UserListResponseDTO
+                List<UserListResponseDTO> userListResponse = (from up in _oMTDataContext.UserProfile
+                                                              join org in _oMTDataContext.Organization on up.OrganizationId equals org.OrganizationId
+                                                              join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                              where up.IsActive && org.IsActive && r.IsActive
+                                                              orderby up.FirstName
+                                                              select new UserListResponseDTO()
+                                                              {
+                                                                  UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                  UserId = up.UserId,
+                                                                  OrganizationId = org.OrganizationId,
+                                                                  OrganizationName = org.OrganizationName,
+                                                                  FirstName = up.FirstName,
+                                                                  LastName = up.LastName,
+                                                                  Mobile = up.Mobile,
+                                                                  Email = up.Email,
+                                                                  Password = up.Password,
+                                                                  RoleId = r.RoleId,
+                                                                  RoleName = r.RoleName,
+                                                                  EmployeeId = up.EmployeeId,
+                                                              }).ToList();
+                                                             
+               if (userListResponse.Count > 0)
                 {
-                    Email = _.Email,
-                    EmployeeId = _.EmployeeId,
-                    FirstName = _.FirstName,
-                    LastName = _.LastName,
-                    UserId = _.UserId,
-                    UserName = (_.FirstName ?? "") + ' ' + (_.LastName ?? "")
-                }).ToList();
-                resultDTO.Data = userListResponseDTOs;
+                    resultDTO.Data = userListResponse;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Users";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "List of Users not found";
+                }
             }
             catch (Exception ex)
             {

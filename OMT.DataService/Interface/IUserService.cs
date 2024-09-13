@@ -6,6 +6,8 @@ namespace OMT.DataService.Interface
     {
         ResultDTO CreateUser(CreateUserDTO createUserDTO);
         ResultDTO GetUserList();
+
+       // ResultDTO GetUserInfoByUserId(int? userId);
         ResultDTO DeleteUser(int userid);
         ResultDTO UpdateByHR(UpdateUserByHrDTO updateUserDTO);
 
