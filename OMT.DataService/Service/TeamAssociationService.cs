@@ -104,10 +104,12 @@ namespace OMT.DataService.Service
                                                                            {
                                                                                FirstName = up.FirstName,
                                                                                TeamName = t.TeamName,
+                                                                               TeamId = t.TeamId,
                                                                                Description = ta.Description,
                                                                                ThresholdCount = ta.ThresholdCount,
                                                                                AssociationId = ta.AssociationId,
-                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "")
+                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                               UserId = up.UserId
                                                                            }).ToList();
                 resultDTO.Data = ListofTeamAssociations;
                 resultDTO.IsSuccess = true;
