@@ -38,7 +38,6 @@ namespace TrdIntegrator
             int pendingTRDidno = GetLastPendingTrdOrdersId();
             GetTrdPendingOrders(pendingTRDidno);
 
-            // BringBackLeftoutOrders("LO8040122PC", 4);              //run if new doctype orders are missed
         }
         public static void GetTrdOrders(int normalTRDidno)
         {
@@ -166,7 +165,7 @@ namespace TrdIntegrator
 
                 }
 
-                if (TrdDocTypeId <= 0 && DocumentName == null)
+                if (TrdDocTypeId <= 0 && string.IsNullOrEmpty(DocumentName))
                 {
                     string createdoctype = $@"INSERT INTO DocType (DocumentName, IsActive, TrdDocTypeId) VALUES (@docname,1,@TrdDocTypeId)";
 
@@ -178,19 +177,21 @@ namespace TrdIntegrator
                     createdoctypecmd.ExecuteNonQuery();
                 }
 
-                if (skillsetid <= 0 && SkillSetName == null)
+                if (skillsetid <= 0 && string.IsNullOrEmpty(SkillSetName))
                 {
-                    string modifiedDocname = docname.Replace(" ", "_");
-                    string trdskillsetname = projid + "_" + modifiedDocname;
+                    string modifiedDocname = Regex.Replace(docname, @"[^a-zA-Z0-9_]", "_");
+                    SkillSetName = projid + "_" + modifiedDocname;
 
                     SqlCommand CreateTrdDetails = new SqlCommand("CreateTrdDetails", connection);
                     CreateTrdDetails.CommandType = CommandType.StoredProcedure;
-                    CreateTrdDetails.Parameters.AddWithValue("@DocumentName", modifiedDocname);
+                    
                     CreateTrdDetails.Parameters.AddWithValue("@ProjectId", projid);
-                    CreateTrdDetails.Parameters.AddWithValue("@Skillsetname", trdskillsetname);
+                    CreateTrdDetails.Parameters.AddWithValue("@Skillsetname", SkillSetName);
                     CreateTrdDetails.Parameters.AddWithValue("@DocTypeId", docid);
 
-
+                    CreateTrdDetails.Parameters.Add("@DupCol", SqlDbType.NVarChar, -1).Direction = ParameterDirection.Output;
+                    CreateTrdDetails.Parameters.Add("@SkillSetId", SqlDbType.Int).Direction = ParameterDirection.Output;
+                    
                     SqlParameter returnTrdValue = new SqlParameter
                     {
                         ParameterName = "@RETURN_VALUE",
@@ -200,6 +201,9 @@ namespace TrdIntegrator
                     CreateTrdDetails.Parameters.Add(returnTrdValue);
 
                     CreateTrdDetails.ExecuteNonQuery();
+
+                    duplicatecol = (string)CreateTrdDetails.Parameters["@DupCol"].Value;
+                    skillsetid = (int)CreateTrdDetails.Parameters["@SkillSetId"].Value;
 
                     int returnCode = (int)CreateTrdDetails.Parameters["@RETURN_VALUE"].Value;
 
@@ -212,8 +216,6 @@ namespace TrdIntegrator
                         Console.WriteLine("TRD details succesfully created for " + SkillSetName + " .");
                     }
                 }
-
-
 
                 List<string> duplicatecolumnsList = duplicatecol.Split(',').Select(s => s.Trim()).ToList();  // for duplicate check
 
@@ -350,13 +352,7 @@ namespace TrdIntegrator
                     // Convert to DataTable if there are rows
                     filteredOrdersDT = updatedFilteredOrders.CopyToDataTable();
                 }
-                //else
-                //{
-
-                //    filteredOrdersDT = TRDorderstoupload.Clone();
-                //}
-
-
+                
                 filteredOrders = filteredOrdersDT.AsEnumerable();
 
                 if (filteredOrders.Any())
@@ -412,11 +408,6 @@ namespace TrdIntegrator
                         Console.WriteLine("TRD orders succesfully loaded in " + SkillSetName + " template.");
                     }
                 }
-
-                //else
-                //{
-                //    Console.WriteLine("ProjectId" + projid + " and doctypeid " + docid + " is not mapped in OMT.");
-                //}
 
             }
         }
@@ -582,7 +573,6 @@ namespace TrdIntegrator
                     Console.WriteLine("TRD Pending orders succesfully loaded in " + SkillSetName + " template.");
                 }
 
-
             }
         }
 
@@ -667,66 +657,5 @@ namespace TrdIntegrator
             }
         }
 
-        public static void BringBackLeftoutOrders(string projectid, int doctypeid)
-        {
-            string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
-            {
-                connection.Open();
-
-                string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"", 0 as ""IsPending""
-                                 from public.tbl_omt_orders oo
-                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
-                                 where oo.projectid = @projectid and oo.doctypeid = @doctypeid Order By oo.id ASC;";
-
-                NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                command.Parameters.AddWithValue("projectid", projectid);
-                command.Parameters.AddWithValue("doctypeid", doctypeid);
-
-                NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
-                DataSet dataset = new DataSet();
-
-                dataAdapter.Fill(dataset);
-
-                DataTable datatable = dataset.Tables[0];
-
-                var distinctProjectIDs = datatable.AsEnumerable()
-                                                      .Select(row => row.Field<string>("ProjectId"))
-                                                      .Distinct()
-                                                      .ToList();
-
-                List<DataRow> TRDorderstoupload = new List<DataRow>();
-
-                foreach (string projid in distinctProjectIDs)
-                {
-                    var doctypeids = datatable.AsEnumerable()
-                                     .Where(row => row.Field<string>("ProjectId") == projid)
-                                     .Select(row => row.Field<int>("doctypeid"))
-                                     .Distinct().ToList();
-
-
-                    foreach (var docid in doctypeids)
-                    {
-                        TRDorderstoupload = datatable.AsEnumerable()
-                                                 .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
-                                                 .ToList();
-
-                        var docname = datatable.AsEnumerable()
-                                               .Where(row => row.Field<int>("doctypeid") == docid)
-                                               .Select(row => row.Field<string>("DocType"))
-                                               .FirstOrDefault();
-
-                        if (TRDorderstoupload.Any())
-                        {
-                            InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
-
-                        }
-                    }
-
-                }
-
-            }
-        }
     }
 }
