@@ -7,6 +7,7 @@ using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
 using OMT.DataService.Settings;
+using OMT.DataService.Utility;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,6 +91,7 @@ builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareService>();
 builder.Services.AddScoped<IInvoiceJointSciService, InvoiceJointSciService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
