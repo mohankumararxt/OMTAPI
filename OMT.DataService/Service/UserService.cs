@@ -169,6 +169,131 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetuserInfoByUserId(int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == userid && x.IsActive).FirstOrDefault();
+                if (user != null)
+                {
+                    //User Profile Info
+                    List<GetUserProfileInfoDTO> ListofUserInformations = (from up in _oMTDataContext.UserProfile
+                                                                          join org in _oMTDataContext.Organization on up.OrganizationId equals org.OrganizationId
+                                                                          join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                                          where up.IsActive && org.IsActive && r.IsActive && up.UserId == userid
+                                                                          orderby up.FirstName
+                                                                          select new GetUserProfileInfoDTO()
+                                                                          {
+                                                                              UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                              UserId = up.UserId,
+                                                                              OrganizationId = org.OrganizationId,
+                                                                              OrganizationName = org.OrganizationName,
+                                                                              FirstName = up.FirstName,
+                                                                              LastName = up.LastName,
+                                                                              Mobile = up.Mobile,
+                                                                              Email = up.Email,
+                                                                              Password = up.Password,
+                                                                              RoleId = r.RoleId,
+                                                                              RoleName = r.RoleName,
+                                                                              EmployeeId = up.EmployeeId,
+                                                                          }).ToList();
+
+                    //User Skill Set Info
+                    List<UserSkillSetResponseDTO> listofuserskillsets = (from up in _oMTDataContext.UserProfile
+                                                                         join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
+                                                                         join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                         where up.UserId == userid && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
+                                                                         orderby ss.SkillSetName
+                                                                         select new UserSkillSetResponseDTO
+                                                                         {
+                                                                             UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                             UserId = uss.UserId,
+                                                                             UserSkillSetId = uss.UserSkillSetId,
+                                                                             SkillSetName = ss.SkillSetName,
+                                                                             SkillSetId = uss.SkillSetId,
+                                                                             Percentage = uss.Percentage,
+                                                                             IsPrimary = uss.IsPrimary,
+                                                                             IsHardStateUser = uss.IsHardStateUser,
+                                                                             HardStateName = uss.HardStateName,
+                                                                         }).ToList();
+
+                    // Combining Both
+                    UserSkillsetCombinedDTO combinedDTO = new UserSkillsetCombinedDTO()
+                    {
+                        UserInfo = ListofUserInformations,
+                        UserSkillSet = listofuserskillsets
+                    };
+
+                    resultDTO.Data = combinedDTO;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List Of User Informations";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "User Informations not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+
+            return resultDTO;
+        }
+
+        public ResultDTO UpdatePasswordByUser(UpdatePasswordByUserDTO updatePasswordByUserDTO)
+         {
+             ResultDTO resultDTO = new ResultDTO() { IsSuccess = false, StatusCode = "201" };
+             try
+             {
+                 UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updatePasswordByUserDTO.UserId && x.IsActive).FirstOrDefault();
+                 if (user != null)
+                 {
+
+                     //Checking Current Password with existing Password
+                     string encryptedCurrentPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.CurrentPassword);
+                     if (user.Password != encryptedCurrentPassword)
+                     {
+                         resultDTO.StatusCode = "401";
+                         resultDTO.Message = "Current password is incorrect";
+                         return resultDTO;
+                     }
+
+                     // Encrypt and update new password
+                     string encryptedNewPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.ConfirmNewPassword);
+                     user.Password = encryptedNewPassword;
+                     _oMTDataContext.UserProfile.Update(user);
+                     _oMTDataContext.SaveChanges();
+
+                     resultDTO.IsSuccess = true;
+                     resultDTO.StatusCode = "200";
+                     resultDTO.Message = "Password updated successfully";
+                 }
+                 else
+                 {
+
+                     resultDTO.IsSuccess = false;
+                     resultDTO.Message = "User not found";
+                     resultDTO.StatusCode = "404";
+                 }
+             }
+             catch (Exception ex)
+             {
+                 resultDTO.IsSuccess = false;
+                 resultDTO.StatusCode = "500";
+                 resultDTO.Message = ex.Message;
+             }
+
+             return resultDTO;
+         }
+
         public ResultDTO UpdatePasswordByHR(UpdateUserPasswordByHrDTO updateUserPasswordDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
@@ -188,7 +313,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    
+
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "User not found";
                     resultDTO.StatusCode = "404";
@@ -203,8 +328,6 @@ namespace OMT.DataService.Service
 
             return resultDTO;
         }
-     }
-     }
 
-
-
+    }
+}
