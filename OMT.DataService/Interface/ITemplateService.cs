@@ -25,7 +25,6 @@ namespace OMT.DataService.Interface
         ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
         ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO);
         ResultDTO GetMandatoryColumnNames(int skillsetid);
-
-
+        ResultDTO GetTrdPendingOrders(int userid);
     }
 }

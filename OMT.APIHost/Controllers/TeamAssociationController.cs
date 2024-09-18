@@ -38,7 +38,7 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns success message after addition of team association</returns>
         [HttpPost]
         [Route("new")]
-        public ResultDTO AddTeamAssociation([FromBody]TeamAssociationCreateDTO teamAssociationCreateDTO)
+        public ResultDTO AddTeamAssociation([FromBody] TeamAssociationCreateDTO teamAssociationCreateDTO)
         {
             return _teamAssociationService.AddTeamAssociation(teamAssociationCreateDTO);
         }
@@ -65,6 +65,13 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetTeamAssociationListByTeamId(int teamid)
         {
             return _teamAssociationService.GetTeamAssociationByTeamId(teamid);
+        }
+
+        [HttpPut]
+        [Route("Update")]
+        public ResultDTO UpdateTeamAssociation([FromBody] UpdateTeamAssociationDTO teamAssociationDTO)
+        {
+            return _teamAssociationService.UpdateTeamAssociation(teamAssociationDTO);
         }
     }
 }
