@@ -9,8 +9,6 @@ using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
 using OMT.DataService.Interface;
 using OMT.DTO;
-using System.Net;
-using System.Net.Mail;
 
 namespace OMT.DataService.Utility
 {
@@ -28,6 +26,34 @@ namespace OMT.DataService.Utility
 
             try
             {
+
+                string senderEmail = _authSettings.Value.FromEmailId;
+                string password = _authSettings.Value.Password;
+                string toemails = string.Join(',', sendEmailDTO.ToEmailIds);
+                string host = _authSettings.Value.Host;
+                int port = _authSettings.Value.Port;
+                bool enablessl = _authSettings.Value.EnableSSL;
+
+                MailMessage message = new MailMessage();
+
+                message.From = new MailAddress(senderEmail);
+
+                // Add multiple recipients to the "To" field (Comma-separated email addresses)
+                message.To.Add(toemails);
+                message.Subject = sendEmailDTO.Subject;
+                message.Body = sendEmailDTO.Body;
+
+                SmtpClient smtpClient = new SmtpClient(host)
+                {
+                    Port = port, // Common port for TLS
+                    Credentials = new NetworkCredential(senderEmail, password),
+                    EnableSsl = enablessl // Enable SSL for secure email sending
+                };
+
+                // Send the email
+                smtpClient.Send(message);
+
+                resultDTO.Message = "Email sent successfully to multiple recipients!";
 
             }
             catch (Exception ex)
