@@ -242,6 +242,59 @@ namespace OMT.DataService.Service
                             throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                         }
 
+                        if (skillSet.SystemofRecordId == 2)
+                        {
+                            var message = "";
+                            List<int> ExistingResWareProductDescriptionIds = new List<int>();
+                            List<string> ExistingResWareProductDescriptionName = new List<string>();
+
+                            var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
+                            var records = insertedJsonobject["Records"];
+
+                            var distinctResWareProductDescriptions = records.Select(r => (string)r.ResWareProductDescriptions).Distinct().ToList();
+
+                            var NewResWareProductDescriptions = distinctResWareProductDescriptions.Where(rpd => !_oMTDataContext.ResWareProductDescriptions
+                                                                                                  .Any(t1 => t1.ResWareProductDescriptionName == rpd)).ToList();
+
+                            foreach ( var kvp in distinctResWareProductDescriptions )
+                            {
+                                var rpdid = _oMTDataContext.ResWareProductDescriptions.Where(x => x.ResWareProductDescriptionName == kvp).FirstOrDefault();
+                                
+                                if (rpdid != null)
+                                {
+                                    ExistingResWareProductDescriptionIds.Add(rpdid.ResWareProductDescriptionId);
+                                    ExistingResWareProductDescriptionName.Add(rpdid.ResWareProductDescriptionName);
+                                }
+                            }
+
+                            //var NotMappedToSkillset = ExistingResWareProductDescriptionIds.Where(rpdm => !_oMTDataContext.ResWareProductDescriptionMap
+                            //                                                               .Any(t1 => t1.ResWareProductDescriptionId == rpdm)).ToList();
+
+                            var NotMappedToSkillset = (from erpd in ExistingResWareProductDescriptionName
+                                                       join rpd in _oMTDataContext.ResWareProductDescriptions on erpd equals rpd.ResWareProductDescriptionName
+                                                       join rpdm in _oMTDataContext.ResWareProductDescriptionMap on rpd.ResWareProductDescriptionId equals rpdm.ResWareProductDescriptionId
+                                                       where ExistingResWareProductDescriptionName.Contains(rpd.ResWareProductDescriptionName)
+                                                       select rpd.ResWareProductDescriptionName).Distinct().ToList();
+                                                       
+
+                            if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
+                            {
+                                message = $"Please do add the following new Resware Product Descriptions, " + string.Join(',',NewResWareProductDescriptions) + "and map the same to the skillset " + skillSet.SkillSetName + " in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please do map the following Resware Product Descriptions, " + string.Join(',', NewResWareProductDescriptions) + "to the skillset " + skillSet.SkillSetName + " in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please do map" + string.Join(',', NewResWareProductDescriptions) + " to the skillset " + skillSet.SkillSetName ;
+
+                            }
+                        }
+
+
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
