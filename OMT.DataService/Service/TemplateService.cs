@@ -256,10 +256,10 @@ namespace OMT.DataService.Service
                             var NewResWareProductDescriptions = distinctResWareProductDescriptions.Where(rpd => !_oMTDataContext.ResWareProductDescriptions
                                                                                                   .Any(t1 => t1.ResWareProductDescriptionName == rpd)).ToList();
 
-                            foreach ( var kvp in distinctResWareProductDescriptions )
+                            foreach (var kvp in distinctResWareProductDescriptions)
                             {
                                 var rpdid = _oMTDataContext.ResWareProductDescriptions.Where(x => x.ResWareProductDescriptionName == kvp).FirstOrDefault();
-                                
+
                                 if (rpdid != null)
                                 {
                                     ExistingResWareProductDescriptionIds.Add(rpdid.ResWareProductDescriptionId);
@@ -267,30 +267,26 @@ namespace OMT.DataService.Service
                                 }
                             }
 
-                            //var NotMappedToSkillset = ExistingResWareProductDescriptionIds.Where(rpdm => !_oMTDataContext.ResWareProductDescriptionMap
-                            //                                                               .Any(t1 => t1.ResWareProductDescriptionId == rpdm)).ToList();
-
                             var NotMappedToSkillset = (from erpd in ExistingResWareProductDescriptionName
                                                        join rpd in _oMTDataContext.ResWareProductDescriptions on erpd equals rpd.ResWareProductDescriptionName
-                                                       join rpdm in _oMTDataContext.ResWareProductDescriptionMap on rpd.ResWareProductDescriptionId equals rpdm.ResWareProductDescriptionId
-                                                       where ExistingResWareProductDescriptionName.Contains(rpd.ResWareProductDescriptionName)
-                                                       select rpd.ResWareProductDescriptionName).Distinct().ToList();
-                                                       
+                                                       where !_oMTDataContext.ResWareProductDescriptionMap
+                                                           .Any(rpdm => rpdm.ResWareProductDescriptionId == rpd.ResWareProductDescriptionId
+                                                                        && rpdm.SkillSetId == skillSet.SkillSetId)
+                                                       select erpd).Distinct().ToList();
 
                             if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
                             {
-                                message = $"Please do add the following new Resware Product Descriptions, " + string.Join(',',NewResWareProductDescriptions) + "and map the same to the skillset " + skillSet.SkillSetName + " in OMT.";
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
                             }
 
                             else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please do map the following Resware Product Descriptions, " + string.Join(',', NewResWareProductDescriptions) + "to the skillset " + skillSet.SkillSetName + " in OMT.";
+                                message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
                             }
 
-                            else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                            else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please do map" + string.Join(',', NewResWareProductDescriptions) + " to the skillset " + skillSet.SkillSetName ;
-
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
                             }
                         }
 
