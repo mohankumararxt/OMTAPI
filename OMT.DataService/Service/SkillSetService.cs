@@ -15,7 +15,7 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-        public ResultDTO CreateSkillSet( SkillSetCreateDTO skillSetCreateDTO)
+        public ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -28,11 +28,13 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
+                    bool isHardState = skillSetCreateDTO.HardstateNames != null && skillSetCreateDTO.HardstateNames.Any(); 
                     SkillSet skillSet = new SkillSet()
                     {
                         SystemofRecordId = skillSetCreateDTO.SystemofRecordId,
                         SkillSetName = skillSetCreateDTO.SkillSetName,
                         Threshold = skillSetCreateDTO.Threshold,
+                        IsHardState = skillSetCreateDTO.IsHardState, 
                         IsActive = true
                     };
                     _oMTDataContext.SkillSet.Add(skillSet);
@@ -40,21 +42,23 @@ namespace OMT.DataService.Service
 
                     // add harstatenames for skillset
 
-                    //var skillsetid = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName && x.IsActive).Select(_ => _.SkillSetId).FirstOrDefault();
+                    var skillsetid = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName && x.IsActive).Select(_ => _.SkillSetId).FirstOrDefault();
 
-                    //foreach (var item in skillSetCreateDTO.HardstateNames)
-                    //{
-                    //    SkillSetHardStates skillSetHardStates = new SkillSetHardStates()
-                    //    {
-                    //        SkillSetId = skillsetid,
-                    //        StateName = item,
-                    //        IsActive = true,
-                    //        CreatedDate = DateTime.Now,
-                    //    };
-                    //    _oMTDataContext.SkillSetHardStates.Add(skillSetHardStates);
-                    //    _oMTDataContext.SaveChanges() ;
-                    //}
-
+                    if (isHardState) 
+                    {
+                        foreach (var item in skillSetCreateDTO.HardstateNames)
+                        {
+                            SkillSetHardStates skillSetHardStates = new SkillSetHardStates()
+                            {
+                                SkillSetId = skillsetid,
+                                StateName = item,
+                                IsActive = true,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.SkillSetHardStates.Add(skillSetHardStates);
+                            _oMTDataContext.SaveChanges();
+                        }    
+                    }
                     resultDTO.Message = "SkillSet created successfully";
                     resultDTO.IsSuccess = true;
                 }
@@ -67,13 +71,14 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
         public ResultDTO DeleteSkillSet(int skillsetId)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetId && x.IsActive).FirstOrDefault();
-                if(skillSet == null)
+                if (skillSet == null)
                 {
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
@@ -126,7 +131,7 @@ namespace OMT.DataService.Service
 
                     var tl = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillSet.SkillSetId && x.IsActive).ToList();
 
-                    foreach ( var t in tl)
+                    foreach (var t in tl)
                     {
                         t.IsActive = false;
                         _oMTDataContext.Timeline.Update(t);
@@ -138,7 +143,7 @@ namespace OMT.DataService.Service
 
                     var sshs = _oMTDataContext.SkillSetHardStates.Where(x => x.IsActive && x.SkillSetId == skillSet.SkillSetId).ToList();
 
-                    foreach ( var ss in sshs)
+                    foreach (var ss in sshs)
                     {
                         ss.IsActive = false;
                         _oMTDataContext.SkillSetHardStates.Update(ss);
@@ -175,27 +180,41 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+       
         public ResultDTO GetSkillSetList()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                // get list of skillsets
-               List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
-                                                             join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
-                                                             where ss.IsActive == true
-                                                             orderby sor.SystemofRecordName,ss.SkillSetName
-                                                             select new SkillSetResponseDTO
-                                                             {
-                                                                 SkillSetName = ss.SkillSetName,
-                                                                 SkillSetId = ss.SkillSetId,
-                                                                 Threshold = ss.Threshold,
-                                                                 SystemofRecordName = sor.SystemofRecordName,
-                                                                 SystemofRecordId = ss.SystemofRecordId,
-                                                             }).ToList();
+                var skillSetGroups = (from ss in _oMTDataContext.SkillSet
+                                      join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
+                                      join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup 
+                                      from hs in hsGroup.DefaultIfEmpty()  // Left join to include all skill sets
+                                      where sor.IsActive  
+                                      orderby ss.SkillSetId,sor.SystemofRecordName, ss.SkillSetName
+                                      group new { ss, sor, hs } by new  //Group the data's
+                                      {
+                                          ss.SkillSetId,
+                                          ss.SkillSetName,
+                                          ss.Threshold,
+                                          sor.SystemofRecordName,
+                                          ss.SystemofRecordId,
+                                          ss.IsHardState
+                                      } into grp  //here grp is the grouping key
+                                        select new SkillSetResponseDTO
+                                      {
+                                          SkillSetId = grp.Key.SkillSetId,
+                                          SkillSetName = grp.Key.SkillSetName,
+                                          Threshold = grp.Key.Threshold,
+                                          SystemofRecordName = grp.Key.SystemofRecordName,
+                                          SystemofRecordId = grp.Key.SystemofRecordId,
+                                          IsHardState = grp.Any(x => x.hs != null),
+                                          StateName = string.Join(", ", grp.Select(x => x.hs.StateName)) 
+                                      }).ToList();
+
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of SkillSets";
-                resultDTO.Data = ListofSkillSets;
+                resultDTO.Data = skillSetGroups;
             }
             catch (Exception ex)
             {
@@ -206,37 +225,40 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO GetSkillSetListBySORId(int sorid)
+       public ResultDTO GetSkillSetListBySORId(int sorid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<SkillSetResponseDTO> ListofSkillSets = (from sor in _oMTDataContext.SystemofRecord
-                                                             join ss in _oMTDataContext.SkillSet on sor.SystemofRecordId equals ss.SystemofRecordId
-                                                             where ss.IsActive == true && sor.SystemofRecordId == sorid && sor.IsActive
-                                                             orderby ss.SkillSetName
-                                                             select new SkillSetResponseDTO
-                                                             {
-                                                                 SkillSetName = ss.SkillSetName,
-                                                                 SkillSetId = ss.SkillSetId,
-                                                                 Threshold = ss.Threshold,
-                                                                 SystemofRecordName = sor.SystemofRecordName,
-                                                                 SystemofRecordId = ss.SystemofRecordId,
-                                                             }).ToList();
+                var skillSetGroups = (from ss in _oMTDataContext.SkillSet
+                                      join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
+                                      join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup 
+                                      from hs in hsGroup.DefaultIfEmpty()  
+                                      where sor.IsActive && sor.SystemofRecordId == sorid // Filter by the specific SOR ID
+                                      orderby sor.SystemofRecordId
+                                      group new { ss, sor, hs } by new 
+                                      {
+                                          ss.SkillSetId,
+                                          ss.SkillSetName,
+                                          ss.Threshold,
+                                          sor.SystemofRecordName,
+                                          ss.SystemofRecordId,
+                                          ss.IsHardState
+                                      } into grp  
+                                      select new SkillSetResponseDTO
+                                      {
+                                          SkillSetId = grp.Key.SkillSetId,
+                                          SkillSetName = grp.Key.SkillSetName,
+                                          Threshold = grp.Key.Threshold,
+                                          SystemofRecordName = grp.Key.SystemofRecordName,
+                                          SystemofRecordId = grp.Key.SystemofRecordId,
+                                          IsHardState = grp.Any(x => x.hs != null), //null 
+                                          StateName = string.Join(", ", grp.Select(x => x.hs.StateName)) 
+                                      }).ToList();
 
-                if(ListofSkillSets.Count > 0 )
-                {
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "List of SkillSets";
-                    resultDTO.Data = ListofSkillSets;
-                }
-                else
-                {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Skill sets not found for the given SystemofRecordId";
-                    resultDTO.StatusCode = "404";
-                }
-               
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of SkillSets";
+                resultDTO.Data = skillSetGroups;
             }
             catch (Exception ex)
             {
@@ -262,7 +284,7 @@ namespace OMT.DataService.Service
                                                             HardstateName = shs.StateName,
                                                         }).ToList();
 
-                if(hardStatename.Count > 0 )
+                if (hardStatename.Count > 0)
                 {
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "List of Statenames";
@@ -275,8 +297,6 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                 }
 
-
-
             }
             catch (Exception ex)
             {
@@ -286,7 +306,7 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
+        
         public ResultDTO UpdateSkillSet(SkillSetResponseDTO skillSetResponseDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
@@ -300,7 +320,7 @@ namespace OMT.DataService.Service
                     skillset.Threshold = skillSetResponseDTO.Threshold;
                     _oMTDataContext.SkillSet.Update(skillset);
                     _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess= true;
+                    resultDTO.IsSuccess = true;
                     resultDTO.Message = "Skill Set updated successfully";
                     resultDTO.Data = skillset;
                 }
@@ -311,6 +331,7 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                 }
             }
+
             catch (Exception ex)
             {
                 resultDTO.IsSuccess = false;
@@ -319,7 +340,5 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
-
     }
 }

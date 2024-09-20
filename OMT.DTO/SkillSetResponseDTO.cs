@@ -1,4 +1,6 @@
-﻿namespace OMT.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace OMT.DTO
 {
     public class SkillSetResponseDTO
     {
@@ -7,6 +9,7 @@
         public string? SystemofRecordName { get; set; }
         public string? SkillSetName { get; set; } 
         public int Threshold { get; set; }
-
+        public string? StateName {  get; set; } 
+        public bool? IsHardState { get; set; }
     }
 }

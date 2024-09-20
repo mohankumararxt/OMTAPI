@@ -48,12 +48,10 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns success message after addition of skill set</returns>
         [HttpPost]
         [Route("new")]
-
         public ResultDTO CreateSkillSet([FromBody] SkillSetCreateDTO skillSetCreateDTO)
         {
             ResultDTO resultDTO = _skillsetService.CreateSkillSet(skillSetCreateDTO);
             return resultDTO;
-
         }
 
         /// <summary>
@@ -63,7 +61,6 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns success message after deletion of skill set</returns>
         [HttpDelete]
         [Route("delete/{skillsetId:int}")]
-
         public ResultDTO DeleteSkillSet(int skillsetId)
         {
             return _skillsetService.DeleteSkillSet(skillsetId);
@@ -83,7 +80,6 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("GetListofHardStatenames/{skillsetid:int}")]
-
         public ResultDTO GetStatenameList(int skillsetid)
         {
             return _skillsetService.GetStatenameList(skillsetid);
