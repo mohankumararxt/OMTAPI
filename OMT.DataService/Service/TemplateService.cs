@@ -242,6 +242,55 @@ namespace OMT.DataService.Service
                             throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                         }
 
+                        if (skillSet.SystemofRecordId == 2)
+                        {
+                            var message = "";
+                            List<int> ExistingResWareProductDescriptionIds = new List<int>();
+                            List<string> ExistingResWareProductDescriptionName = new List<string>();
+
+                            var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
+                            var records = insertedJsonobject["Records"];
+
+                            var distinctResWareProductDescriptions = records.Select(r => (string)r.ResWareProductDescriptions).Distinct().ToList();
+
+                            var NewResWareProductDescriptions = distinctResWareProductDescriptions.Where(rpd => !_oMTDataContext.ResWareProductDescriptions
+                                                                                                  .Any(t1 => t1.ResWareProductDescriptionName == rpd)).ToList();
+
+                            foreach (var kvp in distinctResWareProductDescriptions)
+                            {
+                                var rpdid = _oMTDataContext.ResWareProductDescriptions.Where(x => x.ResWareProductDescriptionName == kvp).FirstOrDefault();
+
+                                if (rpdid != null)
+                                {
+                                    ExistingResWareProductDescriptionIds.Add(rpdid.ResWareProductDescriptionId);
+                                    ExistingResWareProductDescriptionName.Add(rpdid.ResWareProductDescriptionName);
+                                }
+                            }
+
+                            var NotMappedToSkillset = (from erpd in ExistingResWareProductDescriptionName
+                                                       join rpd in _oMTDataContext.ResWareProductDescriptions on erpd equals rpd.ResWareProductDescriptionName
+                                                       where !_oMTDataContext.ResWareProductDescriptionMap
+                                                           .Any(rpdm => rpdm.ResWareProductDescriptionId == rpd.ResWareProductDescriptionId
+                                                                        && rpdm.SkillSetId == skillSet.SkillSetId)
+                                                       select erpd).Distinct().ToList();
+
+                            if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
+                            {
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+                        }
+
+
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
