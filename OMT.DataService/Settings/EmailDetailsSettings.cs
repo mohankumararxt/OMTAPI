@@ -14,5 +14,6 @@ namespace OMT.DataService.Settings
         public int Port { get; set; }
         public bool EnableSSL { get; set; }
         public string SendEmailURL { get; set; }
+        public List<string> ToEmailId { get; set; }
     }
 }

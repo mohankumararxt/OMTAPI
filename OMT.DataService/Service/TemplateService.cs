@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 
 
 
@@ -31,11 +32,13 @@ namespace OMT.DataService.Service
 
         private readonly IOptions<TrdStatusSettings> _authSettings;
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings)
+        private readonly IConfiguration _configuration;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
             _emailDetailsSettings = emailDetailsSettings;
+            _configuration = configuration;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -291,13 +294,20 @@ namespace OMT.DataService.Service
                                 message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
                             }
 
-                            if (message != null)
+                            if (!string.IsNullOrEmpty(message))
                             {
                                 var url = _emailDetailsSettings.Value.SendEmailURL;
+                                IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
+
+                                List<string> toEmailIds = toEmailIdSection.AsEnumerable()
+                                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                          .Select(c => c.Value)
+                                                                          .ToList();
+
 
                                 SendEmailDTO sendEmailDTO = new SendEmailDTO
                                 {
-                                    ToEmailIds = new List<string> { "nivedhita.p@arxtlabs.com", "santhoshkumar@arxtlabs.com", "mohank@arxtlabs.com", "mithulpranav@arxtlabs.com" },
+                                    ToEmailIds = toEmailIds,
                                     Subject = "Invoice - resware product description",
                                     Body = message,
                                 };
