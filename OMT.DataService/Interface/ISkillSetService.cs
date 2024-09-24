@@ -8,7 +8,7 @@ namespace OMT.DataService.Interface
         ResultDTO GetSkillSetListBySORId(int sorid);
         ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO);
         ResultDTO DeleteSkillSet(int skillsetId);
-        ResultDTO UpdateSkillSet(SkillSetResponseDTO skillSetResponseDTO);
+        ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO); 
         ResultDTO GetStatenameList(int skillsetid);
 
     }

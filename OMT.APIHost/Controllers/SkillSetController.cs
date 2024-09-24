@@ -69,13 +69,13 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Update a skill set
         /// </summary>
-        /// <param name="skillSetResponseDTO">SkillSetResponseDTO</param>
+        /// <param name="skillSetUpdateDTO">SkillSetUpdateDTO</param>
         /// <returns>Returns updated skill set</returns>
         [HttpPut]
         [Route("update")]
-        public ResultDTO Update([FromBody]SkillSetResponseDTO skillSetResponseDTO)
+        public ResultDTO Update([FromBody]SkillSetUpdateDTO skillSetUpdateDTO)
         {
-            return _skillsetService.UpdateSkillSet(skillSetResponseDTO);
+            return _skillsetService.UpdateSkillSet(skillSetUpdateDTO);
         }
 
         [HttpGet]
