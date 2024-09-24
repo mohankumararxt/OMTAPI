@@ -12,6 +12,7 @@ namespace OMT.DataService.Settings
         public string Password { get; set; }
         public string Host { get; set; }
         public int Port { get; set; }
-        public bool EnableSSL { get; set; } 
+        public bool EnableSSL { get; set; }
+        public string SendEmailURL { get; set; }
     }
 }

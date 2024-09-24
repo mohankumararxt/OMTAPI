@@ -30,10 +30,12 @@ namespace OMT.DataService.Service
         private readonly OMTDataContext _oMTDataContext;
 
         private readonly IOptions<TrdStatusSettings> _authSettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
+            _emailDetailsSettings = emailDetailsSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -287,6 +289,40 @@ namespace OMT.DataService.Service
                             else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
                             {
                                 message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            if (message != null)
+                            {
+                                var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                                SendEmailDTO sendEmailDTO = new SendEmailDTO
+                                {
+                                    ToEmailIds = new List<string> { "nivedhita.p@arxtlabs.com", "santhoshkumar@arxtlabs.com", "mohank@arxtlabs.com", "mithulpranav@arxtlabs.com" },
+                                    Subject = "Invoice - resware product description",
+                                    Body = message,
+                                };
+                                try
+                                {
+                                    using (HttpClient client = new HttpClient())
+                                    {
+                                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        var webApiUrl = new Uri(url);
+                                        var response = client.PostAsync(webApiUrl, content).Result;
+
+                                        if (response.IsSuccessStatusCode)
+                                        {
+                                            var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    throw;
+                                }
                             }
                         }
 
