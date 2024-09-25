@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 
 
 
@@ -30,10 +31,14 @@ namespace OMT.DataService.Service
         private readonly OMTDataContext _oMTDataContext;
 
         private readonly IOptions<TrdStatusSettings> _authSettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        private readonly IConfiguration _configuration;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
+            _emailDetailsSettings = emailDetailsSettings;
+            _configuration = configuration;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -202,11 +207,17 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-        public ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO)
+        public ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
+                var records = insertedJsonobject["Records"];
+                var NoOfOrders = records.Count;
+
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
@@ -242,14 +253,60 @@ namespace OMT.DataService.Service
                             throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                         }
 
+                        // send details about uploaded orders via mail
+
+                        DateTime uploadedate = DateTime.Now;
+                        string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                        string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                        string username = string.Join(' ', firstname, lastname);
+
+
+                        IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                        List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                  .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                  .Select(c => c.Value)
+                                                                  .ToList();
+
+                        var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
+                       // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
+
+
+                        SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                        {
+                            ToEmailIds = toEmailIds1,
+                            Subject = "Orders uploaded",
+                            Body = uploaddetails,
+                        };
+                        try
+                        {
+                            using (HttpClient client = new HttpClient())
+                            {
+                                var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                var webApiUrl = new Uri(url);
+                                var response = client.PostAsync(webApiUrl, content).Result;
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                            throw;
+                        }
+
+
                         if (skillSet.SystemofRecordId == 2)
                         {
                             var message = "";
                             List<int> ExistingResWareProductDescriptionIds = new List<int>();
                             List<string> ExistingResWareProductDescriptionName = new List<string>();
-
-                            var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
-                            var records = insertedJsonobject["Records"];
 
                             var distinctResWareProductDescriptions = records.Select(r => (string)r.ResWareProductDescriptions).Distinct().ToList();
 
@@ -287,6 +344,47 @@ namespace OMT.DataService.Service
                             else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
                             {
                                 message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            if (!string.IsNullOrEmpty(message))
+                            {
+                                //  var url = _emailDetailsSettings.Value.SendEmailURL;
+                                IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
+
+                                List<string> toEmailIds = toEmailIdSection.AsEnumerable()
+                                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                          .Select(c => c.Value)
+                                                                          .ToList();
+
+
+                                SendEmailDTO sendEmailDTO = new SendEmailDTO
+                                {
+                                    ToEmailIds = toEmailIds,
+                                    Subject = "Invoice - resware product description",
+                                    Body = message,
+                                };
+                                try
+                                {
+                                    using (HttpClient client = new HttpClient())
+                                    {
+                                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        var webApiUrl = new Uri(url);
+                                        var response = client.PostAsync(webApiUrl, content).Result;
+
+                                        if (response.IsSuccessStatusCode)
+                                        {
+                                            var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    throw;
+                                }
                             }
                         }
 

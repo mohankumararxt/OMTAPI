@@ -11,6 +11,7 @@ using Npgsql;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using System.Net.Http;
 
 
 namespace TrdIntegrator
@@ -39,86 +40,128 @@ namespace TrdIntegrator
             GetTrdPendingOrders(pendingTRDidno);
 
         }
+
+        public class EmailDetails
+        {
+            public List<string> ToEmailIds { get; set; }
+            public string Subject { get; set; }
+            public string Body { get; set; }
+        }
         public static void GetTrdOrders(int normalTRDidno)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
+            string Url = "";
 
-            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+            try
             {
-                connection.Open();
+                Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+                string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
 
-                string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"",0 as ""IsPending""
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"",0 as ""IsPending""
                                  from public.tbl_omt_orders oo
                                  inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
                                  where oo.id > @idno Order By oo.id ASC;";
 
-                NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                command.Parameters.AddWithValue("idno", normalTRDidno);
+                    NpgsqlCommand command = new NpgsqlCommand(query, connection);
+                    command.Parameters.AddWithValue("idno", normalTRDidno);
 
-                NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
-                DataSet dataset = new DataSet();
+                    NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
 
-                dataAdapter.Fill(dataset);
+                    dataAdapter.Fill(dataset);
 
-                DataTable datatable = dataset.Tables[0];
+                    DataTable datatable = dataset.Tables[0];
 
-                var distinctProjectIDs = datatable.AsEnumerable()
-                                                      .Select(row => row.Field<string>("ProjectId"))
-                                                      .Distinct()
-                                                      .ToList();
+                    var distinctProjectIDs = datatable.AsEnumerable()
+                                                          .Select(row => row.Field<string>("ProjectId"))
+                                                          .Distinct()
+                                                          .ToList();
 
-                List<DataRow> TRDorderstoupload = new List<DataRow>();
+                    List<DataRow> TRDorderstoupload = new List<DataRow>();
 
-                foreach (string projid in distinctProjectIDs)
-                {
-                    var doctypeids = datatable.AsEnumerable()
-                                     .Where(row => row.Field<string>("ProjectId") == projid)
-                                     .Select(row => row.Field<int>("doctypeid"))
-                                     .Distinct().ToList();
-
-
-                    foreach (var docid in doctypeids)
+                    foreach (string projid in distinctProjectIDs)
                     {
-                        TRDorderstoupload = datatable.AsEnumerable()
-                                                 .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
-                                                 .ToList();
+                        var doctypeids = datatable.AsEnumerable()
+                                         .Where(row => row.Field<string>("ProjectId") == projid)
+                                         .Select(row => row.Field<int>("doctypeid"))
+                                         .Distinct().ToList();
 
-                        var docname = datatable.AsEnumerable()
-                                                .Where(row => row.Field<int>("doctypeid") == docid)
-                                                .Select(row => row.Field<string>("DocType"))
-                                                .FirstOrDefault();
 
-                        if (TRDorderstoupload.Any())
+                        foreach (var docid in doctypeids)
                         {
-                            InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
+                            TRDorderstoupload = datatable.AsEnumerable()
+                                                     .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
+                                                     .ToList();
 
+                            var docname = datatable.AsEnumerable()
+                                                    .Where(row => row.Field<int>("doctypeid") == docid)
+                                                    .Select(row => row.Field<string>("DocType"))
+                                                    .FirstOrDefault();
+
+                            if (TRDorderstoupload.Any())
+                            {
+                                InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
+
+                            }
                         }
+
                     }
 
-                }
+                    int idValue = normalTRDidno;
+                    if (datatable.Rows.Count > 0)
+                    {
+                        DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+                        idValue = (int)lastRow["id"];
+                    }
 
-                int idValue = normalTRDidno;
-                if (datatable.Rows.Count > 0)
+                    // call method to update the last id of trd order uploaded in trdtrack table
+
+                    UpdateNormalTrdOrdersId(idValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+
+                EmailDetails sendEmail = new EmailDetails
                 {
-                    DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
-                    idValue = (int)lastRow["id"];
+                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+                    Subject = "Trd Orders - Fetching normal trd orders from postgres",
+                    Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
+                };
+
+                using (HttpClient client = new HttpClient())
+                {
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(Url);
+                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
                 }
-
-                // call method to update the last id of trd order uploaded in trdtrack table
-
-                UpdateNormalTrdOrdersId(idValue);
+                throw;
             }
         }
 
         public static void InsertIntoSqlServer(DataTable TRDorderstoupload, string projid, int docid, string docname)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                string skillsetDetailsQuery = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName,ss.SystemofRecordId,STRING_AGG(CASE WHEN dt.IsDuplicateCheck = 1 THEN dt.DefaultColumnName END, ', ') AS Columns 
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string skillsetDetailsQuery = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName,ss.SystemofRecordId,STRING_AGG(CASE WHEN dt.IsDuplicateCheck = 1 THEN dt.DefaultColumnName END, ', ') AS Columns 
                                  FROM TrdMap tm
                                  INNER JOIN TemplateColumns TC ON TC.SkillSetId = tm.SkillSetId
                                  INNER JOIN SkillSet ss ON ss.SkillSetId = tm.SkillSetId
@@ -127,259 +170,465 @@ namespace TrdIntegrator
                                  GROUP BY  tm.SkillSetId,ss.SkillSetName ,ss.SystemofRecordId; 
                                  SELECT DocumentName,TrdDocTypeId FROM DocType WHERE TrdDocTypeId = @docid AND IsActive = 1";
 
-                SqlCommand skillSetCommand = new SqlCommand(skillsetDetailsQuery, connection);
+                    SqlCommand skillSetCommand = new SqlCommand(skillsetDetailsQuery, connection);
 
-                skillSetCommand.Parameters.AddWithValue("@docid", docid);
-                skillSetCommand.Parameters.AddWithValue("@projid", projid);
+                    skillSetCommand.Parameters.AddWithValue("@docid", docid);
+                    skillSetCommand.Parameters.AddWithValue("@projid", projid);
 
-                SqlDataAdapter skillsetdetailsAdapter = new SqlDataAdapter(skillSetCommand);
-                DataSet skillsetds = new DataSet();
+                    SqlDataAdapter skillsetdetailsAdapter = new SqlDataAdapter(skillSetCommand);
+                    DataSet skillsetds = new DataSet();
 
-                skillsetdetailsAdapter.Fill(skillsetds);
+                    skillsetdetailsAdapter.Fill(skillsetds);
 
-                DataTable skillsetdt = skillsetds.Tables[0];
-                DataTable doctypedt = skillsetds.Tables[1];
+                    DataTable skillsetdt = skillsetds.Tables[0];
+                    DataTable doctypedt = skillsetds.Tables[1];
 
-                int skillsetid = 0;
-                string SkillSetName = "";
-                string duplicatecol = "";
-                string DocumentName = "";
-                int TrdDocTypeId = 0;
+                    int skillsetid = 0;
+                    string SkillSetName = "";
+                    string duplicatecol = "";
+                    string DocumentName = "";
+                    int TrdDocTypeId = 0;
 
 
-                if (skillsetdt.Rows.Count > 0)
-                {
-                    DataRow row = skillsetdt.Rows[0];
-
-                    skillsetid = Convert.ToInt32(row["SkillSetId"]);
-                    SkillSetName = row["SkillSetName"].ToString();
-                    duplicatecol = row["Columns"].ToString();
-
-                }
-                if (doctypedt.Rows.Count > 0)
-                {
-                    DataRow dataRow = doctypedt.Rows[0];
-
-                    TrdDocTypeId = Convert.ToInt32(dataRow["TrdDocTypeId"]);
-                    DocumentName = dataRow["DocumentName"].ToString();
-
-                }
-
-                if (TrdDocTypeId <= 0 && string.IsNullOrEmpty(DocumentName))
-                {
-                    string createdoctype = $@"INSERT INTO DocType (DocumentName, IsActive, TrdDocTypeId) VALUES (@docname,1,@TrdDocTypeId)";
-
-                    SqlCommand createdoctypecmd = new SqlCommand(createdoctype, connection);
-
-                    createdoctypecmd.Parameters.AddWithValue("@docname", docname);
-                    createdoctypecmd.Parameters.AddWithValue("@TrdDocTypeId", docid);
-
-                    createdoctypecmd.ExecuteNonQuery();
-                }
-
-                if (skillsetid <= 0 && string.IsNullOrEmpty(SkillSetName))
-                {
-                    string modifiedDocname = Regex.Replace(docname, @"[^a-zA-Z0-9_]", "_");
-                    SkillSetName = projid + "_" + modifiedDocname;
-
-                    SqlCommand CreateTrdDetails = new SqlCommand("CreateTrdDetails", connection);
-                    CreateTrdDetails.CommandType = CommandType.StoredProcedure;
-                    
-                    CreateTrdDetails.Parameters.AddWithValue("@ProjectId", projid);
-                    CreateTrdDetails.Parameters.AddWithValue("@Skillsetname", SkillSetName);
-                    CreateTrdDetails.Parameters.AddWithValue("@DocTypeId", docid);
-
-                    CreateTrdDetails.Parameters.Add("@DupCol", SqlDbType.NVarChar, -1).Direction = ParameterDirection.Output;
-                    CreateTrdDetails.Parameters.Add("@SkillSetId", SqlDbType.Int).Direction = ParameterDirection.Output;
-                    
-                    SqlParameter returnTrdValue = new SqlParameter
+                    if (skillsetdt.Rows.Count > 0)
                     {
-                        ParameterName = "@RETURN_VALUE",
-                        Direction = ParameterDirection.ReturnValue
-                    };
+                        DataRow row = skillsetdt.Rows[0];
 
-                    CreateTrdDetails.Parameters.Add(returnTrdValue);
+                        skillsetid = Convert.ToInt32(row["SkillSetId"]);
+                        SkillSetName = row["SkillSetName"].ToString();
+                        duplicatecol = row["Columns"].ToString();
 
-                    CreateTrdDetails.ExecuteNonQuery();
-
-                    duplicatecol = (string)CreateTrdDetails.Parameters["@DupCol"].Value;
-                    skillsetid = (int)CreateTrdDetails.Parameters["@SkillSetId"].Value;
-
-                    int returnCode = (int)CreateTrdDetails.Parameters["@RETURN_VALUE"].Value;
-
-                    if (returnCode != 1)
-                    {
-                        throw new InvalidOperationException("Something went wrong while creating TRD details for " + SkillSetName + " .");
                     }
-                    else
+                    if (doctypedt.Rows.Count > 0)
                     {
-                        Console.WriteLine("TRD details succesfully created for " + SkillSetName + " .");
+                        DataRow dataRow = doctypedt.Rows[0];
+
+                        TrdDocTypeId = Convert.ToInt32(dataRow["TrdDocTypeId"]);
+                        DocumentName = dataRow["DocumentName"].ToString();
+
                     }
-                }
 
-                List<string> duplicatecolumnsList = duplicatecol.Split(',').Select(s => s.Trim()).ToList();  // for duplicate check
+                    if (TrdDocTypeId <= 0 && string.IsNullOrEmpty(DocumentName))
+                    {
+                        string createdoctype = $@"INSERT INTO DocType (DocumentName, IsActive, TrdDocTypeId) VALUES (@docname,1,@TrdDocTypeId)";
 
-                List<DataRow> TRDdataRowList = TRDorderstoupload.AsEnumerable().ToList();
+                        SqlCommand createdoctypecmd = new SqlCommand(createdoctype, connection);
 
-                List<JObject> TRDjObjectList = TRDdataRowList
-                                            .Select(row =>
-                                            {
-                                                JObject jObject = new JObject();
+                        createdoctypecmd.Parameters.AddWithValue("@docname", docname);
+                        createdoctypecmd.Parameters.AddWithValue("@TrdDocTypeId", docid);
 
-                                                foreach (DataColumn column in row.Table.Columns)
+                        createdoctypecmd.ExecuteNonQuery();
+                    }
+
+                    if (skillsetid <= 0 && string.IsNullOrEmpty(SkillSetName))
+                    {
+                        string modifiedDocname = Regex.Replace(docname, @"[^a-zA-Z0-9_]", "_");
+                        SkillSetName = projid + "_" + modifiedDocname;
+
+                        SqlCommand CreateTrdDetails = new SqlCommand("CreateTrdDetails", connection);
+                        CreateTrdDetails.CommandType = CommandType.StoredProcedure;
+
+                        CreateTrdDetails.Parameters.AddWithValue("@ProjectId", projid);
+                        CreateTrdDetails.Parameters.AddWithValue("@Skillsetname", SkillSetName);
+                        CreateTrdDetails.Parameters.AddWithValue("@DocTypeId", docid);
+
+                        CreateTrdDetails.Parameters.Add("@DupCol", SqlDbType.NVarChar, -1).Direction = ParameterDirection.Output;
+                        CreateTrdDetails.Parameters.Add("@SkillSetId", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                        SqlParameter returnTrdValue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        CreateTrdDetails.Parameters.Add(returnTrdValue);
+
+                        CreateTrdDetails.ExecuteNonQuery();
+
+                        duplicatecol = (string)CreateTrdDetails.Parameters["@DupCol"].Value;
+                        skillsetid = (int)CreateTrdDetails.Parameters["@SkillSetId"].Value;
+
+                        int returnCode = (int)CreateTrdDetails.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Something went wrong while creating TRD details for " + SkillSetName + " .");
+                        }
+                        else
+                        {
+                            Console.WriteLine("TRD details succesfully created for " + SkillSetName + " .");
+                        }
+                    }
+
+                    List<string> duplicatecolumnsList = duplicatecol.Split(',').Select(s => s.Trim()).ToList();  // for duplicate check
+
+                    List<DataRow> TRDdataRowList = TRDorderstoupload.AsEnumerable().ToList();
+
+                    List<JObject> TRDjObjectList = TRDdataRowList
+                                                .Select(row =>
                                                 {
-                                                    if (column.ColumnName != "id" && column.ColumnName != "doctypeid")
+                                                    JObject jObject = new JObject();
+
+                                                    foreach (DataColumn column in row.Table.Columns)
                                                     {
-                                                        jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                        if (column.ColumnName != "id" && column.ColumnName != "doctypeid")
+                                                        {
+                                                            jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                        }
                                                     }
-                                                }
 
-                                                return jObject;
-                                            })
-                                            .ToList();
+                                                    return jObject;
+                                                })
+                                                .ToList();
 
 
-                JObject TRDrecordsObject = new JObject();
-                TRDrecordsObject["Records"] = JArray.FromObject(TRDjObjectList);
+                    JObject TRDrecordsObject = new JObject();
+                    TRDrecordsObject["Records"] = JArray.FromObject(TRDjObjectList);
 
-                // Serialize the records to a JSON string - to insert into templates
-                string TRDjsonToInsert = TRDrecordsObject.ToString();
+                    // Serialize the records to a JSON string - to insert into templates
+                    string TRDjsonToInsert = TRDrecordsObject.ToString();
 
-                //parse json data - to validate duplicate records
-                JObject TRDjsondata = JObject.Parse(TRDjsonToInsert);
-                JArray TRDrecordsarray = TRDjsondata.Value<JArray>("Records");
+                    //parse json data - to validate duplicate records
+                    JObject TRDjsondata = JObject.Parse(TRDjsonToInsert);
+                    JArray TRDrecordsarray = TRDjsondata.Value<JArray>("Records");
 
-                // duplicate check
+                    // duplicate check
 
-                string duplchckquery = $"SELECT * FROM {SkillSetName} WHERE ";
+                    string duplchckquery = $"SELECT * FROM {SkillSetName} WHERE ";
 
-                foreach (JObject TRDrecords in TRDrecordsarray)
-                {
-                    string duplchck = "(";
-                    foreach (string DuplicateColumnname in duplicatecolumnsList)
+                    foreach (JObject TRDrecords in TRDrecordsarray)
                     {
-                        string columndata = TRDrecords.Value<string>(DuplicateColumnname);
+                        string duplchck = "(";
+                        foreach (string DuplicateColumnname in duplicatecolumnsList)
+                        {
+                            string columndata = TRDrecords.Value<string>(DuplicateColumnname);
 
-                        duplchck += $"[{DuplicateColumnname}] = '{columndata}' AND ";
+                            duplchck += $"[{DuplicateColumnname}] = '{columndata}' AND ";
+                        }
+
+                        duplchck = duplchck.Substring(0, duplchck.Length - 5);
+                        duplchck += ") OR ";
+
+                        duplchckquery += duplchck;
                     }
 
-                    duplchck = duplchck.Substring(0, duplchck.Length - 5);
-                    duplchck += ") OR ";
+                    duplchckquery = duplchckquery.Substring(0, duplchckquery.Length - 4);
 
-                    duplchckquery += duplchck;
-                }
+                    SqlDataAdapter DuplicatecheckdataAdapter = new SqlDataAdapter(duplchckquery, connection);
 
-                duplchckquery = duplchckquery.Substring(0, duplchckquery.Length - 4);
+                    DataSet DuplicatecheckDS = new DataSet();
 
-                SqlDataAdapter DuplicatecheckdataAdapter = new SqlDataAdapter(duplchckquery, connection);
+                    DuplicatecheckdataAdapter.Fill(DuplicatecheckDS);
 
-                DataSet DuplicatecheckDS = new DataSet();
+                    DataTable DuplicatecheckDT = DuplicatecheckDS.Tables[0];
 
-                DuplicatecheckdataAdapter.Fill(DuplicatecheckDS);
+                    //var duplicateorders = new HashSet<string>(
+                    //                         DuplicatecheckDT.AsEnumerable()
+                    //                         .Select(row => row.Field<string>("OrderId")));
 
-                DataTable DuplicatecheckDT = DuplicatecheckDS.Tables[0];
+                    //var filteredOrders = TRDorderstoupload.AsEnumerable()
+                    //                  .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
 
-                //var duplicateorders = new HashSet<string>(
-                //                         DuplicatecheckDT.AsEnumerable()
-                //                         .Select(row => row.Field<string>("OrderId")));
+                    var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
+                                          DuplicatecheckDT.AsEnumerable()
+                                          .Select(row => (
+                                              row.Field<string>("OrderId"),
+                                              row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                                          )));
 
-                //var filteredOrders = TRDorderstoupload.AsEnumerable()
-                //                  .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
+                    IEnumerable<DataRow> filteredOrders;
+                    IEnumerable<DataRow> orderstoreplace;
 
-                var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
-                                      DuplicatecheckDT.AsEnumerable()
-                                      .Select(row => (
+                    if (duplicateorders.Count > 0)
+                    {
+                        filteredOrders = TRDorderstoupload.AsEnumerable()
+                                      .Where(row => !duplicateorders.Contains((
                                           row.Field<string>("OrderId"),
                                           row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
                                       )));
 
-                IEnumerable<DataRow> filteredOrders;
-                IEnumerable<DataRow> orderstoreplace;
-
-                if (duplicateorders.Count > 0)
-                {
-                    filteredOrders = TRDorderstoupload.AsEnumerable()
-                                  .Where(row => !duplicateorders.Contains((
-                                      row.Field<string>("OrderId"),
-                                      row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
-                                  )));
-
-                    orderstoreplace = filteredOrders.Where(row => duplicateorders.Any(dup =>
-                                      dup.OrderId == row.Field<string>("OrderId") &&    // Match on OrderId
-                                      dup.DocImageDate != row.Field<DateTime>("DocImageDate").Date // Ensure DocImageDate is different
-                                      ));
-                }
-                else
-                {
-                    filteredOrders = TRDorderstoupload.AsEnumerable();
-                    orderstoreplace = Enumerable.Empty<DataRow>();
-                }
+                        orderstoreplace = filteredOrders.Where(row => duplicateorders.Any(dup =>
+                                          dup.OrderId == row.Field<string>("OrderId") &&    // Match on OrderId
+                                          dup.DocImageDate != row.Field<DateTime>("DocImageDate").Date // Ensure DocImageDate is different
+                                          ));
+                    }
+                    else
+                    {
+                        filteredOrders = TRDorderstoupload.AsEnumerable();
+                        orderstoreplace = Enumerable.Empty<DataRow>();
+                    }
 
 
-                if (orderstoreplace.Any())
-                {
-                    var orderIdList = string.Join(",", orderstoreplace.Select(row => $"'{row.Field<string>("OrderId")}'"));
+                    if (orderstoreplace.Any())
+                    {
+                        var orderIdList = string.Join(",", orderstoreplace.Select(row => $"'{row.Field<string>("OrderId")}'"));
 
-                    string updatequery = $@"
+                        string updatequery = $@"
                                                 UPDATE {SkillSetName}
                                                 SET DocImageDate = CASE OrderId
                                                     {string.Join(Environment.NewLine, orderstoreplace.Select(row =>
-                                                   $"WHEN '{row.Field<string>("OrderId")}' THEN '{row.Field<DateTime>("DocImageDate").ToString("yyyy-MM-dd")}'"))}
+                                                       $"WHEN '{row.Field<string>("OrderId")}' THEN '{row.Field<DateTime>("DocImageDate").ToString("yyyy-MM-dd")}'"))}
                                                 END
                                                 WHERE OrderId IN ({orderIdList}) AND Status IS NULL;
                                             ";
 
 
-                    SqlCommand updateordercommand = new SqlCommand(updatequery, connection);
+                        SqlCommand updateordercommand = new SqlCommand(updatequery, connection);
 
-                    updateordercommand.ExecuteNonQuery();
-                }
+                        updateordercommand.ExecuteNonQuery();
+                    }
 
-                var filteredOrdersList = filteredOrders.ToList();
-                var updatedFilteredOrders = filteredOrders;
+                    var filteredOrdersList = filteredOrders.ToList();
+                    var updatedFilteredOrders = filteredOrders;
 
-                if (orderstoreplace.Any())
-                {
-                    // Remove these orders from filteredOrders
-                    updatedFilteredOrders = filteredOrdersList.Except(orderstoreplace);
-
-                }
-
-                DataTable filteredOrdersDT = new DataTable();
-
-                if (updatedFilteredOrders.Any())
-                {
-                    // Convert to DataTable if there are rows
-                    filteredOrdersDT = updatedFilteredOrders.CopyToDataTable();
-                }
-                
-                filteredOrders = filteredOrdersDT.AsEnumerable();
-
-                if (filteredOrders.Any())
-                {
-                    var recordsList = filteredOrders
-                                      .Select(row => filteredOrdersDT.Columns
-                                          .Cast<DataColumn>()
-                                          .ToDictionary(col => col.ColumnName, col => row[col]))
-                                      .ToList();
-
-                    var result = new
+                    if (orderstoreplace.Any())
                     {
-                        Records = recordsList
-                    };
+                        // Remove these orders from filteredOrders
+                        updatedFilteredOrders = filteredOrdersList.Except(orderstoreplace);
 
-                    // Serialize to JSON
-                    TRDjsonToInsert = JsonConvert.SerializeObject(result, Formatting.Indented);
+                    }
+
+                    DataTable filteredOrdersDT = new DataTable();
+
+                    if (updatedFilteredOrders.Any())
+                    {
+                        // Convert to DataTable if there are rows
+                        filteredOrdersDT = updatedFilteredOrders.CopyToDataTable();
+                    }
+
+                    filteredOrders = filteredOrdersDT.AsEnumerable();
+
+                    if (filteredOrders.Any())
+                    {
+                        var recordsList = filteredOrders
+                                          .Select(row => filteredOrdersDT.Columns
+                                              .Cast<DataColumn>()
+                                              .ToDictionary(col => col.ColumnName, col => row[col]))
+                                          .ToList();
+
+                        var result = new
+                        {
+                            Records = recordsList
+                        };
+
+                        // Serialize to JSON
+                        TRDjsonToInsert = JsonConvert.SerializeObject(result, Formatting.Indented);
+
+                    }
+                    else
+                    {
+                        TRDjsonToInsert = "";
+                    }
+
+
+                    if (!string.IsNullOrEmpty(TRDjsonToInsert))
+                    {
+                        // insert into templates
+
+                        SqlCommand InsertCmd = new SqlCommand("InsertData", connection);
+                        InsertCmd.CommandType = CommandType.StoredProcedure;
+                        InsertCmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
+                        InsertCmd.Parameters.AddWithValue("@jsonData", TRDjsonToInsert);
+
+                        SqlParameter returnValue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        InsertCmd.Parameters.Add(returnValue);
+
+                        InsertCmd.ExecuteNonQuery();
+
+                        int returnCode = (int)InsertCmd.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Something went wrong while inserting the orders in " + SkillSetName + " template.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("TRD orders succesfully loaded in " + SkillSetName + " template.");
+                        }
+                    }
 
                 }
-                else
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InsertIntoSqlServer method: {ex.Message}");
+                throw;
+            }
+        }
+
+        public static void GetTrdPendingOrders(int pendingTRDidno)
+        {
+            string Url = "";
+
+            try
+            {
+                Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+                string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
+
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
                 {
-                    TRDjsonToInsert = "";
+                    connection.Open();
+
+                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"", 1 as ""IsPending""
+                                 from public.tbl_omt_orders_pending oo
+                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
+                                 where oo.id > @idno Order By oo.id ASC;";
+
+                    NpgsqlCommand command = new NpgsqlCommand(query, connection);
+                    command.Parameters.AddWithValue("idno", pendingTRDidno);
+
+                    NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    var distinctProjectIDs = datatable.AsEnumerable()
+                                                          .Select(row => row.Field<string>("ProjectId"))
+                                                          .Distinct()
+                                                          .ToList();
+
+                    List<DataRow> TrdPendingorderstoupload = new List<DataRow>();
+
+                    foreach (string projid in distinctProjectIDs)
+                    {
+                        var doctypeids = datatable.AsEnumerable()
+                                         .Where(row => row.Field<string>("ProjectId") == projid)
+                                         .Select(row => row.Field<int>("doctypeid"))
+                                         .Distinct().ToList();
+
+
+                        foreach (var docid in doctypeids)
+                        {
+                            TrdPendingorderstoupload = datatable.AsEnumerable()
+                                                     .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
+                                                     .ToList();
+
+                            if (TrdPendingorderstoupload.Any())
+                            {
+                                InsertPendingOrdersIntoSqlServer(TrdPendingorderstoupload.CopyToDataTable(), projid, docid);
+
+                            }
+                        }
+
+                    }
+
+                    int idValue = pendingTRDidno;
+                    if (datatable.Rows.Count > 0)
+                    {
+                        DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+                        idValue = (int)lastRow["id"];
+                    }
+
+                    // call method to update the last id of trd order uploaded in trdtrack table
+
+                    UpdatePendingTrdOrdersId(idValue);
                 }
+            }
+            catch (Exception ex)
+            {
+                string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
 
-
-                if (!string.IsNullOrEmpty(TRDjsonToInsert))
+                EmailDetails sendEmail = new EmailDetails
                 {
+                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+                    Subject = "Trd Orders - Fetching pending trd orders from postgres",
+                    Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
+                };
+
+                using (HttpClient client = new HttpClient())
+                {
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(Url);
+                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+                throw;
+            }
+        }
+
+        public static void InsertPendingOrdersIntoSqlServer(DataTable TrdPendingorderstoupload, string projid, int docid)
+        {
+            try
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string skillsetDetailsQuery = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName,ss.SystemofRecordId,STRING_AGG(CASE WHEN dt.IsDuplicateCheck = 1 THEN dt.DefaultColumnName END, ', ') AS Columns 
+                                 FROM TrdMap tm
+                                 INNER JOIN TemplateColumns TC ON TC.SkillSetId = tm.SkillSetId
+                                 INNER JOIN SkillSet ss ON ss.SkillSetId = tm.SkillSetId
+                                 INNER JOIN DefaultTemplateColumns dt on dt.SystemofRecordId = ss.SystemofRecordId
+                                 WHERE tm.IsActive = 1 AND tm.DoctypeId = @docid AND tm.ProjectId = @projid
+                                 GROUP BY  tm.SkillSetId,ss.SkillSetName ,ss.SystemofRecordId";
+
+                    SqlCommand skillSetCommand = new SqlCommand(skillsetDetailsQuery, connection);
+
+                    skillSetCommand.Parameters.AddWithValue("@docid", docid);
+                    skillSetCommand.Parameters.AddWithValue("@projid", projid);
+
+                    SqlDataAdapter skillsetdetailsAdapter = new SqlDataAdapter(skillSetCommand);
+                    DataSet skillsetds = new DataSet();
+
+                    skillsetdetailsAdapter.Fill(skillsetds);
+
+                    DataTable skillsetdt = skillsetds.Tables[0];
+
+                    int skillsetid = 0;
+                    string SkillSetName = "";
+                    string duplicatecol = "";
+
+                    if (skillsetdt.Rows.Count > 0)
+                    {
+                        DataRow row = skillsetdt.Rows[0];
+
+                        skillsetid = Convert.ToInt32(row["SkillSetId"]);
+                        SkillSetName = row["SkillSetName"].ToString();
+                        duplicatecol = row["Columns"].ToString();
+                    }
+
+                    List<DataRow> TRDdataRowList = TrdPendingorderstoupload.AsEnumerable().ToList();
+
+                    List<JObject> TRDjObjectList = TRDdataRowList
+                                              .Select(row =>
+                                              {
+                                                  JObject jObject = new JObject();
+
+                                                  foreach (DataColumn column in row.Table.Columns)
+                                                  {
+                                                      if (column.ColumnName != "id" && column.ColumnName != "doctypeid")
+                                                      {
+                                                          jObject[column.ColumnName] = JToken.FromObject(row[column]);
+                                                      }
+                                                  }
+
+                                                  return jObject;
+                                              })
+                                              .ToList();
+
+
+                    JObject TRDrecordsObject = new JObject();
+                    TRDrecordsObject["Records"] = JArray.FromObject(TRDjObjectList);
+
+                    // Serialize the records to a JSON string - to insert into templates
+                    string TRDjsonToInsert = TRDrecordsObject.ToString();
+
                     // insert into templates
 
                     SqlCommand InsertCmd = new SqlCommand("InsertData", connection);
@@ -405,255 +654,128 @@ namespace TrdIntegrator
                     }
                     else
                     {
-                        Console.WriteLine("TRD orders succesfully loaded in " + SkillSetName + " template.");
-                    }
-                }
-
-            }
-        }
-
-        public static void GetTrdPendingOrders(int pendingTRDidno)
-        {
-            string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
-            {
-                connection.Open();
-
-                string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"", 1 as ""IsPending""
-                                 from public.tbl_omt_orders_pending oo
-                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
-                                 where oo.id > @idno Order By oo.id ASC;";
-
-                NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                command.Parameters.AddWithValue("idno", pendingTRDidno);
-
-                NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
-                DataSet dataset = new DataSet();
-
-                dataAdapter.Fill(dataset);
-
-                DataTable datatable = dataset.Tables[0];
-
-                var distinctProjectIDs = datatable.AsEnumerable()
-                                                      .Select(row => row.Field<string>("ProjectId"))
-                                                      .Distinct()
-                                                      .ToList();
-
-                List<DataRow> TrdPendingorderstoupload = new List<DataRow>();
-
-                foreach (string projid in distinctProjectIDs)
-                {
-                    var doctypeids = datatable.AsEnumerable()
-                                     .Where(row => row.Field<string>("ProjectId") == projid)
-                                     .Select(row => row.Field<int>("doctypeid"))
-                                     .Distinct().ToList();
-
-
-                    foreach (var docid in doctypeids)
-                    {
-                        TrdPendingorderstoupload = datatable.AsEnumerable()
-                                                 .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
-                                                 .ToList();
-
-                        if (TrdPendingorderstoupload.Any())
-                        {
-                            InsertPendingOrdersIntoSqlServer(TrdPendingorderstoupload.CopyToDataTable(), projid, docid);
-
-                        }
+                        Console.WriteLine("TRD Pending orders succesfully loaded in " + SkillSetName + " template.");
                     }
 
                 }
-
-                int idValue = pendingTRDidno;
-                if (datatable.Rows.Count > 0)
-                {
-                    DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
-                    idValue = (int)lastRow["id"];
-                }
-
-                // call method to update the last id of trd order uploaded in trdtrack table
-
-                UpdatePendingTrdOrdersId(idValue);
             }
-        }
-
-        public static void InsertPendingOrdersIntoSqlServer(DataTable TrdPendingorderstoupload, string projid, int docid)
-        {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            catch (Exception ex)
             {
-                connection.Open();
-
-                string skillsetDetailsQuery = @"SELECT DISTINCT tm.SkillSetId,ss.SkillSetName,ss.SystemofRecordId,STRING_AGG(CASE WHEN dt.IsDuplicateCheck = 1 THEN dt.DefaultColumnName END, ', ') AS Columns 
-                                 FROM TrdMap tm
-                                 INNER JOIN TemplateColumns TC ON TC.SkillSetId = tm.SkillSetId
-                                 INNER JOIN SkillSet ss ON ss.SkillSetId = tm.SkillSetId
-                                 INNER JOIN DefaultTemplateColumns dt on dt.SystemofRecordId = ss.SystemofRecordId
-                                 WHERE tm.IsActive = 1 AND tm.DoctypeId = @docid AND tm.ProjectId = @projid
-                                 GROUP BY  tm.SkillSetId,ss.SkillSetName ,ss.SystemofRecordId";
-
-                SqlCommand skillSetCommand = new SqlCommand(skillsetDetailsQuery, connection);
-
-                skillSetCommand.Parameters.AddWithValue("@docid", docid);
-                skillSetCommand.Parameters.AddWithValue("@projid", projid);
-
-                SqlDataAdapter skillsetdetailsAdapter = new SqlDataAdapter(skillSetCommand);
-                DataSet skillsetds = new DataSet();
-
-                skillsetdetailsAdapter.Fill(skillsetds);
-
-                DataTable skillsetdt = skillsetds.Tables[0];
-
-                int skillsetid = 0;
-                string SkillSetName = "";
-                string duplicatecol = "";
-
-                if (skillsetdt.Rows.Count > 0)
-                {
-                    DataRow row = skillsetdt.Rows[0];
-
-                    skillsetid = Convert.ToInt32(row["SkillSetId"]);
-                    SkillSetName = row["SkillSetName"].ToString();
-                    duplicatecol = row["Columns"].ToString();
-                }
-
-                List<DataRow> TRDdataRowList = TrdPendingorderstoupload.AsEnumerable().ToList();
-
-                List<JObject> TRDjObjectList = TRDdataRowList
-                                          .Select(row =>
-                                          {
-                                              JObject jObject = new JObject();
-
-                                              foreach (DataColumn column in row.Table.Columns)
-                                              {
-                                                  if (column.ColumnName != "id" && column.ColumnName != "doctypeid")
-                                                  {
-                                                      jObject[column.ColumnName] = JToken.FromObject(row[column]);
-                                                  }
-                                              }
-
-                                              return jObject;
-                                          })
-                                          .ToList();
-
-
-                JObject TRDrecordsObject = new JObject();
-                TRDrecordsObject["Records"] = JArray.FromObject(TRDjObjectList);
-
-                // Serialize the records to a JSON string - to insert into templates
-                string TRDjsonToInsert = TRDrecordsObject.ToString();
-
-                // insert into templates
-
-                SqlCommand InsertCmd = new SqlCommand("InsertData", connection);
-                InsertCmd.CommandType = CommandType.StoredProcedure;
-                InsertCmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
-                InsertCmd.Parameters.AddWithValue("@jsonData", TRDjsonToInsert);
-
-                SqlParameter returnValue = new SqlParameter
-                {
-                    ParameterName = "@RETURN_VALUE",
-                    Direction = ParameterDirection.ReturnValue
-                };
-
-                InsertCmd.Parameters.Add(returnValue);
-
-                InsertCmd.ExecuteNonQuery();
-
-                int returnCode = (int)InsertCmd.Parameters["@RETURN_VALUE"].Value;
-
-                if (returnCode != 1)
-                {
-                    throw new InvalidOperationException("Something went wrong while inserting the orders in " + SkillSetName + " template.");
-                }
-                else
-                {
-                    Console.WriteLine("TRD Pending orders succesfully loaded in " + SkillSetName + " template.");
-                }
-
+                Console.WriteLine($"Error in InsertPendingOrdersIntoSqlServer method: {ex.Message}");
+                throw;
             }
         }
 
         public static int GetLastNormalTrdOrdersId()
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 1 AND IsActive = 1 AND TrdOrderType = 'Normal'";
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                SqlCommand cmd = new SqlCommand(sql, connection);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 1 AND IsActive = 1 AND TrdOrderType = 'Normal'";
 
-                connection.Open();
+                    SqlCommand cmd = new SqlCommand(sql, connection);
 
-                object result = cmd.ExecuteScalar();
+                    connection.Open();
 
-                int trackTrdId = Convert.ToInt32(result);
+                    object result = cmd.ExecuteScalar();
 
-                return trackTrdId;
+                    int trackTrdId = Convert.ToInt32(result);
+
+                    return trackTrdId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetLastNormalTrdOrdersId method: {ex.Message}");
+                throw;
             }
         }
         public static void UpdateNormalTrdOrdersId(int idValue)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                DateTime dateTime = DateTime.Now;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
-                string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 1";
+                    DateTime dateTime = DateTime.Now;
 
-                SqlCommand cmd = new SqlCommand(sql, connection);
-                cmd.Parameters.AddWithValue("@idValue", idValue);
-                cmd.Parameters.AddWithValue("@dateTime", dateTime);
+                    string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 1";
 
-                cmd.ExecuteNonQuery();
+                    SqlCommand cmd = new SqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@idValue", idValue);
+                    cmd.Parameters.AddWithValue("@dateTime", dateTime);
 
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateNormalTrdOrdersId method: {ex.Message}");
+                throw;
             }
         }
 
         public static int GetLastPendingTrdOrdersId()
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 2 AND IsActive = 1 AND TrdOrderType = 'Pending'";
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                SqlCommand cmd = new SqlCommand(sql, connection);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 2 AND IsActive = 1 AND TrdOrderType = 'Pending'";
 
-                connection.Open();
+                    SqlCommand cmd = new SqlCommand(sql, connection);
 
-                object result = cmd.ExecuteScalar();
+                    connection.Open();
 
-                int trackTrdId = Convert.ToInt32(result);
+                    object result = cmd.ExecuteScalar();
 
-                return trackTrdId;
+                    int trackTrdId = Convert.ToInt32(result);
+
+                    return trackTrdId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetLastPendingTrdOrdersId method: {ex.Message}");
+                throw;
             }
         }
 
         public static void UpdatePendingTrdOrdersId(int idValue)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                DateTime dateTime = DateTime.Now;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
-                string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 2";
+                    DateTime dateTime = DateTime.Now;
 
-                SqlCommand cmd = new SqlCommand(sql, connection);
-                cmd.Parameters.AddWithValue("@idValue", idValue);
-                cmd.Parameters.AddWithValue("@dateTime", dateTime);
+                    string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 2";
 
-                cmd.ExecuteNonQuery();
+                    SqlCommand cmd = new SqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@idValue", idValue);
+                    cmd.Parameters.AddWithValue("@dateTime", dateTime);
 
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePendingTrdOrdersId method: {ex.Message}");
+                throw;
             }
         }
 
