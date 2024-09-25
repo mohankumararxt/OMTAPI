@@ -1118,7 +1118,7 @@
 
 
 --CREATE TABLE [dbo].[InvoiceJointTrd](
---	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL,
+--	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL primary key,
 --	[SystemOfRecordId] [int] NOT NULL,
 --	[SkillSetId] [int] NOT NULL,
 --	[CustomerId] [int] NOT NULL,
@@ -2944,3 +2944,6 @@
 --insert into defaulttemplatecolumns values(3,'IsPending','bit default 0',1,0,0,0,0)
 --update trdmap set skillsetid = 344 where trdmapid = 67
 
+--CREATE TABLE [dbo].[MasterReportColumns](
+--	[MasterReportColumnsId] [int] IDENTITY(1,1) NOT NULL primary key,
+--	[ReportColumnName] NVARCHAR(200) NOT NULL)
