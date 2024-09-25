@@ -190,8 +190,7 @@ namespace OMT.DataService.Service
                                       join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
                                       join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup
                                       from hs in hsGroup.DefaultIfEmpty()  // Left join to include all skill sets
-                                      where sor.IsActive
-                                      orderby ss.SkillSetId, sor.SystemofRecordName, ss.SkillSetName
+                                      where sor.IsActive && ss.IsActive
                                       group new { ss, sor, hs } by new  //Group the data's
                                       {
                                           ss.SkillSetId,
@@ -208,9 +207,12 @@ namespace OMT.DataService.Service
                                           Threshold = grp.Key.Threshold,
                                           SystemofRecordName = grp.Key.SystemofRecordName,
                                           SystemofRecordId = grp.Key.SystemofRecordId,
-                                          IsHardState = grp.Any(x => x.hs != null),
-                                          StateName = string.Join(", ", grp.Select(x => x.hs.StateName))
-                                      }).ToList();
+                                          IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //Isactive only
+                                          StateName = string.Join(", ", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  //Isactive only
+                                      })
+                                      .OrderBy(x => x.SystemofRecordId) //ordering here Bcoz we have used Grouping key
+                                      .ThenBy(x => x.SkillSetName)
+                                      .ToList();
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of SkillSets";
@@ -235,7 +237,6 @@ namespace OMT.DataService.Service
                                       join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup
                                       from hs in hsGroup.DefaultIfEmpty()
                                       where sor.IsActive && sor.SystemofRecordId == sorid // Filter by the specific SOR ID
-                                      orderby sor.SystemofRecordId
                                       group new { ss, sor, hs } by new
                                       {
                                           ss.SkillSetId,
@@ -252,9 +253,12 @@ namespace OMT.DataService.Service
                                           Threshold = grp.Key.Threshold,
                                           SystemofRecordName = grp.Key.SystemofRecordName,
                                           SystemofRecordId = grp.Key.SystemofRecordId,
-                                          IsHardState = grp.Any(x => x.hs != null), //null 
-                                          StateName = string.Join(", ", grp.Select(x => x.hs.StateName))
-                                      }).ToList();
+                                          IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //null  Isactive 
+                                          StateName = string.Join(", ", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))
+                                      })
+                                      .OrderBy(x => x.SystemofRecordId)
+                                      .ThenBy(x => x.SkillSetName)
+                                      .ToList();
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of SkillSets";
@@ -333,7 +337,7 @@ namespace OMT.DataService.Service
                     if (skillSetUpdateDTO.StateName != null && skillSetUpdateDTO.IsHardState == true)
                     {
                         // Fetch all hard states (active or inactive) 
-                        var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId).ToList(); 
+                        var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId).ToList();
 
                         //Disable Hardstates
                         foreach (var hardState in existingHardStates)
