@@ -42,6 +42,7 @@ namespace OMT.DataService.Utility
                 message.To.Add(toemails);
                 message.Subject = sendEmailDTO.Subject;
                 message.Body = sendEmailDTO.Body;
+                //message.IsBodyHtml = true; // to enable html
 
                 SmtpClient smtpClient = new SmtpClient(host)
                 {
