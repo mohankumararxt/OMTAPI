@@ -11,5 +11,7 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO); 
         ResultDTO GetStatenameList(int skillsetid);
 
+       // ResultDTO AddTimeLine(SkillsetTimeLineDTO timeLineDTO); //Timeline
+
     }
 }
