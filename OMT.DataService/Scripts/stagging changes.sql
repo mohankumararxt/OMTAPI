@@ -2922,6 +2922,7 @@
 --(3,517,1,1,6,7,4),
 --(3,518,1,1,6,7,4),
 
+-----------------------------------------------------------add in prod-------------------------------
 
 --ALTER TABLE DocType
 --ADD CONSTRAINT UQ_TDocTypeId UNIQUE (TrdDocTypeId);
@@ -2947,3 +2948,6 @@
 --CREATE TABLE [dbo].[MasterReportColumns](
 --	[MasterReportColumnsId] [int] IDENTITY(1,1) NOT NULL primary key,
 --	[ReportColumnName] NVARCHAR(200) NOT NULL)
+
+--insert into MasterReportColumns values ('CustomerId'), ('ResWareProductDescriptions'), ('PropertyState'), ('County'), ('ProjectId'), ('DocType'), ('DocImageDate')
+
