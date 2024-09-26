@@ -2951,3 +2951,21 @@
 
 --insert into MasterReportColumns values ('CustomerId'), ('ResWareProductDescriptions'), ('PropertyState'), ('County'), ('ProjectId'), ('DocType'), ('DocImageDate')
 
+--update MasterReportColumns set ReportColumnName = '' where MasterReportColumnsId = 8
+
+--insert into MasterReportColumns values ('ProjectId'), ('Name'), ('Reference'), ('JurisdictionDocType'),  ('DateAddedtoKWF'), ('DateReceived'), ('DateImaged'), ('DefaultDays'), ('NeverKeyed'), ('ERecordable'), ('KeyingDueDate'), ('ShippingDateDue'), ('Isthisarush'), ('WorkflowStatus'), ('AllottedDate'), ('AllocatedTo'), ('ProcessorName'), ('Shippingdatedue'), ('Faiprocess'), ('Default_buckets'), ('Date_dr__keyed__data__and__image__uploaded'), ('AllocatedPartner'), ('ProcessorFullname'), ('LoanNumber'), ('ServicerLoanNumber'), ('BorrowerFirstName'), ('BorrowerLastName'), ('PropertyStreetAddress1'), ('PropertyStreetAddress2'), ('City'), ('State'), ('County'), ('Zip'), ('LoanAmount'), ('AllottedTo')
+
+--ALTER TABLE ReportColumns
+--ADD SkillSetId INT;
+
+--ALTER TABLE ReportColumns
+--ADD MasterReportColumnId INT;
+
+--ALTER TABLE ReportColumns                      
+--ADD CONSTRAINT FK_ReportColumns_skillset
+--FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE ReportColumns
+--ADD CONSTRAINT FK_ReportColumns_master
+--FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
+
