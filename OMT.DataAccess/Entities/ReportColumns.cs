@@ -14,5 +14,7 @@ namespace OMT.DataAccess.Entities
         public string ReportColumnName { get; set; }
         public bool IsActive { get; set; }
         public int SystemOfRecordId { get; set; }
+        public int SkillSetId { get; set; }
+        public int MasterReportColumnId { get; set; }
     }
 }

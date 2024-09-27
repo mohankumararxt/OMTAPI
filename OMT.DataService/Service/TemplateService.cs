@@ -911,8 +911,11 @@ namespace OMT.DataService.Service
 
                         SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillSet.SystemofRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -1011,7 +1014,11 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                    var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == agentCompletedOrdersDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
 
                     string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -1116,8 +1123,11 @@ namespace OMT.DataService.Service
 
                         SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -1247,7 +1257,11 @@ namespace OMT.DataService.Service
 
                         SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillSet.SystemofRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -1347,7 +1361,11 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                    var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == teamCompletedOrdersDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -1451,7 +1469,11 @@ namespace OMT.DataService.Service
 
                         SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -3278,16 +3300,25 @@ namespace OMT.DataService.Service
 
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
-                var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                List<string> reportcol = new List<string> ();
 
                 if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
                 {
                     List<string> skillsetnames = (from ss in _oMTDataContext.SkillSet
                                                   where ss.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                   select ss.SkillSetName).ToList();
+                    
 
                     foreach (string skillsetname in skillsetnames)
                     {
+                        var skillsetdetails = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillsetname && x.IsActive).FirstOrDefault();
+
+                        reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillsetdetails.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
+
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
                         if (reportcol.Count > 0)
@@ -3364,6 +3395,12 @@ namespace OMT.DataService.Service
 
                     List<int> statusid = skillsetWiseReportsDTO.StatusId.ToList();
                     string csStatusId = string.Join(",", statusid);
+
+                    reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                 join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                 where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 select mrc.ReportColumnName
+                                  ).ToList();
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -3442,6 +3479,14 @@ namespace OMT.DataService.Service
 
                     foreach (string skillsetname in skillsetnames)
                     {
+                        var skillsetdetails2 = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillsetname && x.IsActive).FirstOrDefault();
+
+                        reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == skillsetdetails2.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
+
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
                         if (reportcol.Count > 0)
@@ -3514,6 +3559,12 @@ namespace OMT.DataService.Service
                     SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetWiseReportsDTO.SkillSetId && x.IsActive).FirstOrDefault();
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+
+                    reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                 join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                 where rc.SkillSetId == skillset.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 select mrc.ReportColumnName
+                                 ).ToList();
 
                     if (reportcol.Count > 0)
                     {
