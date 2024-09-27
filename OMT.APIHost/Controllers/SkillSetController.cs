@@ -73,7 +73,7 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns updated skill set</returns>
         [HttpPut]
         [Route("update")]
-        public ResultDTO Update([FromBody]SkillSetUpdateDTO skillSetUpdateDTO)
+        public ResultDTO Update([FromBody] SkillSetUpdateDTO skillSetUpdateDTO)
         {
             return _skillsetService.UpdateSkillSet(skillSetUpdateDTO);
         }
@@ -83,6 +83,14 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetStatenameList(int skillsetid)
         {
             return _skillsetService.GetStatenameList(skillsetid);
+        }
+
+        [HttpPost]
+        [Route("createTimeline")]
+        public ResultDTO CreateTimeLine([FromBody] SkillSetTimeLineDTO skillSetTimeLineDTO)
+        {
+            ResultDTO resultDTO = _skillsetService.CreateTimeLine(skillSetTimeLineDTO);
+            return resultDTO;
         }
     }
 }

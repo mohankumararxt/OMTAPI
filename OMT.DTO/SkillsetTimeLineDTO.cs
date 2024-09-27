@@ -6,34 +6,19 @@ using System.Threading.Tasks;
 
 namespace OMT.DTO
 {
-    public class SkillsetTimeLineDTO
+    public class SkillSetTimeLineDTO
     {
         public int SkillSetId { get; set; }
-        public List<Timelinedetails> Timelinedetails { get; set; }  
+        public List<TimelineDetailDTO> HardStateTimelineDetails { get; set; }
 
-        public List<Timelinedetails2> Timelinedetails2 { get; set; }    
+        public List<TimelineDetailDTO> NormalStateTimelineDetails { get; set; }
     }
-    public class Timelinedetails //add
+
+    public class TimelineDetailDTO
     {
-        public String? HardStateName { get; set; }
+        public string? HardStateName { get; set; }
         public int ExceedTime { get; set; }
-        public bool IsHardState { get; set; }
+        public bool IsHardstate { get; set; }
 
     }
-    public class Timelinedetails2 //add
-    {
-        public String? HardStateName { get; set; }
-        public int ExceedTime { get; set; }
-        public bool IsHardState { get; set; }
-
-    }
-
-    //public class SkillsetTimeLineDTO
-    //{
-    //    public int SkillSetId { get; set; }
-    //    public string? HardStateName { get; set; }
-    //    public int ExceedTime { get; set; }
-    //    public bool IsHardState { get; set; }
-
-    //}
 }
