@@ -1118,7 +1118,7 @@
 
 
 --CREATE TABLE [dbo].[InvoiceJointTrd](
---	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL,
+--	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL primary key,
 --	[SystemOfRecordId] [int] NOT NULL,
 --	[SkillSetId] [int] NOT NULL,
 --	[CustomerId] [int] NOT NULL,
@@ -2922,6 +2922,7 @@
 --(3,517,1,1,6,7,4),
 --(3,518,1,1,6,7,4),
 
+-----------------------------------------------------------add in prod-------------------------------
 
 --ALTER TABLE DocType
 --ADD CONSTRAINT UQ_TDocTypeId UNIQUE (TrdDocTypeId);
@@ -2943,4 +2944,28 @@
 
 --insert into defaulttemplatecolumns values(3,'IsPending','bit default 0',1,0,0,0,0)
 --update trdmap set skillsetid = 344 where trdmapid = 67
+
+--CREATE TABLE [dbo].[MasterReportColumns](
+--	[MasterReportColumnsId] [int] IDENTITY(1,1) NOT NULL primary key,
+--	[ReportColumnName] NVARCHAR(200) NOT NULL)
+
+--insert into MasterReportColumns values ('CustomerId'), ('ResWareProductDescriptions'), ('PropertyState'), ('County'), ('ProjectId'), ('DocType'), ('DocImageDate')
+
+--update MasterReportColumns set ReportColumnName = '' where MasterReportColumnsId = 8
+
+--insert into MasterReportColumns values ('ProjectId'), ('Name'), ('Reference'), ('JurisdictionDocType'),  ('DateAddedtoKWF'), ('DateReceived'), ('DateImaged'), ('DefaultDays'), ('NeverKeyed'), ('ERecordable'), ('KeyingDueDate'), ('ShippingDateDue'), ('Isthisarush'), ('WorkflowStatus'), ('AllottedDate'), ('AllocatedTo'), ('ProcessorName'), ('Shippingdatedue'), ('Faiprocess'), ('Default_buckets'), ('Date_dr__keyed__data__and__image__uploaded'), ('AllocatedPartner'), ('ProcessorFullname'), ('LoanNumber'), ('ServicerLoanNumber'), ('BorrowerFirstName'), ('BorrowerLastName'), ('PropertyStreetAddress1'), ('PropertyStreetAddress2'), ('City'), ('State'), ('County'), ('Zip'), ('LoanAmount'), ('AllottedTo')
+
+--ALTER TABLE ReportColumns
+--ADD SkillSetId INT;
+
+--ALTER TABLE ReportColumns
+--ADD MasterReportColumnId INT;
+
+--ALTER TABLE ReportColumns                      
+--ADD CONSTRAINT FK_ReportColumns_skillset
+--FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE ReportColumns
+--ADD CONSTRAINT FK_ReportColumns_master
+--FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
