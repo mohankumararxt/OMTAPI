@@ -2944,3 +2944,5 @@
 --insert into defaulttemplatecolumns values(3,'IsPending','bit default 0',1,0,0,0,0)
 --update trdmap set skillsetid = 344 where trdmapid = 67
 
+
+
