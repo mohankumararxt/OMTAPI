@@ -39,9 +39,40 @@ namespace OMT.APIHost.Controllers
         [HttpDelete]
         [Route("delete/{userid:int}")]
 
-        public ResultDTO DeleteUser(int userid) 
+        public ResultDTO DeleteUser(int userid)
         {
             return _userService.DeleteUser(userid);
+        }
+
+        [HttpPut]
+        [Route("UpdateByHR")]
+        public ResultDTO UpdateByHR([FromBody] UpdateUserByHrDTO updateUserDTO)
+        {
+            return _userService.UpdateByHR(updateUserDTO);
+        }
+
+        [HttpGet]
+        [Route("list/{userid:int}")]
+        public ResultDTO GetuserInfoByUserId(int userid)
+        {
+            return _userService.GetuserInfoByUserId(userid);
+
+        }
+
+        [HttpPut]
+        [Route("UpdatePasswordByUser")]
+        public ResultDTO UpdatePasswordByUser([FromBody] UpdatePasswordByUserDTO updatePasswordByUserDTO)
+            
+        {
+            return _userService.UpdatePasswordByUser(updatePasswordByUserDTO);
+
+        }   
+
+        [HttpPut]
+        [Route("UpdatePasswordByHR")]
+        public ResultDTO UpdatePasswordByHR([FromBody] UpdateUserPasswordByHrDTO updateUserPasswordDTO)
+        {
+            return _userService.UpdatePasswordByHR(updateUserPasswordDTO);
         }
     }
 }

@@ -17,12 +17,12 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var isactive = _oMTDataContext.UserProfile.Any(up => up.IsActive && up.UserId == teamAssociationCreateDTO.UserId) && 
+                var isactive = _oMTDataContext.UserProfile.Any(up => up.IsActive && up.UserId == teamAssociationCreateDTO.UserId) &&
                                 _oMTDataContext.Teams.Any(t => t.TeamId == teamAssociationCreateDTO.TeamId && t.IsActive);
 
                 if (isactive)
                 {
-                    var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId ).FirstOrDefault();
+                    var existing_TeamAssociationId = _oMTDataContext.TeamAssociation.Where(x => x.UserId == teamAssociationCreateDTO.UserId).FirstOrDefault();
 
                     if (existing_TeamAssociationId != null)
                     {
@@ -52,7 +52,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "User or team not found";
                 }
 
-                 
+
             }
             catch (Exception ex)
             {
@@ -92,22 +92,24 @@ namespace OMT.DataService.Service
         }
         public ResultDTO GetTeamAssociationList()
         {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200"};
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 List<TeamAssociationResponseDTO> ListofTeamAssociations = (from up in _oMTDataContext.UserProfile
                                                                            join ta in _oMTDataContext.TeamAssociation on up.UserId equals ta.UserId
                                                                            join t in _oMTDataContext.Teams on ta.TeamId equals t.TeamId
                                                                            where up.IsActive && t.IsActive
-                                                                           orderby t.TeamName,up.FirstName
+                                                                           orderby t.TeamName, up.FirstName
                                                                            select new TeamAssociationResponseDTO()
                                                                            {
                                                                                FirstName = up.FirstName,
                                                                                TeamName = t.TeamName,
+                                                                               TeamId = t.TeamId,
                                                                                Description = ta.Description,
                                                                                ThresholdCount = ta.ThresholdCount,
                                                                                AssociationId = ta.AssociationId,
-                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") 
+                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                               UserId = up.UserId
                                                                            }).ToList();
                 resultDTO.Data = ListofTeamAssociations;
                 resultDTO.IsSuccess = true;
@@ -138,10 +140,10 @@ namespace OMT.DataService.Service
                                                                                Description = ta.Description,
                                                                                ThresholdCount = ta.ThresholdCount,
                                                                                AssociationId = ta.AssociationId,
-                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "") 
+                                                                               UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? "")
                                                                            }).ToList();
 
-                if(ListofTeamAssociations.Count > 0)
+                if (ListofTeamAssociations.Count > 0)
                 {
                     resultDTO.Data = ListofTeamAssociations;
                     resultDTO.IsSuccess = true;
@@ -153,7 +155,7 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                     resultDTO.Message = "List of Team Associations not found";
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -163,5 +165,42 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO UpdateTeamAssociation(UpdateTeamAssociationDTO updateTeamAssociationDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+            try
+            {
+                TeamAssociation? teamAssociation = _oMTDataContext.TeamAssociation.Where(x => x.AssociationId == updateTeamAssociationDTO.AssociationId).FirstOrDefault();
+                if (teamAssociation != null) //Find association id in association table
+                {
+
+                    teamAssociation.TeamId = updateTeamAssociationDTO.TeamId;
+                    teamAssociation.ThresholdCount = updateTeamAssociationDTO.ThresholdCount;
+                    teamAssociation.Description = updateTeamAssociationDTO.Description;
+                    _oMTDataContext.TeamAssociation.Update(teamAssociation);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Team Association updated successfully";
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Team Association not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
     }
 }
+
