@@ -46,3 +46,6 @@
 /.gitignore
 >>>>>>> phase2
 /.gitignore
+/PendingSciOrders/obj/Release/net472/PendingSciOrders.AssemblyInfo.cs
+/.gitignore
+/TrdIntegrator/TrdIntegrator.csproj.user
