@@ -2969,3 +2969,21 @@
 --ADD CONSTRAINT FK_ReportColumns_master
 --FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
+
+--------------------------------------------exception changes-------------------------------
+
+--create table SciException
+--(
+--Id int IDENTITY(1,1) primary key,
+--Project NVARCHAR(200) null,
+--Loan NVARCHAR(200) null,
+--Valid_Invalid NVARCHAR(100) null,
+--Status NVARCHAR(100) null,
+--Question NVARCHAR(MAX) null,
+--Code NVARCHAR(100) null,
+--CodeName NVARCHAR(300) null,
+--Description  NVARCHAR(MAX) null,
+--Comments  NVARCHAR(MAX) null,
+--Date_Created  DATETIME null,
+--)
+
