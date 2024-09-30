@@ -76,6 +76,7 @@ namespace OMT.DataService
                             CommandType = CommandType.StoredProcedure,
                             CommandText = "GetLiveReportBySkillset"
                         };
+                        command.Parameters.AddWithValue("@SkillSetId", skillSet.SkillSetId);
                         command.Parameters.AddWithValue("@SkillSetName", skillSet.SkillSetName);
                         command.Parameters.AddWithValue("@STARTDateTime", startDateTime);
                         command.Parameters.AddWithValue("@EndDateTime", endDateTime);
