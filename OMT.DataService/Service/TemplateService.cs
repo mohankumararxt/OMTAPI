@@ -940,8 +940,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1043,8 +1043,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                   $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                    $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                    $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                    $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1152,8 +1152,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1286,8 +1286,8 @@ namespace OMT.DataService.Service
                         }
 
                         string commonSqlPart =
-                            $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                            $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                            $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                            $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                             $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                             $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                             $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1389,8 +1389,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1497,8 +1497,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3343,8 +3343,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                               $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                               $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                                $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                                $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                                $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3426,8 +3426,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                  $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                   $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3511,8 +3511,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3562,7 +3562,7 @@ namespace OMT.DataService.Service
 
                     reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                  join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
-                                 where rc.SkillSetId == skillset.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
                                  select mrc.ReportColumnName
                                  ).ToList();
 
@@ -3588,8 +3588,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                           $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                            $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                            $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                            $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
