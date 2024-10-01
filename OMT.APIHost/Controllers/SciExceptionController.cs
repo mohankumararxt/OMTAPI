@@ -19,14 +19,14 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("UploadSciExceptionReport")]
-        public ResultDTO UploadSciExceptionReport(UploadSciExceptionReportDTO uploadSciExceptionReportDTO)
+        public ResultDTO UploadSciExceptionReport([FromBody] UploadSciExceptionReportDTO uploadSciExceptionReportDTO)
         {
             return _sciExceptionService.UploadSciExceptionReport(uploadSciExceptionReportDTO);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetSciExceptionReport")]
-        public ResultDTO GetSciExceptionReport(GetSciExceptionReportDTO getSciExceptionReportDTO)
+        public ResultDTO GetSciExceptionReport([FromBody] GetSciExceptionReportDTO getSciExceptionReportDTO)
         {
             return _sciExceptionService.GetSciExceptionReport(getSciExceptionReportDTO);
         }

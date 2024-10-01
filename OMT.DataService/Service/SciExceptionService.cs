@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using OMT.DataAccess.Context;
+using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System;
@@ -25,7 +26,38 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                if (getSciExceptionReportDTO.FromDate != null && getSciExceptionReportDTO.ToDate != null)
+                {
+                    var SciExceptionOrders = _oMTDataContext.SciException.Where(x => EF.Functions.DateDiffDay(getSciExceptionReportDTO.FromDate, x.Date_Created) >= 0
+                                                                                     && EF.Functions.DateDiffDay(getSciExceptionReportDTO.ToDate, x.Date_Created) <= 0)
+                                                                         .Select(x => new SciExceptionReportResponseDTO
+                                                                         {
+                                                                             Id = x.Id,
+                                                                             Project = x.Project,
+                                                                             Loan = x.Loan,
+                                                                             Valid_Invalid = x.Valid_Invalid,
+                                                                             Status = x.Status,
+                                                                             Question = x.Question,
+                                                                             Code = x.Code,
+                                                                             CodeName = x.CodeName,
+                                                                             Description = x.Description,
+                                                                             Comments = x.Comments,
+                                                                             Date_Created = x.Date_Created.ToString("MM-dd-yyyy hh:mm:ss tt"),
+                                                                         }).ToList();
 
+                    if (SciExceptionOrders.Any())
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Sci Exception Report fetched successfully";
+                        resultDTO.Data = SciExceptionOrders;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "No details found.";
+                       
+                    }
+                }
             }
             catch (Exception ex)
             {
