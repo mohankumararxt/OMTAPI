@@ -2987,3 +2987,23 @@
 --Date_Created  DATETIME null,
 --)
 
+
+----------------------------------------------------------------threshold changes-------------------------------------------
+
+--create table GetOrderCalculation
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId NVARCHAR(200) null,
+--UserSkillSetId INT null,
+--SkillSetId INT null,
+--TotalOrderstoComplete  INT null,
+--OrdersCompleted INT null,
+--Weightage INT  null,
+--PriorityOrder INT null,
+--Utilized  BIT null,
+--IsActive  BIT null,
+--UpdatedDate  DATETIME null,
+--IsCycle1 BIT null,
+--IsHardStateUser BIT null,
+--HardStateUtilized BIT null
+--)
