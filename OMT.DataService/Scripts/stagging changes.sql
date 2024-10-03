@@ -2993,7 +2993,7 @@
 --create table GetOrderCalculation
 --(
 --Id int IDENTITY(1,1) primary key,
---UserId NVARCHAR(200) null,
+--UserId INT null,
 --UserSkillSetId INT null,
 --SkillSetId INT null,
 --TotalOrderstoComplete  INT null,
