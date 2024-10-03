@@ -14,6 +14,7 @@ namespace OMT.DataAccess.Entities
         public DateTime CreatedDate { get; set; }
         public bool IsHardStateUser { get; set; }
         public string? HardStateName { get; set; }
+        public bool IsCycle1 { get; set; }
 
 
     }

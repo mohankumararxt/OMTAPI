@@ -3002,7 +3002,7 @@
 --PriorityOrder INT null,
 --Utilized  BIT null,
 --IsActive  BIT null,
---UpdatedDate  DATETIME null,
+--UpdatedDate  DATETIME null,	
 --IsCycle1 BIT null,
 --IsHardStateUser BIT null,
 --HardStateUtilized BIT null

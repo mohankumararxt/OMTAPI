@@ -42,6 +42,7 @@ namespace OMT.DataAccess.Context
         public DbSet<TrackTrdOrders> TrackTrdOrders { get; set; }
         public DbSet<MasterReportColumns> MasterReportColumns { get; set; }
         public DbSet<SciException> SciException { get; set; }
+        public DbSet<GetOrderCalculation> GetOrderCalculation { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
