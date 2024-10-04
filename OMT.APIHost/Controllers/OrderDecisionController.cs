@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
+using OMT.DataService.Service;
 using OMT.DTO;
 
 namespace OMT.APIHost.Controllers
@@ -25,6 +26,15 @@ namespace OMT.APIHost.Controllers
         {
             return  _getordercalculationtavbleservice.UpdateGetOrderCalculation();
         }
+
+        [HttpGet]
+        [Route("GetOrderForUser")]
+        public ResultDTO GetOrderForUser()
+        {
+            var userid = UserId;
+            return _getordercalculationtavbleservice.GetOrderForUser(userid);
+        }
+
 
     }
 }

@@ -10,5 +10,6 @@ namespace OMT.DataService.Interface
     public interface IOrderDecisionService
     {
         ResultDTO UpdateGetOrderCalculation();
+        ResultDTO GetOrderForUser(int userid);
     }
 }
