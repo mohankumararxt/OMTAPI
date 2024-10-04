@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace OMT.DTO
+namespace OMT.DataAccess.Entities
 {
-    public class GetOrderCalculationDTO
+    public class Utilization
     {
+        [Key]
+        public int Id { get; set; }
         public int UserId { get; set; }
         public int UserSkillSetId { get; set; }
         public int SkillSetId { get; set; }
@@ -21,6 +19,5 @@ namespace OMT.DTO
         public bool IsCycle1 { get; set; }
         public bool IsHardStateUser { get; set; }
         public bool HardStateUtilized { get; set; }
-
     }
 }

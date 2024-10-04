@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
@@ -7,7 +8,8 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OrderDecisionController : ControllerBase
+    [Authorize]
+    public class OrderDecisionController : BaseController
     {
         private readonly IOrderDecisionService _getordercalculationtavbleservice;
 

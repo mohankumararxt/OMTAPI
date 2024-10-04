@@ -328,12 +328,23 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
+                    bool IsThresholdChanged = false;
+
+                    if (skillset.Threshold != skillSetUpdateDTO.Threshold)
+                    {
+                        IsThresholdChanged = true;
+                    }
                     // Updating Skillset Details
                     skillset.Threshold = skillSetUpdateDTO.Threshold;
                     skillset.IsHardState = skillSetUpdateDTO.IsHardState;
                     skillset.IsActive = true;
                     _oMTDataContext.SkillSet.Update(skillset);
                     _oMTDataContext.SaveChanges();
+
+                    if (IsThresholdChanged)
+                    {
+                        // call method which will update getordercaltable,create private method here
+                    }
 
                     if (skillSetUpdateDTO.StateName != null && skillSetUpdateDTO.IsHardState == true)
                     {

@@ -1,9 +1,12 @@
-﻿using OMT.DataAccess.Context;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,8 +28,71 @@ namespace OMT.DataService.Service
 
             try
             {
-                var users = _oMTDataContext.UserProfile.Where(x => x.IsActive).Select(_ => _.UserId).ToList();
+                //check getorder table for any records , if yes put it into backup table, truncate getorder table and call the below method 
+                var tablename = "GetOrderCalculation";
 
+                var existingdetails = _oMTDataContext.GetOrderCalculation
+                                                     .Select(x => new Utilization
+                                                     {
+                                                         UserId = x.UserId,
+                                                         UserSkillSetId = x.SkillSetId,
+                                                         SkillSetId = x.SkillSetId,
+                                                         TotalOrderstoComplete = x.TotalOrderstoComplete,
+                                                         OrdersCompleted = x.OrdersCompleted,
+                                                         Weightage = x.Weightage,
+                                                         PriorityOrder = x.PriorityOrder,
+                                                         Utilized = x.Utilized,
+                                                         IsActive = x.IsActive,
+                                                         UpdatedDate = x.UpdatedDate,
+                                                         IsCycle1 = x.IsCycle1,
+                                                         IsHardStateUser = x.IsHardStateUser,
+                                                         HardStateUtilized = x.HardStateUtilized,
+                                                     }).ToList();
+
+                if (existingdetails != null && existingdetails.Any())
+                {
+                    _oMTDataContext.Utilization.AddRange(existingdetails);
+                    _oMTDataContext.SaveChanges();
+
+                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                    using SqlConnection connection = new(connectionstring);
+                    using SqlCommand truncatecmd = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.Text,
+                        CommandText = "Truncate table " + tablename,
+                    };
+                    connection.Open();
+                    truncatecmd.ExecuteNonQuery();
+
+                    InsertGetOrderCalculation(resultDTO, 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+
+            return resultDTO;
+        }
+
+        public void InsertGetOrderCalculation(ResultDTO resultDTO, int userid)
+        {
+            try
+            {
+                List<int> users = new List<int>();
+
+                if (userid == 0)
+                {
+                    users = _oMTDataContext.UserProfile.Where(x => x.IsActive).Select(_ => _.UserId).ToList();
+                }
+                else
+                {
+                    users.Add(userid);
+                }
 
                 foreach (var user in users)
                 {
@@ -48,7 +114,7 @@ namespace OMT.DataService.Service
                                              IsCycle1 = uss.IsCycle1,
                                              HardStateName = uss.HardStateName,
                                          }).ToList();
-                                        
+
 
                     foreach (var userkillset in userskillsets)
                     {
@@ -91,7 +157,6 @@ namespace OMT.DataService.Service
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
             }
-            return resultDTO;
         }
     }
 }
