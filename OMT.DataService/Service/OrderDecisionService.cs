@@ -238,11 +238,6 @@ namespace OMT.DataService.Service
 
                     DataTable datatable = dataset.Tables[0];
 
-                    //var querydt1 = datatable.AsEnumerable()
-                    //                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                    //                    column => column.ColumnName,
-                    //                    column => row[column])).ToList();
-
                     var querydt1 = datatable.AsEnumerable()
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                   column => column.ColumnName,
