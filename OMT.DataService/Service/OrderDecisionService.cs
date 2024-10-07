@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace OMT.DataService.Service
 {
@@ -105,7 +106,7 @@ namespace OMT.DataService.Service
                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                          where up.UserId == user && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
-                                         orderby uss.IsHardStateUser descending, uss.IsCycle1 descending , uss.Percentage descending
+                                         orderby uss.IsHardStateUser descending, uss.IsCycle1 descending, uss.Percentage descending
                                          select new UserSkillSet
                                          {
                                              UserId = uss.UserId,
@@ -282,7 +283,7 @@ namespace OMT.DataService.Service
                                                                   join goc in _oMTDataContext.GetOrderCalculation on uss.UserSkillSetId equals goc.UserSkillSetId
                                                                   join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                   join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
-                                                                  where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid && goc.Utilized == false
+                                                                  where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid
                                                                   orderby goc.PriorityOrder // uss.IsHardStateUser descending, uss.Percentage descending
                                                                   select new GetOrderCalculation
                                                                   {
@@ -301,9 +302,23 @@ namespace OMT.DataService.Service
                                                                       HardStateUtilized = goc.HardStateUtilized,
                                                                   }).ToList();
 
-                    List<GetOrderCalculation> hardstateid = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.HardStateUtilized == false).ToList();
+                    bool iscycle1 = true;
 
-                    if (hardstateid.Count > 0)
+                    List<GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false &&  x.IsCycle1).ToList();
+
+                    List<GetOrderCalculation> hardstateid_cycle1_remaining = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).ToList();
+
+                    // Check if there are no remaining usersskillsets in cycle 1, switch to cycle 2
+
+                    List<GetOrderCalculation> hardstateid_cycle2 = new();
+                    if (hardstateid_cycle1_remaining.Count == 0)
+                    {
+                        hardstateid_cycle2 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1 == false).ToList();
+                        iscycle1 = false;
+                    }
+
+                    // first cycle hardstate skillsets
+                    if (hardstateid_cycle1.Count > 0 || hardstateid_cycle2.Count > 0)
                     {
                         string uporder;
                         using SqlCommand command = new()
@@ -313,6 +328,7 @@ namespace OMT.DataService.Service
                             CommandText = "GetOrderByHardstate_Threshold"
                         };
                         command.Parameters.AddWithValue("@userid", userid);
+                        command.Parameters.AddWithValue("@IsCycle1", iscycle1);
                         //output param to get the record
                         SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
                         outputParam.Direction = ParameterDirection.Output;
@@ -346,7 +362,7 @@ namespace OMT.DataService.Service
 
                                 if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
                                 {
-                                    string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 and HardStateUtilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
+                                    string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
 
                                     using SqlCommand UpdateGocTbl = connection.CreateCommand();
                                     UpdateGocTbl.CommandText = UpdateGocTable;
@@ -365,14 +381,14 @@ namespace OMT.DataService.Service
                         else
                         {
                             // if no hardstate orders, make hardstateutilized = true for that skillsetid of user 
-                            callSPbyWeightage(userid, resultDTO, connection);
-                            
+                            callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+
                         }
                     }
                     else
                     {
-                        callSPbyWeightage(userid, resultDTO, connection);
-                       
+                        callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+
                     }
 
                 }
@@ -387,7 +403,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public void callSPbyWeightage(int userid, ResultDTO resultDTO, SqlConnection connection)
+        public void callSPbyWeightage(int userid, bool iscycle1, ResultDTO resultDTO, SqlConnection connection)
         {
             string updatedOrder;
             SqlCommand command1 = new()
@@ -397,6 +413,7 @@ namespace OMT.DataService.Service
                 CommandText = "GetOrderByWeightage_Threshold"
             };
             command1.Parameters.AddWithValue("@userid", userid);
+            command1.Parameters.AddWithValue("@IsCycle1", iscycle1);
             //output param to get the record
             SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
             outputParam.Direction = ParameterDirection.Output;
@@ -408,7 +425,6 @@ namespace OMT.DataService.Service
                 Direction = ParameterDirection.ReturnValue
             };
             command1.Parameters.Add(returnValue);
-
 
             command1.ExecuteNonQuery();
 
@@ -439,7 +455,7 @@ namespace OMT.DataService.Service
 
                     if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
                     {
-                        string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 and HardStateUtilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
+                        string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
 
                         using SqlCommand UpdateGocTbl = connection.CreateCommand();
                         UpdateGocTbl.CommandText = UpdateGocTable;
