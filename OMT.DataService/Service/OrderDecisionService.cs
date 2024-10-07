@@ -105,7 +105,7 @@ namespace OMT.DataService.Service
                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                          where up.UserId == user && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
-                                         orderby uss.IsHardStateUser descending, uss.Percentage descending
+                                         orderby uss.IsHardStateUser descending, uss.IsCycle1 descending , uss.Percentage descending
                                          select new UserSkillSet
                                          {
                                              UserId = uss.UserId,
@@ -346,7 +346,7 @@ namespace OMT.DataService.Service
 
                                 if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
                                 {
-                                    string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
+                                    string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 and HardStateUtilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
 
                                     using SqlCommand UpdateGocTbl = connection.CreateCommand();
                                     UpdateGocTbl.CommandText = UpdateGocTable;
@@ -439,7 +439,7 @@ namespace OMT.DataService.Service
 
                     if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
                     {
-                        string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
+                        string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 and HardStateUtilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
 
                         using SqlCommand UpdateGocTbl = connection.CreateCommand();
                         UpdateGocTbl.CommandText = UpdateGocTable;
