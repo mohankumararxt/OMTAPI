@@ -10,6 +10,9 @@ namespace OMT.DataService.Interface
         ResultDTO DeleteSkillSet(int skillsetId);
         ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO); 
         ResultDTO GetStatenameList(int skillsetid);
-        ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillsettimeLineDTO);  
-    }
+        ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillsettimeLineDTO); 
+        ResultDTO UpdateTimeLine(SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO); 
+        ResultDTO GetSkillSetTimelineList(int? skillsetid); 
+       
+    } 
 }

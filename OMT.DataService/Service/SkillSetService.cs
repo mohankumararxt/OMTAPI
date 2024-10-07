@@ -402,7 +402,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
             {
-                var existingSkillSet = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillSetTimeLineDTO.SkillSetId &&  x.IsActive).FirstOrDefault();
+                var existingSkillSet = _oMTDataContext.Timeline.Where(x => x.SkillSetId == skillSetTimeLineDTO.SkillSetId && x.IsActive).FirstOrDefault();
                 if (existingSkillSet != null)
                 {
                     resultDTO.IsSuccess = false;
@@ -425,23 +425,19 @@ namespace OMT.DataService.Service
                     }
                     foreach (var details in skillSetTimeLineDTO.NormalStateTimelineDetails)
                     {
-                        if (!string.IsNullOrEmpty(details.HardStateName))  
+                        Timeline timeline2 = new Timeline
                         {
-                            Timeline timeline2 = new Timeline
-                            {
-                                SkillSetId = skillSetTimeLineDTO.SkillSetId,
-                                Hardstatename = details.HardStateName,
-                                ExceedTime = details.ExceedTime,
-                                IsHardState = details.IsHardstate,
-                                IsActive = true
-                            };
-                            _oMTDataContext.Timeline.Add(timeline2);
-                            _oMTDataContext.SaveChanges();
-                        }
+                            SkillSetId = skillSetTimeLineDTO.SkillSetId,
+                            Hardstatename = details.HardStateName,
+                            ExceedTime = details.ExceedTime,
+                            IsHardState = details.IsHardstate,
+                            IsActive = true
+                        };
+                        _oMTDataContext.Timeline.Add(timeline2);
+                        _oMTDataContext.SaveChanges();
                     }
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Timeline Added Successfully";
-                    resultDTO.Data = skillSetTimeLineDTO;
                 }
             }
             catch (Exception ex)
@@ -449,7 +445,142 @@ namespace OMT.DataService.Service
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
 
+        public ResultDTO UpdateTimeLine(SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+            try
+            {
+                var existingTimelines = _oMTDataContext.Timeline.Where(t => t.SkillSetId == skillSetUpdateTimeLineDTO.SkillSetId).ToList();
+
+                // Disable 
+                var existingHardStates = existingTimelines.Where(t => t.IsHardState).ToList();
+                foreach (var hardState in existingHardStates)
+                {
+                    hardState.IsActive = false;
+                    _oMTDataContext.Timeline.Update(hardState);
+                    _oMTDataContext.SaveChanges();
+                }
+                foreach (var hardStateDetail in skillSetUpdateTimeLineDTO.HardStateTimelineDetails)
+                {
+                    var existingTimeline = existingHardStates.FirstOrDefault(t => t.Hardstatename == hardStateDetail.HardStateName);
+
+                    if (existingTimeline != null)
+                    {
+                        // Activate 
+                        existingTimeline.ExceedTime = hardStateDetail.ExceedTime;
+                        existingTimeline.IsActive = true;
+                        _oMTDataContext.Timeline.Update(existingTimeline);
+                        _oMTDataContext.SaveChanges();
+                    }
+                    else
+                    {
+                        // Add  
+                        Timeline newTimeline = new Timeline()
+                        {
+                            SkillSetId = skillSetUpdateTimeLineDTO.SkillSetId,
+                            Hardstatename = hardStateDetail.HardStateName,
+                            ExceedTime = hardStateDetail.ExceedTime,
+                            IsHardState = true,
+                            IsActive = true
+                        };
+                        _oMTDataContext.Timeline.Add(newTimeline);
+                        _oMTDataContext.SaveChanges();
+                    }
+                }
+                //Normalstate  
+                var existingNormalState = _oMTDataContext.Timeline.Where(t => t.SkillSetId == skillSetUpdateTimeLineDTO.SkillSetId && t.IsHardState == false && t.IsActive).FirstOrDefault();
+
+                foreach (var normalStateDetail in skillSetUpdateTimeLineDTO.NormalStateTimelineDetails)
+                {
+                    if (existingNormalState != null)
+                    {
+
+                        existingNormalState.ExceedTime = normalStateDetail.ExceedTime;
+                        _oMTDataContext.Timeline.Update(existingNormalState);
+                        _oMTDataContext.SaveChanges();
+                    }
+                }
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "Timeline Details Updated Successfully";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetSkillSetTimelineList(int? skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<SkillSetTimelineResponseDTO> allSkillSetTimelines = new List<SkillSetTimelineResponseDTO>();
+
+                var SSid = _oMTDataContext.SkillSet.Where(ss => ss.IsActive && _oMTDataContext.Timeline.Any(tl => tl.SkillSetId == ss.SkillSetId && tl.IsActive));
+
+                var skillSetIds = (skillsetid == null) ? SSid.Select(ss => ss.SkillSetId).ToList()
+                                  : new List<int> { skillsetid.Value };
+
+                
+                    foreach (var id in skillSetIds)
+                    {
+                        // HardState 
+                        List<ResponseTimelineDetailDTO> Listof_HS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
+                                                                                     where tl.IsActive && tl.IsHardState && tl.SkillSetId == id
+                                                                                     orderby tl.TimelineId
+                                                                                     select new ResponseTimelineDetailDTO()
+                                                                                     {
+                                                                                         HardStateName = tl.Hardstatename,
+                                                                                         ExceedTime = tl.ExceedTime,
+                                                                                         IsHardstate = tl.IsHardState
+                                                                                     }).ToList();
+
+                        // NormalState 
+                        List<ResponseTimelineDetailDTO> Listof_NS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
+                                                                                     where tl.IsActive && !tl.IsHardState && tl.SkillSetId == id
+                                                                                     orderby tl.TimelineId
+                                                                                     select new ResponseTimelineDetailDTO()
+                                                                                     {
+                                                                                         HardStateName = tl.Hardstatename,
+                                                                                         ExceedTime = tl.ExceedTime,
+                                                                                         IsHardstate = tl.IsHardState
+                                                                                     }).ToList();
+
+                        if(Listof_HS_TimeLineDetails.Count==0 && Listof_NS_TimeLineDetails.Count==0) //new
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "No timeline details found for this Skillsetid";
+                            return resultDTO;
+                        }
+
+                        //combine timeline details 
+                        SkillSetTimelineResponseDTO skillSetTimelineResponseDTO = new SkillSetTimelineResponseDTO()
+                        {
+                            SkillSetId = id,
+                            HardStateTimelineDetails = Listof_HS_TimeLineDetails,
+                            NormalStateTimelineDetails = Listof_NS_TimeLineDetails
+                        };
+
+                        allSkillSetTimelines.Add(skillSetTimelineResponseDTO); // Add list of all skillset timelines
+                    }
+
+                    resultDTO.Data = allSkillSetTimelines;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Timeline Details Successfully Fetched";
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
             }
             return resultDTO;
         }

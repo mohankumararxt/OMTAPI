@@ -92,5 +92,19 @@ namespace OMT.APIHost.Controllers
             ResultDTO resultDTO = _skillsetService.CreateTimeLine(skillSetTimeLineDTO);
             return resultDTO;
         }
+
+        [HttpPut]
+        [Route("updateTimeline")]
+        public ResultDTO UpdateTimeLine([FromBody] SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO)
+        {
+            return _skillsetService.UpdateTimeLine(skillSetUpdateTimeLineDTO);
+        }
+
+        [HttpGet]
+        [Route("timelinelist/{skillsetid:int?}")]
+        public ResultDTO GetSkillSetTimelineList(int? skillsetid)
+        {
+            return _skillsetService.GetSkillSetTimelineList(skillsetid);
+        }
     }
 }
