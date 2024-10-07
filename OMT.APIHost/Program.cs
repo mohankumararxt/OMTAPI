@@ -95,6 +95,7 @@ builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareServi
 builder.Services.AddScoped<IInvoiceJointSciService, InvoiceJointSciService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
+builder.Services.AddScoped<ISciExceptionService, SciExceptionService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
