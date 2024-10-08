@@ -438,5 +438,84 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
+
+                var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct();
+
+                var userskillSetIds = (userid == null) ? USSid.ToList() : new List<int> { userid.Value };
+
+                foreach (var id in userskillSetIds)
+                {
+                    var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
+                    var userName = userProfile != null ? userProfile.FirstName + ' '+ userProfile.LastName : "User Not Found";
+
+                    // HardState 
+                    List<UserSkillSetDetailsDTO> FirstCycle1 = (from uss in _oMTDataContext.UserSkillSet
+                                                                join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                where uss.IsActive && uss.UserId == id && uss.IsCycle1
+                                                                orderby uss.UserId
+                                                                select new UserSkillSetDetailsDTO()
+                                                                {
+                                                                    SkillSetId = uss.SkillSetId,
+                                                                    SkillSetName = ss.SkillSetName,
+                                                                    Weightage = uss.Percentage,
+                                                                    IsHardStateUser = uss.IsHardStateUser,
+                                                                    HardStateName = uss.HardStateName,
+                                                                }).ToList();
+
+                    // NormalState 
+                    List<UserSkillSetDetailsDTO> SecondCycle2 = (from uss in _oMTDataContext.UserSkillSet
+                                                                 join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                 join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                 where uss.IsActive && uss.UserId == id && !uss.IsCycle1
+                                                                 orderby uss.UserId
+                                                                 select new UserSkillSetDetailsDTO()
+                                                                 {
+                                                                     SkillSetId = uss.SkillSetId,
+                                                                     SkillSetName = ss.SkillSetName,
+                                                                     Weightage = 0,
+                                                                     IsHardStateUser = uss.IsHardStateUser,
+                                                                     HardStateName = uss.HardStateName,
+                                                                 }).ToList();
+
+
+
+                    if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0) 
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "No Consolidated Userskillset details found for this Userid";
+                        return resultDTO;
+                    }
+
+                    //combine details 
+                    ConsolidatedUserSkillSetlistDTO userSkillSetDetailsDTO = new ConsolidatedUserSkillSetlistDTO()
+                    {
+                        Username = userName,
+                        UserId = id,
+                        FirstCycle = FirstCycle1,
+                        SecondCycle = SecondCycle2
+                    };
+
+                    allUserSkillSet.Add(userSkillSetDetailsDTO); 
+                }
+                resultDTO.Data = allUserSkillSet;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
