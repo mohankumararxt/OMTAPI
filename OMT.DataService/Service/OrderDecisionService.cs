@@ -305,7 +305,7 @@ namespace OMT.DataService.Service
                     bool iscycle1 = true;
                     var cycle = new List<GetOrderCalculation>();
 
-                    List <GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1).OrderByDescending(x => x.PriorityOrder).ToList();
+                    List<GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1).OrderByDescending(x => x.PriorityOrder).ToList();
 
                     List<GetOrderCalculation> hardstateid_cycle1_remaining = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).ToList();
 
@@ -343,7 +343,7 @@ namespace OMT.DataService.Service
                                 CommandText = "GetOrderByHardstate_Threshold"
                             };
                             command.Parameters.AddWithValue("@userid", userid);
-                            command.Parameters.AddWithValue("@SkillSetId)", ss.SkillSetId);
+                            command.Parameters.AddWithValue("@SkillSetId", ss.SkillSetId);
                             command.Parameters.AddWithValue("@IsCycle1", iscycle1);
                             //output param to get the record
                             SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
@@ -369,10 +369,16 @@ namespace OMT.DataService.Service
                             if (!string.IsNullOrWhiteSpace(uporder))
                             {
                                 OrderAssigned = true;
+                                int? ssid = null;
 
-                                //update getordercal table- increment orders completed by 1 and then check if toc == oc ,if yes make utilized = true,else false
-                                var jsonObj = JObject.Parse(uporder);
-                                var ssid = jsonObj["SkillSetId"] != null ? (int)jsonObj["SkillSetId"] : (int?)null;
+                                //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
+                                var jsonArray = JArray.Parse(uporder);
+
+                                var firstItem = jsonArray[0] as JObject; // Cast to JObject to access properties
+                                if (firstItem != null)
+                                {
+                                    ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
+                                }
 
                                 if (ssid.HasValue)
                                 {
@@ -412,7 +418,7 @@ namespace OMT.DataService.Service
 
                             }
 
-                            
+
                         }
                     }
                     else
@@ -475,9 +481,16 @@ namespace OMT.DataService.Service
             }
             else
             {
-                //update getordercal table- increment orders completed by 1 and then check if toc == oc ,if yes make utilized = true,else false
-                var jsonObj = JObject.Parse(updatedOrder);
-                var ssid = jsonObj["SkillSetId"] != null ? (int)jsonObj["SkillSetId"] : (int?)null;
+                int? ssid = null;
+
+                //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
+                var jsonArray = JArray.Parse(updatedOrder);
+
+                var firstItem = jsonArray[0] as JObject; // Cast to JObject to access properties
+                if (firstItem != null)
+                {
+                    ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
+                }
 
                 if (ssid.HasValue)
                 {
