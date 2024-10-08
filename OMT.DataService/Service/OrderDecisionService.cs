@@ -305,7 +305,7 @@ namespace OMT.DataService.Service
                     bool iscycle1 = true;
                     var cycle = new List<GetOrderCalculation>();
 
-                    List<GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1).OrderByDescending(x => x.PriorityOrder).ToList();
+                    List<GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
 
                     List<GetOrderCalculation> hardstateid_cycle1_remaining = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).ToList();
 
@@ -314,7 +314,7 @@ namespace OMT.DataService.Service
                     List<GetOrderCalculation> hardstateid_cycle2 = new();
                     if (hardstateid_cycle1_remaining.Count == 0)
                     {
-                        hardstateid_cycle2 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1 == false).OrderByDescending(x => x.PriorityOrder).ToList();
+                        hardstateid_cycle2 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1 == false).OrderBy(x => x.PriorityOrder).ToList();
                         iscycle1 = false;
                     }
 
@@ -410,20 +410,40 @@ namespace OMT.DataService.Service
                                 // if no hardstate orders, make hardstateutilized = true for that skillsetid of user 
                                 var nsorders = callSPbyWeightage(userid, iscycle1, resultDTO, connection);
 
-                                if (nsorders != null)
+                                if (string.IsNullOrWhiteSpace(nsorders))
+                                {
+                                    iscycle1 = false;
+
+                                    //check cycle2 has hs skillsets if yes call above sp else call below sp
+                                    var Cycle2Order = callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+
+                                    if (!string.IsNullOrWhiteSpace(Cycle2Order))
+                                    {
+                                        OrderAssigned = true;
+                                        break;
+                                    }
+
+                                }
+                                else
                                 {
                                     OrderAssigned = true;
                                     break;
+
                                 }
 
                             }
-
-
                         }
                     }
                     else
                     {
-                        callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+                        var normalStateorders = callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+
+                        if (string.IsNullOrWhiteSpace(normalStateorders))
+                        {
+                            iscycle1 = false;
+                            callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+
+                        }
 
                     }
 
