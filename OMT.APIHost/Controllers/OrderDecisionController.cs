@@ -12,11 +12,11 @@ namespace OMT.APIHost.Controllers
     [Authorize]
     public class OrderDecisionController : BaseController
     {
-        private readonly IOrderDecisionService _getordercalculationtavbleservice;
+        private readonly IOrderDecisionService _orderdecisionservice;
 
-        public OrderDecisionController(IOrderDecisionService getordercalculationtavbleservice)
+        public OrderDecisionController(IOrderDecisionService orderdecisionservice)
         {
-            _getordercalculationtavbleservice = getordercalculationtavbleservice;
+            _orderdecisionservice = orderdecisionservice;
         }
 
         [HttpPost]
@@ -24,7 +24,7 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO UpdateGetOrderCalculation()
         {
-            return  _getordercalculationtavbleservice.UpdateGetOrderCalculation();
+            return  _orderdecisionservice.UpdateGetOrderCalculation();
         }
 
         [HttpGet]
@@ -32,7 +32,7 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetOrderForUser()
         {
             var userid = UserId;
-            return _getordercalculationtavbleservice.GetOrderForUser(userid);
+            return _orderdecisionservice.GetOrderForUser(userid);
         }
 
 
