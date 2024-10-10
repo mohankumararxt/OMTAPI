@@ -2969,7 +2969,7 @@
 --ADD CONSTRAINT FK_ReportColumns_master
 --FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
-
+-- make reportcolumns reportcolumnname as null ,change cretaetrddetails sp 
 --------------------------------------------exception changes-------------------------------
 
 --create table SciException
