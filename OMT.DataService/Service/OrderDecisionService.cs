@@ -53,7 +53,7 @@ namespace OMT.DataService.Service
                                                          HardStateUtilized = x.HardStateUtilized,
                                                      }).ToList();
 
-                if (existingdetails != null && existingdetails.Any())
+                if (existingdetails.Count > 0)
                 {
                     _oMTDataContext.Utilization.AddRange(existingdetails);
                     _oMTDataContext.SaveChanges();
