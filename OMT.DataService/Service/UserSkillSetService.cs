@@ -11,11 +11,14 @@ namespace OMT.DataService.Service
     {
 
         private readonly OMTDataContext _oMTDataContext;
-        public UserSkillSetService(OMTDataContext oMTDataContext)
+        private readonly IOrderDecisionService _orderDecisionService;
+
+        public UserSkillSetService(OMTDataContext oMTDataContext, IOrderDecisionService orderDecisionService)
         {
             _oMTDataContext = oMTDataContext;
+            _orderDecisionService = orderDecisionService;
         }
-
+            
         public ResultDTO GetUserSkillSetList(int? userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -426,6 +429,11 @@ namespace OMT.DataService.Service
                         _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                         _oMTDataContext.SaveChanges();
                     }
+
+                    // after adding userskillset for new user, call the insertintogoc table method 
+
+                    _orderDecisionService.InsertGetOrderCalculation(resultDTO,multipleUserSkillSetCreateDTO.UserId);
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "UserSkillset Added Successfully.";
                 }
