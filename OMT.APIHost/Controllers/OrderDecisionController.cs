@@ -35,6 +35,15 @@ namespace OMT.APIHost.Controllers
             return _orderdecisionservice.GetOrderForUser(userid);
         }
 
+        [HttpGet]
+        [Route("GetTrdPendingOrderForUser")]
+
+        public ResultDTO GetTrdPendingOrderForUser()
+        {
+            var userid = UserId;
+            return _orderdecisionservice.GetTrdPendingOrderForUser(userid);
+        }
+
 
     }
 }
