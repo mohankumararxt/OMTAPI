@@ -752,13 +752,13 @@ namespace OMT.DataService.Service
 
             updatedOrder = command1.Parameters["@updatedrecord"].Value.ToString();
 
-            if (!string.IsNullOrEmpty(updatedOrder))
-            {
-                resultDTO.Data = updatedOrder;
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "Order assigned successfully";
-            }
-
+            //if (!string.IsNullOrEmpty(updatedOrder))
+            //{
+            //    resultDTO.Data = updatedOrder;
+            //    resultDTO.IsSuccess = true;
+            //    resultDTO.Message = "Order assigned successfully";
+            //}
+            UpdateUtilized(userid, resultDTO, connection, iscycle1, updatedOrder);
 
             return updatedOrder;
         }
