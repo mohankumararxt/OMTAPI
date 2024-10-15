@@ -11,7 +11,6 @@ namespace OMT.DTO
         public string Username { get; set; }
         public int UserId { get; set; }
         public List<UserSkillSetDetailsDTO> FirstCycle { get; set; }
-
         public List<UserSkillSetDetailsDTO> SecondCycle { get; set; }
     }
     public class UserSkillSetDetailsDTO
@@ -20,9 +19,9 @@ namespace OMT.DTO
         public string SkillSetName { get; set; }
         public int? Weightage { get; set; }
         public bool IsHardStateUser { get; set; }
-       // public List<string>? HardStateName { get; set; }
+        // public List<string>? HardStateName { get; set; }
         public string? HardStateName { get; set; }
 
-       // public string Username { get; set; } //new 
+        // public string Username { get; set; } //new 
     }
 }

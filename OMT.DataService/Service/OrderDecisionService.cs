@@ -106,7 +106,7 @@ namespace OMT.DataService.Service
                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                          where up.UserId == user && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
-                                         orderby uss.IsHardStateUser descending, uss.IsCycle1 descending, uss.Percentage descending
+                                         orderby uss.IsCycle1 descending, uss.Percentage descending
                                          select new UserSkillSet
                                          {
                                              UserId = uss.UserId,
@@ -166,7 +166,6 @@ namespace OMT.DataService.Service
         public ResultDTO GetOrderForUser(int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-
             try
             {
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
@@ -276,7 +275,6 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "200";
                     resultDTO.Data = JsonConvert.SerializeObject(dataToReturn);
                 }
-
                 else
                 {
                     List<GetOrderCalculation> userskillsetlist = (from uss in _oMTDataContext.UserSkillSet
@@ -284,7 +282,7 @@ namespace OMT.DataService.Service
                                                                   join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                   join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
                                                                   where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid
-                                                                  orderby goc.PriorityOrder // uss.IsHardStateUser descending, uss.Percentage descending
+                                                                  orderby goc.PriorityOrder
                                                                   select new GetOrderCalculation
                                                                   {
                                                                       UserId = goc.UserId,
@@ -303,118 +301,46 @@ namespace OMT.DataService.Service
                                                                   }).ToList();
 
                     bool iscycle1 = true;
-                    var cycle = new List<GetOrderCalculation>();
 
-                    List<GetOrderCalculation> hardstateid_cycle1 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
+                    string uporder = string.Empty;
 
-                    List<GetOrderCalculation> hardstateid_cycle1_remaining = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).ToList();
+                    List<GetOrderCalculation> uss_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
 
-                    // Check if there are no remaining usersskillsets in cycle 1, switch to cycle 2
-
-                    List<GetOrderCalculation> hardstateid_cycle2 = new();
-                    if (hardstateid_cycle1_remaining.Count == 0)
+                    if (uss_cycle1.Count == 0)
                     {
-                        hardstateid_cycle2 = userskillsetlist.Where(x => x.IsHardStateUser && x.Utilized == false && x.IsCycle1 == false).ToList();
                         iscycle1 = false;
-                    }
 
-                    // first cycle hardstate skillsets
-                    if (hardstateid_cycle1.Count > 0 || hardstateid_cycle2.Count > 0)
-                    {
-                        string uporder;
+                        // Get unutilized skill sets for cycle 2, ordered by priority
+                        var uss_cycle2 = userskillsetlist
+                            .Where(x => !x.Utilized && !x.IsCycle1)
+                            .OrderBy(x => x.PriorityOrder)
+                            .ToList();
 
-                        uporder = callByHardstate(userid, resultDTO, connection, iscycle1);   //call hs sp
-                        if (!string.IsNullOrWhiteSpace(uporder))
-                        {
-                            int? ssid = null;
+                        // Process cycle 2 skill sets
+                        uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
 
-                            //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
-                            var jsonArray = JArray.Parse(uporder);
-
-                            var firstItem = jsonArray[0] as JObject; // Cast to JObject to access properties
-                            if (firstItem != null)
-                            {
-                                ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
-                            }
-
-                            if (ssid.HasValue)
-                            {
-                                var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1).FirstOrDefault();
-
-                                if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
-                                {
-                                    string UpdateGocTable = $"UPDATE GetOrderCalculation SET Utilized = 1 WHERE UserId = @UserId AND SkillSetId = @ssid";
-
-                                    using SqlCommand UpdateGocTbl = connection.CreateCommand();
-                                    UpdateGocTbl.CommandText = UpdateGocTable;
-                                    UpdateGocTbl.Parameters.AddWithValue("@UserId", userid);
-                                    UpdateGocTbl.Parameters.AddWithValue("@ssid", ssid);
-
-                                    UpdateGocTbl.ExecuteNonQuery();
-                                }
-
-                            }
-
-                            resultDTO.Data = uporder;
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Order assigned successfully";
-                        }
-                        else
-                        {
-                            // if no hardstate orders, call ns sp
-                            var nsorders = callSPbyWeightage(userid, iscycle1, resultDTO, connection);
-
-                            if (string.IsNullOrEmpty(nsorders) && iscycle1)
-                            {
-                                iscycle1 = false;
-                                var HsSkillset_Cycle2 = userskillsetlist.Where(x => x.Utilized == false && x.IsHardStateUser && x.IsCycle1 == false).OrderBy(x => x.PriorityOrder).ToList();
-
-                                if (HsSkillset_Cycle2.Count > 0)
-                                {
-                                    var second_HsOrder = callByHardstate(userid, resultDTO, connection, iscycle1);
-
-                                    if (string.IsNullOrEmpty(second_HsOrder))
-                                    {
-                                        callSPbyWeightage(userid, iscycle1, resultDTO, connection);
-                                    }
-                                }
-                                else
-                                {
-                                    callSPbyWeightage(userid, iscycle1, resultDTO, connection);
-                                }
-                            }
-
-                        }
                     }
                     else
                     {
-                        var order = callSPbyWeightage(userid, iscycle1, resultDTO, connection);
+                        uporder = GetOrderByCycle(uss_cycle1, iscycle1, userid, resultDTO, connection);
 
-                        if (string.IsNullOrEmpty(order) && iscycle1)
+                        // If no orders were assigned in cycle 1, proceed to cycle 2
+                        if (string.IsNullOrWhiteSpace(uporder))
                         {
                             iscycle1 = false;
-                            var HsSkillset_Cycle2 = userskillsetlist.Where(x => x.Utilized == false && x.IsHardStateUser && x.IsCycle1 == false).OrderBy(x => x.PriorityOrder).ToList();
 
-                            if (HsSkillset_Cycle2.Count > 0)
-                            {
-                                var second_HsOrder = callByHardstate(userid, resultDTO, connection, iscycle1);
+                            // Get unutilized skill sets for cycle 2, ordered by priority
+                            var uss_cycle2 = userskillsetlist
+                                .Where(x => !x.Utilized && !x.IsCycle1)
+                                .OrderBy(x => x.PriorityOrder)
+                                .ToList();
 
-                                if (string.IsNullOrEmpty(second_HsOrder))
-                                {
-                                    callSPbyWeightage(userid, iscycle1, resultDTO, connection);
-                                }
-                            }
-                            else
-                            {
-                                callSPbyWeightage(userid, iscycle1, resultDTO, connection);
-                            }
-
+                            // Process cycle 2 skill sets
+                            uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
                         }
-
                     }
 
                 }
-
             }
             catch (Exception ex)
             {
@@ -425,7 +351,56 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public dynamic callSPbyWeightage(int userid, bool iscycle1, ResultDTO resultDTO, SqlConnection connection)
+        public string GetOrderByCycle(List<GetOrderCalculation> skillSets, bool iscycle1, int userid, ResultDTO resultDTO, SqlConnection connection)
+        {
+            foreach (var uss in skillSets)
+            {
+                string uporder = string.Empty;
+
+                if (uss.IsHardStateUser)
+                {
+                    // Call method for hard state orders
+                    uporder = callByHardstate(userid, resultDTO, connection, iscycle1, uss.SkillSetId);
+
+                    if (!string.IsNullOrWhiteSpace(uporder))
+                    {
+                        // Order assigned successfully
+                        resultDTO.Data = uporder;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.StatusCode = "200";
+                        resultDTO.Message = "Order assigned successfully";
+                        return uporder;
+                    }
+                    //else
+                    //{
+                    //    // Mark as utilized if no order is assigned
+                    //    uss.HardStateUtilized = true;
+                    //    _oMTDataContext.GetOrderCalculation.Update(uss);
+                    //    _oMTDataContext.SaveChanges();
+                    //}
+                }
+                else
+                {
+                    // Call method for non-hard state orders
+                    uporder = callSPbyWeightage(userid, resultDTO, connection, iscycle1, uss.SkillSetId);
+
+                    if (!string.IsNullOrWhiteSpace(uporder))
+                    {
+                        // Order assigned successfully
+                        resultDTO.Data = uporder;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.StatusCode = "200";
+                        resultDTO.Message = "Order assigned successfully";
+                        return uporder;
+                    }
+                }
+            }
+
+            // No order was assigned, return an empty string
+            return string.Empty;
+
+        }
+        public dynamic callSPbyWeightage(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, int skillsetid)
         {
             string updatedOrder;
             SqlCommand command1 = new()
@@ -436,6 +411,7 @@ namespace OMT.DataService.Service
             };
             command1.Parameters.AddWithValue("@userid", userid);
             command1.Parameters.AddWithValue("@IsCycle1", iscycle1);
+            command1.Parameters.AddWithValue("@SkillSetId", skillsetid);
             //output param to get the record
             SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
             outputParam.Direction = ParameterDirection.Output;
@@ -458,6 +434,53 @@ namespace OMT.DataService.Service
             }
 
             updatedOrder = command1.Parameters["@updatedrecord"].Value.ToString();
+            UpdateUtilized(userid, resultDTO, connection, iscycle1, updatedOrder);
+
+            return updatedOrder;
+        }
+
+        public dynamic callByHardstate(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, int skillsetid)
+        {
+            string uporder;
+
+            using SqlCommand command = new()
+            {
+                Connection = connection,
+                CommandType = CommandType.StoredProcedure,
+                CommandText = "GetOrderByHardstate_Threshold"
+            };
+            command.Parameters.AddWithValue("@userid", userid);
+            command.Parameters.AddWithValue("@IsCycle1", iscycle1);
+            command.Parameters.AddWithValue("@SkillSetId", skillsetid);
+            //output param to get the record
+            SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
+            outputParam.Direction = ParameterDirection.Output;
+            command.Parameters.Add(outputParam);
+
+            SqlParameter returnValue = new()
+            {
+                ParameterName = "@RETURN_VALUE",
+                Direction = ParameterDirection.ReturnValue
+            };
+            command.Parameters.Add(returnValue);
+            command.ExecuteNonQuery();
+
+            int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+            if (returnCode != 1)
+            {
+                throw new InvalidOperationException("Stored Procedure call failed.");
+            }
+
+            uporder = command.Parameters["@updatedrecord"].Value.ToString();
+
+            UpdateUtilized(userid, resultDTO, connection, iscycle1, uporder);
+
+            return uporder;
+        }
+
+        private void UpdateUtilized(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, string updatedOrder)
+        {
             if (string.IsNullOrWhiteSpace(updatedOrder))
             {
                 resultDTO.Data = "";
@@ -501,51 +524,8 @@ namespace OMT.DataService.Service
                 resultDTO.StatusCode = "200";
                 resultDTO.Message = "Order assigned successfully";
             }
-
-            return updatedOrder;
         }
 
-        public dynamic callByHardstate(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1)
-        {
-            string uporder;
-
-            using SqlCommand command = new()
-            {
-                Connection = connection,
-                CommandType = CommandType.StoredProcedure,
-                CommandText = "GetOrderByHardstate_Threshold"
-            };
-            command.Parameters.AddWithValue("@userid", userid);
-            command.Parameters.AddWithValue("@IsCycle1", iscycle1);
-            //output param to get the record
-            SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
-            outputParam.Direction = ParameterDirection.Output;
-            command.Parameters.Add(outputParam);
-
-            SqlParameter returnValue = new()
-            {
-                ParameterName = "@RETURN_VALUE",
-                Direction = ParameterDirection.ReturnValue
-            };
-            command.Parameters.Add(returnValue);
-            command.ExecuteNonQuery();
-
-            int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
-            if (returnCode != 1)
-            {
-                throw new InvalidOperationException("Stored Procedure call failed.");
-            }
-
-            uporder = command.Parameters["@updatedrecord"].Value.ToString();
-
-            resultDTO.Data = uporder;
-            resultDTO.IsSuccess = true;
-            resultDTO.StatusCode = "200";
-            resultDTO.Message = "Order assigned successfully";
-
-            return uporder;
-        }
 
         public ResultDTO GetTrdPendingOrderForUser(int userid)
         {
@@ -719,7 +699,7 @@ namespace OMT.DataService.Service
                             resultDTO.StatusCode = "4200";
                             resultDTO.Message = "Order assigned successfully";
                         }
-                       
+
                     }
                     else
                     {
@@ -778,7 +758,7 @@ namespace OMT.DataService.Service
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "Order assigned successfully";
             }
-            
+
 
             return updatedOrder;
         }

@@ -20,7 +20,7 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPost]
-        [Route("add")]
+        [Route("UpdateGetOrderCalculation")]
 
         public ResultDTO UpdateGetOrderCalculation()
         {
