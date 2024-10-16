@@ -11,6 +11,7 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateUserSkillsetList(UpdateUserSkillsetListDTO updateUserSkillsetListDTO);
         ResultDTO BulkUpdate(BulkUserSkillsetUpdateDTO bulkUserSkillsetUpdateDTO);
         ResultDTO CreateMultipleUserSkillset(MultipleUserSkillSetCreateDTO multipleUserSkillSetCreateDTO);
-        ResultDTO ConsolidatedUserSkillSetlist(int? userid); 
+        ResultDTO ConsolidatedUserSkillSetlist(int? userid);
+        ResultDTO UpdateUserSkillSetThWt(UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO);
     }
 }
