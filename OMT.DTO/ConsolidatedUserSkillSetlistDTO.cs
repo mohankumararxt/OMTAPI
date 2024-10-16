@@ -11,7 +11,6 @@ namespace OMT.DTO
         public string Username { get; set; }
         public int UserId { get; set; }
         public List<UserSkillSetDetailsDTO> FirstCycle { get; set; }
-
         public List<UserSkillSetDetailsDTO> SecondCycle { get; set; }
     }
     public class UserSkillSetDetailsDTO

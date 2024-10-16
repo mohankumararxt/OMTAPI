@@ -382,7 +382,8 @@ namespace OMT.DataService.Service
 
                     if (IsThresholdChanged)
                     {
-                        // call method which will update getordercaltable,create private method here
+                        // call UpdateGocTable to update getordercaltable
+                        UpdateGocTable(resultDTO, skillSetUpdateDTO.SkillSetId, skillSetUpdateDTO.Threshold);
                     }
 
                     if (skillSetUpdateDTO.StateName != null && skillSetUpdateDTO.IsHardState == true)
@@ -446,6 +447,46 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        private void UpdateGocTable(ResultDTO resultDTO,int skillsetid, int threshold)
+        {
+            try 
+            {
+                var UserWithSkillSet = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive).ToList();
+
+                if (UserWithSkillSet.Count > 0)
+                {
+                    foreach (var uss in UserWithSkillSet)
+                    {
+                       // var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uss.SkillSetId && x.IsActive).FirstOrDefault();
+
+                        double totalorders = ((double)uss.Weightage / 100) * threshold;
+
+                        int roundedtotalorders = (int)Math.Round(totalorders);
+
+                        if (uss.OrdersCompleted !=  roundedtotalorders && uss.OrdersCompleted < roundedtotalorders && uss.IsCycle1)
+                        {
+                            uss.Utilized = false;
+                        }
+                        else if (uss.OrdersCompleted >= roundedtotalorders && uss.IsCycle1)
+                        {
+                            uss.Utilized = true;
+                        }
+
+                        uss.TotalOrderstoComplete = roundedtotalorders;
+
+                        _oMTDataContext.GetOrderCalculation.Update(uss);
+                        _oMTDataContext.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
         }
         public ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillSetTimeLineDTO)
         {

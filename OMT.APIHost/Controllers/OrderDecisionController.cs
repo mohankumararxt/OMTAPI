@@ -20,7 +20,7 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPost]
-        [Route("add")]
+        [Route("UpdateGetOrderCalculation")]
 
         public ResultDTO UpdateGetOrderCalculation()
         {
@@ -33,6 +33,15 @@ namespace OMT.APIHost.Controllers
         {
             var userid = UserId;
             return _orderdecisionservice.GetOrderForUser(userid);
+        }
+
+        [HttpGet]
+        [Route("GetTrdPendingOrderForUser")]
+
+        public ResultDTO GetTrdPendingOrderForUser()
+        {
+            var userid = UserId;
+            return _orderdecisionservice.GetTrdPendingOrderForUser(userid);
         }
 
 
