@@ -615,7 +615,7 @@ namespace OMT.DataService.Service
             {
                 var exisitinguss = _oMTDataContext.GetOrderCalculation.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId).ToList();
 
-                //Disable
+                //Disable all uss of the user
                 foreach (var USS_SS in exisitinguss)
                 {
                     USS_SS.IsActive = false;
@@ -623,27 +623,29 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                 }
 
-                var cycle1_ss = updateUserSkillSetThWtDTO.FirstCycle.OrderBy(x =>x.Weightage).ToList();
                 //cycle 1
-                foreach (var USS_ss in cycle1_ss)
+                var cycle1_ss = updateUserSkillSetThWtDTO.FirstCycle.OrderByDescending(x => x.Weightage).ToList();
+                
+                foreach (var USS_ip in cycle1_ss)
                 {
-                    var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ss.SkillSetId).Select(_ => _.Threshold).FirstOrDefault();
+                    var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
 
-                    var Uss_Cycle1 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ss.SkillSetId && uss.IsCycle1);
-                    var PriorityOrder= 0;
+                    var Uss_Cycle1 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ip.SkillSetId && uss.IsCycle1);
+                    var PriorityOrder = 1;
 
                     if (Uss_Cycle1 != null)
                     {
                         //Activate
                         Uss_Cycle1.IsActive = true;
                         Uss_Cycle1.IsCycle1 = true;
-                        Uss_Cycle1.IsHardStateUser = USS_ss.IsHardStateUser;
-                        Uss_Cycle1.Weightage = (int)USS_ss.Weightage;
+                        //Uss_Cycle1.UserSkillSetId = USS_ip.UserSkillSetId;
+                        Uss_Cycle1.IsHardStateUser = USS_ip.IsHardStateUser;
+                        Uss_Cycle1.Weightage = (int)USS_ip.Weightage;
                         Uss_Cycle1.PriorityOrder = PriorityOrder++;
 
-                        if (USS_ss.Weightage != Uss_Cycle1.Weightage)
+                        if (USS_ip.Weightage != Uss_Cycle1.Weightage)
                         {
-                            double totalorders = ((double)USS_ss.Weightage / 100) * threshold;
+                            double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
                             int roundedtotalorders = (int)Math.Round(totalorders);
 
                             if (Uss_Cycle1.OrdersCompleted != roundedtotalorders && Uss_Cycle1.OrdersCompleted < roundedtotalorders && Uss_Cycle1.IsCycle1)
@@ -663,23 +665,25 @@ namespace OMT.DataService.Service
                     }
                     else
                     {
-                        double totalorders = ((double)USS_ss.Weightage / 100) * threshold;
+                        double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
                         int roundedtotalorders = (int)Math.Round(totalorders);
+
+                        var ussid = _oMTDataContext.UserSkillSet.Where(x =>x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
 
                         GetOrderCalculation goc = new GetOrderCalculation()
                         {
                             UserId = updateUserSkillSetThWtDTO.UserId,
-                            Weightage = (int)USS_ss.Weightage,
-                            SkillSetId = USS_ss.SkillSetId,
-                            //UserSkillSetId = 
+                            UserSkillSetId = ussid.UserSkillSetId ,
+                            SkillSetId = USS_ip.SkillSetId,
                             TotalOrderstoComplete = roundedtotalorders,
                             OrdersCompleted = 0,
+                            Weightage = (int)USS_ip.Weightage,
                             PriorityOrder = PriorityOrder++,
-                            IsHardStateUser = USS_ss.IsHardStateUser,
-                            IsCycle1 = true,
-                            IsActive = true,
                             Utilized = false,
+                            IsActive = true,
                             UpdatedDate = DateTime.Now,
+                            IsCycle1 = true,
+                            IsHardStateUser = USS_ip.IsHardStateUser,
                             HardStateUtilized = false,
 
                         };
