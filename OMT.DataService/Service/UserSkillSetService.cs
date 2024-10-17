@@ -455,7 +455,7 @@ namespace OMT.DataService.Service
                 List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
 
                 var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct();
-                  
+
                 var userskillSetIds = (userid == null) ? USSid.ToList() : new List<int> { userid.Value };
 
                 foreach (var id in userskillSetIds)
@@ -471,7 +471,7 @@ namespace OMT.DataService.Service
                                                                 orderby uss.UserId
                                                                 select new UserSkillSetDetailsDTO()
                                                                 {
-                                                                    UserSkillSetId=uss.UserSkillSetId, 
+                                                                    UserSkillSetId = uss.UserSkillSetId,
                                                                     SkillSetId = uss.SkillSetId,
                                                                     SkillSetName = ss.SkillSetName,
                                                                     Weightage = uss.Percentage,
@@ -487,7 +487,7 @@ namespace OMT.DataService.Service
                                                                  orderby uss.UserId
                                                                  select new UserSkillSetDetailsDTO()
                                                                  {
-                                                                     UserSkillSetId=uss.UserSkillSetId, 
+                                                                     UserSkillSetId = uss.UserSkillSetId,
                                                                      SkillSetId = uss.SkillSetId,
                                                                      SkillSetName = ss.SkillSetName,
                                                                      Weightage = 0,
@@ -550,6 +550,9 @@ namespace OMT.DataService.Service
                         //Activate
                         Uss_Cycle1.Percentage = (int)USS_ss.Weightage;
                         Uss_Cycle1.IsActive = true;
+                        Uss_Cycle1.IsHardStateUser = USS_ss.IsHardStateUser;
+                        Uss_Cycle1.HardStateName = USS_ss.HardStateName;
+                        Uss_Cycle1.IsCycle1 = true;
                         _oMTDataContext.UserSkillSet.Update(Uss_Cycle1);
                         _oMTDataContext.SaveChanges();
                     }
@@ -579,6 +582,9 @@ namespace OMT.DataService.Service
                         //Activate
                         Uss_Cycle2.Percentage = (int)Uss_skillset.Weightage;
                         Uss_Cycle2.IsActive = true;
+                        Uss_Cycle2.IsHardStateUser = Uss_skillset.IsHardStateUser;
+                        Uss_Cycle2.HardStateName = Uss_skillset.HardStateName;
+                        Uss_Cycle2.IsCycle1 = false;
                         _oMTDataContext.UserSkillSet.Update(Uss_Cycle2);
                         _oMTDataContext.SaveChanges();
                     }
@@ -599,6 +605,10 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                     }
                 }
+
+                //call EditUssInGOC method to update goc table 
+                EditUssInGOC(updateUserSkillSetThWtDTO, resultDTO);
+
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "UserSkillSet Updated Successfully";
             }
@@ -621,22 +631,26 @@ namespace OMT.DataService.Service
                 foreach (var USS_SS in exisitinguss)
                 {
                     USS_SS.IsActive = false;
+                    USS_SS.PriorityOrder = 0;
                     _oMTDataContext.GetOrderCalculation.Update(USS_SS);
                     _oMTDataContext.SaveChanges();
                 }
 
                 //cycle 1
                 var cycle1_ss = updateUserSkillSetThWtDTO.FirstCycle.OrderByDescending(x => x.Weightage).ToList();
-                
+
+                var PriorityOrder = 1;
+
                 foreach (var USS_ip in cycle1_ss)
                 {
                     var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
 
                     var Uss_Cycle1 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ip.SkillSetId && uss.IsCycle1);
-                    var PriorityOrder = 1;
 
                     if (Uss_Cycle1 != null)
                     {
+                        var ExistingWeightage = Uss_Cycle1.Weightage;
+
                         //Activate
                         Uss_Cycle1.IsActive = true;
                         Uss_Cycle1.IsCycle1 = true;
@@ -645,7 +659,7 @@ namespace OMT.DataService.Service
                         Uss_Cycle1.Weightage = (int)USS_ip.Weightage;
                         Uss_Cycle1.PriorityOrder = PriorityOrder++;
 
-                        if (USS_ip.Weightage != Uss_Cycle1.Weightage)
+                        if (USS_ip.Weightage != ExistingWeightage)
                         {
                             double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
                             int roundedtotalorders = (int)Math.Round(totalorders);
@@ -670,12 +684,12 @@ namespace OMT.DataService.Service
                         double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
                         int roundedtotalorders = (int)Math.Round(totalorders);
 
-                        var ussid = _oMTDataContext.UserSkillSet.Where(x =>x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
+                        var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
 
                         GetOrderCalculation goc = new GetOrderCalculation()
                         {
                             UserId = updateUserSkillSetThWtDTO.UserId,
-                            UserSkillSetId = ussid.UserSkillSetId ,
+                            UserSkillSetId = ussid.UserSkillSetId,
                             SkillSetId = USS_ip.SkillSetId,
                             TotalOrderstoComplete = roundedtotalorders,
                             OrdersCompleted = 0,
@@ -697,9 +711,76 @@ namespace OMT.DataService.Service
                 //cycle 2
                 var cycle2_ss = updateUserSkillSetThWtDTO.SecondCycle.OrderByDescending(x => x.Weightage).ToList();
 
+                var PriorityOrder_2 = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1)
+                                                                         .OrderByDescending(x => x.PriorityOrder).Select(x => x.PriorityOrder).FirstOrDefault();
+
+                PriorityOrder_2++;
+
                 foreach (var USS_ip in cycle2_ss)
                 {
+                    var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
 
+                    var Uss_Cycle2 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ip.SkillSetId && !uss.IsCycle1);
+
+                    if (Uss_Cycle2 != null)
+                    {
+                        var ExistingWeightage = Uss_Cycle2.Weightage;
+
+                        //Activate
+                        Uss_Cycle2.IsActive = true;
+                        Uss_Cycle2.IsCycle1 = false;
+                        Uss_Cycle2.UserSkillSetId = (int)USS_ip.UserSkillSetId;
+                        Uss_Cycle2.IsHardStateUser = USS_ip.IsHardStateUser;
+                        Uss_Cycle2.Weightage = (int)USS_ip.Weightage;
+                        Uss_Cycle2.PriorityOrder = PriorityOrder_2++;
+
+                        if (USS_ip.Weightage != ExistingWeightage)
+                        {
+                            double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                            int roundedtotalorders = (int)Math.Round(totalorders);
+
+                            if (Uss_Cycle2.OrdersCompleted != roundedtotalorders && Uss_Cycle2.OrdersCompleted < roundedtotalorders && !Uss_Cycle2.IsCycle1)
+                            {
+                                Uss_Cycle2.Utilized = false;
+                            }
+                            else if (Uss_Cycle2.OrdersCompleted >= roundedtotalorders && !Uss_Cycle2.IsCycle1)
+                            {
+                                Uss_Cycle2.Utilized = true;
+                            }
+
+                            Uss_Cycle2.TotalOrderstoComplete = roundedtotalorders;
+                        }
+
+                        _oMTDataContext.GetOrderCalculation.Update(Uss_Cycle2);
+                        _oMTDataContext.SaveChanges();
+                    }
+                    else
+                    {
+                        double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                        int roundedtotalorders = (int)Math.Round(totalorders);
+
+                        var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
+
+                        GetOrderCalculation goc = new GetOrderCalculation()
+                        {
+                            UserId = updateUserSkillSetThWtDTO.UserId,
+                            UserSkillSetId = ussid.UserSkillSetId,
+                            SkillSetId = USS_ip.SkillSetId,
+                            TotalOrderstoComplete = roundedtotalorders,
+                            OrdersCompleted = 0,
+                            Weightage = (int)USS_ip.Weightage,
+                            PriorityOrder = PriorityOrder_2++,
+                            Utilized = false,
+                            IsActive = true,
+                            UpdatedDate = DateTime.Now,
+                            IsCycle1 = false,
+                            IsHardStateUser = USS_ip.IsHardStateUser,
+                            HardStateUtilized = false,
+
+                        };
+                        _oMTDataContext.GetOrderCalculation.Add(goc);
+                        _oMTDataContext.SaveChanges();
+                    }
                 }
 
             }
