@@ -640,7 +640,7 @@ namespace OMT.DataService.Service
                         //Activate
                         Uss_Cycle1.IsActive = true;
                         Uss_Cycle1.IsCycle1 = true;
-                        //Uss_Cycle1.UserSkillSetId = USS_ip.UserSkillSetId;
+                        Uss_Cycle1.UserSkillSetId = (int)USS_ip.UserSkillSetId;
                         Uss_Cycle1.IsHardStateUser = USS_ip.IsHardStateUser;
                         Uss_Cycle1.Weightage = (int)USS_ip.Weightage;
                         Uss_Cycle1.PriorityOrder = PriorityOrder++;
@@ -694,6 +694,13 @@ namespace OMT.DataService.Service
                     }
                 }
 
+                //cycle 2
+                var cycle2_ss = updateUserSkillSetThWtDTO.SecondCycle.OrderByDescending(x => x.Weightage).ToList();
+
+                foreach (var USS_ip in cycle2_ss)
+                {
+
+                }
 
             }
             catch (Exception ex)
