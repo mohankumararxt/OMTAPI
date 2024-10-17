@@ -455,7 +455,7 @@ namespace OMT.DataService.Service
                 List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
 
                 var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct();
-
+                  
                 var userskillSetIds = (userid == null) ? USSid.ToList() : new List<int> { userid.Value };
 
                 foreach (var id in userskillSetIds)
@@ -471,6 +471,7 @@ namespace OMT.DataService.Service
                                                                 orderby uss.UserId
                                                                 select new UserSkillSetDetailsDTO()
                                                                 {
+                                                                    UserSkillSetId=uss.UserSkillSetId, 
                                                                     SkillSetId = uss.SkillSetId,
                                                                     SkillSetName = ss.SkillSetName,
                                                                     Weightage = uss.Percentage,
@@ -486,6 +487,7 @@ namespace OMT.DataService.Service
                                                                  orderby uss.UserId
                                                                  select new UserSkillSetDetailsDTO()
                                                                  {
+                                                                     UserSkillSetId=uss.UserSkillSetId, 
                                                                      SkillSetId = uss.SkillSetId,
                                                                      SkillSetName = ss.SkillSetName,
                                                                      Weightage = 0,

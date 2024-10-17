@@ -15,6 +15,7 @@ namespace OMT.DTO
     }
     public class UserSkillSetDetailsDTO
     {
+        public int UserSkillSetId { get; set; } 
         public int SkillSetId { get; set; }
         public string SkillSetName { get; set; }
         public int? Weightage { get; set; }

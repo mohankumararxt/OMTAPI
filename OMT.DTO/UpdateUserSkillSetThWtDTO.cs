@@ -14,6 +14,7 @@ namespace OMT.DTO
     }
     public class UserSkillSetDetailsThWtDTO
     {
+        public int? UserSkillSetId { get; set; } 
         public int SkillSetId { get; set; }
         public int? Weightage { get; set; }
         public bool IsHardStateUser { get; set; }
