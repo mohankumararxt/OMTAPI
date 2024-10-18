@@ -388,6 +388,7 @@ namespace OMT.DataService.Service
                             }
                         }
 
+                        //call store procedure to update goc table to rearange priority of user skillsets- send the skillsetid,sorid to sp
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
