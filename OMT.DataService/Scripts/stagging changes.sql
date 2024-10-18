@@ -2969,6 +2969,12 @@
 --ADD CONSTRAINT FK_ReportColumns_master
 --FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
+--ALTER TABLE ReportColumns
+--ALTER COLUMN ReportColumnName varchar(100) NULL;
+
+--do this before inserting
+--update reportcolumns set isactive = 0 
+
 -- make reportcolumns reportcolumnname as null ,change cretaetrddetails sp 
 --------------------------------------------exception changes-------------------------------
 
