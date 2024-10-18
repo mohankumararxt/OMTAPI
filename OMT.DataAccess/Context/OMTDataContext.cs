@@ -40,6 +40,8 @@ namespace OMT.DataAccess.Context
         public DbSet<DocType> DocType { get; set; }
         public DbSet<TrdMap> TrdMap { get; set; }
         public DbSet<TrackTrdOrders> TrackTrdOrders { get; set; }
+        public DbSet<MasterReportColumns> MasterReportColumns { get; set; }
+        public DbSet<SciException> SciException { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

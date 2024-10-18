@@ -36,7 +36,8 @@ namespace OMT.APIHost.Controllers
         [Route("uploadOrders")]
         public ResultDTO UploadOrders([FromBody] UploadTemplateDTO uploadTemplateDTO)
         {
-            return _templateService.UploadOrders(uploadTemplateDTO);
+            var userid = UserId;
+            return _templateService.UploadOrders(uploadTemplateDTO,userid);
         }
 
         [HttpPost]

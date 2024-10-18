@@ -7,6 +7,7 @@ using OMT.DataService;
 using OMT.DataService.Interface;
 using OMT.DataService.Service;
 using OMT.DataService.Settings;
+using OMT.DataService.Utility;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,8 +61,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                  });
 
 builder.Services.AddControllers();
+//add the required settings from appsettings.json
 builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("AuthSettings"));
 builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
+builder.Services.Configure<EmailDetailsSettings>(builder.Configuration.GetSection("EmailConfig:Common")); //for sending email
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -90,6 +94,8 @@ builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<IInvoiceJointReswareService, InvoiceJointReswareService>();
 builder.Services.AddScoped<IInvoiceJointSciService, InvoiceJointSciService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
+builder.Services.AddScoped<ISciExceptionService, SciExceptionService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

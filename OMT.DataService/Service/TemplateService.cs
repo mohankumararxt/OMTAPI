@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 using OMT.DataService.Settings;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 
 
 
@@ -30,10 +31,14 @@ namespace OMT.DataService.Service
         private readonly OMTDataContext _oMTDataContext;
 
         private readonly IOptions<TrdStatusSettings> _authSettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings)
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        private readonly IConfiguration _configuration;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
+            _emailDetailsSettings = emailDetailsSettings;
+            _configuration = configuration;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -202,11 +207,17 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-        public ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO)
+        public ResultDTO UploadOrders(UploadTemplateDTO uploadTemplateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
+                var records = insertedJsonobject["Records"];
+                var NoOfOrders = records.Count;
+
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
@@ -241,6 +252,142 @@ namespace OMT.DataService.Service
                         {
                             throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                         }
+
+                        // send details about uploaded orders via mail
+
+                        DateTime uploadedate = DateTime.Now;
+                        string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                        string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                        string username = string.Join(' ', firstname, lastname);
+
+
+                        IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                        List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                  .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                  .Select(c => c.Value)
+                                                                  .ToList();
+
+                        var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
+                       // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
+
+
+                        SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                        {
+                            ToEmailIds = toEmailIds1,
+                            Subject = "Orders uploaded",
+                            Body = uploaddetails,
+                        };
+                        try
+                        {
+                            using (HttpClient client = new HttpClient())
+                            {
+                                var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                var webApiUrl = new Uri(url);
+                                var response = client.PostAsync(webApiUrl, content).Result;
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                            throw;
+                        }
+
+
+                        if (skillSet.SystemofRecordId == 2)
+                        {
+                            var message = "";
+                            List<int> ExistingResWareProductDescriptionIds = new List<int>();
+                            List<string> ExistingResWareProductDescriptionName = new List<string>();
+
+                            var distinctResWareProductDescriptions = records.Select(r => (string)r.ResWareProductDescriptions).Distinct().ToList();
+
+                            var NewResWareProductDescriptions = distinctResWareProductDescriptions.Where(rpd => !_oMTDataContext.ResWareProductDescriptions
+                                                                                                  .Any(t1 => t1.ResWareProductDescriptionName == rpd)).ToList();
+
+                            foreach (var kvp in distinctResWareProductDescriptions)
+                            {
+                                var rpdid = _oMTDataContext.ResWareProductDescriptions.Where(x => x.ResWareProductDescriptionName == kvp).FirstOrDefault();
+
+                                if (rpdid != null)
+                                {
+                                    ExistingResWareProductDescriptionIds.Add(rpdid.ResWareProductDescriptionId);
+                                    ExistingResWareProductDescriptionName.Add(rpdid.ResWareProductDescriptionName);
+                                }
+                            }
+
+                            var NotMappedToSkillset = (from erpd in ExistingResWareProductDescriptionName
+                                                       join rpd in _oMTDataContext.ResWareProductDescriptions on erpd equals rpd.ResWareProductDescriptionName
+                                                       where !_oMTDataContext.ResWareProductDescriptionMap
+                                                           .Any(rpdm => rpdm.ResWareProductDescriptionId == rpd.ResWareProductDescriptionId
+                                                                        && rpdm.SkillSetId == skillSet.SkillSetId)
+                                                       select erpd).Distinct().ToList();
+
+                            if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
+                            {
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
+                            {
+                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                            }
+
+                            if (!string.IsNullOrEmpty(message))
+                            {
+                                //  var url = _emailDetailsSettings.Value.SendEmailURL;
+                                IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
+
+                                List<string> toEmailIds = toEmailIdSection.AsEnumerable()
+                                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                          .Select(c => c.Value)
+                                                                          .ToList();
+
+
+                                SendEmailDTO sendEmailDTO = new SendEmailDTO
+                                {
+                                    ToEmailIds = toEmailIds,
+                                    Subject = "Invoice - resware product description",
+                                    Body = message,
+                                };
+                                try
+                                {
+                                    using (HttpClient client = new HttpClient())
+                                    {
+                                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        var webApiUrl = new Uri(url);
+                                        var response = client.PostAsync(webApiUrl, content).Result;
+
+                                        if (response.IsSuccessStatusCode)
+                                        {
+                                            var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    throw;
+                                }
+                            }
+                        }
+
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
@@ -911,8 +1058,11 @@ namespace OMT.DataService.Service
 
                         SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillSet.SystemofRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -937,8 +1087,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1011,7 +1161,11 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == agentCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                    var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == agentCompletedOrdersDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
 
                     string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -1036,8 +1190,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                   $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                   $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                    $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                    $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                    $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1116,8 +1270,11 @@ namespace OMT.DataService.Service
 
                         SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
-
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT t.OrderId,ss.SkillSetName as skillset, ps.Status as Status,t.Remarks,";
 
@@ -1142,8 +1299,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                              $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                               $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                               $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1247,7 +1404,11 @@ namespace OMT.DataService.Service
 
                         SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillSet.SystemofRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -1272,8 +1433,8 @@ namespace OMT.DataService.Service
                         }
 
                         string commonSqlPart =
-                            $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                            $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                            $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                            $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                             $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                             $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                             $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1347,7 +1508,11 @@ namespace OMT.DataService.Service
 
                     SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == teamCompletedOrdersDTO.SkillSetId).FirstOrDefault();
 
-                    var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                    var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == teamCompletedOrdersDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -1371,8 +1536,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -1451,7 +1616,11 @@ namespace OMT.DataService.Service
 
                         SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tablename).FirstOrDefault();
 
-                        var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                        var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillSet.SkillSetId && rc.IsActive && rc.SystemOfRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
@@ -1475,8 +1644,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3278,16 +3447,25 @@ namespace OMT.DataService.Service
 
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
-                var reportcol = _oMTDataContext.ReportColumns.Where(x => x.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId && x.IsActive).Select(_ => _.ReportColumnName).ToList();
+                List<string> reportcol = new List<string> ();
 
                 if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
                 {
                     List<string> skillsetnames = (from ss in _oMTDataContext.SkillSet
                                                   where ss.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                   select ss.SkillSetName).ToList();
+                    
 
                     foreach (string skillsetname in skillsetnames)
                     {
+                        var skillsetdetails = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillsetname && x.IsActive).FirstOrDefault();
+
+                        reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                         where rc.SkillSetId == skillsetdetails.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                         select mrc.ReportColumnName
+                                         ).ToList();
+
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
                         if (reportcol.Count > 0)
@@ -3312,8 +3490,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                               $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                               $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                                $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                                $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                                $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3365,6 +3543,12 @@ namespace OMT.DataService.Service
                     List<int> statusid = skillsetWiseReportsDTO.StatusId.ToList();
                     string csStatusId = string.Join(",", statusid);
 
+                    reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                 join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                 where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 select mrc.ReportColumnName
+                                  ).ToList();
+
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
                     if (reportcol.Count > 0)
@@ -3389,8 +3573,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                  $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                  $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                   $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                   $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                   $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3442,6 +3626,14 @@ namespace OMT.DataService.Service
 
                     foreach (string skillsetname in skillsetnames)
                     {
+                        var skillsetdetails2 = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillsetname && x.IsActive).FirstOrDefault();
+
+                        reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == skillsetdetails2.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
+                                     ).ToList();
+
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
                         if (reportcol.Count > 0)
@@ -3466,8 +3658,8 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                      $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                       $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
@@ -3515,6 +3707,12 @@ namespace OMT.DataService.Service
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
 
+                    reportcol = (from mrc in _oMTDataContext.MasterReportColumns
+                                 join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                 where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 select mrc.ReportColumnName
+                                 ).ToList();
+
                     if (reportcol.Count > 0)
                     {
                         foreach (string col in reportcol)
@@ -3537,8 +3735,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime, " +
-                                           $"CONVERT(VARCHAR(19), t.EndTime, 120) as EndTime, " +
+                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                           $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                            $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                            $"CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':', " +
                                            $"((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
