@@ -55,3 +55,6 @@
 /.gitignore
 /PendingSciOrders
 /.gitignore
+/TrdIntegrator/obj/Release/net472/TrdIntegrator.AssemblyInfo.cs
+/TrdIntegrator/obj/Release/net472/TrdIntegrator.AssemblyInfoInputs.cache
+/TrdIntegrator/obj/Release/net472/TrdIntegrator.exe.withSupportedRuntime.config
