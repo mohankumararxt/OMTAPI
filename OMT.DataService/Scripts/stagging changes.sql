@@ -2975,7 +2975,7 @@
 --do this before inserting
 --update reportcolumns set isactive = 0 
 
--- make reportcolumns reportcolumnname as null ,change cretaetrddetails sp 
+-- make reportcolumns reportcolumnname as null ,change cretaetrddetails and livereport sp 
 --------------------------------------------exception changes-------------------------------
 
 --create table SciException
