@@ -3261,7 +3261,12 @@
 --ADD CONSTRAINT FK_ReportColumns_master
 --FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
+-- for hardstate ------
+--ALTER TABLE SkillSet
+--ADD IsHardState BIT;
 
+--UPDATE SKILLSET SET ISHARDSTATE = 0 
+--UPDATE SKILLSET SET ISHARDSTATE = 1 WHERE SKILLSETID IN (1,3,78)
 --------------------------------------------exception changes-------------------------------
 
 --create table SciException
