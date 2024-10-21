@@ -2976,6 +2976,13 @@
 --update reportcolumns set isactive = 0 
 
 -- make reportcolumns reportcolumnname as null ,change cretaetrddetails and livereport sp 
+
+-- for hardstate ------
+--ALTER TABLE SkillSet
+--ADD IsHardState BIT;
+
+--UPDATE SKILLSET SET ISHARDSTATE = 0 
+--UPDATE SKILLSET SET ISHARDSTATE = 1 WHERE SKILLSETID IN (1,3,78)
 --------------------------------------------exception changes-------------------------------
 
 --create table SciException
