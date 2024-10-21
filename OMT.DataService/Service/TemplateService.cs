@@ -212,11 +212,15 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+
                 var url = _emailDetailsSettings.Value.SendEmailURL;
 
                 var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
                 var records = insertedJsonobject["Records"];
                 var NoOfOrders = records.Count;
+                var HasPriorityOrder = records.Any(record => record.IsPriority == 1); //check for priority orders presence
 
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
@@ -224,9 +228,6 @@ namespace OMT.DataService.Service
                     TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).FirstOrDefault();
                     if (template != null)
                     {
-                        string? connectionstring = _oMTDataContext.Database.GetConnectionString();
-
-                        using SqlConnection connection = new(connectionstring);
                         using SqlCommand command = new()
                         {
                             Connection = connection,
@@ -269,7 +270,7 @@ namespace OMT.DataService.Service
                                                                   .ToList();
 
                         var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
-                       // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
+                        // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
 
 
                         SendEmailDTO sendEmailDTO1 = new SendEmailDTO
@@ -388,7 +389,37 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        //call store procedure to update goc table to rearange priority of user skillsets- send the skillsetid,sorid to sp
+                        //call store procedure to update goc table to rearange priority of user skillsets
+
+                        if (HasPriorityOrder)
+                        {
+                            using SqlCommand priority = new()
+                            {
+                                Connection = connection,
+                                CommandType = CommandType.StoredProcedure,
+                                CommandText = "UpdateGoc_PriorityOrder"
+                            };
+
+                            priority.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
+                            priority.Parameters.AddWithValue("@SystemOfRecordId",skillSet.SystemofRecordId);
+                            priority.Parameters.AddWithValue("@UserId", 0);
+
+                            SqlParameter priority_returnValue = new()
+                            {
+                                ParameterName = "@RETURN_VALUE_Po",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+                            priority.Parameters.Add(priority_returnValue);
+
+                            priority.ExecuteNonQuery();
+
+                            int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
+
+                            if (priority_returnCode != 1)
+                            {
+                                throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                            }
+                        }
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
@@ -3448,23 +3479,23 @@ namespace OMT.DataService.Service
 
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
-                List<string> reportcol = new List<string> ();
+                List<string> reportcol = new List<string>();
 
                 if (skillsetWiseReportsDTO.SkillSetId == null && skillsetWiseReportsDTO.StatusId == null)
                 {
                     List<string> skillsetnames = (from ss in _oMTDataContext.SkillSet
                                                   where ss.SystemofRecordId == skillsetWiseReportsDTO.SystemOfRecordId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                   select ss.SkillSetName).ToList();
-                    
+
 
                     foreach (string skillsetname in skillsetnames)
                     {
                         var skillsetdetails = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillsetname && x.IsActive).FirstOrDefault();
 
                         reportcol = (from mrc in _oMTDataContext.MasterReportColumns
-                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
-                                         where rc.SkillSetId == skillsetdetails.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
-                                         select mrc.ReportColumnName
+                                     join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
+                                     where rc.SkillSetId == skillsetdetails.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                     select mrc.ReportColumnName
                                          ).ToList();
 
                         string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";

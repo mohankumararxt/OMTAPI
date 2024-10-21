@@ -85,6 +85,10 @@ namespace OMT.DataService.Service
 
         public void InsertGetOrderCalculation(ResultDTO resultDTO, int userid)
         {
+            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+            using SqlConnection connection = new(connectionstring);
+            connection.Open();
+
             try
             {
                 List<int> users = new List<int>();
@@ -152,11 +156,107 @@ namespace OMT.DataService.Service
 
                 }
 
+                // update priorityorder based on priority orders in skillset tables
+
+                Update_by_priorityOrder(resultDTO, connection, 0);
+
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "GetOrderCalculation table updated successfully.";
             }
             catch (Exception ex)
             {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+        }
+
+        public void Update_by_priorityOrder(ResultDTO resultDTO, SqlConnection connection, int userid)
+        {
+            try
+            {
+                List<SkillSet> skillsets = new List<SkillSet>();
+
+
+                if (userid == 0)
+                {
+                    skillsets = (from ss in _oMTDataContext.SkillSet
+                                 join goc in _oMTDataContext.GetOrderCalculation on ss.SkillSetId equals goc.SkillSetId
+                                 where ss.IsActive && goc.IsActive && goc.IsCycle1
+                                 select new SkillSet
+                                 {
+                                     SkillSetId = ss.SkillSetId,
+                                     SkillSetName = ss.SkillSetName,
+                                     SystemofRecordId = ss.SystemofRecordId
+                                 }).Distinct().ToList();
+                }
+                else
+                {
+                    skillsets = (from ss in _oMTDataContext.SkillSet
+                                 join goc in _oMTDataContext.GetOrderCalculation on ss.SkillSetId equals goc.SkillSetId
+                                 where ss.IsActive && goc.IsActive && goc.IsCycle1 && goc.UserId == userid
+                                 select new SkillSet
+                                 {
+                                     SkillSetId = ss.SkillSetId,
+                                     SkillSetName = ss.SkillSetName,
+                                     SystemofRecordId = ss.SystemofRecordId
+                                 }).Distinct().ToList();
+                }
+
+                foreach (var ss in skillsets)
+                {
+                    string tableName = ss.SkillSetName;
+
+                    string query = $@"
+                                    SELECT COUNT(*)
+                                    FROM {tableName} 
+                                    WHERE IsPriority = 1 AND UserId IS NULL AND Status IS NULL";
+
+                    using SqlCommand command = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.Text,
+                        CommandText = query
+                    };
+
+                    int count = (int)command.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        using SqlCommand priority = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.StoredProcedure,
+                            CommandText = "UpdateGoc_PriorityOrder"
+                        };
+                        priority.Parameters.AddWithValue("@SkillSetId", ss.SkillSetId);
+                        priority.Parameters.AddWithValue("@SystemOfRecordId", ss.SystemofRecordId);
+                        priority.Parameters.AddWithValue("@UserId", userid);
+
+                        SqlParameter priority_returnValue = new()
+                        {
+                            ParameterName = "@RETURN_VALUE_Po",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+                        priority.Parameters.Add(priority_returnValue);
+
+                        priority.ExecuteNonQuery();
+
+                        int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
+
+                        if (priority_returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                        }
+                    }
+
+                }
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "GetOrderCalculation table updated successfully.";
+            }
+            catch (Exception ex)
+            {
+
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
