@@ -1,9 +1,12 @@
 ﻿using Azure.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Collections.Generic;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace OMT.DataService.Service
 {
@@ -623,6 +626,10 @@ namespace OMT.DataService.Service
 
         private void EditUssInGOC(UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO, ResultDTO resultDTO)
         {
+            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+            using SqlConnection connection = new(connectionstring);
+            connection.Open();
+
             try
             {
                 var exisitinguss = _oMTDataContext.GetOrderCalculation.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId).ToList();
@@ -782,6 +789,10 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                     }
                 }
+
+                // update priorityorder in goc table based on priority orders in skillset tables
+
+                _orderDecisionService.Update_by_priorityOrder(resultDTO, connection, updateUserSkillSetThWtDTO.UserId);
 
             }
             catch (Exception ex)

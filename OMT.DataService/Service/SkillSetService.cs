@@ -453,7 +453,7 @@ namespace OMT.DataService.Service
         {
             try 
             {
-                var UserWithSkillSet = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive).ToList();
+                var UserWithSkillSet = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive && x.IsCycle1).ToList();
 
                 if (UserWithSkillSet.Count > 0)
                 {

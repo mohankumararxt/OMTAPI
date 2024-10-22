@@ -156,9 +156,9 @@ namespace OMT.DataService.Service
 
                 }
 
-                // update priorityorder based on priority orders in skillset tables
+                // update priorityorder in goc table based on priority orders in skillset tables
 
-                Update_by_priorityOrder(resultDTO, connection, 0);
+                Update_by_priorityOrder(resultDTO, connection, userid);
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "GetOrderCalculation table updated successfully.";
@@ -176,7 +176,6 @@ namespace OMT.DataService.Service
             try
             {
                 List<SkillSet> skillsets = new List<SkillSet>();
-
 
                 if (userid == 0)
                 {
