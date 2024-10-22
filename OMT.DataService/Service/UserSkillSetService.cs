@@ -518,7 +518,7 @@ namespace OMT.DataService.Service
 
                     allUserSkillSet.Add(userSkillSetDetailsDTO);
                 }
-                resultDTO.Data = allUserSkillSet;
+                resultDTO.Data = allUserSkillSet.OrderBy(x =>x.Username);
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
             }
