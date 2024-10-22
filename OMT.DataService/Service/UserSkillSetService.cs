@@ -14,12 +14,13 @@ namespace OMT.DataService.Service
     {
 
         private readonly OMTDataContext _oMTDataContext;
-        private readonly IOrderDecisionService _orderDecisionService;
+       
+        private readonly IUpdateGOCService _updateGOCService;
 
-        public UserSkillSetService(OMTDataContext oMTDataContext, IOrderDecisionService orderDecisionService)
+        public UserSkillSetService(OMTDataContext oMTDataContext,  IUpdateGOCService updateGOCService)
         {
             _oMTDataContext = oMTDataContext;
-            _orderDecisionService = orderDecisionService;
+            _updateGOCService = updateGOCService;
         }
 
         public ResultDTO GetUserSkillSetList(int? userid)
@@ -435,7 +436,7 @@ namespace OMT.DataService.Service
 
                     // after adding userskillset for new user, call the insertintogoc table method 
 
-                    _orderDecisionService.InsertGetOrderCalculation(resultDTO, multipleUserSkillSetCreateDTO.UserId);
+                    _updateGOCService.InsertGetOrderCalculation(resultDTO, multipleUserSkillSetCreateDTO.UserId);
 
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "UserSkillset Added Successfully.";
@@ -792,7 +793,7 @@ namespace OMT.DataService.Service
 
                 // update priorityorder in goc table based on priority orders in skillset tables
 
-                _orderDecisionService.Update_by_priorityOrder(resultDTO, connection, updateUserSkillSetThWtDTO.UserId);
+                _updateGOCService.Update_by_priorityOrder(resultDTO, connection, updateUserSkillSetThWtDTO.UserId);
 
             }
             catch (Exception ex)

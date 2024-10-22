@@ -10,9 +10,6 @@ namespace OMT.DataService.Interface
 {
     public interface IOrderDecisionService
     {
-        ResultDTO UpdateGetOrderCalculation();
-        void InsertGetOrderCalculation(ResultDTO resultDTO, int userid);
-        void Update_by_priorityOrder(ResultDTO resultDTO, SqlConnection connection, int userid);
         ResultDTO GetOrderForUser(int userid);
         ResultDTO GetTrdPendingOrderForUser(int userid);
     }
