@@ -97,6 +97,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
 builder.Services.AddScoped<ISciExceptionService, SciExceptionService>();
 builder.Services.AddScoped<IOrderDecisionService, OrderDecisionService>();
+builder.Services.AddScoped<IUpdateGOCService, UpdateGOCService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

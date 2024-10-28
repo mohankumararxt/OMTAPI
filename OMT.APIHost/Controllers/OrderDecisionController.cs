@@ -19,14 +19,6 @@ namespace OMT.APIHost.Controllers
             _orderdecisionservice = orderdecisionservice;
         }
 
-        [HttpPost]
-        [Route("UpdateGetOrderCalculation")]
-
-        public ResultDTO UpdateGetOrderCalculation()
-        {
-            return  _orderdecisionservice.UpdateGetOrderCalculation();
-        }
-
         [HttpGet]
         [Route("GetOrderForUser")]
         public ResultDTO GetOrderForUser()

@@ -60,7 +60,7 @@ namespace TrdIntegrator
                 {
                     connection.Open();
 
-                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 1 as ""IsPriority"",0 as ""IsPending""
+                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"",0 as ""IsPending""
                                  from public.tbl_omt_orders oo
                                  inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
                                  where oo.id > @idno Order By oo.id ASC;";
