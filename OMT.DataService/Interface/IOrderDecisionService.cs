@@ -12,5 +12,6 @@ namespace OMT.DataService.Interface
     {
         ResultDTO GetOrderForUser(int userid);
         ResultDTO GetTrdPendingOrderForUser(int userid);
+        ResultDTO GetOrderInfo(OrderInfoDTO orderInfoDTO);  
     }
 }
