@@ -13,5 +13,6 @@ namespace OMT.DataService.Interface
         void InsertGetOrderCalculation(ResultDTO resultDTO, int userid);
         ResultDTO GetOrderForUser(int userid);
         ResultDTO GetTrdPendingOrderForUser(int userid);
+        ResultDTO GetOrderInfo(OrderInfoDTO orderInfoDTO);  
     }
 }
