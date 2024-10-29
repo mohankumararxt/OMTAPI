@@ -5,6 +5,7 @@ using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OMT.DataService.Service
 {
@@ -193,7 +194,7 @@ namespace OMT.DataService.Service
                                           join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
                                           join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup
                                           from hs in hsGroup.DefaultIfEmpty()  // Left join to include all skill sets
-                                          where sor.IsActive && ss.IsActive 
+                                          where sor.IsActive && ss.IsActive
                                           group new { ss, sor, hs } by new  //Group the data's
                                           {
                                               ss.SkillSetId,
@@ -211,7 +212,10 @@ namespace OMT.DataService.Service
                                               SystemofRecordName = grp.Key.SystemofRecordName,
                                               SystemofRecordId = grp.Key.SystemofRecordId,
                                               IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //Isactive only
-                                              StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  //Isactive only
+                                              StateName = grp
+                                                            .Where(x => x.hs != null && x.hs.IsActive)
+                                                            .Select(x => x.hs.StateName)
+                                                            .ToArray()  //Isactive only
                                           })
                                           .OrderBy(x => x.SkillSetId) //ordering here Bcoz we have used Grouping key
                                           .ThenBy(x => x.SkillSetName)
@@ -227,9 +231,9 @@ namespace OMT.DataService.Service
                     var skillSetGroups = (from ss in _oMTDataContext.SkillSet
                                           join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
                                           join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup
-                                          from hs in hsGroup.DefaultIfEmpty()  
+                                          from hs in hsGroup.DefaultIfEmpty()
                                           where sor.IsActive && ss.IsActive && ss.SkillSetId == skillsetid
-                                          group new { ss, sor, hs } by new  
+                                          group new { ss, sor, hs } by new
                                           {
                                               ss.SkillSetId,
                                               ss.SkillSetName,
@@ -237,7 +241,7 @@ namespace OMT.DataService.Service
                                               sor.SystemofRecordName,
                                               ss.SystemofRecordId,
                                               ss.IsHardState
-                                          } into grp 
+                                          } into grp
                                           select new SkillSetResponseDTO
                                           {
                                               SkillSetId = grp.Key.SkillSetId,
@@ -246,9 +250,12 @@ namespace OMT.DataService.Service
                                               SystemofRecordName = grp.Key.SystemofRecordName,
                                               SystemofRecordId = grp.Key.SystemofRecordId,
                                               IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //Isactive only
-                                              StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  
+                                              StateName = grp
+                                                            .Where(x => x.hs != null && x.hs.IsActive)
+                                                            .Select(x => x.hs.StateName)
+                                                            .ToArray()  //Isactive only
                                           })
-                                         .OrderBy(x => x.SkillSetId) 
+                                         .OrderBy(x => x.SkillSetId)
                                          .ThenBy(x => x.SkillSetName)
                                          .ToList();
 
@@ -294,7 +301,10 @@ namespace OMT.DataService.Service
                                           SystemofRecordName = grp.Key.SystemofRecordName,
                                           SystemofRecordId = grp.Key.SystemofRecordId,
                                           IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //null  Isactive 
-                                          StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))
+                                          StateName = grp
+                                                            .Where(x => x.hs != null && x.hs.IsActive)
+                                                            .Select(x => x.hs.StateName)
+                                                            .ToArray()  //Isactive only
                                       })
                                       .OrderBy(x => x.SystemofRecordId)
                                       .ThenBy(x => x.SkillSetName)
@@ -449,9 +459,9 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        private void UpdateGocTable(ResultDTO resultDTO,int skillsetid, int threshold)
+        private void UpdateGocTable(ResultDTO resultDTO, int skillsetid, int threshold)
         {
-            try 
+            try
             {
                 var UserWithSkillSet = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive && x.IsCycle1).ToList();
 
@@ -459,13 +469,13 @@ namespace OMT.DataService.Service
                 {
                     foreach (var uss in UserWithSkillSet)
                     {
-                       // var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uss.SkillSetId && x.IsActive).FirstOrDefault();
+                        // var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uss.SkillSetId && x.IsActive).FirstOrDefault();
 
                         double totalorders = ((double)uss.Weightage / 100) * threshold;
 
                         int roundedtotalorders = (int)Math.Round(totalorders);
 
-                        if (uss.OrdersCompleted !=  roundedtotalorders && uss.OrdersCompleted < roundedtotalorders && uss.IsCycle1)
+                        if (uss.OrdersCompleted != roundedtotalorders && uss.OrdersCompleted < roundedtotalorders && uss.IsCycle1)
                         {
                             uss.Utilized = false;
                         }
@@ -619,52 +629,52 @@ namespace OMT.DataService.Service
                 var skillSetIds = (skillsetid == null) ? SSid.Select(ss => ss.SkillSetId).ToList()
                                   : new List<int> { skillsetid.Value };
 
-                
-                    foreach (var id in skillSetIds)
+
+                foreach (var id in skillSetIds)
+                {
+                    // HardState 
+                    List<ResponseTimelineDetailDTO> Listof_HS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
+                                                                                 where tl.IsActive && tl.IsHardState && tl.SkillSetId == id
+                                                                                 orderby tl.TimelineId
+                                                                                 select new ResponseTimelineDetailDTO()
+                                                                                 {
+                                                                                     HardStateName = tl.Hardstatename,
+                                                                                     ExceedTime = tl.ExceedTime,
+                                                                                     IsHardstate = tl.IsHardState
+                                                                                 }).ToList();
+
+                    // NormalState 
+                    List<ResponseTimelineDetailDTO> Listof_NS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
+                                                                                 where tl.IsActive && !tl.IsHardState && tl.SkillSetId == id
+                                                                                 orderby tl.TimelineId
+                                                                                 select new ResponseTimelineDetailDTO()
+                                                                                 {
+                                                                                     HardStateName = tl.Hardstatename,
+                                                                                     ExceedTime = tl.ExceedTime,
+                                                                                     IsHardstate = tl.IsHardState
+                                                                                 }).ToList();
+
+                    if (Listof_HS_TimeLineDetails.Count == 0 && Listof_NS_TimeLineDetails.Count == 0) //new
                     {
-                        // HardState 
-                        List<ResponseTimelineDetailDTO> Listof_HS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                     where tl.IsActive && tl.IsHardState && tl.SkillSetId == id
-                                                                                     orderby tl.TimelineId
-                                                                                     select new ResponseTimelineDetailDTO()
-                                                                                     {
-                                                                                         HardStateName = tl.Hardstatename,
-                                                                                         ExceedTime = tl.ExceedTime,
-                                                                                         IsHardstate = tl.IsHardState
-                                                                                     }).ToList();
-
-                        // NormalState 
-                        List<ResponseTimelineDetailDTO> Listof_NS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                     where tl.IsActive && !tl.IsHardState && tl.SkillSetId == id
-                                                                                     orderby tl.TimelineId
-                                                                                     select new ResponseTimelineDetailDTO()
-                                                                                     {
-                                                                                         HardStateName = tl.Hardstatename,
-                                                                                         ExceedTime = tl.ExceedTime,
-                                                                                         IsHardstate = tl.IsHardState
-                                                                                     }).ToList();
-
-                        if(Listof_HS_TimeLineDetails.Count==0 && Listof_NS_TimeLineDetails.Count==0) //new
-                        {
-                            resultDTO.IsSuccess = false;
-                            resultDTO.Message = "No timeline details found for this Skillsetid";
-                            return resultDTO;
-                        }
-
-                        //combine timeline details 
-                        SkillSetTimelineResponseDTO skillSetTimelineResponseDTO = new SkillSetTimelineResponseDTO()
-                        {
-                            SkillSetId = id,
-                            HardStateTimelineDetails = Listof_HS_TimeLineDetails,
-                            NormalStateTimelineDetails = Listof_NS_TimeLineDetails
-                        };
-
-                        allSkillSetTimelines.Add(skillSetTimelineResponseDTO); // Add list of all skillset timelines
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "No timeline details found for this Skillsetid";
+                        return resultDTO;
                     }
 
-                    resultDTO.Data = allSkillSetTimelines;
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "List of Timeline Details Successfully Fetched";
+                    //combine timeline details 
+                    SkillSetTimelineResponseDTO skillSetTimelineResponseDTO = new SkillSetTimelineResponseDTO()
+                    {
+                        SkillSetId = id,
+                        HardStateTimelineDetails = Listof_HS_TimeLineDetails,
+                        NormalStateTimelineDetails = Listof_NS_TimeLineDetails
+                    };
+
+                    allSkillSetTimelines.Add(skillSetTimelineResponseDTO); // Add list of all skillset timelines
+                }
+
+                resultDTO.Data = allSkillSetTimelines;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Timeline Details Successfully Fetched";
 
             }
             catch (Exception ex)
