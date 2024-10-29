@@ -614,7 +614,7 @@ namespace OMT.DataService.Service
                             Uss_Cycle1.Percentage = (int)USS_ss.Weightage;
                             Uss_Cycle1.IsActive = true;
                             Uss_Cycle1.IsHardStateUser = USS_ss.IsHardStateUser;
-                            Uss_Cycle1.HardStateName = USS_ss.HardStateName;
+                            Uss_Cycle1.HardStateName = USS_ss.HardStateName != null && USS_ss.HardStateName.Any()? string.Join(",", USS_ss.HardStateName.Select(item => item.Trim())): "";
                             Uss_Cycle1.IsCycle1 = true;
                             _oMTDataContext.UserSkillSet.Update(Uss_Cycle1);
                             _oMTDataContext.SaveChanges();
@@ -646,7 +646,7 @@ namespace OMT.DataService.Service
                             Uss_Cycle2.Percentage = (int)Uss_skillset.Weightage;
                             Uss_Cycle2.IsActive = true;
                             Uss_Cycle2.IsHardStateUser = Uss_skillset.IsHardStateUser;
-                            Uss_Cycle2.HardStateName = Uss_skillset.HardStateName;
+                            Uss_Cycle2.HardStateName = Uss_skillset.HardStateName != null && Uss_skillset.HardStateName.Any() ? string.Join(",", Uss_skillset.HardStateName.Select(item => item.Trim())) : "";
                             Uss_Cycle2.IsCycle1 = false;
                             _oMTDataContext.UserSkillSet.Update(Uss_Cycle2);
                             _oMTDataContext.SaveChanges();
