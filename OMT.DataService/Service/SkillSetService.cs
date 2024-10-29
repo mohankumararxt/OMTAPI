@@ -211,7 +211,7 @@ namespace OMT.DataService.Service
                                               SystemofRecordName = grp.Key.SystemofRecordName,
                                               SystemofRecordId = grp.Key.SystemofRecordId,
                                               IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //Isactive only
-                                              StateName = string.Join(", ", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  //Isactive only
+                                              StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  //Isactive only
                                           })
                                           .OrderBy(x => x.SkillSetId) //ordering here Bcoz we have used Grouping key
                                           .ThenBy(x => x.SkillSetName)
@@ -246,7 +246,7 @@ namespace OMT.DataService.Service
                                               SystemofRecordName = grp.Key.SystemofRecordName,
                                               SystemofRecordId = grp.Key.SystemofRecordId,
                                               IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //Isactive only
-                                              StateName = string.Join(", ", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  
+                                              StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))  
                                           })
                                          .OrderBy(x => x.SkillSetId) 
                                          .ThenBy(x => x.SkillSetName)
@@ -294,7 +294,7 @@ namespace OMT.DataService.Service
                                           SystemofRecordName = grp.Key.SystemofRecordName,
                                           SystemofRecordId = grp.Key.SystemofRecordId,
                                           IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //null  Isactive 
-                                          StateName = string.Join(", ", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))
+                                          StateName = string.Join(",", grp.Where(x => x.hs != null && x.hs.IsActive).Select(x => x.hs.StateName))
                                       })
                                       .OrderBy(x => x.SystemofRecordId)
                                       .ThenBy(x => x.SkillSetName)
