@@ -3261,6 +3261,17 @@
 --ADD CONSTRAINT FK_ReportColumns_master
 --FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
 
+--ALTER TABLE ReportColumns
+--ALTER COLUMN ReportColumnName varchar(100) NULL;
+
+--do this before inserting
+--update reportcolumns set isactive = 0 
+-- for hardstate ------
+--ALTER TABLE SkillSet
+--ADD IsHardState BIT;
+
+-- make reportcolumns reportcolumnname as null ,change cretaetrddetails and livereport sp 
+
 -- for hardstate ------
 --ALTER TABLE SkillSet
 --ADD IsHardState BIT;
@@ -3284,6 +3295,7 @@
 --Date_Created  DATETIME null,
 --)
 
+--insert into ProcessStatus values (3,'Complex',1)
 
 ----------------------------------------------------------------threshold changes-------------------------------------------
 
@@ -3299,8 +3311,31 @@
 --PriorityOrder INT null,
 --Utilized  BIT null,
 --IsActive  BIT null,
---UpdatedDate  DATETIME null,
+--UpdatedDate  DATETIME null,	
 --IsCycle1 BIT null,
 --IsHardStateUser BIT null,
 --HardStateUtilized BIT null
 --)
+
+--create table Utilization
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId INT null,
+--UserSkillSetId INT null,
+--SkillSetId INT null,
+--TotalOrderstoComplete  INT null,
+--OrdersCompleted INT null,
+--Weightage INT  null,
+--PriorityOrder INT null,
+--Utilized  BIT null,
+--IsActive  BIT null,
+--UpdatedDate  DATETIME null,	
+--IsCycle1 BIT null,
+--IsHardStateUser BIT null,
+--HardStateUtilized BIT null
+--)
+
+--ALTER TABLE UserSkillSet
+--ADD IsCycle1 BIT;
+
+--add getorderbyweightage_threshold,getorderbyhardstate_threshold,gettrdpendingorder_threshold,updategoc_priorityorder sp

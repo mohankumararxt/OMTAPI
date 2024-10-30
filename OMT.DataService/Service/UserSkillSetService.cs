@@ -1,9 +1,13 @@
 ﻿using Azure.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Collections.Generic;
+using System.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace OMT.DataService.Service
 {
@@ -11,9 +15,13 @@ namespace OMT.DataService.Service
     {
 
         private readonly OMTDataContext _oMTDataContext;
-        public UserSkillSetService(OMTDataContext oMTDataContext)
+
+        private readonly IUpdateGOCService _updateGOCService;
+
+        public UserSkillSetService(OMTDataContext oMTDataContext, IUpdateGOCService updateGOCService)
         {
             _oMTDataContext = oMTDataContext;
+            _updateGOCService = updateGOCService;
         }
 
         public ResultDTO GetUserSkillSetList(int? userid)
@@ -426,6 +434,11 @@ namespace OMT.DataService.Service
                         _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                         _oMTDataContext.SaveChanges();
                     }
+
+                    // after adding userskillset for new user, call the insertintogoc table method 
+
+                    _updateGOCService.InsertGetOrderCalculation(resultDTO, multipleUserSkillSetCreateDTO.UserId);
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "UserSkillset Added Successfully.";
                 }
@@ -437,6 +450,414 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
+
+                var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct();
+
+                var userskillSetIds = (userid == null) ? USSid.ToList() : new List<int> { userid.Value };
+
+                foreach (var id in userskillSetIds)
+                {
+                    var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
+                    var userName = userProfile != null ? userProfile.FirstName + ' ' + userProfile.LastName : "User Not Found";
+
+                    //Cycle1
+                    List<UserSkillSetDetailsDTO> FirstCycle1 = (from uss in _oMTDataContext.UserSkillSet
+                                                                join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                where uss.IsActive && uss.UserId == id && uss.IsCycle1
+                                                                orderby uss.UserId
+                                                                select new UserSkillSetDetailsDTO()
+                                                                {
+                                                                    UserSkillSetId = uss.UserSkillSetId,
+                                                                    SkillSetId = uss.SkillSetId,
+                                                                    SkillSetName = ss.SkillSetName,
+                                                                    Weightage = uss.Percentage,
+                                                                    IsHardStateUser = uss.IsHardStateUser,
+                                                                    HardStateName = uss.HardStateName,
+                                                                }).ToList();
+
+                    //Cycle2
+                    List<UserSkillSetDetailsDTO> SecondCycle2 = (from uss in _oMTDataContext.UserSkillSet
+                                                                 join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                 join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                 where uss.IsActive && uss.UserId == id && !uss.IsCycle1
+                                                                 orderby uss.UserId
+                                                                 select new UserSkillSetDetailsDTO()
+                                                                 {
+                                                                     UserSkillSetId = uss.UserSkillSetId,
+                                                                     SkillSetId = uss.SkillSetId,
+                                                                     SkillSetName = ss.SkillSetName,
+                                                                     Weightage = 0,
+                                                                     IsHardStateUser = uss.IsHardStateUser,
+                                                                     HardStateName = uss.HardStateName,
+                                                                 }).ToList();
+
+
+
+                    if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0)
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "No Consolidated Userskillset details found for this Userid";
+                        return resultDTO;
+                    }
+
+                    //combine details 
+                    ConsolidatedUserSkillSetlistDTO userSkillSetDetailsDTO = new ConsolidatedUserSkillSetlistDTO()
+                    {
+                        Username = userName,
+                        UserId = id,
+                        FirstCycle = FirstCycle1,
+                        SecondCycle = SecondCycle2
+                    };
+
+                    allUserSkillSet.Add(userSkillSetDetailsDTO);
+                }
+                resultDTO.Data = allUserSkillSet.OrderBy(x => x.Username);
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+        public ResultDTO UpdateUserSkillSetThWt(UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO)
+        {
+            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+            using SqlConnection connection = new(connectionstring);
+            connection.Open();
+
+            ResultDTO resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "201" };
+            try
+            {
+                // check if any to obe deleted skillset has any orders in que for the user, if yes dont allow to delete
+                var ExistingActiveUSS_Cycle1 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && uss.IsCycle1).Select(x => x.SkillSetId).ToList();
+                var ExistingActiveUSS_Cycle2 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && !uss.IsCycle1).Select(x => x.SkillSetId).ToList();
+
+                var incomingUss_Cycle1 = updateUserSkillSetThWtDTO.FirstCycle.Select(x => x.SkillSetId).ToList();
+                var incomingUss_Cycle2 = updateUserSkillSetThWtDTO.SecondCycle.Select(x => x.SkillSetId).ToList();
+
+                var Delete_Cycle1 = ExistingActiveUSS_Cycle1.Except(incomingUss_Cycle1).ToList();
+                var Delete_Cycle2 = ExistingActiveUSS_Cycle2.Except(incomingUss_Cycle2).ToList();
+
+                var Delete_Cycle = Delete_Cycle1.Concat(Delete_Cycle2).ToList();
+
+                List<string> Dont_Delete_Skillset = new List<string>(); // will have the skillsets in which the user has an order to be processed
+
+                // get skillsets which cant be deleted 
+                foreach (var dc1 in Delete_Cycle)
+                {
+                    var skillsetinfo1 = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == dc1).FirstOrDefault();
+
+                    string AssignedOrder = $"SELECT * FROM {skillsetinfo1.SkillSetName} WHERE UserId = @userid AND Status IS NULL AND CompletionDate IS NULL";
+
+                    using SqlCommand AssignedOrder_command = new SqlCommand(AssignedOrder, connection);
+
+                    AssignedOrder_command.Parameters.AddWithValue("@userid", updateUserSkillSetThWtDTO.UserId); 
+
+                    using SqlDataAdapter AssignedOrderDA = new SqlDataAdapter(AssignedOrder_command);
+                    DataSet AssignedOrderDS = new DataSet();
+
+                    AssignedOrderDA.Fill(AssignedOrderDS);
+
+                    DataTable AssignedOrderDT = AssignedOrderDS.Tables[0];
+
+                    var query_AssignedOrder = AssignedOrderDT.AsEnumerable()
+                                     .Select(row => AssignedOrderDT.Columns.Cast<DataColumn>().ToDictionary(
+                                         column => column.ColumnName,
+                                         column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                    if (query_AssignedOrder.Count > 0)
+                    {
+                        Dont_Delete_Skillset.Add(skillsetinfo1.SkillSetName);
+                    }
+
+                }
+
+                if (Dont_Delete_Skillset.Count > 0)
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "The following skillsets cannot be deleted as the user is currently processing an order: " + string.Join(", ", Dont_Delete_Skillset) + ".";
+
+                }
+
+                else
+                {
+                    var exisitinguss = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId).ToList();
+
+                    //Disable
+                    foreach (var USS_SS in exisitinguss)
+                    {
+                        USS_SS.IsActive = false;
+                        _oMTDataContext.UserSkillSet.Update(USS_SS);
+                        _oMTDataContext.SaveChanges();
+                    }
+                    //cycle 1
+                    foreach (var USS_ss in updateUserSkillSetThWtDTO.FirstCycle)
+                    {
+                        var Uss_Cycle1 = exisitinguss.FirstOrDefault(uss => uss.IsCycle1 && uss.SkillSetId == USS_ss.SkillSetId);
+                        if (Uss_Cycle1 != null)
+                        {
+                            //Activate
+                            Uss_Cycle1.Percentage = (int)USS_ss.Weightage;
+                            Uss_Cycle1.IsActive = true;
+                            Uss_Cycle1.IsHardStateUser = USS_ss.IsHardStateUser;
+                            Uss_Cycle1.HardStateName = USS_ss.HardStateName != null && USS_ss.HardStateName.Any()? string.Join(",", USS_ss.HardStateName.Select(item => item.Trim())): "";
+                            Uss_Cycle1.IsCycle1 = true;
+                            _oMTDataContext.UserSkillSet.Update(Uss_Cycle1);
+                            _oMTDataContext.SaveChanges();
+                        }
+                        else
+                        {
+                            UserSkillSet userSkillSet = new UserSkillSet()
+                            {
+                                UserId = updateUserSkillSetThWtDTO.UserId,
+                                Percentage = (int)USS_ss.Weightage,
+                                SkillSetId = USS_ss.SkillSetId,
+                                HardStateName = USS_ss.HardStateName != null && USS_ss.HardStateName.Any() ? string.Join(",", USS_ss.HardStateName) : "",
+                                IsHardStateUser = USS_ss.IsHardStateUser,
+                                IsCycle1 = true,
+                                IsActive = true,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(userSkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+                    }
+                    //cycle 2
+                    foreach (var Uss_skillset in updateUserSkillSetThWtDTO.SecondCycle)
+                    {
+                        var Uss_Cycle2 = exisitinguss.FirstOrDefault(uss => uss.IsCycle1 == false && uss.SkillSetId == Uss_skillset.SkillSetId);
+                        if (Uss_Cycle2 != null)
+                        {
+                            //Activate
+                            Uss_Cycle2.Percentage = (int)Uss_skillset.Weightage;
+                            Uss_Cycle2.IsActive = true;
+                            Uss_Cycle2.IsHardStateUser = Uss_skillset.IsHardStateUser;
+                            Uss_Cycle2.HardStateName = Uss_skillset.HardStateName != null && Uss_skillset.HardStateName.Any() ? string.Join(",", Uss_skillset.HardStateName.Select(item => item.Trim())) : "";
+                            Uss_Cycle2.IsCycle1 = false;
+                            _oMTDataContext.UserSkillSet.Update(Uss_Cycle2);
+                            _oMTDataContext.SaveChanges();
+                        }
+                        else
+                        {
+                            UserSkillSet userSkillSet = new UserSkillSet()
+                            {
+                                UserId = updateUserSkillSetThWtDTO.UserId,
+                                Percentage = (int)Uss_skillset.Weightage,
+                                SkillSetId = Uss_skillset.SkillSetId,
+                                HardStateName = Uss_skillset.HardStateName != null && Uss_skillset.HardStateName.Any() ? string.Join(",", Uss_skillset.HardStateName) : "",
+                                IsHardStateUser = Uss_skillset.IsHardStateUser,
+                                IsCycle1 = false,
+                                IsActive = true,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(userSkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+                    }
+
+                    //call EditUssInGOC method to update goc table 
+                    EditUssInGOC(updateUserSkillSetThWtDTO, resultDTO, connection);
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "UserSkillSet Updated Successfully";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        private void EditUssInGOC(UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO, ResultDTO resultDTO, SqlConnection connection)
+        {
+            try
+            {
+                var exisitinguss = _oMTDataContext.GetOrderCalculation.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId).ToList();
+
+                //Disable all uss of the user
+                foreach (var USS_SS in exisitinguss)
+                {
+                    USS_SS.IsActive = false;
+                    USS_SS.PriorityOrder = 0;
+                    _oMTDataContext.GetOrderCalculation.Update(USS_SS);
+                    _oMTDataContext.SaveChanges();
+                }
+
+                //cycle 1
+                var cycle1_ss = updateUserSkillSetThWtDTO.FirstCycle.OrderByDescending(x => x.Weightage).ToList();
+
+                var PriorityOrder = 1;
+
+                foreach (var USS_ip in cycle1_ss)
+                {
+                    var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
+
+                    var Uss_Cycle1 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ip.SkillSetId && uss.IsCycle1);
+
+                    if (Uss_Cycle1 != null)
+                    {
+                        var ExistingWeightage = Uss_Cycle1.Weightage;
+
+                        //Activate
+                        Uss_Cycle1.IsActive = true;
+                        Uss_Cycle1.IsCycle1 = true;
+                        Uss_Cycle1.UserSkillSetId = (int)USS_ip.UserSkillSetId;
+                        Uss_Cycle1.IsHardStateUser = USS_ip.IsHardStateUser;
+                        Uss_Cycle1.Weightage = (int)USS_ip.Weightage;
+                        Uss_Cycle1.PriorityOrder = PriorityOrder++;
+
+                        if (USS_ip.Weightage != ExistingWeightage)
+                        {
+                            double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                            int roundedtotalorders = (int)Math.Round(totalorders);
+
+                            if (Uss_Cycle1.OrdersCompleted != roundedtotalorders && Uss_Cycle1.OrdersCompleted < roundedtotalorders && Uss_Cycle1.IsCycle1)
+                            {
+                                Uss_Cycle1.Utilized = false;
+                            }
+                            else if (Uss_Cycle1.OrdersCompleted >= roundedtotalorders && Uss_Cycle1.IsCycle1)
+                            {
+                                Uss_Cycle1.Utilized = true;
+                            }
+
+                            Uss_Cycle1.TotalOrderstoComplete = roundedtotalorders;
+                        }
+
+                        _oMTDataContext.GetOrderCalculation.Update(Uss_Cycle1);
+                        _oMTDataContext.SaveChanges();
+                    }
+                    else
+                    {
+                        double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                        int roundedtotalorders = (int)Math.Round(totalorders);
+
+                        var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
+
+                        GetOrderCalculation goc = new GetOrderCalculation()
+                        {
+                            UserId = updateUserSkillSetThWtDTO.UserId,
+                            UserSkillSetId = ussid.UserSkillSetId,
+                            SkillSetId = USS_ip.SkillSetId,
+                            TotalOrderstoComplete = roundedtotalorders,
+                            OrdersCompleted = 0,
+                            Weightage = (int)USS_ip.Weightage,
+                            PriorityOrder = PriorityOrder++,
+                            Utilized = false,
+                            IsActive = true,
+                            UpdatedDate = DateTime.Now,
+                            IsCycle1 = true,
+                            IsHardStateUser = USS_ip.IsHardStateUser,
+                            HardStateUtilized = false,
+
+                        };
+                        _oMTDataContext.GetOrderCalculation.Add(goc);
+                        _oMTDataContext.SaveChanges();
+                    }
+                }
+
+                //cycle 2
+                var cycle2_ss = updateUserSkillSetThWtDTO.SecondCycle.OrderByDescending(x => x.Weightage).ToList();
+
+                var PriorityOrder_2 = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1)
+                                                                         .OrderByDescending(x => x.PriorityOrder).Select(x => x.PriorityOrder).FirstOrDefault();
+
+                PriorityOrder_2++;
+
+                foreach (var USS_ip in cycle2_ss)
+                {
+                    var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
+
+                    var Uss_Cycle2 = exisitinguss.FirstOrDefault(uss => uss.SkillSetId == USS_ip.SkillSetId && !uss.IsCycle1);
+
+                    if (Uss_Cycle2 != null)
+                    {
+                        var ExistingWeightage = Uss_Cycle2.Weightage;
+
+                        //Activate
+                        Uss_Cycle2.IsActive = true;
+                        Uss_Cycle2.IsCycle1 = false;
+                        Uss_Cycle2.UserSkillSetId = (int)USS_ip.UserSkillSetId;
+                        Uss_Cycle2.IsHardStateUser = USS_ip.IsHardStateUser;
+                        Uss_Cycle2.Weightage = (int)USS_ip.Weightage;
+                        Uss_Cycle2.PriorityOrder = PriorityOrder_2++;
+
+                        if (USS_ip.Weightage != ExistingWeightage)
+                        {
+                            double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                            int roundedtotalorders = (int)Math.Round(totalorders);
+
+                            if (Uss_Cycle2.OrdersCompleted != roundedtotalorders && Uss_Cycle2.OrdersCompleted < roundedtotalorders && !Uss_Cycle2.IsCycle1)
+                            {
+                                Uss_Cycle2.Utilized = false;
+                            }
+                            else if (Uss_Cycle2.OrdersCompleted >= roundedtotalorders && !Uss_Cycle2.IsCycle1)
+                            {
+                                Uss_Cycle2.Utilized = true;
+                            }
+
+                            Uss_Cycle2.TotalOrderstoComplete = roundedtotalorders;
+                        }
+
+                        _oMTDataContext.GetOrderCalculation.Update(Uss_Cycle2);
+                        _oMTDataContext.SaveChanges();
+                    }
+                    else
+                    {
+                        double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
+                        int roundedtotalorders = (int)Math.Round(totalorders);
+
+                        var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId).FirstOrDefault();
+
+                        GetOrderCalculation goc = new GetOrderCalculation()
+                        {
+                            UserId = updateUserSkillSetThWtDTO.UserId,
+                            UserSkillSetId = ussid.UserSkillSetId,
+                            SkillSetId = USS_ip.SkillSetId,
+                            TotalOrderstoComplete = roundedtotalorders,
+                            OrdersCompleted = 0,
+                            Weightage = (int)USS_ip.Weightage,
+                            PriorityOrder = PriorityOrder_2++,
+                            Utilized = false,
+                            IsActive = true,
+                            UpdatedDate = DateTime.Now,
+                            IsCycle1 = false,
+                            IsHardStateUser = USS_ip.IsHardStateUser,
+                            HardStateUtilized = false,
+
+                        };
+                        _oMTDataContext.GetOrderCalculation.Add(goc);
+                        _oMTDataContext.SaveChanges();
+                    }
+                }
+
+                // update priorityorder in goc table based on priority orders in skillset tables
+
+                _updateGOCService.Update_by_priorityOrder(resultDTO, connection, updateUserSkillSetThWtDTO.UserId);
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
         }
     }
 }

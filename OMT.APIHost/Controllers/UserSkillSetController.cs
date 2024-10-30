@@ -101,5 +101,20 @@ namespace OMT.APIHost.Controllers
             ResultDTO resultDTO = _userSkillSetService.CreateMultipleUserSkillset(multipleUserSkillSetCreateDTO);
             return resultDTO;
         }
+
+        [HttpGet]
+        [Route("userskillsetlist/{userid:int?}")]
+        public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
+        {
+            return _userSkillSetService.ConsolidatedUserSkillSetlist(userid);
+        }
+
+        [HttpPut]
+        [Route("UpdateUserskillset")]
+        public ResultDTO UpdateUserSkillSetThWt([FromBody] UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO)
+        {
+            ResultDTO result = _userSkillSetService.UpdateUserSkillSetThWt(updateUserSkillSetThWtDTO);
+            return result;
+        }
     }
 }
