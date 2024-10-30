@@ -176,7 +176,7 @@ namespace OMT.DataService.Utility
                 {
                     skillsets = (from ss in _oMTDataContext.SkillSet
                                  join goc in _oMTDataContext.GetOrderCalculation on ss.SkillSetId equals goc.SkillSetId
-                                 where ss.IsActive && goc.IsActive && goc.IsCycle1
+                                 where ss.IsActive && goc.IsActive && goc.IsCycle1 && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                  select new SkillSet
                                  {
                                      SkillSetId = ss.SkillSetId,
@@ -188,7 +188,7 @@ namespace OMT.DataService.Utility
                 {
                     skillsets = (from ss in _oMTDataContext.SkillSet
                                  join goc in _oMTDataContext.GetOrderCalculation on ss.SkillSetId equals goc.SkillSetId
-                                 where ss.IsActive && goc.IsActive && goc.IsCycle1 && goc.UserId == userid
+                                 where ss.IsActive && goc.IsActive && goc.IsCycle1 && goc.UserId == userid && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                  select new SkillSet
                                  {
                                      SkillSetId = ss.SkillSetId,
