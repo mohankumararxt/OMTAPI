@@ -3040,4 +3040,7 @@
 --HardStateUtilized BIT null
 --)
 
+--ALTER TABLE UserSkillSet
+--ADD IsCycle1 BIT;
 
+--add getorderbyweightage_threshold,getorderbyhardstate_threshold,gettrdpendingorder_threshold,updategoc_priorityorder sp
