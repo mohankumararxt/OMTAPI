@@ -3339,3 +3339,4 @@
 --ADD IsCycle1 BIT;
 
 --add getorderbyweightage_threshold,getorderbyhardstate_threshold,gettrdpendingorder_threshold,updategoc_priorityorder sp
+--insert into processstatus values(3,'Complex',1)
