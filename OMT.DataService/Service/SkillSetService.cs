@@ -396,7 +396,7 @@ namespace OMT.DataService.Service
                         UpdateGocTable(resultDTO, skillSetUpdateDTO.SkillSetId, skillSetUpdateDTO.Threshold);
                     }
 
-                    if (skillSetUpdateDTO.StateName != null && skillSetUpdateDTO.IsHardState == true)
+                    if (skillSetUpdateDTO.IsHardState == true && (skillSetUpdateDTO.StateName != null || skillSetUpdateDTO.StateName.Any()) )
                     {
                         // Fetch all hard states (active or inactive) 
                         var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId).ToList();
@@ -434,7 +434,7 @@ namespace OMT.DataService.Service
                             }
                         }
                     }
-                    else if (skillSetUpdateDTO.IsHardState == false && skillSetUpdateDTO.StateName == null)
+                    else if (skillSetUpdateDTO.IsHardState == false && (skillSetUpdateDTO.StateName == null || !skillSetUpdateDTO.StateName.Any()))
                     {
                         // Disable all hard states if IsHardState is false
                         var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId && h.IsActive).ToList();
