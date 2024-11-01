@@ -2187,7 +2187,7 @@ namespace OMT.DataService.Service
                                             INNER JOIN ProcessStatus ps on ps.Id = t.Status
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
-                                            WHERE t.Status = 15";
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2268,7 +2268,7 @@ namespace OMT.DataService.Service
                                             INNER JOIN ProcessStatus ps on ps.Id = t.Status
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
-                                            WHERE t.Status = 15";
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
