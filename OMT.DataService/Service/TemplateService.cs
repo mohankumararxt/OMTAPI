@@ -1966,7 +1966,14 @@ namespace OMT.DataService.Service
                         }
                         else if (tablename.SystemofRecordId == 3)
                         {
-                            sqlquery = null;
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,t.DocType,CONVERT(VARCHAR(10), t.DocImageDate, 120) as DocImageDate,t.HaStatus,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 15";
                         }
 
                         if (sqlquery != null)
@@ -2039,12 +2046,18 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 3)
                         {
-                            sqlquery = null;
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,t.DocType,CONVERT(VARCHAR(10), t.DocImageDate, 120) as DocImageDate,t.HaStatus,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 15";
                         }
 
                         if (sqlquery != null)
                         {
-
 
                             using SqlCommand command = connection.CreateCommand();
                             command.CommandText = sqlquery;
@@ -2135,7 +2148,14 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 3)
                         {
-                            sqlquery = null;
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,t.DocType,CONVERT(VARCHAR(10), t.DocImageDate, 120) as DocImageDate,t.HaStatus,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2209,7 +2229,14 @@ namespace OMT.DataService.Service
                         }
                         else if (skillset.SystemofRecordId == 3)
                         {
-                            sqlquery = null;
+                            sqlquery = $@"SELECT t.Id,t.ProjectId,t.OrderId,t.DocType,CONVERT(VARCHAR(10), t.DocImageDate, 120) as DocImageDate,t.HaStatus,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
