@@ -41,5 +41,13 @@ namespace OMT.APIHost.Controllers
         {
             return _orderdecisionservice.GetOrderInfo(orderInfoDTO);
         }
+
+        [HttpPut]
+        [Route("UpdateOrderStatusByTL")]
+        public ResultDTO UpdateOrderStatusByTL([FromBody] UpdateOrderStatusByTLDTO updateOrderStatusByTLDTO)
+        {
+            var userid = UserId;
+            return _orderdecisionservice.UpdateOrderStatusByTL(userid, updateOrderStatusByTLDTO);
+        }
     }
 }

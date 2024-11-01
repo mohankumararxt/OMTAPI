@@ -635,14 +635,14 @@ namespace OMT.DataService.Service
                                 select new
                                 {
                                     SkillSetName = ss.SkillSetName,
-                                    SystemofRecordId=ss.SystemofRecordId,
+                                    SystemofRecordId = ss.SystemofRecordId,
                                 }).FirstOrDefault();
 
                 if (skillset != null)
                 {
                     var reportCol = (from mrc in _oMTDataContext.MasterReportColumns
                                      join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
-                                     where rc.SkillSetId == orderInfoDTO.SkillSetId && rc.IsActive  && rc.SystemOfRecordId == skillset.SystemofRecordId && rc.IsActive
+                                     where rc.SkillSetId == orderInfoDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillset.SystemofRecordId && rc.IsActive
                                      select mrc.ReportColumnName).ToList();
 
                     string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
@@ -712,6 +712,13 @@ namespace OMT.DataService.Service
 
                     }
                 }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset Table Not Found";
+
+                }
             }
             catch (Exception ex)
             {
@@ -720,6 +727,154 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
-        } 
+        }
+        public ResultDTO UpdateOrderStatusByTL(int userid, UpdateOrderStatusByTLDTO updateOrderStatusByTLDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "400" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                var targettablename = "Order_Histroy";
+
+                var skillset = (from tc in _oMTDataContext.TemplateColumns
+                                join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
+                                where tc.SkillSetId == updateOrderStatusByTLDTO.SkillSetId && ss.IsActive
+                                select new
+                                {
+                                    Tablename = ss.SkillSetName,
+
+                                }).FirstOrDefault();
+
+                string[] ExcludedColumns = { "OrderId", "ProjectId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
+
+                string DynamicColumns = string.Empty;
+
+                if (skillset != null)
+                {
+                    string tableName = skillset.Tablename;
+
+                    DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
+
+                    string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
+                                     (  SELECT {DynamicColumns} FROM {tableName}
+                                        WHERE OrderId = @OrderId
+                                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
+                                    FROM {tableName}  WHERE OrderId = @OrderId"; 
+                                   
+
+                    //Fetching Old Datas from the table
+                    using (SqlCommand command = new SqlCommand(ordersql, connection))
+                    {
+                        command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+
+                        using SqlDataAdapter dataAdapter = new(command);
+                        DataSet orderdetails = new DataSet();
+                        dataAdapter.Fill(orderdetails);
+                        {
+                            if (orderdetails.Tables[0].Rows.Count > 0)
+                            {
+                                DataRow row = orderdetails.Tables[0].Rows[0];
+                                var oldUserId = row["UserId"];
+                                var oldOrderid = row["OrderId"];
+                                var oldSkillsetid = row["SkillSetId"];
+                                var oldProjectid = row["ProjectId"];
+                                var oldSystemofRecordid = row["SystemofRecordId"];
+                                var oldStatus = row["Status"];
+                                string oldOrderDetails = row["OrderDetailsJson"] as string;  
+
+
+                                // Insert old details into Order_History table   
+                                string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails)  
+                                                     VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails)";
+
+                                using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
+                                {
+                                    insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
+                                    insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
+                                    insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
+                                    insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid);
+                                    insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
+                                    insertCommand.Parameters.AddWithValue("@Status", oldStatus);
+                                    insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
+
+                                    insertCommand.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                resultDTO.StatusCode = "404";
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Order not found";
+
+                            }
+                        }
+                    }
+                    //Updating Skillset table
+                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,CompletionDate = @CompletionDate, EndTime= @EndTime,
+                                       TLDescription = @TLDescription, UserId=@UserId
+                                       WHERE  OrderId = @OrderId";  
+
+                    using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
+                    {
+                        updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                        updateCommand.Parameters.AddWithValue("@Userid", userid);
+                        updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
+                        updateCommand.Parameters.AddWithValue("@CompletionDate", DateTime.Now);
+                        updateCommand.Parameters.AddWithValue("@EndTime", DateTime.Now);
+                        updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
+
+                        updateCommand.ExecuteNonQuery();
+                    }
+                    resultDTO.StatusCode = "200";
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Order Details Updated Successfully";
+                }
+                else
+                {
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "No Skillset table found for the given SkillsetId";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.StatusCode = "500";
+                resultDTO.IsSuccess = false;
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+        public string GetDynamicColumns(SqlConnection connection, string tableName, string[] ExcludedColumns, ResultDTO resultDTO)
+        {
+            string GetDynamicColumnssql = $@"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=@Tablename";
+            using (SqlCommand Colcommand = new SqlCommand(GetDynamicColumnssql, connection))
+            {
+                Colcommand.Parameters.AddWithValue("@Tablename", tableName);
+                var Columns = new List<string>();
+
+                using SqlDataAdapter dataAdapter = new(Colcommand);
+                DataSet dataset = new DataSet();
+                dataAdapter.Fill(dataset);
+
+                var dynamiclist = string.Empty;
+
+                if (dataset != null && dataset.Tables.Count > 0 && dataset.Tables[0].Rows.Count > 0)
+                {
+                    DataTable datatable = dataset.Tables[0];
+
+                    dynamiclist = string.Join(",", datatable.AsEnumerable()
+                                   .Select(row => row["COLUMN_NAME"].ToString())
+                                   .Where(columnName => !ExcludedColumns.Contains(columnName)));
+
+                    resultDTO.Data = dynamiclist;
+                    resultDTO.Message = "List of Order Details";
+                    resultDTO.IsSuccess = true;
+                }
+                return dynamiclist;
+            }
+        }
     }
 }
