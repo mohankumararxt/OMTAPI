@@ -256,7 +256,8 @@ namespace OMT.DataService.Service
 
                         // send details about uploaded orders via mail
 
-                        DateTime uploadedate = DateTime.Now;
+                        DateTime uploadedate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
                         string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
                         string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
                         string username = string.Join(' ', firstname, lastname);
@@ -401,7 +402,7 @@ namespace OMT.DataService.Service
                             };
 
                             priority.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
-                            priority.Parameters.AddWithValue("@SystemOfRecordId",skillSet.SystemofRecordId);
+                            priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
                             priority.Parameters.AddWithValue("@UserId", 0);
 
                             SqlParameter priority_returnValue = new()
@@ -2186,7 +2187,7 @@ namespace OMT.DataService.Service
                                             INNER JOIN ProcessStatus ps on ps.Id = t.Status
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
-                                            WHERE t.Status = 15";
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2267,7 +2268,7 @@ namespace OMT.DataService.Service
                                             INNER JOIN ProcessStatus ps on ps.Id = t.Status
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
-                                            WHERE t.Status = 15";
+                                            WHERE t.Status = 15 and t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2447,11 +2448,11 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
                                           AND (
-                                                (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                                (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
                         else if (tablename.SystemofRecordId == 2)
@@ -2471,11 +2472,11 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
                                           AND (
-                                                (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                 AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                                 OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                 AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                               (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
 
@@ -2495,8 +2496,9 @@ namespace OMT.DataService.Service
                                                 Timeline tl on ss.SkillSetId = tl.SkillSetId
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
-                                                AND (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+                                                AND  (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.IsHardState = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+
                         }
 
                         using SqlCommand command = connection.CreateCommand();
@@ -2577,11 +2579,12 @@ namespace OMT.DataService.Service
                                         WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
                                         AND (
-                                            (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                             AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                   OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                             OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                             AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                            (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
@@ -2601,11 +2604,12 @@ namespace OMT.DataService.Service
                                         WHERE 
                                                  t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
                                         AND (
-                                            (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                            AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                 OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                            OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                            AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                             (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+
                         }
                         else
                         {
@@ -2624,8 +2628,8 @@ namespace OMT.DataService.Service
                                                  Timeline tl on ss.SkillSetId = tl.SkillSetId
                                         WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
-                                        AND (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                             AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+                                        AND  (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.IsHardState = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
 
                         }
                         using SqlCommand command = connection.CreateCommand();
@@ -2701,11 +2705,12 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
                                           AND (
-                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                                (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+
 
                         }
                         else if (skillset.SystemofRecordId == 2)
@@ -2725,11 +2730,11 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
                                           AND (
-                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                      OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                                (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
                         else
                         {
@@ -2747,8 +2752,8 @@ namespace OMT.DataService.Service
                                                 Timeline tl on ss.SkillSetId = tl.SkillSetId
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL 
-                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.IsHardState = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
 
                         }
 
@@ -2821,11 +2826,12 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
                                           AND (
-                                              (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                               AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                               OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                               AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                               (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+
                         }
                         else if (skillset.SystemofRecordId == 2)
                         {
@@ -2844,11 +2850,12 @@ namespace OMT.DataService.Service
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
                                           AND (
-                                               (EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND ((tl.hardstatename <> '' AND ishardstate = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
-                                                     OR (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
-                                                OR (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                                AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+                                                (EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND ((tl.HardStateName <> '' AND tl.IsHardState = 1 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')) AND t.PropertyState = tl.Hardstatename)
+                                                     OR (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime AND t.PropertyState NOT IN (SELECT value FROM STRING_SPLIT(@hardstates, ',')))))
+                                                OR (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.ishardstate = 1 AND tl_sub.IsActive = 1) 
+                                                AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
+
                         }
                         else
                         {
@@ -2866,8 +2873,8 @@ namespace OMT.DataService.Service
                                                 Timeline tl on ss.SkillSetId = tl.SkillSetId
                                           WHERE 
                                                 t.Status IS NULL and t.Completiondate IS NULL and t.UserId = @UserId 
-                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline WHERE SkillSetId = ss.SkillSetId AND ishardstate = 1 AND IsActive = 1) 
-                                               AND (tl.hardstatename = '' AND ishardstate = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
+                                          AND  (NOT EXISTS (SELECT 1 FROM Timeline tl_sub WHERE tl_sub.SkillSetId = ss.SkillSetId AND tl_sub.IsHardState = 1 AND tl_sub.IsActive = 1) 
+                                               AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime))";
 
                         }
 

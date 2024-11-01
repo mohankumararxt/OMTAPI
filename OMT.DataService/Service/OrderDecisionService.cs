@@ -560,7 +560,7 @@ namespace OMT.DataService.Service
                         {
                             resultDTO.Data = updatedOrder;
                             resultDTO.IsSuccess = true;
-                            resultDTO.StatusCode = "4200";
+                            resultDTO.StatusCode = "200";
                             resultDTO.Message = "Order assigned successfully";
                         }
 
