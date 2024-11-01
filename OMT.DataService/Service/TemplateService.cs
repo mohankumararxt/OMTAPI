@@ -255,7 +255,8 @@ namespace OMT.DataService.Service
 
                         // send details about uploaded orders via mail
 
-                        DateTime uploadedate = DateTime.Now;
+                        DateTime uploadedate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
                         string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
                         string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
                         string username = string.Join(' ', firstname, lastname);
