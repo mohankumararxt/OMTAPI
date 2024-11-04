@@ -631,11 +631,15 @@ namespace OMT.DataService.Service
 
                 var skillset = (from tc in _oMTDataContext.TemplateColumns
                                 join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
+                                join sr in  _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
                                 where tc.SkillSetId == orderInfoDTO.SkillSetId && ss.IsActive
                                 select new
                                 {
                                     SkillSetName = ss.SkillSetName,
+                                    SkillSetId = ss.SkillSetId,
                                     SystemofRecordId = ss.SystemofRecordId,
+                                    SystemofRecordName = sr.SystemofRecordName
+
                                 }).FirstOrDefault();
 
                 if (skillset != null)
@@ -645,7 +649,7 @@ namespace OMT.DataService.Service
                                      where rc.SkillSetId == orderInfoDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillset.SystemofRecordId && rc.IsActive
                                      select mrc.ReportColumnName).ToList();
 
-                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSetName,ss.SkillSetId as SkillSetId,ss.SystemofRecordId as SystemofRecordId,sr.SystemofRecordName as SystemofRecordName, ps.Status as Status,t.Remarks,";
 
                     if (reportCol.Count > 0)
                     {
@@ -678,6 +682,7 @@ namespace OMT.DataService.Service
                                            $" INNER JOIN SkillSet ss ON ss.SkillSetId = t.SkillSetId" +
                                            $" INNER JOIN ProcessStatus ps ON ps.Id = t.Status" +
                                            $" INNER JOIN UserProfile up ON up.UserId = t.UserId" +
+                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId"+
                                            $" WHERE  t.OrderId = @OrderId AND t.Status IS NOT NULL AND  t.Status <> '' AND  t.UserId IS NOT NULL";
 
                     // Combine everything into the final query
@@ -717,7 +722,6 @@ namespace OMT.DataService.Service
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
                     resultDTO.Message = "Skillset Table Not Found";
-
                 }
             }
             catch (Exception ex)
@@ -808,8 +812,9 @@ namespace OMT.DataService.Service
                                 resultDTO.StatusCode = "404";
                                 resultDTO.IsSuccess = false;
                                 resultDTO.Message = "Order not found";
-
+                                return resultDTO;
                             }
+
                         }
                     }
                     //Updating Skillset table
@@ -869,7 +874,6 @@ namespace OMT.DataService.Service
                                    .Select(row => row["COLUMN_NAME"].ToString())
                                    .Where(columnName => !ExcludedColumns.Contains(columnName)));
 
-                    resultDTO.Data = dynamiclist;
                     resultDTO.Message = "List of Order Details";
                     resultDTO.IsSuccess = true;
                 }
