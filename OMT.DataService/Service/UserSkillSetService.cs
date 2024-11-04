@@ -553,6 +553,8 @@ namespace OMT.DataService.Service
 
                 var Delete_Cycle = Delete_Cycle1.Concat(Delete_Cycle2).ToList();
 
+                Delete_Cycle = _oMTDataContext.TemplateColumns.Where(x => Delete_Cycle.Contains(x.SkillSetId)).Select(x => x.SkillSetId).ToList();
+
                 List<string> Dont_Delete_Skillset = new List<string>(); // will have the skillsets in which the user has an order to be processed
 
                 // get skillsets which cant be deleted 
