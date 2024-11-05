@@ -791,8 +791,8 @@ namespace OMT.DataService.Service
 
 
                                 // Insert old details into Order_History table   
-                                string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails)  
-                                                     VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails)";
+                                string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
+                                                     VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
 
                                 using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
                                 {
@@ -803,6 +803,8 @@ namespace OMT.DataService.Service
                                     insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
                                     insertCommand.Parameters.AddWithValue("@Status", oldStatus);
                                     insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
+                                    insertCommand.Parameters.AddWithValue("@UpdatedBy", userid); 
+                                    insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
 
                                     insertCommand.ExecuteNonQuery();
                                 }
@@ -817,18 +819,14 @@ namespace OMT.DataService.Service
 
                         }
                     }
-                    //Updating Skillset table
-                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,CompletionDate = @CompletionDate, EndTime= @EndTime,
-                                       TLDescription = @TLDescription, UserId=@UserId
-                                       WHERE  OrderId = @OrderId";  
-
+                    //Updating Skillset table    
+                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";  
+                                      
+                    
                     using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
                     {
                         updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
-                        updateCommand.Parameters.AddWithValue("@Userid", userid);
                         updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
-                        updateCommand.Parameters.AddWithValue("@CompletionDate", DateTime.Now);
-                        updateCommand.Parameters.AddWithValue("@EndTime", DateTime.Now);
                         updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
 
                         updateCommand.ExecuteNonQuery();
