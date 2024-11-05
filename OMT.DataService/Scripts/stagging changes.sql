@@ -3022,6 +3022,21 @@
 --HardStateUtilized BIT null
 --)
 
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_uss
+--FOREIGN KEY (UserSkillSetId)
+--REFERENCES UserSkillSet(UserSkillSetId);
+
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
 --create table Utilization
 --(
 --Id int IDENTITY(1,1) primary key,
@@ -3040,7 +3055,63 @@
 --HardStateUtilized BIT null
 --)
 
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_usss
+--FOREIGN KEY (UserSkillSetId)
+--REFERENCES UserSkillSet(UserSkillSetId);
+
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
 --ALTER TABLE UserSkillSet
 --ADD IsCycle1 BIT;
 
 --add getorderbyweightage_threshold,getorderbyhardstate_threshold,gettrdpendingorder_threshold,updategoc_priorityorder sp
+
+-----------------------------------------------------phase4 ---------update order status ----------------------
+
+--CREATE TABLE Order_History (
+--Id INT PRIMARY KEY IDENTITY(1,1),
+--OrderId VARCHAR(100) NOT NULL,
+--ProjectId VARCHAR(100) NOT NULL,
+--SkillSetId INT NOT NULL,
+--UserId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--Status INT NOT NULL,
+--Orderdetails NVARCHAR(MAX) NOT NULL,
+--UpdatedBy INT NOT NULL,
+--UpdatedTime DateTime NOT NULL
+--);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_sor
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_upby
+--FOREIGN KEY (UpdatedBy)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
