@@ -2970,6 +2970,7 @@ namespace OMT.DataService.Service
 
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
+                connection.Open();
 
                 if (skillSet != null)
                 {
@@ -2993,35 +2994,43 @@ namespace OMT.DataService.Service
                         // Combine the strings, ensuring that if any of them is null, it's selected without a comma
                         string combinedString = (isDuplicateColumns1 != "" && isDuplicateColumns != "") ? isDuplicateColumns1 + "," + isDuplicateColumns : isDuplicateColumns1 + isDuplicateColumns;
 
-                        // update the orders which are already assigned with IsPriority = 1
-                        string priorityUpdateQuery = $"UPDATE  " +
-                                   $"{tablename} " +
-                                   $"SET IsPriority = 1 " +
-                                   $"WHERE UserID IS NOT NULL AND (";
+                        // update ispriority = 1 only if order is replaced as ispriority = 1
 
-                        foreach (JObject records in recordsarray)
+                        JArray filteredRecords = new JArray(
+                                                 recordsarray.Where(record => (int?)record["IsPriority"] == 1));
+
+                        if (filteredRecords.Count > 0)
                         {
-                            string query = "(";
-                            foreach (string columnname in combinedList)
-                            {
-                                string columndata = records.Value<string>(columnname);
+                            // update the orders which are already assigned with IsPriority = 1
+                            string priorityUpdateQuery = $"UPDATE  " +
+                                       $"{tablename} " +
+                                       $"SET IsPriority = 1 " +
+                                       $"WHERE UserID IS NOT NULL AND (";
 
-                                query += $"[{columnname}] = '{columndata}' AND ";
+                            foreach (JObject records in filteredRecords)
+                            {
+                                string query = "(";
+                                foreach (string columnname in combinedList)
+                                {
+                                    string columndata = records.Value<string>(columnname);
+
+                                    query += $"[{columnname}] = '{columndata}' AND ";
+                                }
+
+                                query = query.Substring(0, query.Length - 5);
+                                query += ") OR ";
+
+                                priorityUpdateQuery += query;
                             }
 
-                            query = query.Substring(0, query.Length - 5);
-                            query += ") OR ";
+                            priorityUpdateQuery = priorityUpdateQuery.Substring(0, priorityUpdateQuery.Length - 4);
+                            priorityUpdateQuery += ")";
 
-                            priorityUpdateQuery += query;
+
+                            SqlCommand updatePriority = new SqlCommand(priorityUpdateQuery, connection);
+                            updatePriority.ExecuteNonQuery();
+
                         }
-
-                        priorityUpdateQuery = priorityUpdateQuery.Substring(0, priorityUpdateQuery.Length - 4);
-                        priorityUpdateQuery += ")";
-
-                        connection.Open();
-                        SqlCommand updatePriority = new SqlCommand(priorityUpdateQuery, connection);
-                        updatePriority.ExecuteNonQuery();
-
                         // replace orders
 
                         string sql = $"SELECT * " +
@@ -3136,33 +3145,37 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
-                                // if new priority orders are inserted call sp to rearrange the priorityorder of this skillset to 1 for all users having it
+                                int priorityCount = recordsToInsert.Count(record => (int?)record["IsPriority"] == 1);
 
-                                using SqlCommand priority = new()
+                                if (priorityCount > 0)
                                 {
-                                    Connection = connection,
-                                    CommandType = CommandType.StoredProcedure,
-                                    CommandText = "UpdateGoc_PriorityOrder"
-                                };
+                                    using SqlCommand priority = new()
+                                    {
+                                        Connection = connection,
+                                        CommandType = CommandType.StoredProcedure,
+                                        CommandText = "UpdateGoc_PriorityOrder"
+                                    };
 
-                                priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
-                                priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                                priority.Parameters.AddWithValue("@UserId", 0);
+                                    priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
+                                    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
+                                    priority.Parameters.AddWithValue("@UserId", 0);
 
-                                SqlParameter priority_returnValue = new()
-                                {
-                                    ParameterName = "@RETURN_VALUE_Po",
-                                    Direction = ParameterDirection.ReturnValue
-                                };
-                                priority.Parameters.Add(priority_returnValue);
+                                    SqlParameter priority_returnValue = new()
+                                    {
+                                        ParameterName = "@RETURN_VALUE_Po",
+                                        Direction = ParameterDirection.ReturnValue
+                                    };
 
-                                priority.ExecuteNonQuery();
+                                    priority.Parameters.Add(priority_returnValue);
+                                    priority.ExecuteNonQuery();
 
-                                int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
+                                    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
 
-                                if (priority_returnCode != 1)
-                                {
-                                    throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                                    if (priority_returnCode != 1)
+                                    {
+                                        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                                    }
+
                                 }
 
                                 resultDTO.IsSuccess = true;
