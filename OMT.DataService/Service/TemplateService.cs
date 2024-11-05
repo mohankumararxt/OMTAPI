@@ -3136,6 +3136,35 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
+                                // if new priority orders are inserted call sp to rearrange the priorityorder of this skillset to 1 for all users having it
+
+                                using SqlCommand priority = new()
+                                {
+                                    Connection = connection,
+                                    CommandType = CommandType.StoredProcedure,
+                                    CommandText = "UpdateGoc_PriorityOrder"
+                                };
+
+                                priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
+                                priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
+                                priority.Parameters.AddWithValue("@UserId", 0);
+
+                                SqlParameter priority_returnValue = new()
+                                {
+                                    ParameterName = "@RETURN_VALUE_Po",
+                                    Direction = ParameterDirection.ReturnValue
+                                };
+                                priority.Parameters.Add(priority_returnValue);
+
+                                priority.ExecuteNonQuery();
+
+                                int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
+
+                                if (priority_returnCode != 1)
+                                {
+                                    throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                                }
+
                                 resultDTO.IsSuccess = true;
                                 resultDTO.Message = "Orders replaced successfully";
                                 resultDTO.StatusCode = "200";
