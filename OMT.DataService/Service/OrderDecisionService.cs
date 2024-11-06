@@ -631,7 +631,7 @@ namespace OMT.DataService.Service
 
                 var skillset = (from tc in _oMTDataContext.TemplateColumns
                                 join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
-                                join sr in  _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
+                                join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
                                 where tc.SkillSetId == orderInfoDTO.SkillSetId && ss.IsActive
                                 select new
                                 {
@@ -682,7 +682,7 @@ namespace OMT.DataService.Service
                                            $" INNER JOIN SkillSet ss ON ss.SkillSetId = t.SkillSetId" +
                                            $" INNER JOIN ProcessStatus ps ON ps.Id = t.Status" +
                                            $" INNER JOIN UserProfile up ON up.UserId = t.UserId" +
-                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId"+
+                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId" +
                                            $" WHERE  t.OrderId = @OrderId AND t.Status IS NOT NULL AND  t.Status <> '' AND  t.UserId IS NOT NULL";
 
                     // Combine everything into the final query
@@ -768,6 +768,15 @@ namespace OMT.DataService.Service
 
                     using SqlDataAdapter detailsAdapter = new SqlDataAdapter(detailscommand);
 
+                    DataSet detailsDS = new DataSet();
+                    detailsAdapter.Fill(detailsDS);
+
+                    if (detailsDS.Tables[0].Rows.Count > 0)
+                    {
+
+                    }
+
+
 
                 }
 
@@ -785,8 +794,8 @@ namespace OMT.DataService.Service
                                      (  SELECT {DynamicColumns} FROM {tableName}
                                         WHERE OrderId = @OrderId
                                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
-                                    FROM {tableName}  WHERE OrderId = @OrderId"; 
-                                   
+                                    FROM {tableName}  WHERE OrderId = @OrderId";
+
 
                     //Fetching Old Datas from the table
                     using (SqlCommand command = new SqlCommand(ordersql, connection))
@@ -794,54 +803,54 @@ namespace OMT.DataService.Service
                         command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
 
                         using SqlDataAdapter dataAdapter = new(command);
+
                         DataSet orderdetails = new DataSet();
                         dataAdapter.Fill(orderdetails);
+
+                        if (orderdetails.Tables[0].Rows.Count > 0)
                         {
-                            if (orderdetails.Tables[0].Rows.Count > 0)
-                            {
-                                DataRow row = orderdetails.Tables[0].Rows[0];
-                                var oldUserId = row["UserId"];
-                                var oldOrderid = row["OrderId"];
-                                var oldSkillsetid = row["SkillSetId"];
-                                var oldProjectid = row["ProjectId"];
-                                var oldSystemofRecordid = row["SystemofRecordId"];
-                                var oldStatus = row["Status"];
-                                string oldOrderDetails = row["OrderDetailsJson"] as string;  
+                            DataRow row = orderdetails.Tables[0].Rows[0];
+                            var oldUserId = row["UserId"];
+                            var oldOrderid = row["OrderId"];
+                            var oldSkillsetid = row["SkillSetId"];
+                            var oldProjectid = row["ProjectId"];
+                            var oldSystemofRecordid = row["SystemofRecordId"];
+                            var oldStatus = row["Status"];
+                            string oldOrderDetails = row["OrderDetailsJson"] as string;
 
 
-                                // Insert old details into Order_History table   
-                                string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
+                            // Insert old details into Order_History table   
+                            string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
                                                      VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
 
-                                using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
-                                {
-                                    insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
-                                    insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
-                                    insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
-                                    insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid);
-                                    insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
-                                    insertCommand.Parameters.AddWithValue("@Status", oldStatus);
-                                    insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
-                                    insertCommand.Parameters.AddWithValue("@UpdatedBy", userid); 
-                                    insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
-
-                                    insertCommand.ExecuteNonQuery();
-                                }
-                            }
-                            else
+                            using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
                             {
-                                resultDTO.StatusCode = "404";
-                                resultDTO.IsSuccess = false;
-                                resultDTO.Message = "Order not found";
-                                return resultDTO;
-                            }
+                                insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
+                                insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
+                                insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
+                                insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid);
+                                insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
+                                insertCommand.Parameters.AddWithValue("@Status", oldStatus);
+                                insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
+                                insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
+                                insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now);
 
+                                insertCommand.ExecuteNonQuery();
+                            }
                         }
+                        else
+                        {
+                            resultDTO.StatusCode = "404";
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Order not found";
+                            return resultDTO;
+                        }
+
                     }
                     //Updating Skillset table    
-                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";  
-                                      
-                    
+                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";
+
+
                     using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
                     {
                         updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
