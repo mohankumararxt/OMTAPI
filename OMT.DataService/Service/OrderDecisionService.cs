@@ -752,6 +752,25 @@ namespace OMT.DataService.Service
 
                                 }).FirstOrDefault();
 
+                // check if its already into invoice, if yes dont allow to update
+
+                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
+                DateTime endtime = todayUtc.AddHours(17).AddMinutes(30); // Today 5:00 PM UTC
+                DateTime starttime = endtime.AddDays(-1);
+
+                var editable = false;
+
+                string details = $@"SELECT * FROM {skillset.Tablename} WHERE OrderId = @OrderId";
+
+                using (SqlCommand detailscommand = new SqlCommand(details, connection))
+                {
+                    detailscommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+
+                    using SqlDataAdapter detailsAdapter = new SqlDataAdapter(detailscommand);
+
+
+                }
+
                 string[] ExcludedColumns = { "OrderId", "ProjectId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
 
                 string DynamicColumns = string.Empty;
