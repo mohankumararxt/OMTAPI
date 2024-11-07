@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
@@ -631,7 +632,7 @@ namespace OMT.DataService.Service
 
                 var skillset = (from tc in _oMTDataContext.TemplateColumns
                                 join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
-                                join sr in  _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
+                                join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
                                 where tc.SkillSetId == orderInfoDTO.SkillSetId && ss.IsActive
                                 select new
                                 {
@@ -682,7 +683,7 @@ namespace OMT.DataService.Service
                                            $" INNER JOIN SkillSet ss ON ss.SkillSetId = t.SkillSetId" +
                                            $" INNER JOIN ProcessStatus ps ON ps.Id = t.Status" +
                                            $" INNER JOIN UserProfile up ON up.UserId = t.UserId" +
-                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId"+
+                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId" +
                                            $" WHERE  t.OrderId = @OrderId AND t.Status IS NOT NULL AND  t.Status <> '' AND  t.UserId IS NOT NULL";
 
                     // Combine everything into the final query
@@ -766,8 +767,8 @@ namespace OMT.DataService.Service
                                      (  SELECT {DynamicColumns} FROM {tableName}
                                         WHERE OrderId = @OrderId
                                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
-                                    FROM {tableName}  WHERE OrderId = @OrderId"; 
-                                   
+                                    FROM {tableName}  WHERE OrderId = @OrderId";
+
 
                     //Fetching Old Datas from the table
                     using (SqlCommand command = new SqlCommand(ordersql, connection))
@@ -787,7 +788,7 @@ namespace OMT.DataService.Service
                                 var oldProjectid = row["ProjectId"];
                                 var oldSystemofRecordid = row["SystemofRecordId"];
                                 var oldStatus = row["Status"];
-                                string oldOrderDetails = row["OrderDetailsJson"] as string;  
+                                string oldOrderDetails = row["OrderDetailsJson"] as string;
 
 
                                 // Insert old details into Order_History table   
@@ -803,8 +804,8 @@ namespace OMT.DataService.Service
                                     insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
                                     insertCommand.Parameters.AddWithValue("@Status", oldStatus);
                                     insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
-                                    insertCommand.Parameters.AddWithValue("@UpdatedBy", userid); 
-                                    insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
+                                    insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
+                                    insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now);
 
                                     insertCommand.ExecuteNonQuery();
                                 }
@@ -820,9 +821,9 @@ namespace OMT.DataService.Service
                         }
                     }
                     //Updating Skillset table    
-                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";  
-                                      
-                    
+                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";
+
+
                     using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
                     {
                         updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
@@ -877,6 +878,131 @@ namespace OMT.DataService.Service
                 }
                 return dynamiclist;
             }
+        }
+        public ResultDTO GetUnassignedOrderInfo(UnassignedOrderInfoDTO unassignedOrderInfoDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                var skillset = (from tc in _oMTDataContext.TemplateColumns
+                                join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
+                                join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
+                                where tc.SkillSetId == unassignedOrderInfoDTO.SkillSetId && ss.IsActive
+                                select new
+                                {
+                                    SkillSetName = ss.SkillSetName,
+                                    SkillSetId = ss.SkillSetId,
+                                    SystemofRecordId = ss.SystemofRecordId,
+                                    SystemofRecordName = sr.SystemofRecordName
+                                }).FirstOrDefault();
+
+                if (skillset != null)
+                {
+                  
+                    // pending orders 
+                    var columns1 = (from dt in _oMTDataContext.TemplateColumns
+                                    where dt.SkillSetId == unassignedOrderInfoDTO.SkillSetId && dt.IsGetOrderColumn == true
+                                    select dt.ColumnAliasName).ToList();
+
+                    var columns2 = (from dt in _oMTDataContext.DefaultTemplateColumns
+                                    where dt.SystemOfRecordId == skillset.SystemofRecordId && dt.IsGetOrderColumn == true
+                                    select dt.DefaultColumnName).ToList();
+
+                    // get date type columns 
+                    var datecol = (from ss in _oMTDataContext.SkillSet
+                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                   where ss.SkillSetName == skillset.SkillSetName && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                   select dt.DefaultColumnName).ToList();
+                    //Datetime
+                    var datetimecol = (from ss in _oMTDataContext.SkillSet
+                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                   where ss.SkillSetName == skillset.SkillSetName && dt.IsGetOrderColumn && dt.DataType == "DateTime"
+                                   select dt.DefaultColumnName).ToList();
+
+                    var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
+                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+
+                    string query = $@"
+                                   SELECT 
+                                        {selectedColumns}, 
+                                        '{skillset.SkillSetName}' AS SkillSetName, 
+                                        {skillset.SkillSetId} AS SkillSetId , 
+                                        '{skillset.SystemofRecordName}' AS SystemOfRecordName,
+                                        {skillset.SystemofRecordId} AS SystemOfRecordId
+                                    FROM 
+                                        {skillset.SkillSetName} AS t1
+                                   WHERE 
+                                        t1.UserId IS NULL 
+                                        AND (t1.Status IS NULL OR t1.Status = '') 
+                                    ORDER BY 
+                                        t1.Id";  
+
+                    using SqlCommand cmd = connection.CreateCommand();
+                    cmd.CommandText = query;
+
+                    using SqlDataAdapter dataAdapter = new(cmd);
+                    DataSet dataset = new DataSet();
+                    dataAdapter.Fill(dataset);
+
+                    if (dataset.Tables.Count > 0 && dataset.Tables[0].Rows.Count > 0)
+                    {
+                        DataTable datatable = dataset.Tables[0];
+
+                        var orderlist = datatable.AsEnumerable()
+                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                  column => column.ColumnName,
+                                  column =>
+                                  {
+                                      if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                                      {
+                                          if (row[column] == DBNull.Value)
+                                          {
+                                              return "";
+                                          }
+                                          DateTime dateValue = (DateTime)row[column];
+                                          return dateValue.ToString("yyyy-MM-dd");  // Format as date string
+                                      }
+                                      if (datetimecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                                      {
+                                          if (row[column] == DBNull.Value)
+                                          {
+                                              return "";
+                                          }
+                                          DateTime dateValue = (DateTime)row[column];
+                                          return dateValue.ToString("yyyy-MM-dd HH:mm:ss");  // Format as date & Time string
+                                      }
+                                      return row[column] == DBNull.Value ? "" : row[column];
+                                  })).ToList();
+
+                        resultDTO.Data = orderlist;
+                        resultDTO.Message = "List of Unassigned Orders";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Unassigned Orders Not Found";
+                    }
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset Table Not Found";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
         }
     }
 }
