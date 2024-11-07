@@ -753,32 +753,81 @@ namespace OMT.DataService.Service
 
                                 }).FirstOrDefault();
 
+                // check if its already into invoice, if yes dont allow to update
+
+                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
+                DateTime endtime = todayUtc.AddHours(11).AddMinutes(30); // Today 5:00 PM UTC
+                DateTime starttime = endtime.AddDays(-1);
+
+                var editable = false;
+                var completiondate = DateTime.UtcNow;
+
                 string[] ExcludedColumns = { "OrderId", "ProjectId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
 
                 string DynamicColumns = string.Empty;
 
                 if (skillset != null)
                 {
-                    string tableName = skillset.Tablename;
+                    string details = $@"SELECT * FROM {skillset.Tablename} WHERE OrderId = @OrderId";
 
-                    DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
+                    using (SqlCommand detailscommand = new SqlCommand(details, connection))
+                    {
+                        detailscommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
 
-                    string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
-                                     (  SELECT {DynamicColumns} FROM {tableName}
+                        using SqlDataAdapter detailsAdapter = new SqlDataAdapter(detailscommand);
+
+                        DataSet detailsDS = new DataSet();
+                        detailsAdapter.Fill(detailsDS);
+
+                        if (detailsDS.Tables[0].Rows.Count > 0)
+                        {
+                            DataRow detailsrow = detailsDS.Tables[0].Rows[0];
+                            completiondate = (DateTime)detailsrow["CompletionDate"];
+                        }
+
+                        if ((completiondate <= endtime || completiondate >= starttime) && DateTime.UtcNow >= endtime)
+                        {
+                            editable = false;
+                        }
+                        else if (completiondate > endtime && DateTime.UtcNow >= endtime)
+                        {
+                            editable = true;
+                        }
+                        else if ((completiondate <= endtime && completiondate >= starttime) && DateTime.UtcNow < endtime)
+                        {
+                            editable = true;
+                        }
+                        else if (completiondate < starttime)
+                        {
+                            editable = false;
+                        }
+
+                    }
+
+                    // allow to edit only if completiondate <= endtime and >= startime and DateTime.UtcNow < endtime
+                    if (editable)
+                    {
+                        string tableName = skillset.Tablename;
+
+                        DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
+
+                        string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
+                                        (  SELECT {DynamicColumns} FROM {tableName}
                                         WHERE OrderId = @OrderId
                                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
-                                    FROM {tableName}  WHERE OrderId = @OrderId";
+                                        FROM {tableName}  WHERE OrderId = @OrderId";
 
 
-                    //Fetching Old Datas from the table
-                    using (SqlCommand command = new SqlCommand(ordersql, connection))
-                    {
-                        command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
-
-                        using SqlDataAdapter dataAdapter = new(command);
-                        DataSet orderdetails = new DataSet();
-                        dataAdapter.Fill(orderdetails);
+                        //Fetching Old Datas from the table
+                        using (SqlCommand command = new SqlCommand(ordersql, connection))
                         {
+                            command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+
+                            using SqlDataAdapter dataAdapter = new(command);
+
+                            DataSet orderdetails = new DataSet();
+                            dataAdapter.Fill(orderdetails);
+
                             if (orderdetails.Tables[0].Rows.Count > 0)
                             {
                                 DataRow row = orderdetails.Tables[0].Rows[0];
@@ -819,22 +868,29 @@ namespace OMT.DataService.Service
                             }
 
                         }
+                        //Updating Skillset table    
+                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";
+
+
+                        using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
+                        {
+                            updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                            updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
+                            updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
+
+                            updateCommand.ExecuteNonQuery();
+                        }
+                        resultDTO.StatusCode = "200";
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Order Details Updated Successfully";
+
                     }
-                    //Updating Skillset table    
-                    string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";
-
-
-                    using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
+                    else
                     {
-                        updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
-                        updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
-                        updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
-
-                        updateCommand.ExecuteNonQuery();
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "The order has already moved to invoice, you can't update the status anymore.";
                     }
-                    resultDTO.StatusCode = "200";
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Order Details Updated Successfully";
                 }
                 else
                 {
