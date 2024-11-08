@@ -222,6 +222,21 @@ namespace OMT.DataService.Service
                 var NoOfOrders = records.Count;
                 var HasPriorityOrder = records.Any(record => record.IsPriority == 1); //check for priority orders presence
 
+                string uploadedDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+
+                for (int i = 0; i < records.Count; i++)
+                {
+                    // Cast each item to JObject so we can add new properties
+                    var item = records[i] as JObject;
+                    if (item != null)
+                    {
+                        item["UploadedBy"] = userid;
+                        item["UploadedDate"] = uploadedDate;
+                    }
+                }
+
+                string updatedJsonData = JsonConvert.SerializeObject(insertedJsonobject);
+
                 SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
@@ -235,7 +250,7 @@ namespace OMT.DataService.Service
                             CommandText = "InsertData"
                         };
                         command.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
-                        command.Parameters.AddWithValue("@jsonData", uploadTemplateDTO.JsonData);
+                        command.Parameters.AddWithValue("@jsonData", updatedJsonData);
 
                         SqlParameter returnValue = new()
                         {

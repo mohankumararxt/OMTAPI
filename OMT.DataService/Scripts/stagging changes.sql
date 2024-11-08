@@ -3115,3 +3115,27 @@
 --ADD CONSTRAINT fk_Order_History_status
 --FOREIGN KEY (Status)
 --REFERENCES ProcessStatus(Id);
+
+
+----add tldescription,uploadedby,uploadeddate col in all skillset tables
+
+
+--ALTER TABLE LR_1ST_KEY
+--ADD TLDescription nvarchar(200);
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedBy INT;
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedDate datetime;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedBy INT;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedDate datetime;
+
+--insert into DefaultTemplateColumns values (1,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedDate','DateTime',1,0,0,0,0)
+
+--update DefaultTemplateColumns set isactive = 0 where id between 51 and 56
