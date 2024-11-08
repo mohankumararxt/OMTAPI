@@ -3423,11 +3423,13 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO)
+        public ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var url = _emailDetailsSettings.Value.SendEmailURL;
+
                 SkillSet? skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == deleteOrderDTO.SkillsetId && x.IsActive).FirstOrDefault();
                 if (skillSet != null)
                 {
@@ -3493,35 +3495,123 @@ namespace OMT.DataService.Service
                                           column => column.ColumnName,
                                           column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
-                        List<JObject> recordsToInsert = new List<JObject>();
+                        // Check if orders already in invoice 
 
-                        if (querydt.Count > 0)
+                        var orderids_inv = new List<string>();
+
+                        foreach (DataRow row_inv in datatable.Rows)
                         {
-                            string deleteSql = $"DELETE FROM {tablename} WHERE ";
-
-                            foreach (var record in querydt)
+                            if (datatable.Columns.Contains("OrderId") && row_inv["OrderId"] != DBNull.Value)
                             {
-                                string deleteQuery = "(";
-                                foreach (string columnname in combinedList)
-                                {
-                                    string columndata = record[columnname].ToString();
+                                var oid = row_inv["OrderId"].ToString();
+                                orderids_inv.Add(oid);
+                            }
+                        }
 
-                                    deleteQuery += $"[{columnname}] = '{columndata}' AND ";
+                        var oid_check = string.Join(",", orderids_inv.Select(oid => $"'{oid}'"));
+
+                        string inv_query = $"SELECT OrderId FROM InvoiceDump WHERE Skillset = '{tablename}' and OrderId in ({oid_check})";
+
+                        using SqlDataAdapter Inv_dataAdapter = new SqlDataAdapter(inv_query, connection);
+
+                        DataSet inDS = new DataSet();
+
+                        Inv_dataAdapter.Fill(inDS);
+
+                        DataTable inv_datatable = inDS.Tables[0];
+
+                        var inv_dt = inv_datatable.AsEnumerable()
+                                      .Select(row => inv_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                          column => column.ColumnName,
+                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                        // if yes dont allow to delete
+                        if (inv_dt.Count > 0)
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.StatusCode = "404";
+                            resultDTO.Message = "The following orders are already in invoice and cant be deleted: " + string.Join(", ", inv_dt.Select(dict => dict["OrderId"].ToString()));
+                        }
+                        else
+                        {
+                            var NoOfOrders = querydt.Count;
+
+                            if (querydt.Count > 0)
+                            {
+                                string deleteSql = $"DELETE FROM {tablename} WHERE ";
+
+                                foreach (var record in querydt)
+                                {
+                                    string deleteQuery = "(";
+                                    foreach (string columnname in combinedList)
+                                    {
+                                        string columndata = record[columnname].ToString();
+
+                                        deleteQuery += $"[{columnname}] = '{columndata}' AND ";
+                                    }
+
+                                    deleteQuery = deleteQuery.Substring(0, deleteQuery.Length - 5);
+                                    deleteQuery += ") OR ";
+
+                                    deleteSql += deleteQuery;
                                 }
 
-                                deleteQuery = deleteQuery.Substring(0, deleteQuery.Length - 5);
-                                deleteQuery += ") OR ";
+                                deleteSql = deleteSql.Substring(0, deleteSql.Length - 4);
 
-                                deleteSql += deleteQuery;
+                                using SqlCommand deleteCommand = new SqlCommand(deleteSql, connection);
+                                deleteCommand.ExecuteNonQuery();
+
+                                // send details about deleted orders via mail 
+
+                                DateTime deletedDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                                string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                                string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                                string username = string.Join(' ', firstname, lastname);
+
+                                IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                                List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                          .Select(c => c.Value)
+                                                                          .ToList();
+
+                                var deletedetails = $"{username} has deleted {NoOfOrders} orders in {skillSet.SkillSetName} at {deletedDate}";
+
+                                SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                                {
+                                    ToEmailIds = toEmailIds1,
+                                    Subject = "Orders deleted",
+                                    Body = deletedetails,
+                                };
+
+                                try
+                                {
+                                    using (HttpClient client = new HttpClient())
+                                    {
+                                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        var webApiUrl = new Uri(url);
+                                        var response = client.PostAsync(webApiUrl, content).Result;
+
+                                        if (response.IsSuccessStatusCode)
+                                        {
+                                            var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                    throw;
+                                }
+
+
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "Orders deleted from template successfully";
                             }
-
-                            deleteSql = deleteSql.Substring(0, deleteSql.Length - 4);
-
-                            using SqlCommand deleteCommand = new SqlCommand(deleteSql, connection);
-                            deleteCommand.ExecuteNonQuery();
-
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Orders deleted from template successfully";
                         }
 
                     }

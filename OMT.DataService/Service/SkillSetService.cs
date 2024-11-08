@@ -217,8 +217,8 @@ namespace OMT.DataService.Service
                                                             .Select(x => x.hs.StateName)
                                                             .ToArray()  //Isactive only
                                           })
-                                          .OrderBy(x => x.SkillSetId) //ordering here Bcoz we have used Grouping key
-                                          .ThenBy(x => x.SkillSetName)
+                                          .OrderBy(x => x.SystemofRecordName)
+                                          .ThenBy(x =>x.SkillSetName)//ordering here Bcoz we have used Grouping key
                                           .ToList();
 
                     resultDTO.IsSuccess = true;
