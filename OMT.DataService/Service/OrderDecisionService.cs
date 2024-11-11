@@ -186,6 +186,12 @@ namespace OMT.DataService.Service
                     }
                     else
                     {
+                        // get priority orders only from all the cycle1 skillsets by looping each
+
+                        string po_uporder = string.Empty;
+                        
+                        //po_uporder = callByPO(userid, resultDTO, connection, iscycle1);
+                        
                         uporder = GetOrderByCycle(uss_cycle1, iscycle1, userid, resultDTO, connection);
 
                         // If no orders were assigned in cycle 1, proceed to cycle 2
