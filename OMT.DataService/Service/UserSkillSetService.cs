@@ -404,35 +404,108 @@ namespace OMT.DataService.Service
                 {
                     foreach (var detail in multipleUserSkillSetCreateDTO.FirstCycle)
                     {
-                        UserSkillSet userSkillSet = new UserSkillSet
+                        if (detail.IsHardStateUser)
                         {
-                            UserId = multipleUserSkillSetCreateDTO.UserId,
-                            SkillSetId = detail.SkillSetId,
-                            Percentage = (int)detail.Weightage,
-                            IsHardStateUser = detail.IsHardStateUser,
-                            HardStateName = detail.HardStateName != null && detail.HardStateName.Any() ? string.Join(",", detail.HardStateName) : "",
-                            IsActive = true,
-                            IsCycle1 = true,
-                            CreatedDate = DateTime.Now,
-                        };
-                        _oMTDataContext.UserSkillSet.Add(userSkillSet);
-                        _oMTDataContext.SaveChanges();
+                            foreach (var hsdetails in detail.HardStateDetails)
+                            {
+                                UserSkillSet hs_userSkillSet = new UserSkillSet
+                                {
+                                    UserId = multipleUserSkillSetCreateDTO.UserId,
+                                    SkillSetId = detail.SkillSetId,
+                                    Percentage = (int)hsdetails.Weightage,
+                                    IsHardStateUser = detail.IsHardStateUser,
+                                    HardStateName = hsdetails.HardStateName,
+                                    IsActive = true,
+                                    IsCycle1 = true,
+                                    CreatedDate = DateTime.Now,
+                                };
+                                _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            UserSkillSet nr_userSkillSet = new UserSkillSet
+                            {
+                                UserId = multipleUserSkillSetCreateDTO.UserId,
+                                SkillSetId = detail.SkillSetId,
+                                Percentage = (int)detail.Weightage,
+                                IsHardStateUser = false,     //make as a false
+                                HardStateName = "",
+                                IsActive = true,
+                                IsCycle1 = true,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+                        else
+                        {
+                            UserSkillSet userSkillSet = new UserSkillSet
+                            {
+                                UserId = multipleUserSkillSetCreateDTO.UserId,
+                                SkillSetId = detail.SkillSetId,
+                                Percentage = (int)detail.Weightage,
+                                IsHardStateUser = detail.IsHardStateUser,
+                                HardStateName = "",
+                                IsActive = true,
+                                IsCycle1 = true,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(userSkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
                     }
                     foreach (var details in multipleUserSkillSetCreateDTO.SecondCycle)
                     {
-                        UserSkillSet userSkillSet2 = new UserSkillSet
+                        if (details.IsHardStateUser)
                         {
-                            UserId = multipleUserSkillSetCreateDTO.UserId,
-                            SkillSetId = details.SkillSetId,
-                            Percentage = 0,
-                            IsHardStateUser = details.IsHardStateUser,
-                            HardStateName = details.HardStateName != null && details.HardStateName.Any() ? string.Join(",", details.HardStateName) : "",
-                            IsActive = true,
-                            IsCycle1 = false,
-                            CreatedDate = DateTime.Now,
-                        };
-                        _oMTDataContext.UserSkillSet.Add(userSkillSet2);
-                        _oMTDataContext.SaveChanges();
+                            foreach (var hsdetails in details.HardStateDetails)
+                            {
+                                UserSkillSet hs_userSkillSet = new UserSkillSet
+                                {
+                                    UserId = multipleUserSkillSetCreateDTO.UserId,
+                                    SkillSetId = details.SkillSetId,
+                                    Percentage = (int)hsdetails.Weightage,
+                                    IsHardStateUser = details.IsHardStateUser,
+                                    HardStateName = hsdetails.HardStateName,
+                                    IsActive = true,
+                                    IsCycle1 = false,
+                                    CreatedDate = DateTime.Now,
+                                };
+                                _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            UserSkillSet nr_userSkillSet = new UserSkillSet
+                            {
+                                UserId = multipleUserSkillSetCreateDTO.UserId,
+                                SkillSetId = details.SkillSetId,
+                                Percentage = (int)details.Weightage,
+                                IsHardStateUser = false,  //make as false
+                                HardStateName = "",
+                                IsActive = true,
+                                IsCycle1 = false,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+                        else
+                        {
+                            UserSkillSet userSkillSet2 = new UserSkillSet
+                            {
+                                UserId = multipleUserSkillSetCreateDTO.UserId,
+                                SkillSetId = details.SkillSetId,
+                                Percentage = 0,
+                                IsHardStateUser = details.IsHardStateUser,
+                                HardStateName = "",
+                                IsActive = true,
+                                IsCycle1 = false,
+                                CreatedDate = DateTime.Now,
+                            };
+                            _oMTDataContext.UserSkillSet.Add(userSkillSet2);
+                            _oMTDataContext.SaveChanges();
+                        }
+                       
                     }
 
                     // after adding userskillset for new user, call the insertintogoc table method 
@@ -566,7 +639,7 @@ namespace OMT.DataService.Service
 
                     using SqlCommand AssignedOrder_command = new SqlCommand(AssignedOrder, connection);
 
-                    AssignedOrder_command.Parameters.AddWithValue("@userid", updateUserSkillSetThWtDTO.UserId); 
+                    AssignedOrder_command.Parameters.AddWithValue("@userid", updateUserSkillSetThWtDTO.UserId);
 
                     using SqlDataAdapter AssignedOrderDA = new SqlDataAdapter(AssignedOrder_command);
                     DataSet AssignedOrderDS = new DataSet();
@@ -616,7 +689,7 @@ namespace OMT.DataService.Service
                             Uss_Cycle1.Percentage = (int)USS_ss.Weightage;
                             Uss_Cycle1.IsActive = true;
                             Uss_Cycle1.IsHardStateUser = USS_ss.IsHardStateUser;
-                            Uss_Cycle1.HardStateName = USS_ss.HardStateName != null && USS_ss.HardStateName.Any()? string.Join(",", USS_ss.HardStateName.Select(item => item.Trim())): "";
+                            Uss_Cycle1.HardStateName = USS_ss.HardStateName != null && USS_ss.HardStateName.Any() ? string.Join(",", USS_ss.HardStateName.Select(item => item.Trim())) : "";
                             Uss_Cycle1.IsCycle1 = true;
                             _oMTDataContext.UserSkillSet.Update(Uss_Cycle1);
                             _oMTDataContext.SaveChanges();

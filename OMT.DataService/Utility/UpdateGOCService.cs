@@ -101,6 +101,10 @@ namespace OMT.DataService.Utility
                 {
                     var PriorityOrder = 1;
 
+                    int highestCycle1PriorityOrder = 0;
+                    var skillSetPriorityMap_c1 = new Dictionary<int, int>();
+                    var skillSetPriorityMap_c2 = new Dictionary<int, int>();
+
                     var userskillsets = (from up in _oMTDataContext.UserProfile
                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
@@ -118,28 +122,52 @@ namespace OMT.DataService.Utility
                                              HardStateName = uss.HardStateName,
                                          }).ToList();
 
-
-                    foreach (var userkillset in userskillsets)
+                    foreach (var userSkillset in userskillsets)
                     {
-                        var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == userkillset.SkillSetId && x.IsActive).FirstOrDefault();
+                        int currentPriorityOrder;
 
-                        double totalorders = ((double)userkillset.Percentage / 100) * skillset.Threshold;
+                        if (userSkillset.IsCycle1)
+                        {
+                            // Handle IsCycle1 = true entries
+                            if (!skillSetPriorityMap_c1.TryGetValue(userSkillset.SkillSetId, out currentPriorityOrder))
+                            {
+                                // Assign the next available PriorityOrder for this SkillSetId
+                                currentPriorityOrder = PriorityOrder++;
+                                skillSetPriorityMap_c1[userSkillset.SkillSetId] = currentPriorityOrder;
+
+                            }
+                            // Update highestCycle1PriorityOrder if this is the highest priority seen in Cycle1
+                            highestCycle1PriorityOrder = Math.Max(highestCycle1PriorityOrder, currentPriorityOrder);
+                        }
+                        else
+                        {
+                            // For Cycle2 entries, start from highestCycle1PriorityOrder + 1
+                            if (!skillSetPriorityMap_c2.TryGetValue(userSkillset.SkillSetId, out currentPriorityOrder))
+                            {
+                                currentPriorityOrder = highestCycle1PriorityOrder + 1;
+                                skillSetPriorityMap_c2[userSkillset.SkillSetId] = currentPriorityOrder;
+                            }
+                        }
+
+                        var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == userSkillset.SkillSetId && x.IsActive).FirstOrDefault();
+
+                        double totalorders = ((double)userSkillset.Percentage / 100) * skillset.Threshold;
 
                         int roundedtotalorders = (int)Math.Round(totalorders);
 
                         GetOrderCalculation getOrderCalculation = new GetOrderCalculation
                         {
-                            UserId = userkillset.UserId,
-                            UserSkillSetId = userkillset.UserSkillSetId,
-                            SkillSetId = userkillset.SkillSetId,
+                            UserId = userSkillset.UserId,
+                            UserSkillSetId = userSkillset.UserSkillSetId,
+                            SkillSetId = userSkillset.SkillSetId,
                             TotalOrderstoComplete = roundedtotalorders,
                             OrdersCompleted = 0,
-                            Weightage = userkillset.Percentage,
-                            PriorityOrder = PriorityOrder++,
+                            Weightage = userSkillset.Percentage,
+                            PriorityOrder = currentPriorityOrder,
                             IsActive = true,
                             UpdatedDate = DateTime.Now,
-                            IsCycle1 = userkillset.IsCycle1,
-                            IsHardStateUser = userkillset.IsHardStateUser,
+                            IsCycle1 = userSkillset.IsCycle1,
+                            IsHardStateUser = userSkillset.IsHardStateUser,
                             Utilized = false,
                             HardStateUtilized = false,
                         };
@@ -153,7 +181,7 @@ namespace OMT.DataService.Utility
 
                 // update priorityorder in goc table based on priority orders in skillset tables
 
-                Update_by_priorityOrder(resultDTO, connection, userid);
+                // Update_by_priorityOrder(resultDTO, connection, userid);
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "GetOrderCalculation table updated successfully.";
