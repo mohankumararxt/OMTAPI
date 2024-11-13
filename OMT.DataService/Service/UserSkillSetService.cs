@@ -505,7 +505,7 @@ namespace OMT.DataService.Service
                             _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                             _oMTDataContext.SaveChanges();
                         }
-                       
+
                     }
 
                     // after adding userskillset for new user, call the insertintogoc table method 
@@ -532,46 +532,180 @@ namespace OMT.DataService.Service
             {
                 List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
 
-                var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct();
+                var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct().ToList();
 
-                var userskillSetIds = (userid == null) ? USSid.ToList() : new List<int> { userid.Value };
+                var active_users = _oMTDataContext.UserProfile.Where(x => x.IsActive && USSid.Contains(x.UserId)).Select(x => x.UserId).ToList();
 
-                foreach (var id in userskillSetIds)
+                var userids = (userid == null) ? active_users : new List<int> { userid.Value };
+
+                foreach (var id in userids)
                 {
+                    List<UserSkillSetDetailsDTO> FirstCycle1 = new List<UserSkillSetDetailsDTO>();
+                    List<UserSkillSetDetailsDTO> SecondCycle2 = new List<UserSkillSetDetailsDTO>();
+
                     var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
                     var userName = userProfile != null ? userProfile.FirstName + ' ' + userProfile.LastName : "User Not Found";
 
                     //Cycle1
-                    List<UserSkillSetDetailsDTO> FirstCycle1 = (from uss in _oMTDataContext.UserSkillSet
-                                                                join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
-                                                                where uss.IsActive && uss.UserId == id && uss.IsCycle1
-                                                                orderby uss.UserId
-                                                                select new UserSkillSetDetailsDTO()
-                                                                {
-                                                                    UserSkillSetId = uss.UserSkillSetId,
-                                                                    SkillSetId = uss.SkillSetId,
-                                                                    SkillSetName = ss.SkillSetName,
-                                                                    Weightage = uss.Percentage,
-                                                                    IsHardStateUser = uss.IsHardStateUser,
-                                                                    HardStateName = uss.HardStateName,
-                                                                }).ToList();
+
+                    List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
+                    
+                    foreach (var ssid in ssids_c1)
+                    {
+                        var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
+
+                        var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
+                       
+                        var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+                        if (hs_ss.Count > 0)
+                        {
+                            foreach (var h in hs_ss)
+                            {
+                                UserSkillSetDetailsDTO c1_hs = new UserSkillSetDetailsDTO()
+                                {
+                                    UserSkillSetId = h.UserSkillSetId,
+                                    SkillSetId = h.SkillSetId,
+                                    SkillSetName = skillsetname,
+                                    Weightage = ns_ss.Percentage,
+                                    IsHardStateUser = h.IsHardStateUser,
+                                    //HardStateName = uss.HardStateName,
+                                    HardStateDetails = (from us in _oMTDataContext.UserSkillSet
+                                                        where us.UserSkillSetId == h.UserSkillSetId
+                                                        select new HardStateDetails
+                                                        {
+                                                            HardStateName = us.HardStateName,
+                                                            Weightage = us.Percentage
+                                                        }).ToList()
+                                };
+
+                                FirstCycle1.Add(c1_hs);
+                            }
+
+                        }
+
+                        UserSkillSetDetailsDTO c1_ns = new UserSkillSetDetailsDTO()
+                        {
+                            UserSkillSetId = ns_ss.UserSkillSetId,
+                            SkillSetId = ns_ss.SkillSetId,
+                            SkillSetName = skillsetname,
+                            Weightage = ns_ss.Percentage,
+                            IsHardStateUser = ns_ss.IsHardStateUser,
+                            //HardStateName = uss.HardStateName,
+                            HardStateDetails = (from us in _oMTDataContext.UserSkillSet
+                                                where us.UserSkillSetId == ns_ss.UserSkillSetId
+                                                select new HardStateDetails
+                                                {
+                                                    HardStateName = "",
+                                                    Weightage = 0
+                                                }).ToList()
+                        };
+
+                        FirstCycle1.Add(c1_ns);
+
+
+                    }
+
+                    //List<UserSkillSetDetailsDTO> FirstCycle1 = (from uss in _oMTDataContext.UserSkillSet
+                    //                                            join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                    //                                            join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                    //                                            where uss.IsActive && uss.UserId == id && uss.IsCycle1
+                    //                                            orderby uss.UserId
+                    //                                            select new UserSkillSetDetailsDTO()
+                    //                                            {
+                    //                                                UserSkillSetId = uss.UserSkillSetId,
+                    //                                                SkillSetId = uss.SkillSetId,
+                    //                                                SkillSetName = ss.SkillSetName,
+                    //                                                Weightage = uss.Percentage,
+                    //                                                IsHardStateUser = uss.IsHardStateUser,
+                    //                                                //HardStateName = uss.HardStateName,
+                    //                                                HardStateDetails = (from h in _oMTDataContext.UserSkillSet
+                    //                                                                    where h.UserSkillSetId == uss.UserSkillSetId
+                    //                                                                    select new HardStateDetails
+                    //                                                                    {
+                    //                                                                        HardStateName = h.HardStateName,
+                    //                                                                        Weightage = h.Percentage
+                    //                                                                    }).ToList()
+                    //                                            }).ToList();
 
                     //Cycle2
-                    List<UserSkillSetDetailsDTO> SecondCycle2 = (from uss in _oMTDataContext.UserSkillSet
-                                                                 join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                 join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
-                                                                 where uss.IsActive && uss.UserId == id && !uss.IsCycle1
-                                                                 orderby uss.UserId
-                                                                 select new UserSkillSetDetailsDTO()
-                                                                 {
-                                                                     UserSkillSetId = uss.UserSkillSetId,
-                                                                     SkillSetId = uss.SkillSetId,
-                                                                     SkillSetName = ss.SkillSetName,
-                                                                     Weightage = 0,
-                                                                     IsHardStateUser = uss.IsHardStateUser,
-                                                                     HardStateName = uss.HardStateName,
-                                                                 }).ToList();
+                    List<int> ssids_c2 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
+
+                    foreach (var ssid in ssids_c2)
+                    {
+                        var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
+
+                        var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
+
+                        var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+                        if (hs_ss.Count > 0)
+                        {
+                            foreach (var h in hs_ss)
+                            {
+                                UserSkillSetDetailsDTO c2_hs = new UserSkillSetDetailsDTO()
+                                {
+                                    UserSkillSetId = h.UserSkillSetId,
+                                    SkillSetId = h.SkillSetId,
+                                    SkillSetName = skillsetname,
+                                    Weightage = ns_ss.Percentage,
+                                    IsHardStateUser = h.IsHardStateUser,
+                                    //HardStateName = uss.HardStateName,
+                                    HardStateDetails = (from us in _oMTDataContext.UserSkillSet
+                                                        where us.UserSkillSetId == h.UserSkillSetId
+                                                        select new HardStateDetails
+                                                        {
+                                                            HardStateName = us.HardStateName,
+                                                            Weightage = us.Percentage
+                                                        }).ToList()
+                                };
+
+                                SecondCycle2.Add(c2_hs);
+                            }
+
+                        }
+
+                        UserSkillSetDetailsDTO c2_ns = new UserSkillSetDetailsDTO()
+                        {
+                            UserSkillSetId = ns_ss.UserSkillSetId,
+                            SkillSetId = ns_ss.SkillSetId,
+                            SkillSetName = skillsetname,
+                            Weightage = ns_ss.Percentage,
+                            IsHardStateUser = ns_ss.IsHardStateUser,
+                            //HardStateName = uss.HardStateName,
+                            HardStateDetails = (from us in _oMTDataContext.UserSkillSet
+                                                where us.UserSkillSetId == ns_ss.UserSkillSetId
+                                                select new HardStateDetails
+                                                {
+                                                    HardStateName = "",
+                                                    Weightage = 0
+                                                }).ToList()
+                        };
+
+                        SecondCycle2.Add(c2_ns);
+
+
+                    }
+                    //List<UserSkillSetDetailsDTO> SecondCycle2 = (from uss in _oMTDataContext.UserSkillSet
+                    //                                             join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                    //                                             join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                    //                                             where uss.IsActive && uss.UserId == id && !uss.IsCycle1
+                    //                                             orderby uss.UserId
+                    //                                             select new UserSkillSetDetailsDTO()
+                    //                                             {
+                    //                                                 UserSkillSetId = uss.UserSkillSetId,
+                    //                                                 SkillSetId = uss.SkillSetId,
+                    //                                                 SkillSetName = ss.SkillSetName,
+                    //                                                 Weightage = 0,
+                    //                                                 IsHardStateUser = uss.IsHardStateUser,
+                    //                                                 HardStateDetails = (from h in _oMTDataContext.UserSkillSet
+                    //                                                                     where h.UserSkillSetId == uss.UserSkillSetId
+                    //                                                                     select new HardStateDetails
+                    //                                                                     {
+                    //                                                                         HardStateName = h.HardStateName,
+                    //                                                                         Weightage = h.Percentage
+                    //                                                                     }).ToList()
+                    //                                             }).ToList();
 
 
 
@@ -614,9 +748,9 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "201" };
             try
             {
-                // check if any to obe deleted skillset has any orders in que for the user, if yes dont allow to delete
-                var ExistingActiveUSS_Cycle1 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && uss.IsCycle1).Select(x => x.SkillSetId).ToList();
-                var ExistingActiveUSS_Cycle2 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && !uss.IsCycle1).Select(x => x.SkillSetId).ToList();
+                // check if any to be deleted skillset has any orders in que for the user, if yes dont allow to delete
+                var ExistingActiveUSS_Cycle1 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && uss.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
+                var ExistingActiveUSS_Cycle2 = _oMTDataContext.UserSkillSet.Where(uss => uss.UserId == updateUserSkillSetThWtDTO.UserId && uss.IsActive && !uss.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
 
                 var incomingUss_Cycle1 = updateUserSkillSetThWtDTO.FirstCycle.Select(x => x.SkillSetId).ToList();
                 var incomingUss_Cycle2 = updateUserSkillSetThWtDTO.SecondCycle.Select(x => x.SkillSetId).ToList();
@@ -624,7 +758,7 @@ namespace OMT.DataService.Service
                 var Delete_Cycle1 = ExistingActiveUSS_Cycle1.Except(incomingUss_Cycle1).ToList();
                 var Delete_Cycle2 = ExistingActiveUSS_Cycle2.Except(incomingUss_Cycle2).ToList();
 
-                var Delete_Cycle = Delete_Cycle1.Concat(Delete_Cycle2).ToList();
+                var Delete_Cycle = Delete_Cycle1.Concat(Delete_Cycle2).Distinct().ToList();
 
                 Delete_Cycle = _oMTDataContext.TemplateColumns.Where(x => Delete_Cycle.Contains(x.SkillSetId)).Select(x => x.SkillSetId).ToList();
 
@@ -664,7 +798,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
-                    resultDTO.Message = "The following skillsets cannot be deleted as the user is currently processing an order: " + string.Join(", ", Dont_Delete_Skillset) + ".";
+                    resultDTO.Message = "The following skillsets cannot be deleted as the user has orders in their queue: " + string.Join(", ", Dont_Delete_Skillset) + ".";
 
                 }
 

@@ -109,18 +109,28 @@ namespace OMT.DataService.Utility
                                          join uss in _oMTDataContext.UserSkillSet on up.UserId equals uss.UserId
                                          join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                          where up.UserId == user && up.IsActive == true && uss.IsActive == true && ss.IsActive == true
-                                         orderby uss.IsCycle1 descending, uss.Percentage descending
-                                         select new UserSkillSet
+                                         select new
                                          {
-                                             UserId = uss.UserId,
-                                             UserSkillSetId = uss.UserSkillSetId,
-                                             SkillSetId = uss.SkillSetId,
-                                             Percentage = uss.Percentage,
-                                             IsActive = uss.IsActive,
-                                             IsHardStateUser = uss.IsHardStateUser,
-                                             IsCycle1 = uss.IsCycle1,
-                                             HardStateName = uss.HardStateName,
-                                         }).ToList();
+                                             UserSkillSet = uss,
+                                             TotalPercentage = _oMTDataContext.UserSkillSet.Where(x => x.SkillSetId == uss.SkillSetId && x.UserId == user).Sum(x => x.Percentage)
+                                         })
+                                         .OrderByDescending(x => x.UserSkillSet.IsCycle1)
+                                         .ThenByDescending(x => x.TotalPercentage)
+                                         .ThenBy(x => x.UserSkillSet.SkillSetId)
+                                         .ThenByDescending(x => x.UserSkillSet.IsHardStateUser)
+                                         .ThenByDescending(x => x.UserSkillSet.Percentage)
+                                         .Select(x => new UserSkillSet
+                                         {
+                                             UserId = x.UserSkillSet.UserId,
+                                             UserSkillSetId = x.UserSkillSet.UserSkillSetId,
+                                             SkillSetId = x.UserSkillSet.SkillSetId,
+                                             Percentage = x.UserSkillSet.Percentage,
+                                             IsActive = x.UserSkillSet.IsActive,
+                                             IsHardStateUser = x.UserSkillSet.IsHardStateUser,
+                                             IsCycle1 = x.UserSkillSet.IsCycle1,
+                                             HardStateName = x.UserSkillSet.HardStateName
+                                         })
+                                         .ToList();
 
                     foreach (var userSkillset in userskillsets)
                     {
