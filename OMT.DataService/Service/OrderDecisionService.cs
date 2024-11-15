@@ -146,7 +146,7 @@ namespace OMT.DataService.Service
                                                                   join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
                                                                   join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
                                                                   where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid
-                                                                  orderby goc.PriorityOrder
+                                                                  orderby goc.PriorityOrder 
                                                                   select new GetOrderCalculation
                                                                   {
                                                                       UserId = goc.UserId,
@@ -168,7 +168,7 @@ namespace OMT.DataService.Service
 
                     string uporder = string.Empty;
 
-                    List<GetOrderCalculation> uss_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
+                    List<GetOrderCalculation> uss_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenBy(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
 
                     if (uss_cycle1.Count == 0)
                     {
