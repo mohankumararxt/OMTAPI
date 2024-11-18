@@ -22,6 +22,10 @@ namespace OMT.DTO
     }
     public class UserSkillSetDetailsDTO
     {
+        public UserSkillSetDetailsDTO()
+        {
+            HardStateDetails = new List<UPdateHardStateDetailsDTO>();
+        }
         public int UserSkillSetId { get; set; } 
         public int SkillSetId { get; set; }
         public string SkillSetName { get; set; }

@@ -599,26 +599,56 @@ namespace OMT.DataService.Service
                     bool iscycle1 = true;
                     var cycle = new List<GetOrderCalculation>();
 
-                    List<GetOrderCalculation> trd_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
-                    List<GetOrderCalculation> trd_cycle2 = new();
+                    List<GetOrderCalculation> trd_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+
                     if (trd_cycle1.Count == 0)
                     {
                         iscycle1 = false;
-                        trd_cycle2 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1 == false).OrderBy(x => x.PriorityOrder).ToList();
+                        
                     }
 
                     // check if cycle 1 has no more orders , then send to cycle 2 ? or 
 
+                    string po_uporder = string.Empty;
                     string updatedOrder;
 
-                    updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1);
-                    if (string.IsNullOrWhiteSpace(updatedOrder) && iscycle1)
+                    // get only priority orders from all the cycle1 skillsets 
+
+                    po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
+
+                    //if no priority orders then go by weightage in cycle1
+                    if (string.IsNullOrEmpty(po_uporder))
                     {
-                        iscycle1 = false;
+                        updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
 
-                        updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1);
+                        if (string.IsNullOrWhiteSpace(updatedOrder) && iscycle1)
+                        {
+                            iscycle1 = false;
 
-                        if (string.IsNullOrWhiteSpace(updatedOrder))
+                            po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
+
+                            if (string.IsNullOrEmpty(po_uporder))
+                            {
+                                updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
+
+                                if (string.IsNullOrWhiteSpace(updatedOrder))
+                                {
+                                    resultDTO.Data = "";
+                                    resultDTO.StatusCode = "404";
+                                    resultDTO.IsSuccess = false;
+                                    resultDTO.Message = "No more orders for now, please come back again";
+                                }
+                                else
+                                {
+                                    resultDTO.Data = updatedOrder;
+                                    resultDTO.IsSuccess = true;
+                                    resultDTO.StatusCode = "200";
+                                    resultDTO.Message = "Order assigned successfully";
+                                }
+                            }
+
+                        }
+                        else if (string.IsNullOrWhiteSpace(updatedOrder) && !iscycle1)
                         {
                             resultDTO.Data = "";
                             resultDTO.StatusCode = "404";
@@ -629,17 +659,11 @@ namespace OMT.DataService.Service
                         {
                             resultDTO.Data = updatedOrder;
                             resultDTO.IsSuccess = true;
-                            resultDTO.StatusCode = "200";
                             resultDTO.Message = "Order assigned successfully";
                         }
+                    }
 
-                    }
-                    else
-                    {
-                        resultDTO.Data = updatedOrder;
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Order assigned successfully";
-                    }
+
                 }
             }
             catch (Exception ex)
@@ -651,7 +675,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public dynamic GetTrdPendingOrder_Threshold(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1)
+        public dynamic GetTrdPendingOrder_Threshold(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, bool ispriority)
         {
             string updatedOrder;
             int userskillsetid_p;
@@ -664,6 +688,8 @@ namespace OMT.DataService.Service
             };
             command1.Parameters.AddWithValue("@userid", userid);
             command1.Parameters.AddWithValue("@IsCycle1", iscycle1);
+            command1.Parameters.AddWithValue("@IsPriority", ispriority);
+
             //output param to get the record
             SqlParameter outputParam = new SqlParameter("@updatedrecord", SqlDbType.NVarChar, -1);
             outputParam.Direction = ParameterDirection.Output;

@@ -549,7 +549,6 @@ namespace OMT.DataService.Service
                     //Cycle1
 
                     List<UPdateHardStateDetailsDTO> details_hs_c1 = new List<UPdateHardStateDetailsDTO>();
-                    List<UPdateHardStateDetailsDTO> details_ns_c1 = new List<UPdateHardStateDetailsDTO>();
 
                     List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
 
@@ -590,15 +589,6 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            var detail_add_ns = new UPdateHardStateDetailsDTO()
-                            {
-                                HardStateName = "",
-                                Weightage = 0,
-                                UserSkillSetId = 0,
-                            };
-
-                            details_ns_c1.Add(detail_add_ns);
-
                             UserSkillSetDetailsDTO c1_ns = new UserSkillSetDetailsDTO()
                             {
                                 UserSkillSetId = ns_ss.UserSkillSetId,
@@ -606,20 +596,15 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = false,
-                                HardStateDetails = details_ns_c1
                             };
 
                             FirstCycle1.Add(c1_ns);
                         }
-
-
-
                     }
 
                     //Cycle2
 
                     List<UPdateHardStateDetailsDTO> details_hs_c2 = new List<UPdateHardStateDetailsDTO>();
-                    List<UPdateHardStateDetailsDTO> details_ns_c2 = new List<UPdateHardStateDetailsDTO>();
 
                     List<int> ssids_c2 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
 
@@ -660,15 +645,6 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            var detail_add_ns_c2 = new UPdateHardStateDetailsDTO()
-                            {
-                                HardStateName = "",
-                                Weightage = 0,
-                                UserSkillSetId = 0,
-                            };
-
-                            details_ns_c2.Add(detail_add_ns_c2);
-
                             UserSkillSetDetailsDTO c2_ns = new UserSkillSetDetailsDTO()
                             {
                                 UserSkillSetId = ns_ss.UserSkillSetId,
@@ -676,16 +652,12 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = ns_ss.IsHardStateUser,
-                                HardStateDetails = details_ns_c2
                             };
 
                             SecondCycle2.Add(c2_ns);
                         }
-
-
-
                     }
-                   
+
                     if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0)
                     {
                         resultDTO.IsSuccess = false;
