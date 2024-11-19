@@ -3571,44 +3571,61 @@ namespace OMT.DataService.Service
                         reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                      join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                      where rc.SkillSetId == skillsetdetails.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                     orderby rc.ColumnSequence
                                      select mrc.ReportColumnName
-                                         ).ToList();
+                                    ).ToList();
 
-                        string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+                        // Query to get column data types for the dynamic table
+                        SqlCommand sqlCommand_columnTypeQuery;
+                        SqlDataAdapter dataAdapter_columnTypeQuery;
+                        List<Dictionary<string, object>> columnTypes;
+                        GetDataType(connection, skillsetdetails, out sqlCommand_columnTypeQuery, out dataAdapter_columnTypeQuery, out columnTypes);
+
+                        // Extract valid columns based on column type
+                        var validDateCols = reportcol
+                                                     .Where(col => columnTypes.Any(ct =>
+                                                         ct.ContainsKey("COLUMN_NAME") &&
+                                                         ct.ContainsKey("DATA_TYPE") &&
+                                                         ct["COLUMN_NAME"].ToString() == col &&
+                                                         (ct["DATA_TYPE"].ToString() == "datetime" || ct["DATA_TYPE"].ToString() == "date")))
+                                                     .ToList();
+
+
+                        string sqlquery1 = $"SELECT ";
 
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                if (validDateCols.Contains(col))
                                 {
                                     sqlquery1 += $@"
-                                                  CASE 
-                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
-                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
-                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
-                                                  END as {col}, ";
-
+                                               CASE 
+                                                   WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                   THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                   ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                               END as {col}, ";
                                 }
                                 else
                                 {
-
                                     sqlquery1 += $"t.{col}, ";
                                 }
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                                               $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                                               $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                               $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                                               $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                                               $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken " +
-                                               $"FROM {skillsetname} t " +
-                                               $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                               $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                               $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                               $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
+                        string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
+                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
+                                      $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                      $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                      $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                      $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                      $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                      $"ss.SkillSetName as SkillSet " +
+                                      $"FROM {skillsetdetails.SkillSetName} t " +
+                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                      $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                                   $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
 
 
 
@@ -3655,31 +3672,14 @@ namespace OMT.DataService.Service
                                  join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                  where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
                                  orderby rc.ColumnSequence
-                                 select mrc.ReportColumnName 
+                                 select mrc.ReportColumnName
                                   ).ToList();
 
                     // Query to get column data types for the dynamic table
-                    string columnTypeQuery = $@"
-                                                SELECT COLUMN_NAME, DATA_TYPE 
-                                                FROM INFORMATION_SCHEMA.COLUMNS 
-                                                WHERE TABLE_NAME = '{skillset.SkillSetName}'";
-
-                    using SqlCommand sqlCommand_columnTypeQuery = connection.CreateCommand();
-                    sqlCommand_columnTypeQuery.CommandText = columnTypeQuery;
-
-                    using SqlDataAdapter dataAdapter_columnTypeQuery = new SqlDataAdapter(sqlCommand_columnTypeQuery);
-
-                    DataSet dataset_columnTypeQuery = new DataSet();
-
-                    dataAdapter_columnTypeQuery.Fill(dataset_columnTypeQuery);
-
-                    DataTable datatable_columnTypeQuery = dataset_columnTypeQuery.Tables[0];
-
-                    //query dt to get records
-                    var columnTypes = datatable_columnTypeQuery.AsEnumerable()
-                                      .Select(row => datatable_columnTypeQuery.Columns.Cast<DataColumn>().ToDictionary(
-                                      column => column.ColumnName,
-                                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                    SqlCommand sqlCommand_columnTypeQuery;
+                    SqlDataAdapter dataAdapter_columnTypeQuery;
+                    List<Dictionary<string, object>> columnTypes;
+                    GetDataType(connection, skillset, out sqlCommand_columnTypeQuery, out dataAdapter_columnTypeQuery, out columnTypes);
 
                     // Extract valid columns based on column type
                     var validDateCols = reportcol
@@ -3735,7 +3735,7 @@ namespace OMT.DataService.Service
                     string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sqlquery;
-                    
+
                     sqlCommand.Parameters.AddWithValue("@FromDate", skillsetWiseReportsDTO.FromDate);
                     sqlCommand.Parameters.AddWithValue("@ToDate", skillsetWiseReportsDTO.ToDate);
 
@@ -3776,37 +3776,53 @@ namespace OMT.DataService.Service
                                      select mrc.ReportColumnName
                                      ).ToList();
 
-                        string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
+                        // Query to get column data types for the dynamic table
+                        SqlCommand sqlCommand_columnTypeQuery;
+                        SqlDataAdapter dataAdapter_columnTypeQuery;
+                        List<Dictionary<string, object>> columnTypes;
+                        GetDataType(connection, skillsetdetails2, out sqlCommand_columnTypeQuery, out dataAdapter_columnTypeQuery, out columnTypes);
+
+                        // Extract valid columns based on column type
+                        var validDateCols = reportcol
+                                                     .Where(col => columnTypes.Any(ct =>
+                                                         ct.ContainsKey("COLUMN_NAME") &&
+                                                         ct.ContainsKey("DATA_TYPE") &&
+                                                         ct["COLUMN_NAME"].ToString() == col &&
+                                                         (ct["DATA_TYPE"].ToString() == "datetime" || ct["DATA_TYPE"].ToString() == "date")))
+                                                     .ToList();
+
+
+                        string sqlquery1 = $"SELECT ";
 
                         if (reportcol.Count > 0)
                         {
                             foreach (string col in reportcol)
                             {
-                                if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                                if (validDateCols.Contains(col))
                                 {
                                     sqlquery1 += $@"
-                                                  CASE 
-                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
-                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
-                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
-                                                  END as {col}, ";
-
+                                               CASE 
+                                                   WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                   THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                   ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                               END as {col}, ";
                                 }
                                 else
                                 {
-
                                     sqlquery1 += $"t.{col}, ";
                                 }
                             }
                         }
 
-                        string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                        string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
+                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
+                                      $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
                                       $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                                      $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
                                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
                                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                                      $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken " +
-                                      $"FROM {skillsetname} t " +
+                                      $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                      $"ss.SkillSetName as SkillSet " +
+                                      $"FROM {skillsetdetails2.SkillSetName} t " +
                                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
                                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
@@ -3847,47 +3863,63 @@ namespace OMT.DataService.Service
                 {
                     SkillSet skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetWiseReportsDTO.SkillSetId && x.IsActive).FirstOrDefault();
 
-                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSet,ps.Status as Status,t.Remarks,";
-
                     reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                  join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                  where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
                                  select mrc.ReportColumnName
                                  ).ToList();
 
+                    // Query to get column data types for the dynamic table
+                    SqlCommand sqlCommand_columnTypeQuery;
+                    SqlDataAdapter dataAdapter_columnTypeQuery;
+                    List<Dictionary<string, object>> columnTypes;
+                    GetDataType(connection, skillset, out sqlCommand_columnTypeQuery, out dataAdapter_columnTypeQuery, out columnTypes);
+
+                    // Extract valid columns based on column type
+                    var validDateCols = reportcol
+                                                 .Where(col => columnTypes.Any(ct =>
+                                                     ct.ContainsKey("COLUMN_NAME") &&
+                                                     ct.ContainsKey("DATA_TYPE") &&
+                                                     ct["COLUMN_NAME"].ToString() == col &&
+                                                     (ct["DATA_TYPE"].ToString() == "datetime" || ct["DATA_TYPE"].ToString() == "date")))
+                                                 .ToList();
+
+
+                    string sqlquery1 = $"SELECT ";
+
                     if (reportcol.Count > 0)
                     {
                         foreach (string col in reportcol)
                         {
-                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            if (validDateCols.Contains(col))
                             {
                                 sqlquery1 += $@"
-                                                  CASE 
-                                                     WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
-                                                     THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
-                                                     ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
-                                                  END as {col}, ";
-
+                                               CASE 
+                                                   WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                   THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
+                                                   ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                               END as {col}, ";
                             }
                             else
                             {
-
                                 sqlquery1 += $"t.{col}, ";
                             }
                         }
                     }
 
-                    string commonSqlPart = $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                                           $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                                           $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                           $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                                           $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                                           $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken " +
-                                           $"FROM {skillset.SkillSetName} t " +
-                                           $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                           $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                           $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                           $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
+                    string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
+                                  $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
+                                  $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                  $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                  $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                  $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                  $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                  $"ss.SkillSetName as SkillSet " +
+                                  $"FROM {skillset.SkillSetName} t " +
+                                  $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                  $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                  $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                       $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
 
                     string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                               ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
@@ -3940,6 +3972,28 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        private static void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes)
+        {
+            string columnTypeQuery = $@"
+                                                SELECT COLUMN_NAME, DATA_TYPE 
+                                                FROM INFORMATION_SCHEMA.COLUMNS 
+                                                WHERE TABLE_NAME = '{skillset.SkillSetName}'";
+            sqlCommand_columnTypeQuery = connection.CreateCommand();
+            sqlCommand_columnTypeQuery.CommandText = columnTypeQuery;
+            dataAdapter_columnTypeQuery = new SqlDataAdapter(sqlCommand_columnTypeQuery);
+            DataSet dataset_columnTypeQuery = new DataSet();
+
+            dataAdapter_columnTypeQuery.Fill(dataset_columnTypeQuery);
+
+            DataTable datatable_columnTypeQuery = dataset_columnTypeQuery.Tables[0];
+
+            //query dt to get records
+            columnTypes = datatable_columnTypeQuery.AsEnumerable()
+                              .Select(row => datatable_columnTypeQuery.Columns.Cast<DataColumn>().ToDictionary(
+                              column => column.ColumnName,
+                              column => row[column] == DBNull.Value ? "" : row[column])).ToList();
         }
 
         public ResultDTO GetMandatoryColumnNames(int skillsetid)
