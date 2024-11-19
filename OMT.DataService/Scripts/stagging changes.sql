@@ -2961,6 +2961,12 @@
 --ALTER TABLE ReportColumns
 --ADD MasterReportColumnId INT;
 
+--ALTER TABLE ReportColumns
+--ADD ColumnSequence INT;
+
+--ALTER TABLE ReportColumns
+--drop column ReportColumnName
+
 --ALTER TABLE ReportColumns                      
 --ADD CONSTRAINT FK_ReportColumns_skillset
 --FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
