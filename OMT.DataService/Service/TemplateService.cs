@@ -3773,8 +3773,9 @@ namespace OMT.DataService.Service
                         reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                      join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                      where rc.SkillSetId == skillsetdetails2.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                     orderby rc.ColumnSequence
                                      select mrc.ReportColumnName
-                                     ).ToList();
+                                    ).ToList();
 
                         // Query to get column data types for the dynamic table
                         SqlCommand sqlCommand_columnTypeQuery;
@@ -3866,6 +3867,7 @@ namespace OMT.DataService.Service
                     reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                  join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                  where rc.SkillSetId == skillsetWiseReportsDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillsetWiseReportsDTO.SystemOfRecordId
+                                 orderby rc.ColumnSequence
                                  select mrc.ReportColumnName
                                  ).ToList();
 
