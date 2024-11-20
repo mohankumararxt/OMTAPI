@@ -171,10 +171,23 @@ namespace OMT.DataService.Service
                     }
 
                     var rpm = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    if (rpm.Any())
                     {
                         _oMTDataContext.ResWareProductDescriptionMap.RemoveRange(rpm);
                         _oMTDataContext.SaveChanges();
                     }
+
+                    //delete from reportcolumns table
+                    var rc = _oMTDataContext.ReportColumns.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    foreach (var u in rc)
+                    {
+                        u.IsActive = false;
+                        _oMTDataContext.ReportColumns.Update(u);
+                    }
+
+                    _oMTDataContext.SaveChanges();
 
                     resultDTO.Message = "Skill Set has been deleted successfully";
                     resultDTO.IsSuccess = true;
@@ -402,7 +415,7 @@ namespace OMT.DataService.Service
                         UpdateGocTable(resultDTO, skillSetUpdateDTO.SkillSetId, skillSetUpdateDTO.Threshold);
                     }
 
-                    if (skillSetUpdateDTO.IsHardState == true && (skillSetUpdateDTO.StateName != null || skillSetUpdateDTO.StateName.Any()) )
+                    if (skillSetUpdateDTO.IsHardState == true && (skillSetUpdateDTO.StateName != null || skillSetUpdateDTO.StateName.Any()))
                     {
                         // Fetch all hard states (active or inactive) 
                         var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId).ToList();
