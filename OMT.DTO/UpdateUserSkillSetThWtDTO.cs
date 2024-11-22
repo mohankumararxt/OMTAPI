@@ -16,9 +16,10 @@ namespace OMT.DTO
     {
         public int? UserSkillSetId { get; set; } 
         public int SkillSetId { get; set; }
-        public int? Weightage { get; set; }
+        public int? Weightage { get; set; } 
         public bool IsHardStateUser { get; set; }
         //public string? HardStateName { get; set; }
-        public List<string>? HardStateName { get; set; }
+       // public List<string>? HardStateName { get; set; }
+        public List<UPdateHardStateDetailsDTO> HardStateDetails { get; set; }
     }
 }
