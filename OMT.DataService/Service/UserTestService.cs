@@ -123,14 +123,24 @@ namespace OMT.DataService.Service
                 if (existingdata != null)
                 {
 
-                    existingdata.WPM = updateUserTests.WPM;
-                    existingdata.Accuracy = updateUserTests.Accuracy;
-                    existingdata.EndTime = updateUserTests.datetime;
+                    if (existingdata.WPM == null && existingdata.Accuracy == null)
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Please fill all required fields";
+                        resultDTO.StatusCode = "500";
+                    }
+                    else
+                    {
+                        existingdata.WPM = updateUserTests.WPM;
+                        existingdata.Accuracy = updateUserTests.Accuracy;
+                        existingdata.EndTime = updateUserTests.datetime;
 
-                    _oMTDataContext.UserTest.Update(existingdata);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Updated InterviewTests Successfully";
+                        _oMTDataContext.UserTest.Update(existingdata);
+                        _oMTDataContext.SaveChanges();
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Updated InterviewTests Successfully";
+                    }
+
                 }
                 else
                 {
@@ -158,32 +168,39 @@ namespace OMT.DataService.Service
             {
                 //DateOnly dobDateOnly = DateOnly.FromDateTime(userInterviewsDTO.DOB);
                 // Check if TypingUsers is not null to avoid NullReferenceException
+                if (numberofdays >= 0 && numberofdays != 0)
+                {
+                    var result = from itest in _oMTDataContext.UserTest
+                                 join test in _oMTDataContext.Tests
+                                 on itest.TestId equals test.Id
+                                 join user in _oMTDataContext.UserProfile
+                                 on itest.UserId equals user.UserId
+                                 where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays)
+                                 orderby itest.CreateTimestamp descending
+                                 select new LeaderboardUserTestDTO()
+                                 {
+                                     username = user.FirstName + " " + user.LastName,
+                                     text = test.Test_text,
+                                     wpm = itest.WPM,
+                                     accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f,  // Handle nullable Double
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
+                                 };
 
 
-                var result = from itest in _oMTDataContext.UserTest
-                             join test in _oMTDataContext.Tests
-                             on itest.TestId equals test.Id
-                             join user in _oMTDataContext.UserProfile
-                             on itest.UserId equals user.UserId
-                             where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays)
-                             orderby itest.CreateTimestamp descending
-                             select new LeaderboardUserTestDTO()
-                             {
-                                 username = user.FirstName + " " + user.LastName,
-                                 text = test.Test_text,
-                                 wpm = itest.WPM,
-                                 accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f,  // Handle nullable Double
-                                 testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
-                             };
+                    // Example: Convert the result to a list
+                    var joinedData = result.ToList();
 
 
-                // Example: Convert the result to a list
-                var joinedData = result.ToList();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Leaderboard fetch successfully...";
+                    resultDTO.Data = joinedData;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Invalid number of days please check again...";
+                }
 
-
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "Leaderboard fetch successfully...";
-                resultDTO.Data = joinedData;
 
 
             }
@@ -197,6 +214,7 @@ namespace OMT.DataService.Service
 
             // Return the result DTO
             return resultDTO;
-        }
+        }     
+
     }
 }
