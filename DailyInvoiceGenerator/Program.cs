@@ -77,8 +77,8 @@ namespace DailyInvoiceGenerator
                         if (systemOfRecordId == 3)
                         {
                             DateTime utcNow = DateTime.UtcNow;
-                            DateTime yesterday = utcNow.Date.AddDays(-1).AddHours(12);
-                            DateTime today = utcNow.Date.AddHours(12);
+                            DateTime yesterday = utcNow.Date.AddDays(-1).AddHours(11).AddMinutes(30);
+                            DateTime today = utcNow.Date.AddHours(11).AddMinutes(30);
 
                             string updateAllocationdate = $"UPDATE {tabelname} SET AllocationDate = @yesterday WHERE CompletionDate BETWEEN @starttime AND @endtime";
 
