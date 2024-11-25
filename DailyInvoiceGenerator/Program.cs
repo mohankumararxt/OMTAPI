@@ -43,6 +43,7 @@ namespace DailyInvoiceGenerator
         {
             string Url = ConfigurationManager.AppSettings["SendEmailUrl"];
             string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+            var sp = "";
 
             try
             {
@@ -89,9 +90,21 @@ namespace DailyInvoiceGenerator
                             upaldate.Parameters.AddWithValue("@endtime", today);
 
                             upaldate.ExecuteNonQuery();
+
+                            sp = "GetInvoice_TRD";
+                        }
+
+                        if (systemOfRecordId == 1)
+                        {
+                            sp = "GetInvoice_SCI";
+                        }
+
+                        if (systemOfRecordId == 2)
+                        {
+                            sp = "GetInvoice_Resware";
                         }
                         // Call the stored procedure with parameters derived from the current row
-                        using (SqlCommand spCommand = new SqlCommand("GetInvoice", connection))
+                        using (SqlCommand spCommand = new SqlCommand(sp, connection))
                         {
                             spCommand.CommandType = CommandType.StoredProcedure;
 
