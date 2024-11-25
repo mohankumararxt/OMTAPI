@@ -45,9 +45,9 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("IntervieweesLeaderboard")]
-        public ResultDTO GetIntervieweesLeaderboard()
+        public ResultDTO GetIntervieweesLeaderboard(int numberofdays)
         {
-            return _interviewService.GetIntervieweesLeaderboard();
+            return _interviewService.GetIntervieweesLeaderboard(numberofdays);
         }
 
     }

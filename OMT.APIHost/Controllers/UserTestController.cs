@@ -37,9 +37,9 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("UserTestLeaderboard")]
-        public ResultDTO GetUserTestLeaderboard()
+        public ResultDTO GetUserTestLeaderboard(int numberofdays)
         {
-            return _userTestService.GetUserTestLeaderboard();   
+            return _userTestService.GetUserTestLeaderboard(numberofdays);   
         }
     }
 }

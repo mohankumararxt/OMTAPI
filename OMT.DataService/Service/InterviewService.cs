@@ -210,7 +210,7 @@ namespace OMT.DataService.Service
         }
 
 
-        public ResultDTO GetIntervieweesLeaderboard()
+        public ResultDTO GetIntervieweesLeaderboard(int numberofdays)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
@@ -221,21 +221,23 @@ namespace OMT.DataService.Service
                              on itest.TestId equals test.Id
                              join user in _oMTDataContext.UserInterviews
                              on itest.UserId equals user.Id
+                             where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays) // Adjust number of days properly
                              orderby itest.CreateTimestamp descending
                              select new LeaderboardDTO()
                              {
                                  username = user.Firstname + " " + user.Lastname,
                                  email = user.Email,
-                                 phone = user.phone,
+                                 phone = user.phone, // Correct casing for consistency
                                  wpm = itest.WPM,
-                                 accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f,  // Handle nullable Double
+                                 accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f, // Handling nullable
                                  duration = test.Duration,
-                                 testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
+                                 testdate = DateOnly.FromDateTime(itest.CreateTimestamp) // Convert to DateOnly
                              };
 
 
-                    // Example: Convert the result to a list
-                    var joinedData = result.ToList();
+
+                // Example: Convert the result to a list
+                var joinedData = result.ToList();
 
 
                     resultDTO.IsSuccess = true;

@@ -16,7 +16,7 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateInterviewStartTime(UpdateInterviewTestTimeDTO updateInterviewTestTime);
 
         ResultDTO UpdateInterviewTests(UpdateInterviewTestsDTO updateInterviewTests);
-        ResultDTO GetIntervieweesLeaderboard();
+        ResultDTO GetIntervieweesLeaderboard(int numberofdays);
 
         //ResultDTO getLeaderboardByUser(string username);
     }

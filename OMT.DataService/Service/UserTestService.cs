@@ -150,7 +150,7 @@ namespace OMT.DataService.Service
         }
 
 
-        public ResultDTO GetUserTestLeaderboard()
+        public ResultDTO GetUserTestLeaderboard(int numberofdays)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
@@ -165,6 +165,7 @@ namespace OMT.DataService.Service
                              on itest.TestId equals test.Id
                              join user in _oMTDataContext.UserProfile
                              on itest.UserId equals user.UserId
+                             where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays)
                              orderby itest.CreateTimestamp descending
                              select new LeaderboardUserTestDTO()
                              {
