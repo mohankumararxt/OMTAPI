@@ -178,7 +178,7 @@ namespace OMT.DataService.Utility
                             UpdatedDate = DateTime.Now,
                             IsCycle1 = userSkillset.IsCycle1,
                             IsHardStateUser = userSkillset.IsHardStateUser,
-                            Utilized = false,
+                            Utilized = userSkillset.IsCycle1 == false ? false : roundedtotalorders == 0 ? true : false,
                             HardStateUtilized = false,
                         };
 
