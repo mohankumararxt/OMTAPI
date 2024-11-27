@@ -996,7 +996,7 @@ namespace OMT.DataService.Service
                                 if (item.Weightage != ExistingWeightage)
                                 {
                                     double totalorders = ((double)item.Weightage / 100) * threshold;
-                                    int roundedtotalorders = (int)Math.Round(totalorders);
+                                    int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                                     if (hs_present.OrdersCompleted != roundedtotalorders && hs_present.OrdersCompleted < roundedtotalorders && hs_present.IsCycle1)
                                     {
@@ -1015,7 +1015,7 @@ namespace OMT.DataService.Service
                             else
                             {
                                 double totalorders = ((double)item.Weightage / 100) * threshold;
-                                int roundedtotalorders = (int)Math.Round(totalorders);
+                                int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                                 var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId && x.IsHardStateUser && x.HardStateName == item.HardStateName).FirstOrDefault();
 
@@ -1028,7 +1028,7 @@ namespace OMT.DataService.Service
                                     OrdersCompleted = 0,
                                     Weightage = item.Weightage,
                                     PriorityOrder = currentPriorityOrder,
-                                    Utilized = false,
+                                    Utilized = roundedtotalorders == 0 ? true : false,
                                     IsActive = true,
                                     UpdatedDate = DateTime.Now,
                                     IsCycle1 = true,
@@ -1060,7 +1060,7 @@ namespace OMT.DataService.Service
                         if (USS_ip.Weightage != ExistingWeightage_n)
                         {
                             double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
-                            int roundedtotalorders = (int)Math.Round(totalorders);
+                            int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                             if (ns_present.OrdersCompleted != roundedtotalorders && ns_present.OrdersCompleted < roundedtotalorders && ns_present.IsCycle1)
                             {
@@ -1079,7 +1079,7 @@ namespace OMT.DataService.Service
                     else
                     {
                         double totalorders = ((double)USS_ip.Weightage / 100) * threshold;
-                        int roundedtotalorders = (int)Math.Round(totalorders);
+                        int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                         var ussid = _oMTDataContext.UserSkillSet.Where(x => x.UserId == updateUserSkillSetThWtDTO.UserId && x.IsActive && x.IsCycle1 && x.SkillSetId == USS_ip.SkillSetId && !x.IsHardStateUser && x.HardStateName == "").FirstOrDefault();
 
@@ -1092,7 +1092,7 @@ namespace OMT.DataService.Service
                             OrdersCompleted = 0,
                             Weightage = (int)USS_ip.Weightage,
                             PriorityOrder = currentPriorityOrder,
-                            Utilized = false,
+                            Utilized = roundedtotalorders == 0 ? true : false,
                             IsActive = true,
                             UpdatedDate = DateTime.Now,
                             IsCycle1 = true,

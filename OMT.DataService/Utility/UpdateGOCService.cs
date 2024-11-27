@@ -163,14 +163,14 @@ namespace OMT.DataService.Utility
 
                         double totalorders = ((double)userSkillset.Percentage / 100) * skillset.Threshold;
 
-                        int roundedtotalorders = (int)Math.Round(totalorders);
+                        int roundedtotalorders = totalorders == 0 ? 0: (totalorders > 0 && totalorders < 1)? 1: (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                         GetOrderCalculation getOrderCalculation = new GetOrderCalculation
                         {
                             UserId = userSkillset.UserId,
                             UserSkillSetId = userSkillset.UserSkillSetId,
                             SkillSetId = userSkillset.SkillSetId,
-                            TotalOrderstoComplete = roundedtotalorders,
+                            TotalOrderstoComplete = userSkillset.IsCycle1 == true ? roundedtotalorders:0,
                             OrdersCompleted = 0,
                             Weightage = userSkillset.Percentage,
                             PriorityOrder = currentPriorityOrder,
@@ -178,7 +178,7 @@ namespace OMT.DataService.Utility
                             UpdatedDate = DateTime.Now,
                             IsCycle1 = userSkillset.IsCycle1,
                             IsHardStateUser = userSkillset.IsHardStateUser,
-                            Utilized = false,
+                            Utilized = userSkillset.IsCycle1 == false ? false : roundedtotalorders == 0 ? true : false,
                             HardStateUtilized = false,
                         };
 
