@@ -1187,7 +1187,8 @@ namespace OMT.DataService.Service
 
                         if (skillSet.SystemofRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                             if (agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 // Convert IST to UTC
@@ -1196,8 +1197,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1360,9 +1361,11 @@ namespace OMT.DataService.Service
                     {
                         // Adjust CompletionDate field placement after Status
                         completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+
                         dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                      ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                      : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+
                         if (agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
                             fromDate = fromDate.AddHours(-5).AddMinutes(-30);
@@ -1372,7 +1375,8 @@ namespace OMT.DataService.Service
 
                     if (skillSet.SystemofRecordId != 1)
                     {
-                        completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                        completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                         if (agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
                             // Convert IST to UTC
@@ -1381,8 +1385,8 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddDays(-1).AddHours(8);
-                            toDate = toDate.AddHours(8);
+                            fromDate = fromDate.AddHours(8);
+                            toDate = toDate.AddDays(1).AddHours(8);
                         }
 
                         dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1553,9 +1557,11 @@ namespace OMT.DataService.Service
                         {
                             // Adjust CompletionDate field placement after Status
                             completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                          ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                          : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+
                             if (agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 fromDate = fromDate.AddHours(-5).AddMinutes(-30);
@@ -1565,7 +1571,8 @@ namespace OMT.DataService.Service
 
                         if (skillSet.SystemofRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                             if (agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 // Convert IST to UTC
@@ -1574,8 +1581,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1770,9 +1777,11 @@ namespace OMT.DataService.Service
                         {
                             // Adjust CompletionDate field placement after Status
                             completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                          ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                          : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+
                             if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 fromDate = fromDate.AddHours(-5).AddMinutes(-30);
@@ -1782,7 +1791,8 @@ namespace OMT.DataService.Service
 
                         if (skillSet.SystemofRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                             if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 // Convert IST to UTC
@@ -1791,8 +1801,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -1953,9 +1963,11 @@ namespace OMT.DataService.Service
                     {
                         // Adjust CompletionDate field placement after Status
                         completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+
                         dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                      ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                      : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+
                         if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
                             fromDate = fromDate.AddHours(-5).AddMinutes(-30);
@@ -1965,7 +1977,8 @@ namespace OMT.DataService.Service
 
                     if (skillSet.SystemofRecordId != 1)
                     {
-                        completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                        completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                         if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
                             // Convert IST to UTC
@@ -1974,8 +1987,8 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddDays(-1).AddHours(8);
-                            toDate = toDate.AddHours(8);
+                            fromDate = fromDate.AddHours(8);
+                            toDate = toDate.AddDays(1).AddHours(8);
                         }
                         dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                  ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2144,9 +2157,11 @@ namespace OMT.DataService.Service
                         {
                             // Adjust CompletionDate field placement after Status
                             completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                          ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                          : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+
                             if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 fromDate = fromDate.AddHours(-5).AddMinutes(-30);
@@ -2156,7 +2171,8 @@ namespace OMT.DataService.Service
 
                         if (skillSet.SystemofRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
                             if (teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 // Convert IST to UTC
@@ -2165,8 +2181,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -4135,7 +4151,7 @@ namespace OMT.DataService.Service
                         
                         if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
 
                             if (skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
@@ -4145,8 +4161,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
                            
 
@@ -4300,7 +4316,7 @@ namespace OMT.DataService.Service
 
                     if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                     {
-                        completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                        completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
 
                         if (skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
@@ -4310,8 +4326,8 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddDays(-1).AddHours(8);
-                            toDate = toDate.AddHours(8);
+                            fromDate = fromDate.AddHours(8);
+                            toDate = toDate.AddDays(1).AddHours(8);
                         }
 
 
@@ -4473,7 +4489,7 @@ namespace OMT.DataService.Service
 
                         if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                         {
-                            completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                            completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
 
                             if (skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
@@ -4483,8 +4499,8 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddDays(-1).AddHours(8);
-                                toDate = toDate.AddHours(8);
+                                fromDate = fromDate.AddHours(8);
+                                toDate = toDate.AddDays(1).AddHours(8);
                             }
 
 
@@ -4634,7 +4650,7 @@ namespace OMT.DataService.Service
 
                     if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                     {
-                        completionDateField = $"CONVERT(VARCHAR(10), t.CompletionDate, 101) as CompletionDate";
+                        completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
 
                         if (skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                         {
@@ -4644,8 +4660,8 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddDays(-1).AddHours(8);
-                            toDate = toDate.AddHours(8);
+                            fromDate = fromDate.AddHours(8);
+                            toDate = toDate.AddDays(1).AddHours(8);
                         }
 
 
