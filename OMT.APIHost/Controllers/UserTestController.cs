@@ -43,5 +43,12 @@ namespace OMT.APIHost.Controllers
         {
             return _userTestService.GetUserTestLeaderboard(numberofdays);   
         }
+
+        [HttpGet]
+        [Route("Test")]
+        public ResultDTO Test(int userId)
+        {
+            return _userTestService.Test(userId);
+        }
     }
 }

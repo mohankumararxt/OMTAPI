@@ -214,7 +214,42 @@ namespace OMT.DataService.Service
 
             // Return the result DTO
             return resultDTO;
-        }     
+        }
 
+        public ResultDTO Test(int userId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                //string encrytedUserId = Encryption.EncryptPlainTextToCipherText(userId);
+                //string decryptedUserIdString = Encryption.DecryptCipherTextToPlainText(encrytedUserId);
+                //int.TryParse(decryptedUserIdString, out int decryptedUserId);
+                var existingdata = _oMTDataContext?.UserTest
+                            .Where(x => x.UserId == userId && x.StartTime == null && x.EndTime == null).FirstOrDefault();
+                if (existingdata != null)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "fetch starttime and endtime null successfully ";
+                    resultDTO.Data = existingdata;
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User Id not found";
+                    resultDTO.StatusCode = "400";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and update the result DTO with error details
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            // Return the result DTO
+            return resultDTO;
+        }
     }
 }
