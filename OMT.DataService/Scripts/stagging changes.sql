@@ -3004,6 +3004,8 @@
 --Description  NVARCHAR(MAX) null,
 --Comments  NVARCHAR(MAX) null,
 --Date_Created  DATETIME null,
+--Processor_Name NVARCHAR(200) null,
+--Completion_Date DATE null
 --)
 
 --insert into ProcessStatus values (3,'Complex',1)
