@@ -248,6 +248,7 @@ namespace OMT.DataService.Service
                                  select new LeaderboardDTO()
                                  {
                                      username = user.Firstname + " " + user.Lastname,
+                                     experience = user.Experience,
                                      email = user.Email,
                                      phone = user.phone, // Correct casing for consistency
                                      wpm = itest.WPM,

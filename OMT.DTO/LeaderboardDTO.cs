@@ -9,6 +9,7 @@ namespace OMT.DTO
     public class LeaderboardDTO
     {
         public string username { get; set; }
+        public int experience { get; set; }
         public string email { get; set; }
         public string phone {  get; set; }
         public int? wpm { get; set; }
