@@ -492,7 +492,7 @@ namespace OMT.DataService.Service
 
                         double totalorders = ((double)uss.Weightage / 100) * threshold;
 
-                        int roundedtotalorders = (int)Math.Round(totalorders);
+                        int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                         if (uss.OrdersCompleted != roundedtotalorders && uss.OrdersCompleted < roundedtotalorders && uss.IsCycle1)
                         {
