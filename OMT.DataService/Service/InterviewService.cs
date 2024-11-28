@@ -237,13 +237,18 @@ namespace OMT.DataService.Service
             {
                 if (numberofdays >= 0 && numberofdays != null) 
                 {
-
+                    var subday = DateTime.UtcNow.Date;
+                    if (numberofdays > 0)
+                    {
+                        subday = subday.AddDays(-numberofdays);
+                    }
+                    
                     var result = from itest in _oMTDataContext.InterviewTests
                                  join test in _oMTDataContext.Tests
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays) // Adjust number of days properly
+                                 where itest.CreateTimestamp.Date >= subday
                                  orderby itest.CreateTimestamp descending
                                  select new LeaderboardDTO()
                                  {
@@ -261,7 +266,6 @@ namespace OMT.DataService.Service
 
                     // Example: Convert the result to a list
                     var joinedData = result.ToList();
-
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Leaderboard fetch successfully...";
