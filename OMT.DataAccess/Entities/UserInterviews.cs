@@ -18,8 +18,10 @@ namespace OMT.DataAccess.Entities
         public string Lastname { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string phone { get; set; } = string.Empty;
+        
         //public DateOnly DOB { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreateTimestamp { get; set; }
+        public int Experience { get; set; }
     }
 }

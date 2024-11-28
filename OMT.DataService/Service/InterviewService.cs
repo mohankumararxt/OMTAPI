@@ -38,7 +38,7 @@ namespace OMT.DataService.Service
                 // Check if TypingUsers is not null to avoid NullReferenceException
                 var user = _oMTDataContext?.UserInterviews
                     .Where(x => x.Firstname == userInterviewsDTO.Firstname && x.Lastname == userInterviewsDTO.Lastname && 
-                    x.Email == userInterviewsDTO.Email && x.phone == userInterviewsDTO.phone).FirstOrDefault();
+                    x.Email == userInterviewsDTO.Email && x.phone == userInterviewsDTO.phone && x.Experience == userInterviewsDTO.Experience).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -47,7 +47,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    if (userInterviewsDTO.Firstname == "" || userInterviewsDTO.Lastname == "" || userInterviewsDTO.Email == "" || userInterviewsDTO.phone == "")
+                    if (userInterviewsDTO.Firstname == "" || userInterviewsDTO.Lastname == "" || userInterviewsDTO.Email == "" || userInterviewsDTO.phone == "" || userInterviewsDTO == null)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
@@ -77,7 +77,8 @@ namespace OMT.DataService.Service
                             Firstname = userInterviewsDTO.Firstname,
                             Lastname = userInterviewsDTO.Lastname,
                             Email = userInterviewsDTO.Email,
-                            phone = userInterviewsDTO.phone
+                            phone = userInterviewsDTO.phone,
+                            Experience = userInterviewsDTO.Experience
                             //CreateTimestamp = DateTime.Now
                         };
                         _oMTDataContext.Add(newUser);
@@ -191,7 +192,7 @@ namespace OMT.DataService.Service
                         .Where(x => x.Id == updateInterviewTests.Id).FirstOrDefault();
                 if (existingdata != null)
                 {
-                    if (existingdata.WPM == null && existingdata.Accuracy == null)
+                    if (updateInterviewTests.WPM == null && updateInterviewTests.Accuracy == null)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";

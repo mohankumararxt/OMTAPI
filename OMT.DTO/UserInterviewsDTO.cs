@@ -17,6 +17,8 @@ namespace OMT.DTO
         public string Email { get; set; } = string.Empty;
         public string phone { get; set; } = string.Empty;
 
+        public int Experience { get; set; }
+
         //public DateTime DOB { get; set; }
 
         //public DateTime DOBOnly => DOB.Date;
