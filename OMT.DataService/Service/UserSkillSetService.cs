@@ -894,7 +894,7 @@ namespace OMT.DataService.Service
                                 SkillSetId = Uss_skillset.SkillSetId,
                                 HardStateName = "",
                                 IsHardStateUser = false,
-                                IsCycle1 = true,
+                                IsCycle1 = false,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
                             };
