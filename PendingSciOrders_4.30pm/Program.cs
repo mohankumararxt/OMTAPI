@@ -12,7 +12,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PendingSciOrders
+namespace PendingSciOrders_4._30pm
 {
     // To learn more about Microsoft Azure WebJobs SDK, please see https://go.microsoft.com/fwlink/?LinkID=320976
     internal class Program
@@ -32,7 +32,7 @@ namespace PendingSciOrders
             //// The following code ensures that the WebJob will be running continuously
             //host.RunAndBlock();
 
-            SetSciOrdersToPending();
+            SetSciOrdersToPending_4_30pm();
         }
 
         public class EmailDetails
@@ -42,7 +42,7 @@ namespace PendingSciOrders
             public string Body { get; set; }
         }
 
-        public static void SetSciOrdersToPending()
+        public static void SetSciOrdersToPending_4_30pm()
         {
 
             string Url = "";
@@ -61,7 +61,7 @@ namespace PendingSciOrders
                                             INNER JOIN SciPendingStatusSkillsets SPS ON SPS.SkillSetId = SS.SkillSetId
                                             INNER JOIN ProcessStatus PS ON PS.SystemofRecordId = SS.SystemofRecordId
                                             INNER JOIN TemplateColumns TC ON TC.SkillSetId = SS.SkillSetId
-                                            WHERE SS.isactive = 1 AND PS.Status = 'Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '12.45 PM' AND SPS.Scheduled_Days = 'Mon-Fri'
+                                            WHERE SS.isactive = 1 AND PS.Status = 'Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '04.30 PM' AND SPS.Scheduled_Days = 'Mon-Sun'
                                             ORDER BY SkillSetId";
 
                     SqlCommand GetSkillsets = new SqlCommand(SciSkillsets, connection);

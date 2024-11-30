@@ -3420,3 +3420,22 @@
 --REFERENCES ProcessStatus(Id);
 
 ---change insertdata sp
+
+-- create table SciPendingStatusSkillsets
+--(
+--Id int IDENTITY(1,1) primary key,
+--SkillSetId int not null,
+--IsActive bit not null DEFAULT 1,
+--ScheduleNo int not null
+--)
+
+--ALTER TABLE SciPendingStatusSkillsets
+--ADD CONSTRAINT fk_SciPendingStatusSkillsets
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table SciPendingStatusSkillsets
+--add Scheduled_Time nvarchar(50)
+
+--alter table SciPendingStatusSkillsets
+--add Scheduled_Days nvarchar(50)
