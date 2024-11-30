@@ -3125,3 +3125,28 @@
 --REFERENCES ProcessStatus(Id);
 
 ---change insertdata sp
+
+--drop table SciPendingStatusSkillsets
+-- create table SciPendingStatusSkillsets
+--(
+--Id int IDENTITY(1,1) primary key,
+--SkillSetId int not null,
+--IsActive bit not null DEFAULT 1,
+--Scheduled_Time nvarchar(50) not null,
+--Scheduled_Days nvarchar(50)
+--)
+
+
+--ALTER TABLE SciPendingStatusSkillsets
+--ADD CONSTRAINT fk_SciPendingStatusSkillsets
+--FOREIGN KEY (SkillSetId)
+
+--insert into SciPendingStatusSkillsets values 
+--(1,1,'12.45 PM','Mon-Fri'),
+--(3,1,'12.45 PM','Mon-Fri'),
+--(78,1,'12.45 PM','Mon-Fri'),
+--(673,1,'04.30 PM','Mon-Sun'),
+--(674,1,'04.30 PM','Mon-Sun'),
+--(1,1,'05:00 PM','Sat'),
+--(3,1,'05:00 PM','Sat'),
+--(78,1,'05:00 PM','Sat')
