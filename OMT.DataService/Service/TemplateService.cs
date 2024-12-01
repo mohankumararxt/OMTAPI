@@ -390,7 +390,7 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        ////call store procedure to update goc table to rearange priority of user skillsets
+                        //call store procedure to update goc table to rearange priority of user skillsets
 
                         //if (HasPriorityOrder)
                         //{
@@ -420,7 +420,7 @@ namespace OMT.DataService.Service
                         //    {
                         //        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
                         //    }
-                        }
+                        //}
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
