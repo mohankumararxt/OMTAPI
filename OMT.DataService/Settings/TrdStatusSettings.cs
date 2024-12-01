@@ -8,7 +8,6 @@ namespace OMT.DataService.Settings
 {
     public class TrdStatusSettings
     {
-    
         public int TRDcompletedManualStatusID { get; set; }
         public int TRDpendingStatusID { get; set; }
         public string TrdURL { get; set; }  

@@ -7,7 +7,7 @@ namespace OMT.DataAccess.Entities
         [Key]
         public int Id { get; set; }
         public int SkillSetId { get; set; }
-        public string StateName { get; set; }
+        public string? StateName { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
 

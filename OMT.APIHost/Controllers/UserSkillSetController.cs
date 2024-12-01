@@ -28,7 +28,7 @@ namespace OMT.APIHost.Controllers
         [Route("list/{userid:int?}")]
         public ResultDTO GetUserSkillSetList(int? userid)
         {
-           return _userSkillSetService.GetUserSkillSetList(userid);
+            return _userSkillSetService.GetUserSkillSetList(userid);
         }
 
         /// <summary>
@@ -92,6 +92,29 @@ namespace OMT.APIHost.Controllers
         public ResultDTO BulkUpdate(BulkUserSkillsetUpdateDTO bulkUserSkillsetUpdateDTO)
         {
             return _userSkillSetService.BulkUpdate(bulkUserSkillsetUpdateDTO);
+        }
+
+        [HttpPost]
+        [Route("createMultipleUserSkillset")]
+        public ResultDTO CreateMultipleUserSkillset([FromBody] MultipleUserSkillSetCreateDTO multipleUserSkillSetCreateDTO)
+        {
+            ResultDTO resultDTO = _userSkillSetService.CreateMultipleUserSkillset(multipleUserSkillSetCreateDTO);
+            return resultDTO;
+        }
+
+        [HttpGet]
+        [Route("userskillsetlist/{userid:int?}")]
+        public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
+        {
+            return _userSkillSetService.ConsolidatedUserSkillSetlist(userid);
+        }
+
+        [HttpPut]
+        [Route("UpdateUserskillset")]
+        public ResultDTO UpdateUserSkillSetThWt([FromBody] UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO)
+        {
+            ResultDTO result = _userSkillSetService.UpdateUserSkillSetThWt(updateUserSkillSetThWtDTO);
+            return result;
         }
     }
 }

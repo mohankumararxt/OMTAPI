@@ -1317,7 +1317,7 @@
 
 
 --CREATE TABLE [dbo].[InvoiceJointTrd](
---	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL,
+--	[InvoiceJointTrdId] [int] IDENTITY(1,1) NOT NULL primary key,
 --	[SystemOfRecordId] [int] NOT NULL,
 --	[SkillSetId] [int] NOT NULL,
 --	[CustomerId] [int] NOT NULL,
@@ -3217,6 +3217,7 @@
 --(3,517,1,1,6,7,4),
 --(3,518,1,1,6,7,4),
 
+-----------------------------------------------------------add in prod-------------------------------
 
 --ALTER TABLE DocType
 --ADD CONSTRAINT UQ_TDocTypeId UNIQUE (TrdDocTypeId);
@@ -3239,7 +3240,205 @@
 --insert into defaulttemplatecolumns values(3,'IsPending','bit default 0',1,0,0,0,0)
 --update trdmap set skillsetid = 344 where trdmapid = 67
 
---update defaulttemplatecolumns set isduplicatecheck = 0 where id = 35
+--CREATE TABLE [dbo].[MasterReportColumns](
+--	[MasterReportColumnsId] [int] IDENTITY(1,1) NOT NULL primary key,
+--	[ReportColumnName] NVARCHAR(200) NOT NULL)
 
---ALTER TABLE skillset
+--insert into MasterReportColumns values ('CustomerId'), ('ResWareProductDescriptions'), ('PropertyState'), ('County'), ('ProjectId'), ('DocType'), ('DocImageDate')
+
+--update MasterReportColumns set ReportColumnName = '' where MasterReportColumnsId = 8
+
+--insert into MasterReportColumns values ('ProjectId'), ('Name'), ('Reference'), ('JurisdictionDocType'),  ('DateAddedtoKWF'), ('DateReceived'), ('DateImaged'), ('DefaultDays'), ('NeverKeyed'), ('ERecordable'), ('KeyingDueDate'), ('ShippingDateDue'), ('Isthisarush'), ('WorkflowStatus'), ('AllottedDate'), ('AllocatedTo'), ('ProcessorName'), ('Shippingdatedue'), ('Faiprocess'), ('Default_buckets'), ('Date_dr__keyed__data__and__image__uploaded'), ('AllocatedPartner'), ('ProcessorFullname'), ('LoanNumber'), ('ServicerLoanNumber'), ('BorrowerFirstName'), ('BorrowerLastName'), ('PropertyStreetAddress1'), ('PropertyStreetAddress2'), ('City'), ('State'), ('County'), ('Zip'), ('LoanAmount'), ('AllottedTo')
+
+--ALTER TABLE ReportColumns
+--ADD SkillSetId INT;
+
+--ALTER TABLE ReportColumns
+--ADD MasterReportColumnId INT;
+
+--ALTER TABLE ReportColumns
+--ADD ColumnSequence INT;
+
+--ALTER TABLE ReportColumns
+--drop column ReportColumnName
+
+--ALTER TABLE ReportColumns                      
+--ADD CONSTRAINT FK_ReportColumns_skillset
+--FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE ReportColumns
+--ADD CONSTRAINT FK_ReportColumns_master
+--FOREIGN KEY (MasterReportColumnId) REFERENCES MasterReportColumns(MasterReportColumnsId);
+
+--ALTER TABLE ReportColumns
+--ALTER COLUMN ReportColumnName varchar(100) NULL;
+
+--do this before inserting
+--update reportcolumns set isactive = 0 
+-- for hardstate ------
+--ALTER TABLE SkillSet
 --ADD IsHardState BIT;
+
+-- make reportcolumns reportcolumnname as null ,change cretaetrddetails and livereport sp 
+
+-- for hardstate ------
+--ALTER TABLE SkillSet
+--ADD IsHardState BIT;
+
+--UPDATE SKILLSET SET ISHARDSTATE = 0 
+--UPDATE SKILLSET SET ISHARDSTATE = 1 WHERE SKILLSETID IN (1,3,78)
+--------------------------------------------exception changes-------------------------------
+
+--create table SciException
+--(
+--Id int IDENTITY(1,1) primary key,
+--Project NVARCHAR(200) null,
+--Loan NVARCHAR(200) null,
+--Valid_Invalid NVARCHAR(100) null,
+--Status NVARCHAR(100) null,
+--Question NVARCHAR(MAX) null,
+--Code NVARCHAR(100) null,
+--CodeName NVARCHAR(300) null,
+--Description  NVARCHAR(MAX) null,
+--Comments  NVARCHAR(MAX) null,
+--Date_Created  DATETIME null,
+--Processor_Name NVARCHAR(200) null,
+--Completion_Date DATE null
+--)
+
+--insert into ProcessStatus values (3,'Complex',1)
+
+----------------------------------------------------------------threshold changes-------------------------------------------
+
+--create table GetOrderCalculation
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId INT null,
+--UserSkillSetId INT null,
+--SkillSetId INT null,
+--TotalOrderstoComplete  INT null,
+--OrdersCompleted INT null,
+--Weightage INT  null,
+--PriorityOrder INT null,
+--Utilized  BIT null,
+--IsActive  BIT null,
+--UpdatedDate  DATETIME null,	
+--IsCycle1 BIT null,
+--IsHardStateUser BIT null,
+--HardStateUtilized BIT null
+--)
+
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_uss
+--FOREIGN KEY (UserSkillSetId)
+--REFERENCES UserSkillSet(UserSkillSetId);
+
+--ALTER TABLE GetOrderCalculation
+--ADD CONSTRAINT fk_GetOrderCalculation_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--create table Utilization
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId INT null,
+--UserSkillSetId INT null,
+--SkillSetId INT null,
+--TotalOrderstoComplete  INT null,
+--OrdersCompleted INT null,
+--Weightage INT  null,
+--PriorityOrder INT null,
+--Utilized  BIT null,
+--IsActive  BIT null,
+--UpdatedDate  DATETIME null,	
+--IsCycle1 BIT null,
+--IsHardStateUser BIT null,
+--HardStateUtilized BIT null
+--)
+
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_usss
+--FOREIGN KEY (UserSkillSetId)
+--REFERENCES UserSkillSet(UserSkillSetId);
+
+--ALTER TABLE Utilization
+--ADD CONSTRAINT fk_Utilization_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE UserSkillSet
+--ADD IsCycle1 BIT;
+
+--add getorderbyweightage_threshold,getorderbyhardstate_threshold,gettrdpendingorder_threshold,updategoc_priorityorder sp
+
+-----------------------------------------------------phase4 ---------update order status ----------------------
+
+--CREATE TABLE Order_History (
+--Id INT PRIMARY KEY IDENTITY(1,1),
+--OrderId VARCHAR(100) NOT NULL,
+--ProjectId VARCHAR(100) NOT NULL,
+--SkillSetId INT NOT NULL,
+--UserId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--Status INT NOT NULL,
+--Orderdetails NVARCHAR(MAX) NOT NULL,
+--UpdatedBy INT NOT NULL,
+--UpdatedTime DateTime NOT NULL
+--);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_sor
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_up
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_upby
+--FOREIGN KEY (UpdatedBy)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Order_History
+--ADD CONSTRAINT fk_Order_History_status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+---change insertdata sp
+
+-- create table SciPendingStatusSkillsets
+--(
+--Id int IDENTITY(1,1) primary key,
+--SkillSetId int not null,
+--IsActive bit not null DEFAULT 1,
+--ScheduleNo int not null
+--)
+
+--ALTER TABLE SciPendingStatusSkillsets
+--ADD CONSTRAINT fk_SciPendingStatusSkillsets
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table SciPendingStatusSkillsets
+--add Scheduled_Time nvarchar(50)
+
+--alter table SciPendingStatusSkillsets
+--add Scheduled_Days nvarchar(50)

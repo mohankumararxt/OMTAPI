@@ -24,10 +24,10 @@ namespace OMT.APIHost.Controllers
         /// </summary>
         /// <returns>Returns a list of skill sets</returns>
         [HttpGet]
-        [Route("list")]
-        public ResultDTO GetSkillSetList()
+        [Route("GetSkillSetList/{skillsetid:int?}")]
+        public ResultDTO GetSkillSetList(int? skillsetid)
         {
-            return _skillsetService.GetSkillSetList();
+            return _skillsetService.GetSkillSetList(skillsetid);
         }
 
         /// <summary>
@@ -48,12 +48,10 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns success message after addition of skill set</returns>
         [HttpPost]
         [Route("new")]
-
         public ResultDTO CreateSkillSet([FromBody] SkillSetCreateDTO skillSetCreateDTO)
         {
             ResultDTO resultDTO = _skillsetService.CreateSkillSet(skillSetCreateDTO);
             return resultDTO;
-
         }
 
         /// <summary>
@@ -63,7 +61,6 @@ namespace OMT.APIHost.Controllers
         /// <returns>Returns success message after deletion of skill set</returns>
         [HttpDelete]
         [Route("delete/{skillsetId:int}")]
-
         public ResultDTO DeleteSkillSet(int skillsetId)
         {
             return _skillsetService.DeleteSkillSet(skillsetId);
@@ -72,21 +69,42 @@ namespace OMT.APIHost.Controllers
         /// <summary>
         /// Update a skill set
         /// </summary>
-        /// <param name="skillSetResponseDTO">SkillSetResponseDTO</param>
+        /// <param name="skillSetUpdateDTO">SkillSetUpdateDTO</param>
         /// <returns>Returns updated skill set</returns>
         [HttpPut]
         [Route("update")]
-        public ResultDTO Update([FromBody]SkillSetResponseDTO skillSetResponseDTO)
+        public ResultDTO Update([FromBody] SkillSetUpdateDTO skillSetUpdateDTO)
         {
-            return _skillsetService.UpdateSkillSet(skillSetResponseDTO);
+            return _skillsetService.UpdateSkillSet(skillSetUpdateDTO);
         }
 
         [HttpGet]
         [Route("GetListofHardStatenames/{skillsetid:int}")]
-
         public ResultDTO GetStatenameList(int skillsetid)
         {
             return _skillsetService.GetStatenameList(skillsetid);
+        }
+
+        [HttpPost]
+        [Route("createTimeline")]
+        public ResultDTO CreateTimeLine([FromBody] SkillSetTimeLineDTO skillSetTimeLineDTO)
+        {
+            ResultDTO resultDTO = _skillsetService.CreateTimeLine(skillSetTimeLineDTO);
+            return resultDTO;
+        }
+
+        [HttpPut]
+        [Route("updateTimeline")]
+        public ResultDTO UpdateTimeLine([FromBody] SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO)
+        {
+            return _skillsetService.UpdateTimeLine(skillSetUpdateTimeLineDTO);
+        }
+
+        [HttpGet]
+        [Route("timelinelist/{skillsetid:int?}")]
+        public ResultDTO GetSkillSetTimelineList(int? skillsetid)
+        {
+            return _skillsetService.GetSkillSetTimelineList(skillsetid);
         }
     }
 }

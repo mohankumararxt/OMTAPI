@@ -10,8 +10,10 @@ namespace OMT.DataAccess.Entities
     public class SciPendingStatusSkillsets
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; set; } 
         public int SkillSetId { get; set; }
         public bool IsActive { get; set; }
+        public string Scheduled_Time { get; set; }
+        public string Scheduled_Days { get; set; }
     }
 }

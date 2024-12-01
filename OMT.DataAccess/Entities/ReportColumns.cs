@@ -11,8 +11,10 @@ namespace OMT.DataAccess.Entities
     {
         [Key]
         public int ReportColumnsId { get; set; }
-        public string ReportColumnName { get; set; }
         public bool IsActive { get; set; }
         public int SystemOfRecordId { get; set; }
+        public int SkillSetId { get; set; }
+        public int MasterReportColumnId { get; set; }
+        public int ColumnSequence { get; set; }
     }
 }

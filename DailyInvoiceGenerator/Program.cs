@@ -1,8 +1,14 @@
 ﻿using Microsoft.Azure.WebJobs;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Net.Http;
+using System.Security.Policy;
+using System.Text;
+
 
 namespace DailyInvoiceGenerator
 {
@@ -26,55 +32,79 @@ namespace DailyInvoiceGenerator
 
         }
 
+        public class EmailDetails
+        {
+            public List<string> ToEmailIds { get; set; }
+            public string Subject { get; set; }
+            public string Body { get; set; }
+        }
+
         public static void callInvoiceSp()
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+            string Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+            string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+            var sp = "";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            { 
-                connection.Open();
+            try
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
 
-                string query = @"
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = @"
                                 SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName
                                 FROM skillset SS
                                 INNER JOIN templatecolumns TC ON TC.skillsetid = SS.skillsetid
                                 WHERE SS.isactive = 1 
-                                ORDER BY SystemofRecordId, SkillSetId"; 
+                                ORDER BY SystemofRecordId, SkillSetId";
 
-                SqlCommand command = new SqlCommand(query, connection);
-                SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                DataSet dataset = new DataSet();
+                    SqlCommand command = new SqlCommand(query, connection);
+                    SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
 
-                dataAdapter.Fill(dataset);
+                    dataAdapter.Fill(dataset);
 
-                DataTable datatable = dataset.Tables[0];
+                    DataTable datatable = dataset.Tables[0];
 
                     foreach (DataRow row in datatable.Rows)
                     {
                         int skillSetId = Convert.ToInt32(row["SkillSetId"]);
                         int systemOfRecordId = Convert.ToInt32(row["SystemofRecordId"]);
-
-                    if (systemOfRecordId == 3)
-                    {
                         string tabelname = row["SkillsetName"].ToString();
 
-                        DateTime utcNow = DateTime.UtcNow;
-                        DateTime yesterday = utcNow.Date.AddDays(-1).AddHours(12);
-                        DateTime today = utcNow.Date.AddHours(12);
+                        if (systemOfRecordId == 3)
+                        {
+                            DateTime utcNow = DateTime.UtcNow;
+                            DateTime yesterday = utcNow.Date.AddDays(-1).AddHours(11).AddMinutes(30);
+                            DateTime today = utcNow.Date.AddHours(11).AddMinutes(30);
 
-                        string updateAllocationdate = $"UPDATE {tabelname} SET AllocationDate = @yesterday WHERE CompletionDate BETWEEN @starttime AND @endtime";
+                            string updateAllocationdate = $"UPDATE {tabelname} SET AllocationDate = @yesterday WHERE CompletionDate BETWEEN @starttime AND @endtime";
 
-                        SqlCommand upaldate = new SqlCommand(updateAllocationdate, connection);
-                        upaldate.CommandType = CommandType.Text;
-                       
-                        upaldate.Parameters.AddWithValue("@yesterday", yesterday.Date);
-                        upaldate.Parameters.AddWithValue("@starttime", yesterday);
-                        upaldate.Parameters.AddWithValue("@endtime", today);
+                            SqlCommand upaldate = new SqlCommand(updateAllocationdate, connection);
+                            upaldate.CommandType = CommandType.Text;
 
-                        upaldate.ExecuteNonQuery();
-                    }
+                            upaldate.Parameters.AddWithValue("@yesterday", yesterday.Date);
+                            upaldate.Parameters.AddWithValue("@starttime", yesterday);
+                            upaldate.Parameters.AddWithValue("@endtime", today);
+
+                            upaldate.ExecuteNonQuery();
+
+                            sp = "GetInvoice_TRD";
+                        }
+
+                        if (systemOfRecordId == 1)
+                        {
+                            sp = "GetInvoice_SCI";
+                        }
+
+                        if (systemOfRecordId == 2)
+                        {
+                            sp = "GetInvoice_Resware";
+                        }
                         // Call the stored procedure with parameters derived from the current row
-                        using (SqlCommand spCommand = new SqlCommand("GetInvoice", connection))
+                        using (SqlCommand spCommand = new SqlCommand(sp, connection))
                         {
                             spCommand.CommandType = CommandType.StoredProcedure;
 
@@ -99,15 +129,39 @@ namespace DailyInvoiceGenerator
                             }
                             else
                             {
-                                Console.WriteLine("Invoice details uploaded successfully in InvoiceDump table.");
+                                Console.WriteLine($"Invoice details of {tabelname} uploaded successfully in InvoiceDump table.");
                             }
 
                         }
-                }       
-                 
-                
+                    }
 
+                }
             }
+            catch (Exception ex)
+            {
+                EmailDetails sendEmail = new EmailDetails
+                {
+                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+                    Subject = "Invoice webjob status",
+                    Body = $"Invoice webjob failed with following exception: {ex.Message}",
+                };
+                using (HttpClient client = new HttpClient())
+                {
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(Url);
+                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+                throw;
+            }
+           
 
         }
 
