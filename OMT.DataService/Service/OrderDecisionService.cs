@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -650,7 +651,7 @@ namespace OMT.DataService.Service
                                      where rc.SkillSetId == orderInfoDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillset.SystemofRecordId && rc.IsActive
                                      select mrc.ReportColumnName).ToList();
 
-                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,ss.SkillSetName as SkillSetName,ss.SkillSetId as SkillSetId,ss.SystemofRecordId as SystemofRecordId,sr.SystemofRecordName as SystemofRecordName, ps.Status as Status,t.Remarks,";
+                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,t.Id,ss.SkillSetName as SkillSetName,ss.SkillSetId as SkillSetId,ss.SystemofRecordId as SystemofRecordId,sr.SystemofRecordName as SystemofRecordName, ps.Status as Status,t.Remarks,";
 
                     if (reportCol.Count > 0)
                     {
@@ -662,8 +663,8 @@ namespace OMT.DataService.Service
                                 sqlquery1 += $@"
                             CASE 
                                 WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
-                                THEN FORMAT(t.{col}, 'yyyy-MM-dd') 
-                                ELSE FORMAT(t.{col}, 'yyyy-MM-dd HH:mm:ss') 
+                                THEN FORMAT(t.{col}, 'MM-dd-yyyy') 
+                                ELSE FORMAT(t.{col}, 'MM-dd-yyyy HH:mm:ss') 
                             END AS {col}, ";
                             }
                             else
@@ -698,16 +699,39 @@ namespace OMT.DataService.Service
                     DataSet dataset = new DataSet();
                     dataAdapter.Fill(dataset);
 
-                    if (dataset != null && dataset.Tables.Count > 0 && dataset.Tables[0].Rows.Count > 0)
+                    //Duplicate Orders
+                    //if ( dataset.Tables.Count > 1)  
+                    if (dataset != null && dataset.Tables.Count >= 1 && dataset.Tables[0].Rows.Count > 0) //>1
                     {
                         DataTable datatable = dataset.Tables[0];
 
-                        var orderlist = datatable.AsEnumerable()
-                            .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary
-                            (column => column.ColumnName, column => row[column] == DBNull.Value ? string.Empty : row[column])).ToList();
+                        // Grouping orders 
+                        var LatestOrders = datatable.AsEnumerable()
+                            .GroupBy(row => row["OrderId"].ToString())
+                            .Select(group =>
+                            {
+                                // finding row with the latest EndTime
+                                var latestrow = group.OrderByDescending(row => row["EndTime"]).FirstOrDefault();
 
-                        resultDTO.Data = orderlist;
-                        resultDTO.Message = "List of Order Details";
+                                var UpdatedId = latestrow["Id"].ToString();
+
+                                var orderDetails = group.Select(row =>
+                                    datatable.Columns.Cast<DataColumn>()
+                                        .ToDictionary(
+                                            column => column.ColumnName,
+                                            column => row[column] == DBNull.Value ? string.Empty : row[column]
+                                        )
+                                ).ToList();
+
+                                return new OrderdetailsDTO
+                                {
+                                    UpdatedId = UpdatedId,
+                                    OrderDetails = orderDetails  // order details -> dynamic 
+                                };
+                            }).ToList();
+
+                        resultDTO.Data = LatestOrders;
+                        resultDTO.Message = "Order Details Fetched Successfully";
                         resultDTO.IsSuccess = true;
                     }
                     else
@@ -715,7 +739,6 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = false;
                         resultDTO.StatusCode = "404";
                         resultDTO.Message = "Neither Order Exists Nor its Processed";
-
                     }
                 }
                 else
@@ -756,7 +779,7 @@ namespace OMT.DataService.Service
                 // check if its already into invoice, if yes dont allow to update
 
                 DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                DateTime endtime = todayUtc.AddHours(11).AddMinutes(30); // Today 5:00 PM UTC
+                DateTime endtime = todayUtc.AddHours(13); // Today 6:30 PM UTC
                 DateTime starttime = endtime.AddDays(-1);
 
                 var editable = false;
@@ -869,7 +892,7 @@ namespace OMT.DataService.Service
 
                         }
                         //Updating Skillset table    
-                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId";
+                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId and UpdatedId=@UpdatedId";
 
 
                         using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
@@ -877,6 +900,7 @@ namespace OMT.DataService.Service
                             updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
                             updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
                             updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
+                            updateCommand.Parameters.AddWithValue("@UpdatedId", updateOrderStatusByTLDTO.UpdatedId);
 
                             updateCommand.ExecuteNonQuery();
                         }
@@ -958,7 +982,7 @@ namespace OMT.DataService.Service
 
                 if (skillset != null)
                 {
-                  
+
                     // pending orders 
                     var columns1 = (from dt in _oMTDataContext.TemplateColumns
                                     where dt.SkillSetId == unassignedOrderInfoDTO.SkillSetId && dt.IsGetOrderColumn == true
@@ -975,12 +999,14 @@ namespace OMT.DataService.Service
                                    select dt.DefaultColumnName).ToList();
                     //Datetime
                     var datetimecol = (from ss in _oMTDataContext.SkillSet
-                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == skillset.SkillSetName && dt.IsGetOrderColumn && dt.DataType == "DateTime"
-                                   select dt.DefaultColumnName).ToList();
+                                       join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                       where ss.SkillSetName == skillset.SkillSetName && dt.IsGetOrderColumn && dt.DataType == "DateTime"
+                                       select dt.DefaultColumnName).ToList();
 
                     var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
-                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+                    
+                    string selectedColumns = $"t1.Id, {string.Join(", ", columns.Select(c => $"t1.{c}"))}";  //included Id's
+
 
                     string query = $@"
                                    SELECT 
@@ -995,7 +1021,7 @@ namespace OMT.DataService.Service
                                         t1.UserId IS NULL 
                                         AND (t1.Status IS NULL OR t1.Status = '') 
                                     ORDER BY 
-                                        t1.Id";  
+                                        t1.Id";
 
                     using SqlCommand cmd = connection.CreateCommand();
                     cmd.CommandText = query;
@@ -1020,7 +1046,7 @@ namespace OMT.DataService.Service
                                               return "";
                                           }
                                           DateTime dateValue = (DateTime)row[column];
-                                          return dateValue.ToString("yyyy-MM-dd");  // Format as date string
+                                          return dateValue.ToString("MM-dd-yyyy");  // Format as date string
                                       }
                                       if (datetimecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
                                       {
@@ -1029,7 +1055,7 @@ namespace OMT.DataService.Service
                                               return "";
                                           }
                                           DateTime dateValue = (DateTime)row[column];
-                                          return dateValue.ToString("yyyy-MM-dd HH:mm:ss");  // Format as date & Time string
+                                          return dateValue.ToString("MM-dd-yyyy HH:mm:ss");  // Format as date & Time string
                                       }
                                       return row[column] == DBNull.Value ? "" : row[column];
                                   })).ToList();
@@ -1057,6 +1083,43 @@ namespace OMT.DataService.Service
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+        public ResultDTO UpdateUnassignedOrder(int userid, UpdateUnassignedOrderDTO updateUnassignedOrderDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection=new(connectionstring);
+                connection.Open();
+
+                var SkillsetTable = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateUnassignedOrderDTO.SkillsetId && x.SystemofRecordId == updateUnassignedOrderDTO.SystemofRecordId)
+                                    .Select(x => x.SkillSetName).FirstOrDefault();
+
+                string IdList = string.Join(",", updateUnassignedOrderDTO.Id);
+
+                var Datetime=DateTime.Now;
+
+                string query = $"UPDATE {SkillsetTable} SET Status=@Status,Remarks = CONCAT(@Remarks, ' ', @Datetime) WHERE Id IN ({IdList})";
+
+                using SqlCommand command = new SqlCommand(query, connection);
+                command.Parameters.AddWithValue("@Status", updateUnassignedOrderDTO.Status);
+                command.Parameters.AddWithValue("@Remarks", updateUnassignedOrderDTO.Remarks);
+                command.Parameters.AddWithValue("@Datetime", Datetime.ToString("MM-dd-yyyy HH:mm:ss"));
+                command.Parameters.AddWithValue("@Id", IdList);
+
+                command.ExecuteNonQuery();
+
+                resultDTO.Message = "Unassigned Order Status Updated Successfully";
+                resultDTO.StatusCode = "200";
+            }
+            catch(Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message=ex.Message;
             }
             return resultDTO;
         }

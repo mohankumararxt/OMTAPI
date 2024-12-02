@@ -18,5 +18,19 @@ namespace OMT.APIHost.Controllers
             _reportColumnsService = reportColumnsService;
         }
 
+        [HttpGet]
+        [Route("skillsetlist/{skillsetid:int?}")]
+        public ResultDTO GetReportColumnlist(int? skillsetid)
+        {
+            return _reportColumnsService.GetReportColumnlist(skillsetid);
+        }
+
+        [HttpPost]
+        [Route("CreateReportColumns")]
+        public ResultDTO CreateReportColumns([FromBody] CreateReportColumnsDTO createReportColumnsDTO)
+        {
+            ResultDTO resultDTO = _reportColumnsService.CreateReportColumns(createReportColumnsDTO);
+            return resultDTO;
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace OMT.DTO
 {
     public class UpdateOrderStatusByTLDTO
     {
+        public int UpdatedId { get; set; }
         public int SkillSetId { get; set; }
         public string OrderId { get; set; }
         public int Status { get; set; }

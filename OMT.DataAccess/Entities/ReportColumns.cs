@@ -16,5 +16,6 @@ namespace OMT.DataAccess.Entities
         public int SystemOfRecordId { get; set; }
         public int SkillSetId { get; set; }
         public int MasterReportColumnId { get; set; }
+        public int ColumnSequence { get; set; } 
     }
 }

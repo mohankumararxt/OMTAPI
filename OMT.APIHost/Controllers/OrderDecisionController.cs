@@ -56,5 +56,13 @@ namespace OMT.APIHost.Controllers
         {
             return _orderdecisionservice.GetUnassignedOrderInfo(unassignedOrderInfoDTO);
         }
+
+        [HttpPut]
+        [Route("UpdateUnassignedOrder")]
+        public ResultDTO UpdateUnassignedOrder([FromBody] UpdateUnassignedOrderDTO updateUnassignedOrderDTO)
+        {
+            var userid = UserId;
+            return _orderdecisionservice.UpdateUnassignedOrder(userid,updateUnassignedOrderDTO);
+        }
     }
 }
