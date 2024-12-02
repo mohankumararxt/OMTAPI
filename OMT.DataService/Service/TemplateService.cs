@@ -405,38 +405,6 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        //call store procedure to update goc table to rearange priority of user skillsets
-
-                        //if (HasPriorityOrder)
-                        //{
-                        //    using SqlCommand priority = new()
-                        //    {
-                        //        Connection = connection,
-                        //        CommandType = CommandType.StoredProcedure,
-                        //        CommandText = "UpdateGoc_PriorityOrder"
-                        //    };
-
-                        //    priority.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
-                        //    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                        //    priority.Parameters.AddWithValue("@UserId", 0);
-
-                        //    SqlParameter priority_returnValue = new()
-                        //    {
-                        //        ParameterName = "@RETURN_VALUE_Po",
-                        //        Direction = ParameterDirection.ReturnValue
-                        //    };
-                        //    priority.Parameters.Add(priority_returnValue);
-
-                        //    priority.ExecuteNonQuery();
-
-                        //    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
-
-                        //    if (priority_returnCode != 1)
-                        //    {
-                        //        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
-                        //    }
-                        //}
-
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
@@ -3667,39 +3635,6 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
-                                int priorityCount = recordsToInsert.Count(record => (int?)record["IsPriority"] == 1);
-
-                                if (priorityCount > 0)
-                                {
-                                    using SqlCommand priority = new()
-                                    {
-                                        Connection = connection,
-                                        CommandType = CommandType.StoredProcedure,
-                                        CommandText = "UpdateGoc_PriorityOrder"
-                                    };
-
-                                    priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
-                                    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                                    priority.Parameters.AddWithValue("@UserId", 0);
-
-                                    SqlParameter priority_returnValue = new()
-                                    {
-                                        ParameterName = "@RETURN_VALUE_Po",
-                                        Direction = ParameterDirection.ReturnValue
-                                    };
-
-                                    priority.Parameters.Add(priority_returnValue);
-                                    priority.ExecuteNonQuery();
-
-                                    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
-
-                                    if (priority_returnCode != 1)
-                                    {
-                                        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
-                                    }
-
-                                }
-
                                 resultDTO.IsSuccess = true;
                                 resultDTO.Message = "Orders replaced successfully";
                                 resultDTO.StatusCode = "200";
@@ -4252,8 +4187,8 @@ namespace OMT.DataService.Service
                                 toDate = toDate.AddHours(-5).AddMinutes(-30);
                             }
                         }
-                       
-                        
+
+
                         if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                         {
                             completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
@@ -4269,7 +4204,7 @@ namespace OMT.DataService.Service
                                 fromDate = fromDate.AddHours(8);
                                 toDate = toDate.AddDays(1).AddHours(8);
                             }
-                           
+
 
                             dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -4460,7 +4395,7 @@ namespace OMT.DataService.Service
                     // Combine everything into the final query
                     string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
-                   
+
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sqlquery;
 
