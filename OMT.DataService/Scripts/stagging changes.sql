@@ -2961,6 +2961,12 @@
 --ALTER TABLE ReportColumns
 --ADD MasterReportColumnId INT;
 
+--ALTER TABLE ReportColumns
+--ADD ColumnSequence INT;
+
+--ALTER TABLE ReportColumns
+--drop column ReportColumnName
+
 --ALTER TABLE ReportColumns                      
 --ADD CONSTRAINT FK_ReportColumns_skillset
 --FOREIGN KEY (SkillSetId) REFERENCES SkillSet(SkillSetId);
@@ -2998,6 +3004,8 @@
 --Description  NVARCHAR(MAX) null,
 --Comments  NVARCHAR(MAX) null,
 --Date_Created  DATETIME null,
+--Processor_Name NVARCHAR(200) null,
+--Completion_Date DATE null
 --)
 
 --insert into ProcessStatus values (3,'Complex',1)
@@ -3114,6 +3122,34 @@
 --ALTER TABLE Order_History
 --ADD CONSTRAINT fk_Order_History_status
 --FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+---change insertdata sp
+
+--drop table SciPendingStatusSkillsets
+-- create table SciPendingStatusSkillsets
+--(
+--Id int IDENTITY(1,1) primary key,
+--SkillSetId int not null,
+--IsActive bit not null DEFAULT 1,
+--Scheduled_Time nvarchar(50) not null,
+--Scheduled_Days nvarchar(50)
+--)
+
+
+--ALTER TABLE SciPendingStatusSkillsets
+--ADD CONSTRAINT fk_SciPendingStatusSkillsets
+--FOREIGN KEY (SkillSetId)
+
+--insert into SciPendingStatusSkillsets values 
+--(1,1,'12.45 PM','Mon-Fri'),
+--(3,1,'12.45 PM','Mon-Fri'),
+--(78,1,'12.45 PM','Mon-Fri'),
+--(673,1,'04.30 PM','Mon-Sun'),
+--(674,1,'04.30 PM','Mon-Sun'),
+--(1,1,'05:00 PM','Sat'),
+--(3,1,'05:00 PM','Sat'),
+--(78,1,'05:00 PM','Sat')
 --REFERENCES ProcessStatus(Id);
 
 

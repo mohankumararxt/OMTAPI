@@ -170,6 +170,25 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                     }
 
+                    var rpm = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    if (rpm.Any())
+                    {
+                        _oMTDataContext.ResWareProductDescriptionMap.RemoveRange(rpm);
+                        _oMTDataContext.SaveChanges();
+                    }
+
+                    //delete from reportcolumns table
+                    var rc = _oMTDataContext.ReportColumns.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
+
+                    foreach (var u in rc)
+                    {
+                        u.IsActive = false;
+                        _oMTDataContext.ReportColumns.Update(u);
+                    }
+
+                    _oMTDataContext.SaveChanges();
+
                     resultDTO.Message = "Skill Set has been deleted successfully";
                     resultDTO.IsSuccess = true;
                 }
@@ -218,7 +237,7 @@ namespace OMT.DataService.Service
                                                             .ToArray()  //Isactive only
                                           })
                                           .OrderBy(x => x.SystemofRecordName)
-                                          .ThenBy(x =>x.SkillSetName)//ordering here Bcoz we have used Grouping key
+                                          .ThenBy(x => x.SkillSetName)//ordering here Bcoz we have used Grouping key
                                           .ToList();
 
                     resultDTO.IsSuccess = true;
@@ -396,7 +415,7 @@ namespace OMT.DataService.Service
                         UpdateGocTable(resultDTO, skillSetUpdateDTO.SkillSetId, skillSetUpdateDTO.Threshold);
                     }
 
-                    if (skillSetUpdateDTO.IsHardState == true && (skillSetUpdateDTO.StateName != null || skillSetUpdateDTO.StateName.Any()) )
+                    if (skillSetUpdateDTO.IsHardState == true && (skillSetUpdateDTO.StateName != null || skillSetUpdateDTO.StateName.Any()))
                     {
                         // Fetch all hard states (active or inactive) 
                         var existingHardStates = _oMTDataContext.SkillSetHardStates.Where(h => h.SkillSetId == skillSetUpdateDTO.SkillSetId).ToList();
@@ -473,7 +492,7 @@ namespace OMT.DataService.Service
 
                         double totalorders = ((double)uss.Weightage / 100) * threshold;
 
-                        int roundedtotalorders = (int)Math.Round(totalorders);
+                        int roundedtotalorders = totalorders == 0 ? 0 : (totalorders > 0 && totalorders < 1) ? 1 : (int)Math.Round(totalorders, MidpointRounding.AwayFromZero);
 
                         if (uss.OrdersCompleted != roundedtotalorders && uss.OrdersCompleted < roundedtotalorders && uss.IsCycle1)
                         {

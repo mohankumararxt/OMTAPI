@@ -13,11 +13,18 @@ namespace OMT.DTO
 
         public List<UserSkillSetDetailDTO> SecondCycle { get; set; }
     }
+
+    public class HardStateDetails
+    {
+        public string HardStateName { get; set; }
+        public int Weightage { get; set; }
+    }
     public class UserSkillSetDetailDTO
     {
         public int SkillSetId { get; set; }
         public int? Weightage { get; set; }
         public bool IsHardStateUser { get; set; }
-        public List<string>? HardStateName { get; set; }
+        public List<HardStateDetails> HardStateDetails { get; set; }
+
     }
 }
