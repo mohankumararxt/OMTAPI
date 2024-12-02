@@ -123,14 +123,7 @@ namespace OMT.DataService.Service
                 if (existingdata != null)
                 {
 
-                    if (existingdata.WPM == null && existingdata.Accuracy == null)
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Please fill all required fields";
-                        resultDTO.StatusCode = "500";
-                    }
-                    else
-                    {
+
                         existingdata.WPM = updateUserTests.WPM;
                         existingdata.Accuracy = updateUserTests.Accuracy;
                         existingdata.EndTime = updateUserTests.datetime;
@@ -139,7 +132,6 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Updated InterviewTests Successfully";
-                    }
 
                 }
                 else
