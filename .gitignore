@@ -45,3 +45,6 @@
 /.gitignore
 /PendingSciOrders/obj/Debug/net472
 /.gitignore
+/PendingSciOrders_4.30pm/PendingSciOrders_4.30pm.csproj.user
+/PendingSciOrders_5pm/PendingSciOrders_5pm.csproj.user
+/CalculationForGOC/CalculationForGOC.csproj.user
