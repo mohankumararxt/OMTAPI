@@ -22,11 +22,14 @@
 /DailyInvoiceGenerator
 /.gitignore
 /.gitignore
+/DailyInvoiceGenerator/Properties/PublishProfiles
+/DailyInvoiceGenerator/DailyInvoiceGenerator.csproj.user
 /PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfo.cs
-/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfo.cs
-/TrdIntegrator/obj/Debug/net472/TrdIntegrator.csproj.AssemblyReference.cache
-/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfoInputs.cache
 /PendingSciOrders/obj/Debug/net472/PendingSciOrders.AssemblyInfoInputs.cache
+<<<<<<< HEAD
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfo.cs
+/TrdIntegrator/obj/Debug/net472/TrdIntegrator.AssemblyInfoInputs.cache
+=======
 /PendingSciOrders/obj/Release/net472/PendingSciOrders.AssemblyInfo.cs
 /PendingSciOrders/obj/Release/net472/PendingSciOrders.AssemblyInfoInputs.cache
 /TrdIntegrator/obj/Release/net472/TrdIntegrator.AssemblyInfo.cs
@@ -40,6 +43,8 @@
 /TrdIntegrator
 /.gitignore
 /.gitignore
+/.gitignore
+>>>>>>> phase2
 /.gitignore
 /PendingSciOrders/obj/Debug/net472/PendingSciOrders.csproj.AssemblyReference.cache
 /.gitignore
