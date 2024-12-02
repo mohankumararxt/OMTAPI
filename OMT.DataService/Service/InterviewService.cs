@@ -38,7 +38,7 @@ namespace OMT.DataService.Service
                 // Check if TypingUsers is not null to avoid NullReferenceException
                 var user = _oMTDataContext?.UserInterviews
                     .Where(x => x.Firstname == userInterviewsDTO.Firstname && x.Lastname == userInterviewsDTO.Lastname && 
-                    x.Email == userInterviewsDTO.Email && x.phone == userInterviewsDTO.phone).FirstOrDefault();
+                    x.Email == userInterviewsDTO.Email && x.phone == userInterviewsDTO.phone && x.Experience == userInterviewsDTO.Experience).FirstOrDefault();
 
                 if (user != null)
                 {
@@ -47,7 +47,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    if (userInterviewsDTO.Firstname == "" || userInterviewsDTO.Lastname == "" || userInterviewsDTO.Email == "" || userInterviewsDTO.phone == "")
+                    if (userInterviewsDTO.Firstname == "" || userInterviewsDTO.Lastname == "" || userInterviewsDTO.Email == "" || userInterviewsDTO.phone == "" || userInterviewsDTO == null)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
@@ -77,7 +77,8 @@ namespace OMT.DataService.Service
                             Firstname = userInterviewsDTO.Firstname,
                             Lastname = userInterviewsDTO.Lastname,
                             Email = userInterviewsDTO.Email,
-                            phone = userInterviewsDTO.phone
+                            phone = userInterviewsDTO.phone,
+                            Experience = userInterviewsDTO.Experience
                             //CreateTimestamp = DateTime.Now
                         };
                         _oMTDataContext.Add(newUser);
@@ -191,7 +192,7 @@ namespace OMT.DataService.Service
                         .Where(x => x.Id == updateInterviewTests.Id).FirstOrDefault();
                 if (existingdata != null)
                 {
-                    if (existingdata.WPM == null && existingdata.Accuracy == null)
+                    if (updateInterviewTests.WPM == null && updateInterviewTests.Accuracy == null)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
@@ -236,17 +237,23 @@ namespace OMT.DataService.Service
             {
                 if (numberofdays >= 0 && numberofdays != null) 
                 {
-
+                    var subday = DateTime.UtcNow.Date;
+                    if (numberofdays > 0)
+                    {
+                        subday = subday.AddDays(-numberofdays);
+                    }
+                    
                     var result = from itest in _oMTDataContext.InterviewTests
                                  join test in _oMTDataContext.Tests
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays) // Adjust number of days properly
+                                 where itest.CreateTimestamp.Date >= subday
                                  orderby itest.CreateTimestamp descending
                                  select new LeaderboardDTO()
                                  {
                                      username = user.Firstname + " " + user.Lastname,
+                                     experience = user.Experience,
                                      email = user.Email,
                                      phone = user.phone, // Correct casing for consistency
                                      wpm = itest.WPM,
@@ -259,7 +266,6 @@ namespace OMT.DataService.Service
 
                     // Example: Convert the result to a list
                     var joinedData = result.ToList();
-
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Leaderboard fetch successfully...";

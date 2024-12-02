@@ -14,5 +14,6 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateUserTest(UpdateUserTestsDTO updateUserTests);
 
         ResultDTO GetUserTestLeaderboard(int numberofdays);
+        ResultDTO Test(int userId);
     }
 }
