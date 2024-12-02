@@ -3652,38 +3652,38 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
-                                int priorityCount = recordsToInsert.Count(record => (int?)record["IsPriority"] == 1);
+                                //int priorityCount = recordsToInsert.Count(record => (int?)record["IsPriority"] == 1);
 
-                                if (priorityCount > 0)
-                                {
-                                    using SqlCommand priority = new()
-                                    {
-                                        Connection = connection,
-                                        CommandType = CommandType.StoredProcedure,
-                                        CommandText = "UpdateGoc_PriorityOrder"
-                                    };
+                                //if (priorityCount > 0)
+                                //{
+                                //    using SqlCommand priority = new()
+                                //    {
+                                //        Connection = connection,
+                                //        CommandType = CommandType.StoredProcedure,
+                                //        CommandText = "UpdateGoc_PriorityOrder"
+                                //    };
 
-                                    priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
-                                    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                                    priority.Parameters.AddWithValue("@UserId", 0);
+                                //    priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
+                                //    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
+                                //    priority.Parameters.AddWithValue("@UserId", 0);
 
-                                    SqlParameter priority_returnValue = new()
-                                    {
-                                        ParameterName = "@RETURN_VALUE_Po",
-                                        Direction = ParameterDirection.ReturnValue
-                                    };
+                                //    SqlParameter priority_returnValue = new()
+                                //    {
+                                //        ParameterName = "@RETURN_VALUE_Po",
+                                //        Direction = ParameterDirection.ReturnValue
+                                //    };
 
-                                    priority.Parameters.Add(priority_returnValue);
-                                    priority.ExecuteNonQuery();
+                                //    priority.Parameters.Add(priority_returnValue);
+                                //    priority.ExecuteNonQuery();
 
-                                    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
+                                //    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
 
-                                    if (priority_returnCode != 1)
-                                    {
-                                        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
-                                    }
+                                //    if (priority_returnCode != 1)
+                                //    {
+                                //        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
+                                //    }
 
-                                }
+                                //}
 
                                 resultDTO.IsSuccess = true;
                                 resultDTO.Message = "Orders replaced successfully";
