@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OMT.DataAccess.Entities;
 
 namespace OMT.DataAccess.Context
@@ -44,6 +45,12 @@ namespace OMT.DataAccess.Context
         public DbSet<SciException> SciException { get; set; }
         public DbSet<GetOrderCalculation> GetOrderCalculation { get; set; }
         public DbSet<Utilization> Utilization { get; set; }
+        public DbSet<UserInterviews> UserInterviews { get; set; }
+        public DbSet<Tests> Tests { get; set; }
+
+        public DbSet<InterviewTests> InterviewTests { get; set; }
+        public DbSet<UserTest> UserTest { get; set; }
+
         public override int SaveChanges()
         {
             return base.SaveChanges();
@@ -67,5 +74,53 @@ namespace OMT.DataAccess.Context
             return SqlServerDbContextOptionsExtensions.UseSqlServer(new DbContextOptionsBuilder(), connectionString).Options;
         }
 
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    base.OnModelCreating(modelBuilder);
+
+        //    // Ensure DateOfBirth is treated as a DATE in the database
+        //    modelBuilder.Entity<UserInterviews>()
+        //        .Property(u => u.DOB)
+        //        .HasColumnType("date");
+        //}
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    base.OnModelCreating(modelBuilder);
+
+        //    // Value converter to map DateOnly to DateTime
+        //    var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
+        //        dateOnly => dateOnly.ToDateTime(new TimeOnly(0, 0)), // Convert DateOnly to DateTime
+        //        dateTime => DateOnly.FromDateTime(dateTime) // Convert DateTime back to DateOnly
+        //    );
+
+        //    modelBuilder.Entity<UserInterviews>()
+        //        .Property(u => u.DOB)
+        //        .HasConversion(dateOnlyConverter);
+        //}
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UserInterviews>()
+                .Property(u => u.CreateTimestamp)
+                .ValueGeneratedOnAdd(); // Use database default value
+
+            modelBuilder.Entity<Tests>()
+               .Property(p => p.CreateTimestamp)
+               .ValueGeneratedOnAdd();
+            modelBuilder.Entity<InterviewTests>()
+                .Property(p => p.CreateTimestamp)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<UserTest>()
+                .Property(p => p.CreateTimestamp) 
+                .ValueGeneratedOnAdd();
+        }
+
+        //protected override void OnModelCreatingTest(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<UserInterviews>()
+        //        .Property(u => u.CreateTimestamp)
+        //        .ValueGeneratedOnAddOrUpdate(); // Use database default value
+        //}
     }
 }

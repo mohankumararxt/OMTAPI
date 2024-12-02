@@ -155,7 +155,8 @@ namespace OMT.APIHost.Controllers
         [Route("DeleteOrders")]
         public ResultDTO DeleteOrders([FromBody] DeleteOrderDTO deleteOrderDTO)
         {
-            return _templateService.DeleteOrders(deleteOrderDTO);
+            var userid = UserId;
+            return _templateService.DeleteOrders(deleteOrderDTO,userid);
         }
 
         [HttpPost]
