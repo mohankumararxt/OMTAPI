@@ -16,5 +16,7 @@ namespace OMT.DataAccess.Entities
         public string Description { get; set; }
         public string Comments { get; set; }
         public DateTime Date_Created { get; set; }
+        public string Processor_Name { get; set; }
+        public DateTime Completion_Date { get; set; }
     }
 }
