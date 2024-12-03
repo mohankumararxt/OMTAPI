@@ -122,8 +122,7 @@ namespace OMT.DataService.Service
                         .Where(x => x.Id == updateUserTests.Id).FirstOrDefault();
                 if (existingdata != null)
                 {
-
-                    if (existingdata.WPM == null && existingdata.Accuracy == null)
+                    if (updateUserTests.WPM == null && updateUserTests.Accuracy == null)
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
@@ -131,6 +130,7 @@ namespace OMT.DataService.Service
                     }
                     else
                     {
+
                         existingdata.WPM = updateUserTests.WPM;
                         existingdata.Accuracy = updateUserTests.Accuracy;
                         existingdata.EndTime = updateUserTests.datetime;
@@ -140,7 +140,6 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Updated InterviewTests Successfully";
                     }
-
                 }
                 else
                 {
