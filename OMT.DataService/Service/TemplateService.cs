@@ -4775,7 +4775,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        private static void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes)
+        public  void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes)
         {
             string columnTypeQuery = $@"
                                                 SELECT COLUMN_NAME, DATA_TYPE 

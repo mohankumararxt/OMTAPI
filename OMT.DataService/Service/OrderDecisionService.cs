@@ -24,9 +24,12 @@ namespace OMT.DataService.Service
     {
         private readonly OMTDataContext _oMTDataContext;
 
-        public OrderDecisionService(OMTDataContext oMTDataContext)
+        private readonly ITemplateService _templateService;
+
+        public OrderDecisionService(OMTDataContext oMTDataContext, ITemplateService templateService)
         {
             _oMTDataContext = oMTDataContext;
+            _templateService = templateService;
         }
 
         public ResultDTO GetOrderForUser(int userid)
@@ -606,7 +609,7 @@ namespace OMT.DataService.Service
                     if (trd_cycle1.Count == 0)
                     {
                         iscycle1 = false;
-                        
+
                     }
 
                     // check if cycle 1 has no more orders , then send to cycle 2 ? or 
@@ -746,48 +749,83 @@ namespace OMT.DataService.Service
 
                                 }).FirstOrDefault();
 
+                string completionDateField = "";
+
+                if (orderInfoDTO.SystemofRecordId == 1)
+                {
+                    // Adjust CompletionDate field placement after Status
+                    completionDateField = "CONVERT(VARCHAR(10), t.AllocationDate, 101) as CompletionDate";
+                }
+                if (orderInfoDTO.SystemofRecordId != 1)
+                {
+                    completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
+
+                }
                 if (skillset != null)
                 {
-                    var reportCol = (from mrc in _oMTDataContext.MasterReportColumns
+                    var skillsetdetails = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillset.SkillSetName && x.IsActive).FirstOrDefault();
+
+                    var reportcol = (from mrc in _oMTDataContext.MasterReportColumns
                                      join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                      where rc.SkillSetId == orderInfoDTO.SkillSetId && rc.IsActive && rc.SystemOfRecordId == skillset.SystemofRecordId && rc.IsActive
-                                     select mrc.ReportColumnName).ToList();
+                                     orderby rc.ColumnSequence
+                                     select mrc.ReportColumnName
+                                   ).ToList();
 
-                    string sqlquery1 = $"SELECT CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.OrderId,t.Id,ss.SkillSetName as SkillSetName,ss.SkillSetId as SkillSetId,ss.SystemofRecordId as SystemofRecordId,sr.SystemofRecordName as SystemofRecordName, ps.Status as Status,t.Remarks,";
+                    // Query to get column data types for the dynamic table
+                    SqlCommand sqlCommand_columnTypeQuery;
+                    SqlDataAdapter dataAdapter_columnTypeQuery;
+                    List<Dictionary<string, object>> columnTypes;
+                    _templateService.GetDataType(connection, skillsetdetails, out sqlCommand_columnTypeQuery, out dataAdapter_columnTypeQuery, out columnTypes);
 
-                    if (reportCol.Count > 0)
+                    // Extract valid columns based on column type
+                    var validDateCols = reportcol
+                                                 .Where(col => columnTypes.Any(ct =>
+                                                     ct.ContainsKey("COLUMN_NAME") &&
+                                                     ct.ContainsKey("DATA_TYPE") &&
+                                                     ct["COLUMN_NAME"].ToString() == col &&
+                                                     (ct["DATA_TYPE"].ToString() == "datetime" || ct["DATA_TYPE"].ToString() == "date")))
+                                                 .ToList();
+
+
+                    string sqlquery1 = $"SELECT ";
+
+                    if (reportcol.Count > 0)
                     {
-                        foreach (string col in reportCol)
+                        foreach (string col in reportcol)
                         {
-                            if (col.Contains("Date", StringComparison.OrdinalIgnoreCase))
+                            if (validDateCols.Contains(col))
                             {
-                                // Handle date formatting
                                 sqlquery1 += $@"
-                            CASE 
-                                WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
-                                THEN FORMAT(t.{col}, 'MM-dd-yyyy') 
-                                ELSE FORMAT(t.{col}, 'MM-dd-yyyy HH:mm:ss') 
-                            END AS {col}, ";
+                                               CASE 
+                                                   WHEN CAST(t.{col} AS DATETIME) = CAST(t.{col} AS DATE) 
+                                                   THEN FORMAT(t.{col}, 'MM-dd-yyyy') 
+                                                   ELSE FORMAT(t.{col}, 'MM-dd-yyyy HH:mm:ss') 
+                                               END as {col}, ";
                             }
                             else
                             {
-                                // Add other columns
                                 sqlquery1 += $"t.{col}, ";
                             }
                         }
                     }
-                    string commonSqlPart = $" CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime," +
-                                           $" CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime," +
-                                           $" CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, " +
-                                           $" CONCAT((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600), ':'," +
-                                           $" ((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60), ':', " +
-                                           $" (DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60)) as TimeTaken" +
-                                           $" FROM [{skillset.SkillSetName}] t" +
-                                           $" INNER JOIN SkillSet ss ON ss.SkillSetId = t.SkillSetId" +
-                                           $" INNER JOIN ProcessStatus ps ON ps.Id = t.Status" +
-                                           $" INNER JOIN UserProfile up ON up.UserId = t.UserId" +
-                                           $" INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId" +
-                                           $" WHERE  t.OrderId = @OrderId AND t.Status IS NOT NULL AND  t.Status <> '' AND  t.UserId IS NOT NULL";
+                    string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName, ps.Status as Status, ";
+
+                    commonSqlPart += $"{completionDateField}, t.Remarks,t.Id, " +
+                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                     $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                     $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                     $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                     $"ss.SkillSetName as SkillSet " +
+                                     $"FROM {skillset.SkillSetName} t " +
+                                     $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                     $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                     $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                     $"INNER JOIN SystemOfRecord sr ON sr.SystemofRecordId = ss.SystemofRecordId " +
+                                     $"WHERE t.OrderId=@OrderId AND t.Status IS NOT NULL AND t.Status <> '' AND t.UserId IS NOT NULL";
+
+
 
                     // Combine everything into the final query
                     string sqlquery = sqlquery1 + commonSqlPart;
@@ -801,9 +839,8 @@ namespace OMT.DataService.Service
                     DataSet dataset = new DataSet();
                     dataAdapter.Fill(dataset);
 
-                    //Duplicate Orders
-                    //if ( dataset.Tables.Count > 1)  
-                    if (dataset != null && dataset.Tables.Count >= 1 && dataset.Tables[0].Rows.Count > 0) //>1
+                    //Duplicate Orders 
+                    if (dataset != null && dataset.Tables.Count >= 1 && dataset.Tables[0].Rows.Count > 0) 
                     {
                         DataTable datatable = dataset.Tables[0];
 
@@ -1106,7 +1143,7 @@ namespace OMT.DataService.Service
                                        select dt.DefaultColumnName).ToList();
 
                     var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
-                    
+
                     string selectedColumns = $"t1.Id, {string.Join(", ", columns.Select(c => $"t1.{c}"))}";  //included Id's
 
 
@@ -1194,7 +1231,7 @@ namespace OMT.DataService.Service
             try
             {
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
-                using SqlConnection connection=new(connectionstring);
+                using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
                 var SkillsetTable = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateUnassignedOrderDTO.SkillsetId && x.SystemofRecordId == updateUnassignedOrderDTO.SystemofRecordId)
@@ -1202,7 +1239,7 @@ namespace OMT.DataService.Service
 
                 string IdList = string.Join(",", updateUnassignedOrderDTO.Id);
 
-                var Datetime=DateTime.Now;
+                var Datetime = DateTime.Now;
 
                 string query = $"UPDATE {SkillsetTable} SET Status=@Status,Remarks = CONCAT(@Remarks, ' ', @Datetime) WHERE Id IN ({IdList})";
 
@@ -1217,11 +1254,11 @@ namespace OMT.DataService.Service
                 resultDTO.Message = "Unassigned Order Status Updated Successfully";
                 resultDTO.StatusCode = "200";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
-                resultDTO.Message=ex.Message;
+                resultDTO.Message = ex.Message;
             }
             return resultDTO;
         }
