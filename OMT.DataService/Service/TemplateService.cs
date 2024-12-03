@@ -222,7 +222,7 @@ namespace OMT.DataService.Service
                 var NoOfOrders = records.Count;
                 var HasPriorityOrder = records.Any(record => record.IsPriority == 1); //check for priority orders presence
 
-                string uploadedDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+                string uploadedDate = DateTime.UtcNow.ToString("MM-dd-yyyy HH:mm:ss");
 
                 for (int i = 0; i < records.Count; i++)
                 {
