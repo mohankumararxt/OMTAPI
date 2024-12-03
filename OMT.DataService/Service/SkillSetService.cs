@@ -587,13 +587,13 @@ namespace OMT.DataService.Service
                     DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
 
                     string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillSetUpdateDTO.SkillSetId).Select(x => x.SkillSetName).FirstOrDefault();
-                    string username=_oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x=>x.FirstName+ " " +x.LastName).FirstOrDefault();
+                    string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
 
                     IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:toEmailId");
 
-                    List<string> toEmailIds=toEmailId.AsEnumerable()
+                    List<string> toEmailIds = toEmailId.AsEnumerable()
                                             .Where(c => !string.IsNullOrEmpty(c.Value))
-                                            .Select(c=>c.Value)
+                                            .Select(c => c.Value)
                                             .ToList();
 
                     //New Details
@@ -604,26 +604,26 @@ namespace OMT.DataService.Service
                         HardStates = skillSetUpdateDTO.StateName ?? new List<string>()
                     };
 
-                    var changes=new List<string>();
+                    var changes = new List<string>();
 
                     //Compare Changes
-                    if(Olddetails.Threshold !=Newdetails.Threshold)
+                    if (Olddetails.Threshold != Newdetails.Threshold)
                     {
                         changes.Add($"Threshold Updated from {Olddetails.Threshold} to {Newdetails.Threshold}");
                     }
-                    if(Olddetails.IsHardState != Newdetails.IsHardState)
+                    if (Olddetails.IsHardState != Newdetails.IsHardState)
                     {
                         changes.Add($"IsHardState Updated from {Olddetails.IsHardState} to {Newdetails.IsHardState}");
                     }
-                    if(Olddetails.HardStates != Newdetails.HardStates)
+                    if (Olddetails.HardStates != Newdetails.HardStates)
                     {
-                        var oldHS=string.Join(", ",Olddetails.HardStates);
-                        var newHS=string.Join (", ",Newdetails.HardStates);
+                        var oldHS = string.Join(", ", Olddetails.HardStates);
+                        var newHS = string.Join(", ", Newdetails.HardStates);
                         changes.Add($"HardStates Updated from {oldHS} to {newHS}");
                     }
 
                     //changes message
-                    var changesmessage = changes.Any() ? $"{string.Join(", ",changes)}" : "No Changes Were Made.";
+                    var changesmessage = changes.Any() ? $"{string.Join(", ", changes)}" : "No Changes Were Made.";
 
                     //Email body
                     var message = $"{username} has Updated the Skillset named '{skillsetname}' at {uploadeddate}. " + $"{changesmessage}";
@@ -829,69 +829,62 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO GetSkillSetTimelineList(int? skillsetid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<SkillSetTimelineResponseDTO> allSkillSetTimelines = new List<SkillSetTimelineResponseDTO>();
+                var skillsetTimeline = (from ss in _oMTDataContext.SkillSet
+                                        join tl in _oMTDataContext.Timeline on ss.SkillSetId equals tl.SkillSetId
+                                        where ss.IsActive && tl.IsActive
+                                        select new
+                                        {
+                                            ss.SkillSetId,
+                                            ss.SkillSetName,
+                                            tl.TimelineId,
+                                            tl.Hardstatename,
+                                            tl.ExceedTime,
+                                            tl.IsHardState,
+                                        }).ToList();
 
-                var SSid = _oMTDataContext.SkillSet.Where(ss => ss.IsActive && _oMTDataContext.Timeline.Any(tl => tl.SkillSetId == ss.SkillSetId && tl.IsActive));
-
-
-                var skillSetdetails = (skillsetid == null) ? SSid.Select(ss => new { ss.SkillSetId, ss.SkillSetName }).ToList()
-                                   : _oMTDataContext.SkillSet.Where(ss => ss.SkillSetId == skillsetid.Value).Select(ss => new { ss.SkillSetId, ss.SkillSetName })
-                                   .ToList();
-
-
-                foreach (var skillSet in skillSetdetails)
+                if (skillsetid != null)
                 {
-                    // HardState 
-                    List<ResponseTimelineDetailDTO> Listof_HS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                 where tl.IsActive && tl.IsHardState && tl.SkillSetId == skillSet.SkillSetId
-                                                                                 orderby tl.TimelineId
-                                                                                 select new ResponseTimelineDetailDTO()
-                                                                                 {
-                                                                                     HardStateName = tl.Hardstatename,
-                                                                                     ExceedTime = tl.ExceedTime,
-                                                                                     IsHardstate = tl.IsHardState
-                                                                                 }).ToList();
-
-                    // NormalState 
-                    List<ResponseTimelineDetailDTO> Listof_NS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                 where tl.IsActive && !tl.IsHardState && tl.SkillSetId == skillSet.SkillSetId
-                                                                                 orderby tl.TimelineId
-                                                                                 select new ResponseTimelineDetailDTO()
-                                                                                 {
-                                                                                     HardStateName = tl.Hardstatename,
-                                                                                     ExceedTime = tl.ExceedTime,
-                                                                                     IsHardstate = tl.IsHardState
-                                                                                 }).ToList();
-
-                    if (Listof_HS_TimeLineDetails.Count == 0 && Listof_NS_TimeLineDetails.Count == 0) //new
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "No timeline details found for this Skillsetid";
-                        return resultDTO;
-                    }
-
-                    //combine timeline details 
-                    SkillSetTimelineResponseDTO skillSetTimelineResponseDTO = new SkillSetTimelineResponseDTO()
-                    {
-                        SkillSetName = skillSet.SkillSetName,
-                        SkillSetId = skillSet.SkillSetId,
-                        HardStateTimelineDetails = Listof_HS_TimeLineDetails,
-                        NormalStateTimelineDetails = Listof_NS_TimeLineDetails
-                    };
-
-                    allSkillSetTimelines.Add(skillSetTimelineResponseDTO); // Add list of all skillset timelines
+                    skillsetTimeline = skillsetTimeline.Where(t => t.SkillSetId == skillsetid.Value).ToList();
                 }
 
-                resultDTO.Data = allSkillSetTimelines;
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of Timeline Details Successfully Fetched";
+                //group by Skillsetid
+                var groupedTimelines = skillsetTimeline
+                                      .GroupBy(t => new { t.SkillSetId, t.SkillSetName })
+                                      .Select(g => new SkillSetTimelineResponseDTO
+                                      {
+                                          SkillSetId = g.Key.SkillSetId,
+                                          SkillSetName = g.Key.SkillSetName,
+                                          HardStateTimelineDetails = g.Where(t => t.IsHardState)
+                                                                    .Select(t => new ResponseTimelineDetailDTO
+                                                                    {
+                                                                        HardStateName = t.Hardstatename,
+                                                                        ExceedTime = t.ExceedTime,
+                                                                        IsHardstate = t.IsHardState,
+                                                                    }).ToList(),
+                                          NormalStateTimelineDetails = g.Where(t => !t.IsHardState)
+                                                                      .Select(t => new ResponseTimelineDetailDTO
+                                                                      {
+                                                                          HardStateName = t.Hardstatename,
+                                                                          ExceedTime = t.ExceedTime,
+                                                                          IsHardstate = t.IsHardState,
+                                                                      }).ToList()
+                                      }).ToList();
 
+                if (!groupedTimelines.Any())
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "No timeline details found for this Skillsetid";
+                    return resultDTO;
+                }
+
+                resultDTO.Data = groupedTimelines;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Timeline Details";
             }
             catch (Exception ex)
             {
