@@ -1031,7 +1031,7 @@ namespace OMT.DataService.Service
 
                         }
                         //Updating Skillset table    
-                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId and UpdatedId=@UpdatedId";
+                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId and Id = @UpdatedId";
 
 
                         using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
