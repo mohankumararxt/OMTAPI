@@ -749,6 +749,7 @@ namespace OMT.DataService.Service
 
                                 }).FirstOrDefault();
 
+                
                 string completionDateField = "";
 
                 if (orderInfoDTO.SystemofRecordId == 1)
@@ -817,7 +818,7 @@ namespace OMT.DataService.Service
                                      $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
                                      $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
                                      $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                                     $"ss.SkillSetName as SkillSet " +
+                                     $"ss.SkillSetName as SkillSet,sr.SystemofRecordId,sr.SystemofRecordName " +
                                      $"FROM {skillset.SkillSetName} t " +
                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -840,7 +841,7 @@ namespace OMT.DataService.Service
                     dataAdapter.Fill(dataset);
 
                     //Duplicate Orders 
-                    if (dataset != null && dataset.Tables.Count >= 1 && dataset.Tables[0].Rows.Count > 0) 
+                    if (dataset != null && dataset.Tables.Count >= 1 && dataset.Tables[0].Rows.Count > 0)
                     {
                         DataTable datatable = dataset.Tables[0];
 
@@ -854,7 +855,7 @@ namespace OMT.DataService.Service
 
                                 var UpdatedId = latestrow["Id"].ToString();
 
-                                var orderDetails = group.Select(row =>
+                               var orderDetails = group.Select(row =>
                                     datatable.Columns.Cast<DataColumn>()
                                         .ToDictionary(
                                             column => column.ColumnName,
@@ -865,7 +866,8 @@ namespace OMT.DataService.Service
                                 return new OrderdetailsDTO
                                 {
                                     UpdatedId = UpdatedId,
-                                    OrderDetails = orderDetails  // order details -> dynamic 
+                                    OrderDetails = orderDetails, // order details -> dynamic 
+                                    
                                 };
                             }).ToList();
 

@@ -16,5 +16,6 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateOrderStatusByTL(int userid,UpdateOrderStatusByTLDTO updateOrderStatusByTLDTO);
         ResultDTO GetUnassignedOrderInfo(UnassignedOrderInfoDTO unassignedOrderInfoDTO);
         ResultDTO UpdateUnassignedOrder(int userid,UpdateUnassignedOrderDTO updateUnassignedOrderDTO);
+       // ResultDTO GetSkillsetOrderdetails(GetSkillsetOrderdetailsDTO getSkillsetOrderdetailsDTO);
     }
 }
