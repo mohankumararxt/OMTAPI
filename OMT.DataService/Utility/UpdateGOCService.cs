@@ -34,7 +34,7 @@ namespace OMT.DataService.Utility
                                                      .Select(x => new Utilization
                                                      {
                                                          UserId = x.UserId,
-                                                         UserSkillSetId = x.SkillSetId,
+                                                         UserSkillSetId = x.UserSkillSetId,
                                                          SkillSetId = x.SkillSetId,
                                                          TotalOrderstoComplete = x.TotalOrderstoComplete,
                                                          OrdersCompleted = x.OrdersCompleted,
