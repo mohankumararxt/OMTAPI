@@ -3178,4 +3178,4 @@
 --insert into DefaultTemplateColumns values (3,'TLDescription','nvarchar(200)',1,0,0,0,0)
 
 
---update DefaultTemplateColumns set isactive = 0 where id between 51 and 56
+--insert into ProcessStatus values(1,'System-Pending',1)
