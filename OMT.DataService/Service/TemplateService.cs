@@ -4264,7 +4264,17 @@ namespace OMT.DataService.Service
                                        $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                        $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
                                        $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                       $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({sci_csStatusId}) ";
+                                       $"WHERE t.Status IS NOT NULL AND t.Status <> ''  AND t.Status <> 17 ";
+
+                        if (!sci_csStatusId.IsNullOrEmpty())
+                        {
+                            commonSqlPart += $"AND t.Status IN ({sci_csStatusId}) ";
+                        }
+
+                        else if (sci_csStatusId.IsNullOrEmpty())
+                        {
+                            commonSqlPart += $"AND 1 = 0 ";
+                        }
 
                         // Combine everything into the final query
                         sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
@@ -4444,7 +4454,17 @@ namespace OMT.DataService.Service
                                         $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                         $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
                                         $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                        $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({sci_csStatusId}) ";
+                                        $"WHERE t.Status IS NOT NULL AND t.Status <> ''  AND t.Status <> 17 ";
+
+                            if (!sci_csStatusId.IsNullOrEmpty())
+                            {
+                                commonSqlPart += $"AND t.Status IN ({sci_csStatusId}) ";
+                            }
+
+                            else if (sci_csStatusId.IsNullOrEmpty())
+                            {
+                                commonSqlPart += $"AND 1 = 0 ";
+                            }
 
                             // Combine everything into the final query
                             sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
