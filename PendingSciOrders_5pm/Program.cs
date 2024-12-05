@@ -61,7 +61,7 @@ namespace PendingSciOrders_5pm
                                             INNER JOIN SciPendingStatusSkillsets SPS ON SPS.SkillSetId = SS.SkillSetId
                                             INNER JOIN ProcessStatus PS ON PS.SystemofRecordId = SS.SystemofRecordId
                                             INNER JOIN TemplateColumns TC ON TC.SkillSetId = SS.SkillSetId
-                                            WHERE SS.isactive = 1 AND PS.Status = 'Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '05:00 PM' AND SPS.Scheduled_Days = 'Sat'
+                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '05:00 PM' AND SPS.Scheduled_Days = 'Sat'
                                             ORDER BY SkillSetId";
 
                     SqlCommand GetSkillsets = new SqlCommand(SciSkillsets, connection);
