@@ -390,38 +390,6 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        //call store procedure to update goc table to rearange priority of user skillsets
-
-                        //if (HasPriorityOrder)
-                        //{
-                        //    using SqlCommand priority = new()
-                        //    {
-                        //        Connection = connection,
-                        //        CommandType = CommandType.StoredProcedure,
-                        //        CommandText = "UpdateGoc_PriorityOrder"
-                        //    };
-
-                        //    priority.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
-                        //    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                        //    priority.Parameters.AddWithValue("@UserId", 0);
-
-                        //    SqlParameter priority_returnValue = new()
-                        //    {
-                        //        ParameterName = "@RETURN_VALUE_Po",
-                        //        Direction = ParameterDirection.ReturnValue
-                        //    };
-                        //    priority.Parameters.Add(priority_returnValue);
-
-                        //    priority.ExecuteNonQuery();
-
-                        //    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
-
-                        //    if (priority_returnCode != 1)
-                        //    {
-                        //        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
-                        //    }
-                        //}
-
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
                     }
@@ -3652,39 +3620,6 @@ namespace OMT.DataService.Service
                                     throw new InvalidOperationException("Something went wrong while replacing the orders,please check the order details.");
                                 }
 
-                                //int priorityCount = recordsToInsert.Count(record => (int?)record["IsPriority"] == 1);
-
-                                //if (priorityCount > 0)
-                                //{
-                                //    using SqlCommand priority = new()
-                                //    {
-                                //        Connection = connection,
-                                //        CommandType = CommandType.StoredProcedure,
-                                //        CommandText = "UpdateGoc_PriorityOrder"
-                                //    };
-
-                                //    priority.Parameters.AddWithValue("@SkillSetId", replaceOrdersDTO.SkillsetId);
-                                //    priority.Parameters.AddWithValue("@SystemOfRecordId", skillSet.SystemofRecordId);
-                                //    priority.Parameters.AddWithValue("@UserId", 0);
-
-                                //    SqlParameter priority_returnValue = new()
-                                //    {
-                                //        ParameterName = "@RETURN_VALUE_Po",
-                                //        Direction = ParameterDirection.ReturnValue
-                                //    };
-
-                                //    priority.Parameters.Add(priority_returnValue);
-                                //    priority.ExecuteNonQuery();
-
-                                //    int priority_returnCode = (int)priority.Parameters["@RETURN_VALUE_Po"].Value;
-
-                                //    if (priority_returnCode != 1)
-                                //    {
-                                //        throw new InvalidOperationException("Something went wrong while updating GetOrderCalculation table.");
-                                //    }
-
-                                //}
-
                                 resultDTO.IsSuccess = true;
                                 resultDTO.Message = "Orders replaced successfully";
                                 resultDTO.StatusCode = "200";
@@ -4124,13 +4059,10 @@ namespace OMT.DataService.Service
 
                         string completionDateField = "";
                         string dateFilterCondition = "";
+                        string sqlquery = "";
 
                         DateTime fromDate = skillsetWiseReportsDTO.FromDate;
                         DateTime toDate = skillsetWiseReportsDTO.ToDate;
-
-                        //fromDate = DateTime.SpecifyKind(fromDate, DateTimeKind.Local);
-
-                        //toDate = DateTime.SpecifyKind(toDate, DateTimeKind.Local);
 
                         if (skillsetWiseReportsDTO.SystemOfRecordId == 1)
                         {
@@ -4139,16 +4071,39 @@ namespace OMT.DataService.Service
 
                             dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                          ? "AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
-                                                         : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate)";
+                                                         : "AND t.AllocationDate BETWEEN CONVERT(DATE, @FromDate) AND CONVERT(DATE, @ToDate) ";
 
                             if (skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime)
                             {
                                 fromDate = fromDate.AddHours(-5).AddMinutes(-30);
                                 toDate = toDate.AddHours(-5).AddMinutes(-30);
                             }
+
+                            commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                        $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                        $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                        $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                        $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                        $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                        $"ss.SkillSetName as SkillSet " +
+                                        $"FROM {skillsetdetails.SkillSetName} t " +
+                                        $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                        $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                        $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                        $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status <> 17 ";
+
+
+
+                            // Combine everything into the final query
+                            sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                            sqlquery += $" Union " +
+                                        $"{sqlquery1} " +
+                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails.SkillSetName}' AS SkillSet FROM {skillsetdetails.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+
                         }
-                       
-                        
+
+
                         if (skillsetWiseReportsDTO.SystemOfRecordId != 1)
                         {
                             completionDateField = $"CONVERT(VARCHAR(10), (t.CompletionDate AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific Standard Time'), 101) as CompletionDate";
@@ -4164,15 +4119,13 @@ namespace OMT.DataService.Service
                                 fromDate = fromDate.AddHours(8);
                                 toDate = toDate.AddDays(1).AddHours(8);
                             }
-                           
+
 
                             dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                                                      : $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate";
 
-                        }
-
-                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                            commonSqlPart += $"{completionDateField}, t.Remarks, " +
                                          $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
                                          $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                          $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
@@ -4187,8 +4140,12 @@ namespace OMT.DataService.Service
 
 
 
-                        // Combine everything into the final query
-                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+                            // Combine everything into the final query
+                            sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                        }
+
+
 
                         using SqlCommand sqlCommand = connection.CreateCommand();
                         sqlCommand.CommandText = sqlquery;
@@ -4267,35 +4224,14 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                    //              $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                    //              $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                    //              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                    //              $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                    //              $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                    //              $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                    //              $"ss.SkillSetName as SkillSet " +
-                    //              $"FROM {skillset.SkillSetName} t " +
-                    //              $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                    //              $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                    //              $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                    //              $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
-
-                    //string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                    //                             ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                    //                             : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
                     string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName, ps.Status as Status, ";
 
                     string completionDateField = "";
                     string dateFilterCondition = "";
+                    string sqlquery = "";
 
                     DateTime fromDate = skillsetWiseReportsDTO.FromDate;
                     DateTime toDate = skillsetWiseReportsDTO.ToDate;
-
-                    //fromDate = DateTime.SpecifyKind(fromDate, DateTimeKind.Local);
-
-                    //toDate = DateTime.SpecifyKind(toDate, DateTimeKind.Local);
 
                     if (skillsetWiseReportsDTO.SystemOfRecordId == 1)
                     {
@@ -4311,6 +4247,37 @@ namespace OMT.DataService.Service
                             fromDate = fromDate.AddHours(-5).AddMinutes(-30);
                             toDate = toDate.AddHours(-5).AddMinutes(-30);
                         }
+
+                        List<int> Sci_statusid = skillsetWiseReportsDTO.StatusId.ToList();
+                        Sci_statusid.Remove(17);
+
+                        string sci_csStatusId = string.Join(",", Sci_statusid);
+
+                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                       $"ss.SkillSetName as SkillSet " +
+                                       $"FROM {skillset.SkillSetName} t " +
+                                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                       $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({sci_csStatusId}) ";
+
+                        // Combine everything into the final query
+                        sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                        if (statusid.Contains(17))
+                        {
+                            sqlquery += $" Union " +
+                                    $"{sqlquery1} " +
+                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+
+
+                        }
+
                     }
 
 
@@ -4335,27 +4302,26 @@ namespace OMT.DataService.Service
                                                                                  ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                                                  : $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate";
 
+                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                    $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                    $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                    $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                    $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                    $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                    $"ss.SkillSetName as SkillSet " +
+                                    $"FROM {skillset.SkillSetName} t " +
+                                    $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                    $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                    $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                    $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
+
+
+
+                        // Combine everything into the final query
+                        sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
                     }
 
-                    commonSqlPart += $"{completionDateField}, t.Remarks, " +
-                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                                     $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                                     $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                                     $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                                     $"ss.SkillSetName as SkillSet " +
-                                     $"FROM {skillset.SkillSetName} t " +
-                                     $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                     $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                     $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                     $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
-
-
-
-                    // Combine everything into the final query
-                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
-
-                   
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sqlquery;
 
@@ -4438,37 +4404,14 @@ namespace OMT.DataService.Service
                             }
                         }
 
-                        //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                        //              $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                        //              $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                        //              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                        //              $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                        //              $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                        //              $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                        //              $"ss.SkillSetName as SkillSet " +
-                        //              $"FROM {skillsetdetails2.SkillSetName} t " +
-                        //              $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                        //              $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                        //              $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                        //              $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({csStatusId}) ";
-
-                        //string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                        //                             ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                        //                             : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-
-
                         string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName, ps.Status as Status, ";
 
                         string completionDateField = "";
                         string dateFilterCondition = "";
+                        string sqlquery = "";
 
                         DateTime fromDate = skillsetWiseReportsDTO.FromDate;
                         DateTime toDate = skillsetWiseReportsDTO.ToDate;
-
-                        //fromDate = DateTime.SpecifyKind(fromDate, DateTimeKind.Local);
-
-                        //toDate = DateTime.SpecifyKind(toDate, DateTimeKind.Local);
 
                         if (skillsetWiseReportsDTO.SystemOfRecordId == 1)
                         {
@@ -4483,6 +4426,36 @@ namespace OMT.DataService.Service
                             {
                                 fromDate = fromDate.AddHours(-5).AddMinutes(-30);
                                 toDate = toDate.AddHours(-5).AddMinutes(-30);
+                            }
+
+                            List<int> Sci_statusid = skillsetWiseReportsDTO.StatusId.ToList();
+                            Sci_statusid.Remove(17);
+
+                            string sci_csStatusId = string.Join(",", Sci_statusid);
+
+                            commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                        $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                        $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                        $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                        $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                        $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                        $"ss.SkillSetName as SkillSet " +
+                                         $"FROM {skillsetdetails2.SkillSetName} t " +
+                                        $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                        $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                        $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                        $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status IN ({sci_csStatusId}) ";
+
+                            // Combine everything into the final query
+                            sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                            if (statusid.Contains(17))
+                            {
+                                sqlquery += $" Union " +
+                                        $"{sqlquery1} " +
+                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails2.SkillSetName}' AS SkillSet FROM {skillsetdetails2.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+
+
                             }
                         }
 
@@ -4508,9 +4481,7 @@ namespace OMT.DataService.Service
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                                                      : $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate";
 
-                        }
-
-                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                            commonSqlPart += $"{completionDateField}, t.Remarks, " +
                                          $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
                                          $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
                                          $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
@@ -4525,8 +4496,12 @@ namespace OMT.DataService.Service
 
 
 
-                        // Combine everything into the final query
-                        string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+                            // Combine everything into the final query
+                            sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                        }
+
+
 
                         using SqlCommand sqlCommand = connection.CreateCommand();
                         sqlCommand.CommandText = sqlquery;
@@ -4601,35 +4576,14 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                    //              $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                    //              $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                    //              $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                    //              $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                    //              $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                    //              $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                    //              $"ss.SkillSetName as SkillSet " +
-                    //              $"FROM {skillset.SkillSetName} t " +
-                    //              $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                    //              $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                    //              $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                    //                   $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
-
-                    //string dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                    //                          ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                    //                          : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
                     string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName, ps.Status as Status, ";
 
                     string completionDateField = "";
                     string dateFilterCondition = "";
+                    string sqlquery = "";
 
                     DateTime fromDate = skillsetWiseReportsDTO.FromDate;
                     DateTime toDate = skillsetWiseReportsDTO.ToDate;
-
-                    //fromDate = DateTime.SpecifyKind(fromDate, DateTimeKind.Local);
-
-                    //toDate = DateTime.SpecifyKind(toDate, DateTimeKind.Local);
 
                     if (skillsetWiseReportsDTO.SystemOfRecordId == 1)
                     {
@@ -4645,6 +4599,30 @@ namespace OMT.DataService.Service
                             fromDate = fromDate.AddHours(-5).AddMinutes(-30);
                             toDate = toDate.AddHours(-5).AddMinutes(-30);
                         }
+
+                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                       $"ss.SkillSetName as SkillSet " +
+                                       $"FROM {skillset.SkillSetName} t " +
+                                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                       $"WHERE t.Status IS NOT NULL AND t.Status <> '' AND t.Status <> 17 ";
+
+
+
+                        // Combine everything into the final query
+                        sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+
+                        sqlquery += $" Union " +
+                                    $"{sqlquery1} " +
+                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+
+
                     }
 
 
@@ -4668,26 +4646,26 @@ namespace OMT.DataService.Service
                         dateFilterCondition = skillsetWiseReportsDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                  ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
                                                                                  : $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate";
+                        commonSqlPart += $"{completionDateField}, t.Remarks, " +
+                                    $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
+                                    $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
+                                    $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
+                                    $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
+                                    $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
+                                    $"ss.SkillSetName as SkillSet " +
+                                    $"FROM {skillset.SkillSetName} t " +
+                                    $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
+                                    $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
+                                    $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
+                                    $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
 
+
+
+                        // Combine everything into the final query
+                        sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
                     }
 
-                    commonSqlPart += $"{completionDateField}, t.Remarks, " +
-                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                                     $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                                     $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                                     $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                                     $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                                     $"ss.SkillSetName as SkillSet " +
-                                     $"FROM {skillset.SkillSetName} t " +
-                                     $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                                     $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                                     $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                                     $"WHERE t.Status IS NOT NULL AND t.Status <> '' ";
-
-
-
-                    // Combine everything into the final query
-                    string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
+                   
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sqlquery;
