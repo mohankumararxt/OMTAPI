@@ -272,7 +272,7 @@ namespace OMT.DataService.Service
                                     Pending_Count = Convert.ToInt32(row["Pending_Count"]),
                                     Reject_Count = Convert.ToInt32(row["Reject_Count"]),
                                     Threshold = Convert.ToInt32(row["Threshold"]),
-                                    Total_WorkingDays = Convert.ToInt32(row["Total_WorkingDays"]),
+                                    Total_WorkingDays = Convert.ToInt32(row["WorkingDays"]),
                                 };
 
                                 skillSetDataList.Add(data);
