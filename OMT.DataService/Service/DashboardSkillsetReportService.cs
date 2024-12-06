@@ -34,192 +34,7 @@ namespace OMT.DataService.Service
             _configuration = configuration;
         }
 
-        public ResultDTO DashboardSkillsetWiseReports(DashboardSkillsetReportsDTO skillsetWiseReportsDTO)
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
-                // Dictionary to store the result in the desired format
-                var systemOfRecordData = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
-
-                List<string> reportcol = new List<string>();
-
-                if (skillsetWiseReportsDTO.SystemOfRecordId != 3 )
-                {
-                    var sorlist = _oMTDataContext.SystemofRecord.ToList();
-
-                    foreach (var sor in sorlist)
-                    {
-                        // Retrieve all SkillSetNames for this SystemOfRecordId
-                        var skillSetNames = new List<string>();
-                        using (var connection = new SqlConnection(connectionstring))
-                        {
-                            connection.Open();
-                            var command = new SqlCommand(
-                                "SELECT SkillSetName FROM SkillSet WHERE SystemofRecordId = @SystemofRecordId AND IsActive = 1",
-                                connection);
-                            command.Parameters.AddWithValue("@SystemofRecordId", sor.SystemofRecordId);
-                            using (var reader = command.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    skillSetNames.Add(reader["SkillSetName"].ToString());
-                                }
-                            }
-                        }
-
-                        foreach (var skillsetName in skillSetNames)
-                        {
-                            string tableName = skillsetName;
-
-                            using (var connection = new SqlConnection(connectionstring))
-                            {
-                                connection.Open();
-
-                                try
-                                {
-                                    string query = $@"
-                                    SELECT so.SystemofRecordName, ss.SkillSetName, ps.Status, COUNT(ps.Status) AS Count, ss.Threshold
-                                    FROM SystemofRecord so
-                                    JOIN SkillSet ss ON so.SystemofRecordId = ss.SystemofRecordId
-                                    JOIN ProcessStatus ps ON so.SystemofRecordId = ps.SystemOfRecordId AND ss.SystemofRecordId = ps.SystemOfRecordId
-                                    JOIN {tableName} sst ON ps.Id = sst.Status AND  ps.SystemofRecordId = sst.SystemofRecordId AND ss.SkillSetId = sst.SkillSetId
-                                    WHERE sst.StartTime <= sst.EndTime AND so.SystemofRecordId = {skillsetWiseReportsDTO.SystemOfRecordId} 
-                                    GROUP BY so.SystemofRecordName, ss.SkillSetName, ps.Status,ss.Threshold";
-
-                                    using (var command = new SqlCommand(query, connection))
-                                    {
-                                        using (var reader = command.ExecuteReader())
-                                        {
-                                            if (reader.HasRows)  // Check if there are rows to read
-                                            {
-                                                
-                                                while (reader.Read())
-                                                {
-                                                    // Extract the values
-                                                    string systemOfRecordName = reader["SystemofRecordName"].ToString();
-                                                    int threshold = Convert.ToInt32(reader["Threshold"]);
-                                                    string skillSetName = skillsetName;
-                                                    string status = reader["Status"].ToString();
-                                                    int count = Convert.ToInt32(reader["Count"]);
-                                                    int resource_worked = 2;
-                                                     
-                                                    float capacityperday = MathF.Round(threshold * resource_worked, 2);
-                                                    DateTime fromDate = skillsetWiseReportsDTO.FromDate;
-                                                    DateTime toDate = skillsetWiseReportsDTO.ToDate;
-
-                                                    // Initialize a counter
-                                                    int totalDaysExcludingSundays = 0;
-
-                                                    // Loop through each day between fromDate and toDate
-                                                    for (DateTime date = fromDate.Date; date <= toDate.Date; date = date.AddDays(1))
-                                                    {
-                                                        if (date.DayOfWeek != DayOfWeek.Sunday)
-                                                        {
-                                                            totalDaysExcludingSundays++;
-                                                        }
-                                                    }
-                                                    int capacitypertotalworkingdays = Convert.ToInt32(capacityperday) * totalDaysExcludingSundays;
-                                                    
-
-                                                    // Ensure the system record dictionary exists
-                                                    if (!systemOfRecordData.ContainsKey(systemOfRecordName))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName] = new Dictionary<string, Dictionary<string, int>>();
-                                                    }
-
-                                                    // Create the skillset entry for the system of record
-                                                    string skillsetKey = $"{skillSetName.ToLower()}";
-                                                    if (!systemOfRecordData[systemOfRecordName].ContainsKey(skillsetKey))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey] = new Dictionary<string, int>()
-                                                        {
-                                                            { "completed", 0 },
-                                                            { "pending", 0 },
-                                                            { "reject", 0 }
-                                                        };
-                                                    }
-
-                                                    // Increment the appropriate status count
-                                                    if (status.Equals("completed", StringComparison.OrdinalIgnoreCase))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["completed"] = count;
-                                                    }
-                                                    else if (status.Equals("exception", StringComparison.OrdinalIgnoreCase))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["completed"] += count;
-                                                    }
-                                                    else if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["pending"] = count;
-                                                    }
-                                                    else if (status.Equals("reject", StringComparison.OrdinalIgnoreCase))
-                                                    {
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["reject"] = count;
-                                                    }
-                                                    int completed = systemOfRecordData[systemOfRecordName][skillsetKey]["completed"];
-                                                    int pending = systemOfRecordData[systemOfRecordName][skillsetKey]["pending"];
-                                                    int reject = systemOfRecordData[systemOfRecordName][skillsetKey]["reject"];
-                                                    int ordersreceived = completed + pending + reject;
-                                                    systemOfRecordData[systemOfRecordName][skillsetKey]["ordersreceived"] = ordersreceived;
-                                                    systemOfRecordData[systemOfRecordName][skillsetKey]["Threshold"] = threshold;
-                                                    
-                                                    int shortfall = systemOfRecordData[systemOfRecordName][skillsetKey]["completed"] - capacitypertotalworkingdays;
-                                                    try
-                                                    {
-
-
-                                                        float utilization = (capacitypertotalworkingdays / systemOfRecordData[systemOfRecordName][skillsetKey]["completed"])*100;
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["resource_worked"] = resource_worked;
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["capacityperday"] = (int)capacityperday;
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["capacitypertotalworkingdays"] = capacitypertotalworkingdays;
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["shortfall"] = shortfall;
-                                                        systemOfRecordData[systemOfRecordName][skillsetKey]["utilization"] = (int)utilization;
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        resultDTO.IsSuccess = false;
-                                                        resultDTO.Message = ex.Message;
-                                                        resultDTO.StatusCode = "500";
-                                                    }
-
-                                                }
-                                                
-                                            }
-                                            else
-                                            {
-                                                resultDTO.IsSuccess = false;
-                                                resultDTO.Message = "No data available.";
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    resultDTO.IsSuccess = false;
-                                    resultDTO.Message = ex.Message;
-                                    resultDTO.StatusCode = "500";
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Assign the result to resultDTO.Data
-                resultDTO.Data = systemOfRecordData;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in DashboardSkillsetWiseReports: {ex.Message}");
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-            }
-
-            return resultDTO;
-        }
         public ResultDTO DashboardReports(DateTime fromDate, DateTime toDate)
         {
             // Initialize the result object
@@ -260,7 +75,7 @@ namespace OMT.DataService.Service
                             List<SkillSetDataDTO> skillSetDataList = new List<SkillSetDataDTO>();
                             string lastSkillSetName = null; // Initialize to track the previous skill name
                             int ordercount = 0; // Initialize order count
-                            
+
 
                             foreach (DataRow row in dataTable.Rows)
                             {
@@ -303,8 +118,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        // Define a class to represent the data structure
-      
+
 
 
 
@@ -637,37 +451,37 @@ namespace OMT.DataService.Service
 
 
         // Helper function to merge both dictionaries
-        private Dictionary<string, Dictionary<string, Dictionary<string, int>>> MergeDictionaries(
-            Dictionary<string, Dictionary<string, Dictionary<string, int>>> dict1,
-            Dictionary<string, Dictionary<string, int>> dict2)
-        {
-            var mergedDict = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
+        //private Dictionary<string, Dictionary<string, Dictionary<string, int>>> MergeDictionaries(
+        //    Dictionary<string, Dictionary<string, Dictionary<string, int>>> dict1,
+        //    Dictionary<string, Dictionary<string, int>> dict2)
+        //{
+        //    var mergedDict = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
 
-            // Merge dict1 into mergedDict
-            foreach (var entry in dict1)
-            {
-                if (!mergedDict.ContainsKey(entry.Key))
-                {
-                    mergedDict[entry.Key] = new Dictionary<string, Dictionary<string, int>>();
-                }
-                foreach (var subEntry in entry.Value)
-                {
-                    mergedDict[entry.Key][subEntry.Key] = new Dictionary<string, int>(subEntry.Value);
-                }
-            }
+        //    // Merge dict1 into mergedDict
+        //    foreach (var entry in dict1)
+        //    {
+        //        if (!mergedDict.ContainsKey(entry.Key))
+        //        {
+        //            mergedDict[entry.Key] = new Dictionary<string, Dictionary<string, int>>();
+        //        }
+        //        foreach (var subEntry in entry.Value)
+        //        {
+        //            mergedDict[entry.Key][subEntry.Key] = new Dictionary<string, int>(subEntry.Value);
+        //        }
+        //    }
 
-            // Merge dict2 into mergedDict (dict2 doesn't have the same nested structure)
-            foreach (var entry in dict2)
-            {
-                if (!mergedDict.ContainsKey(entry.Key))
-                {
-                    mergedDict[entry.Key] = new Dictionary<string, Dictionary<string, int>>();
-                }
-                mergedDict[entry.Key]["general"] = new Dictionary<string, int>(entry.Value);
-            }
+        //    // Merge dict2 into mergedDict (dict2 doesn't have the same nested structure)
+        //    foreach (var entry in dict2)
+        //    {
+        //        if (!mergedDict.ContainsKey(entry.Key))
+        //        {
+        //            mergedDict[entry.Key] = new Dictionary<string, Dictionary<string, int>>();
+        //        }
+        //        mergedDict[entry.Key]["general"] = new Dictionary<string, int>(entry.Value);
+        //    }
 
-            return mergedDict;
-        }
+        //    return mergedDict;
+        //}
 
 
     }

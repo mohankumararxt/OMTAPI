@@ -9,7 +9,7 @@ namespace OMT.DataService.Interface
 {
     public interface IDashboardSkillsetReportService
     {
-        ResultDTO DashboardSkillsetWiseReports(DashboardSkillsetReportsDTO skillsetWiseReportsDTO);
+        //ResultDTO DashboardSkillsetWiseReports(DashboardSkillsetReportsDTO skillsetWiseReportsDTO);
 
         ResultDTO DashboardReports(DateTime fromDate, DateTime toDate);
     }

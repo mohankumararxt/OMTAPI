@@ -16,13 +16,13 @@ namespace OMT.APIHost.Controllers
             _dashboardSkillsetReportService = dashboardSkillsetReportService;
         }
 
-        [HttpPost]
-        [Route("SkillsetWiseReports")]
+        //[HttpPost]
+        //[Route("SkillsetWiseReports")]
 
-        public ResultDTO SkillsetWiseReports([FromBody] DashboardSkillsetReportsDTO skillsetWiseReportsDTO)
-        {
-            return _dashboardSkillsetReportService.DashboardSkillsetWiseReports(skillsetWiseReportsDTO);
-        }
+        //public ResultDTO SkillsetWiseReports([FromBody] DashboardSkillsetReportsDTO skillsetWiseReportsDTO)
+        //{
+        //    return _dashboardSkillsetReportService.DashboardSkillsetWiseReports(skillsetWiseReportsDTO);
+        //}
 
 
         [HttpGet]
