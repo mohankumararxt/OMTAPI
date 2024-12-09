@@ -192,6 +192,8 @@ namespace OMT.DataService
 
                                                 }).ToList();
 
+                            ListofStatus.RemoveAll(item => item.Status == "System-Pending");
+
                             // get order counts for each status
 
                             foreach (var status in ListofStatus)
