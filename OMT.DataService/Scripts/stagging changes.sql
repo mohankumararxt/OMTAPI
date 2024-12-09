@@ -3150,3 +3150,8 @@
 --(1,1,'05:00 PM','Sat'),
 --(3,1,'05:00 PM','Sat'),
 --(78,1,'05:00 PM','Sat')
+
+
+--insert into ProcessStatus values
+--(3,'Not found',0),
+--(1,'System-Pending',1)
