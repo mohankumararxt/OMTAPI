@@ -20,7 +20,7 @@ namespace OMT.DataService.Service
             {
                 List<ProcessStatusResponseDTO> listofstatus = (from sor in _oMTDataContext.SystemofRecord
                                                                join ps in _oMTDataContext.ProcessStatus on sor.SystemofRecordId equals ps.SystemOfRecordId
-                                                               where ps.IsActive == true && ps.SystemOfRecordId == systemofrecordid
+                                                               where ps.IsActive == true && ps.SystemOfRecordId == systemofrecordid && ps.IsActive
                                                                orderby ps.Status
                                                                select new ProcessStatusResponseDTO
                                                                {
@@ -43,7 +43,7 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
+            
         public ResultDTO UpdateOrderStatusList(int systemofrecordid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -52,7 +52,7 @@ namespace OMT.DataService.Service
                 
                 List<ProcessStatusResponseDTO> listofstatus = (from sor in _oMTDataContext.SystemofRecord
                                                                join ps in _oMTDataContext.ProcessStatus on sor.SystemofRecordId equals ps.SystemOfRecordId
-                                                               where ps.IsActive == true && ps.SystemOfRecordId == systemofrecordid
+                                                               where ps.IsActive == true && ps.SystemOfRecordId == systemofrecordid && ps.IsActive
                                                                orderby ps.Status
                                                                select new ProcessStatusResponseDTO
                                                                {

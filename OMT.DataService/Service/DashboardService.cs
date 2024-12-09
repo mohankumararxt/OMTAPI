@@ -184,7 +184,7 @@ namespace OMT.DataService
 
                             var ListofStatus = (from ss in _oMTDataContext.SystemofRecord
                                                 join ps in _oMTDataContext.ProcessStatus on ss.SystemofRecordId equals ps.SystemOfRecordId
-                                                where ss.SystemofRecordId == liveStatusReportDTO.SystemOfRecordId
+                                                where ss.SystemofRecordId == liveStatusReportDTO.SystemOfRecordId && ps.IsActive
                                                 select new
                                                 {
                                                     StatusId = ps.Id,
