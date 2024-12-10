@@ -20,7 +20,6 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-
         public ResultDTO GetReportColumnlist(int? skillsetid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -30,19 +29,20 @@ namespace OMT.DataService.Service
                                         join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
                                         join ss in _oMTDataContext.SkillSet on rc.SkillSetId equals ss.SkillSetId
                                         join sr in _oMTDataContext.SystemofRecord on rc.SystemOfRecordId equals sr.SystemofRecordId
-                                        where (ss.SkillSetId == skillsetid || skillsetid == null) && ss.IsActive==true && rc.IsActive==true && sr.IsActive==true 
+                                        where (ss.SkillSetId == skillsetid || skillsetid == null) && ss.IsActive == true && rc.IsActive == true && sr.IsActive == true
                                         select new
                                         {
                                             SkillSetName = ss.SkillSetName,
                                             SkillSetId = ss.SkillSetId,
                                             SystemofRecordId = sr.SystemofRecordId,
                                             SystemofRecordName = sr.SystemofRecordName,
-                                            ReportColumnName = mrc.ReportColumnName,  
+                                            ReportColumnName = mrc.ReportColumnName,
                                             MasterReportColumnId = rc.MasterReportColumnId,
-                                            ColumnSequence=rc.ColumnSequence,
+                                            ColumnSequence = rc.ColumnSequence,
 
                                         })
-                                        .OrderBy(x => x.SkillSetName)  
+                                        .OrderBy(x => x.SystemofRecordName)
+                                        .ThenBy(x => x.SkillSetName)
                                         .ThenBy(x => x.ColumnSequence)
                                         .ToList();
 
@@ -67,69 +67,66 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO CreateReportColumns(CreateReportColumnsDTO createReportColumnsDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                //all Exisiting cols
-                var existingColumns = (from mrc in _oMTDataContext.MasterReportColumns
-                                       join rc in _oMTDataContext.ReportColumns on mrc.MasterReportColumnsId equals rc.MasterReportColumnId
-                                       join ss in _oMTDataContext.SkillSet on rc.SkillSetId equals ss.SkillSetId
-                                       join sr in _oMTDataContext.SystemofRecord on rc.SystemOfRecordId equals sr.SystemofRecordId
-                                       where rc.SkillSetId == createReportColumnsDTO.SkillSetId && rc.SystemOfRecordId == createReportColumnsDTO.SystemofRecordId
-                                       && createReportColumnsDTO.MasterReportColumnId.Contains(rc.MasterReportColumnId) && rc.IsActive
-                                       select new
-                                       {
-                                           SkillSetName = ss.SkillSetName,
-                                           SkillSetId = ss.SkillSetId,
-                                           SystemofRecordId = sr.SystemofRecordId,
-                                           SystemofRecordName = sr.SystemofRecordName,
-                                           ReportColumnName = mrc.ReportColumnName,
-                                           ReportColumnId = rc.ReportColumnsId,
-                                           IsActive = rc.IsActive
-                                       }).ToList();
+                //Check Skillset Already Exists
+                var ExistingSkillset = (from rc in _oMTDataContext.ReportColumns
+                                        join ss in _oMTDataContext.SkillSet on rc.SkillSetId equals ss.SkillSetId
+                                        where ss.SkillSetId == createReportColumnsDTO.SkillSetId
+                                        select rc).FirstOrDefault();
 
-                if (existingColumns.Any())
+                if (ExistingSkillset != null)
                 {
-                    //if any IsActive=1
-                    var skillsetName = existingColumns.First().SkillSetName;
-                    var RepColName = string.Join(",", existingColumns.Select(x => x.ReportColumnName));
-                    resultDTO.Message = $"The Following Columns are Already Mapped to {skillsetName}->{RepColName}, Please try again..";
                     resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "ReportColumns are already Configured for this Skillset...Please Update it.";
+
                     return resultDTO;
                 }
+
+                //Find Existing Names
+                var existingMasterRepCols = _oMTDataContext.MasterReportColumns
+                                        .Where(mrc => createReportColumnsDTO.MasterReportColumnNames.Contains(mrc.ReportColumnName))
+                                        .ToDictionary(mrc => mrc.ReportColumnName, mrc => mrc.ReportColumnName);
+
+                var newColumns = createReportColumnsDTO.MasterReportColumnNames.Except(existingMasterRepCols.Keys).ToList();
+
+                //Add 
+                if (newColumns.Any())
+                {
+                    var newMasterCol = newColumns.Select(name => new MasterReportColumns { ReportColumnName = name }).ToList();
+
+                    _oMTDataContext.MasterReportColumns.AddRange(newMasterCol);
+                    _oMTDataContext.SaveChanges();
+                }
+
+                //Total Id's & Ordering Accordingly
+                var masterrepId = _oMTDataContext.MasterReportColumns
+                                  .Where(mrc => createReportColumnsDTO.MasterReportColumnNames.Contains(mrc.ReportColumnName))
+                                  .ToList();
+
+                var TotalColIds = masterrepId
+                                  .OrderBy(mrc => createReportColumnsDTO.MasterReportColumnNames.IndexOf(mrc.ReportColumnName))
+                                  .Select(mrc => mrc.MasterReportColumnsId).ToList();
 
                 var newCols = new List<ReportColumns>(); //If no active Cols exist (new list)
 
                 int ColsequenceOrder = 1;
 
-                foreach (var marterReportColumnId in createReportColumnsDTO.MasterReportColumnId)
+                foreach (var marterReportColumnId in TotalColIds)
                 {
-                    var existingColumn = _oMTDataContext.ReportColumns.FirstOrDefault
-                                        (rc => rc.SkillSetId == createReportColumnsDTO.SkillSetId &&
-                                        rc.SystemOfRecordId == createReportColumnsDTO.SystemofRecordId &&
-                                        rc.MasterReportColumnId == marterReportColumnId);
 
-                    if (existingColumn == null)  //Add new
+                    newCols.Add(new ReportColumns
                     {
-                        newCols.Add(new ReportColumns
-                        {
-                            SkillSetId = createReportColumnsDTO.SkillSetId,
-                            SystemOfRecordId = createReportColumnsDTO.SystemofRecordId,
-                            MasterReportColumnId = marterReportColumnId,
-                            ColumnSequence= ColsequenceOrder++,   //increament
-                            IsActive = true
-                        });
-                    }
-                    else //Reactivate
-                    {
-                        existingColumn.IsActive = true;
-                        existingColumn.ColumnSequence = ColsequenceOrder++;
-                        _oMTDataContext.ReportColumns.Update(existingColumn);
-                        _oMTDataContext.SaveChanges();
-                    }
+                        SkillSetId = createReportColumnsDTO.SkillSetId,
+                        SystemOfRecordId = createReportColumnsDTO.SystemofRecordId,
+                        MasterReportColumnId = marterReportColumnId,
+                        ColumnSequence = ColsequenceOrder++,   //increament
+                        IsActive = true
+                    });
                 }
                 _oMTDataContext.ReportColumns.AddRange(newCols);
                 _oMTDataContext.SaveChanges();

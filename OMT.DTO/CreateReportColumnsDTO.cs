@@ -10,6 +10,6 @@ namespace OMT.DTO
     {
         public int SkillSetId { get; set; }
         public int SystemofRecordId {  get; set; }
-        public List<int> MasterReportColumnId { get; set; }
+        public List<string> MasterReportColumnNames { get; set; }
     }
 }
