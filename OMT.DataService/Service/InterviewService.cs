@@ -44,6 +44,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "User already exists. Please try to add different User";
+                    resultDTO.StatusCode = "409";
                 }
                 else
                 {
@@ -51,7 +52,7 @@ namespace OMT.DataService.Service
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
-                        resultDTO.StatusCode = "500";
+                        resultDTO.StatusCode = "400";
                     }
                     else 
                     {
@@ -129,6 +130,7 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "InterviewTest Inserted Successfully";
                         resultDTO.Data = joinedData;
+                        resultDTO.StatusCode = "201";
                     }
 
                 } 
@@ -164,11 +166,13 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Updated Starttime Successfully";
+                    resultDTO.StatusCode = "200";
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Id not found";
+                    resultDTO.StatusCode = "404";
                 }
             }
             catch (Exception ex)
@@ -196,7 +200,7 @@ namespace OMT.DataService.Service
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
-                        resultDTO.StatusCode = "500";
+                        resultDTO.StatusCode = "400";
                     }
                     else
                     {
@@ -208,6 +212,7 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Updated InterviewTests Successfully";
+                        resultDTO.StatusCode = "200";
                     }
 
                 }
@@ -215,6 +220,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "data not found";
+                    resultDTO.StatusCode = "404";
                 }
             }
             catch (Exception ex)
@@ -270,11 +276,13 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Leaderboard fetch successfully...";
                         resultDTO.Data = joinedData;
+                    resultDTO.StatusCode = "200";
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Invalid number of days please check again...";
+                    resultDTO.StatusCode = "400";
                 }
 
 

@@ -50,5 +50,23 @@ namespace OMT.APIHost.Controllers
         {
             return _userTestService.Test(userId);
         }
+
+        [HttpGet]
+        [Route("GetCountOfTestByUser")]
+        public ResultDTO GetCountOfTestByUser(int userId)
+        {
+            return _userTestService.GetCountOfTestByUser(userId);
+        }
+
+
+        [HttpGet]
+        [Route("AgentProgressBar")]
+        public ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO)
+        {
+            return _userTestService.AgentProgressBar(agentProgressBarRequestDTO);
+        }
+
+
+
     }
 }

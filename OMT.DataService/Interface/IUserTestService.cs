@@ -15,5 +15,9 @@ namespace OMT.DataService.Interface
 
         ResultDTO GetUserTestLeaderboard(int numberofdays);
         ResultDTO Test(int userId);
+
+        ResultDTO GetCountOfTestByUser(int userId);
+
+        ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO);
     }
 }

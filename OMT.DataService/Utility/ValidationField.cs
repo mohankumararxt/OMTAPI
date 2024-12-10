@@ -44,7 +44,7 @@ namespace OMT.DataService.Utility
            
 
             // Calculate the duration and round it
-            return Math.Max((int)Math.Round((double)wordCount / 40),1);
+            return Math.Max((int)Math.Ceiling((double)wordCount / 40), 1);
         }
 
     }

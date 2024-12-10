@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace OMT.DTO
 {
-    public class LeaderboardUserTestDTO
+    public class UserTestDTO
     {
-        public string username { get; set; }  
-        public string email { get; set; }
-
+        public string username { get; set; }
+        
+        public string text { get; set; }
         public int duration { get; set; }
         public int? wpm { get; set; }
         public Double? accuracy { get; set; }
-        
+        public int userTestId { get; set; }
         public DateOnly testdate { get; set; }
     }
 }
