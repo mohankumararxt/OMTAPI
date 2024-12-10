@@ -3987,7 +3987,7 @@ namespace OMT.DataService.Service
                         {
                             resultDTO.IsSuccess = false;
                             resultDTO.StatusCode = "404";
-                            resultDTO.Message = "The following orders are already in invoice and cant be deleted: " + string.Join(", ", inv_dt.Select(dict => dict["OrderId"].ToString()));
+                            resultDTO.Message = "The following orders are already in invoice and can't be deleted: " + string.Join(", ", inv_dt.Select(dict => dict["OrderId"].ToString()));
                         }
                         else
                         {
