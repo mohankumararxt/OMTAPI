@@ -41,10 +41,10 @@ namespace OMT.DataService.Utility
             // Split the text and calculate the number of words
             int wordCount = testText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
 
-           
+
 
             // Calculate the duration and round it
-            return Math.Max((int)Math.Ceiling((double)wordCount / 40), 1);
+            return (int)Math.Round((double)(wordCount * 60) / 40);
         }
 
     }

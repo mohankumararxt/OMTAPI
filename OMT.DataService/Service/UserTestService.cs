@@ -42,7 +42,7 @@ namespace OMT.DataService.Service
                             {
                                 Test_text = trimmedString,
                                 IsSample = false,
-                                Duration = (int)duration
+                                Duration = duration
                             };
 
                             _oMTDataContext.Tests.Add(newtest);
