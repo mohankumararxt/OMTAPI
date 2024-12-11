@@ -398,22 +398,22 @@ namespace OMT.DataService.Service
 
 
 
-        public ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO)
+        public ResultDTO AgentProgressBar(List<int> userids, DateTime startdate, DateTime enddate)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                if (agentProgressBarRequestDTO.userids.Count() > 0) {
+                if (userids.Count() > 0) {
                     var result = from itest in _oMTDataContext.UserTest
                                  join test in _oMTDataContext.Tests
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where agentProgressBarRequestDTO.userids.Contains(itest.UserId) &&
+                                 where userids.Contains(itest.UserId) &&
                                        itest.StartTime != null &&
                                        itest.EndTime != null &&
-                                       itest.CreateTimestamp >= agentProgressBarRequestDTO.startdate &&
-                                       itest.CreateTimestamp <= agentProgressBarRequestDTO.enddate
+                                       itest.CreateTimestamp >= startdate &&
+                                       itest.CreateTimestamp <= enddate
                                  orderby itest.CreateTimestamp descending
                                  select new AgentProgressBarResponseDTO()
                                  {

@@ -61,9 +61,9 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("AgentProgressBar")]
-        public ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO)
+        public ResultDTO AgentProgressBar(List<int> userids, DateTime startdate, DateTime enddate)
         {
-            return _userTestService.AgentProgressBar(agentProgressBarRequestDTO);
+            return _userTestService.AgentProgressBar(userids, startdate, enddate);
         }
 
         [HttpGet]

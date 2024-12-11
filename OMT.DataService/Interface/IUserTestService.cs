@@ -18,7 +18,7 @@ namespace OMT.DataService.Interface
 
         ResultDTO GetTotalOpenCount();
 
-        ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO);
+        ResultDTO AgentProgressBar(List<int> userids, DateTime startdate, DateTime enddate);
 
          ResultDTO GetCountOfTestBasedOnStatus();
         ResultDTO GetAgentStatusCount(int userId);
