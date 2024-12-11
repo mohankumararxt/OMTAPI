@@ -404,28 +404,64 @@ namespace OMT.DataService.Service
             try
             {
                 if (userids.Count() > 0) {
-                    var result = from itest in _oMTDataContext.UserTest
-                                 join test in _oMTDataContext.Tests
-                                 on itest.TestId equals test.Id
-                                 join user in _oMTDataContext.UserProfile
-                                 on itest.UserId equals user.UserId
-                                 where userids.Contains(itest.UserId) &&
-                                       itest.StartTime != null &&
-                                       itest.EndTime != null &&
-                                       itest.CreateTimestamp >= startdate &&
-                                       itest.CreateTimestamp <= enddate
-                                 orderby itest.CreateTimestamp descending
-                                 select new AgentProgressBarResponseDTO()
-                                 {
-                                     username = user.FirstName + " " + user.LastName,
-                                     email = user.Email,
-                                     wpm = (int)itest.WPM,
-                                     accuracy = (float)(itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f),
-                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
-                                 };
+                    // Query for matched UserIds
+                    var matchedResults = from itest in _oMTDataContext.UserTest
+                                         join user in _oMTDataContext.UserProfile
+                                         on itest.UserId equals user.UserId
+                                         where userids.Contains(itest.UserId) &&
+                                               itest.StartTime != null &&
+                                               itest.EndTime != null &&
+                                               itest.CreateTimestamp >= startdate &&
+                                               itest.CreateTimestamp <= enddate
+                                         orderby itest.CreateTimestamp descending
+                                         select new AgentProgressBarResponseDTO()
+                                         {
+                                             username = user.FirstName + " " + user.LastName,
+                                             email = user.Email,
+                                             wpm = (int)itest.WPM,
+                                             accuracy = (float)(itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f),
+                                             testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
+                                         };
+
+                    // Query for unmatched UserIds
+                    var unmatchedResults = from itest in _oMTDataContext.UserTest
+                                           join user in _oMTDataContext.UserProfile
+                                           on itest.UserId equals user.UserId
+                                           where !userids.Contains(itest.UserId) &&
+                                                 itest.StartTime != null &&
+                                                 itest.EndTime != null &&
+                                                 itest.CreateTimestamp >= startdate &&
+                                                 itest.CreateTimestamp <= enddate
+                                           orderby itest.CreateTimestamp descending
+                                           select new AgentProgressBarResponseDTO()
+                                           {
+                                               username = user.FirstName + " " + user.LastName,
+                                               email = user.Email,
+                                               wpm = 0,  // Empty value for unmatched
+                                               accuracy = 0f,  // Empty value for unmatched
+                                               testdate = DateOnly.MinValue  // Empty value for unmatched
+                                           };
+
+                    // Combine both results
+                    var matchedResultsList = matchedResults.ToList();
+                    var unmatchedResultsList = unmatchedResults.ToList();
+
+                    // Combine both lists into one
+                    var combinedResults = matchedResultsList.Concat(unmatchedResultsList)
+                                        .Select(result => new AgentProgressBarResponseDTO()
+                                        {
+                                            username = result.username,
+                                            email = result.email,
+                                            wpm = result.wpm == 0 ? (int?)null : result.wpm,  // Set to null if wpm is 0
+                                            accuracy = result.accuracy == 0 ? (float?)null : result.accuracy,  // Set to null if accuracy is 0
+                                            testdate = result.testdate == DateOnly.MinValue ? null : result.testdate // Set to null if testdate is default value
+                                        })
+                                        .ToList();
+
+
 
                     // Convert the result to a list
-                    var joinedData = result.ToList();
+                    var joinedData = combinedResults;
 
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = $"Filtered User Progress Data Count: {joinedData.Count}";

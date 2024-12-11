@@ -10,9 +10,9 @@ namespace OMT.DTO
     {
         public string username { get; set; }
         public string email { get; set; }
-        public int wpm { get; set; }
-        public float accuracy {  get; set; }
-        public  DateOnly testdate { get; set; }
+        public int? wpm { get; set; }
+        public float? accuracy {  get; set; }
+        public  DateOnly? testdate { get; set; }
 
     }
 }
