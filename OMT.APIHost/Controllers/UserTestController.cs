@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using OMT.DataService.Interface;
 using OMT.DTO;
 
@@ -61,9 +62,10 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("AgentProgressBar")]
-        public ResultDTO AgentProgressBar(List<int> userids, DateTime startdate, DateTime enddate)
+        public ResultDTO AgentProgressBar([FromQuery] string userids, [FromQuery] DateTime startdate, [FromQuery] DateTime enddate)
         {
-            return _userTestService.AgentProgressBar(userids, startdate, enddate);
+            var userIdList = JsonConvert.DeserializeObject<List<int>>(userids);
+            return _userTestService.AgentProgressBar(userIdList, startdate, enddate);
         }
 
         [HttpGet]
