@@ -52,10 +52,10 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpGet]
-        [Route("GetCountOfTestByUser")]
-        public ResultDTO GetCountOfTestByUser(int userId)
+        [Route("GetTotalOpenCount")]
+        public ResultDTO GetTotalOpenCount()
         {
-            return _userTestService.GetCountOfTestByUser(userId);
+            return _userTestService.GetTotalOpenCount();
         }
 
 
@@ -64,6 +64,20 @@ namespace OMT.APIHost.Controllers
         public ResultDTO AgentProgressBar(AgentProgressBarRequestDTO agentProgressBarRequestDTO)
         {
             return _userTestService.AgentProgressBar(agentProgressBarRequestDTO);
+        }
+
+        [HttpGet]
+        [Route("GetCountOfTestBasedOnStatus")]
+        public ResultDTO GetCountOfTestBasedOnStatus()
+        {
+            return _userTestService.GetCountOfTestBasedOnStatus();
+        }
+
+        [HttpGet]
+        [Route("GetAgentStatusCount")]
+        public ResultDTO GetAgentStatusCount(int userId)
+        {
+            return _userTestService.GetAgentStatusCount(userId);
         }
 
 

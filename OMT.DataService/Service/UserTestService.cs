@@ -27,45 +27,115 @@ namespace OMT.DataService.Service
             try
             {
                 var duration = ValidationField.CalculateDuration(createTestAndAssign.text);
-                if (!createTestAndAssign.text.IsNullOrEmpty())
-                {         
+                var existing_test_text = _oMTDataContext.Tests.Where(x=> x.Test_text == createTestAndAssign.text).FirstOrDefault();
+                if (existing_test_text == null)
+                {
+                    var trimmedString = createTestAndAssign.text.Trim();
 
-                    //var /*userId*/ = createTestAndAssign.userids;
-                    var newtest = new Tests()
+                    if (!trimmedString.IsNullOrEmpty() )
                     {
-                        Test_text = createTestAndAssign.text,
-                        IsSample = false,
-                        Duration = (int)duration
-                    };
-                    
-                    _oMTDataContext.Tests.Add(newtest);
-                    _oMTDataContext?.SaveChanges();
-                    var userTest = new List<UserTest>();
-
-                    // Iterate over userIds and create UserTest objects
-                    foreach (var id in createTestAndAssign.userids)
-                    {
-                        userTest.Add(new UserTest()
+                        
+                        
+                        if (createTestAndAssign.userids.Count()>0 && !createTestAndAssign.userids.Contains(0))
                         {
-                            UserId = id,          // Assign UserId from the loop
-                            TestId = newtest.Id   // Assign the TestId (from newtest object)
-                        });
+                            var newtest = new Tests()
+                            {
+                                Test_text = trimmedString,
+                                IsSample = false,
+                                Duration = (int)duration
+                            };
+
+                            _oMTDataContext.Tests.Add(newtest);
+                            _oMTDataContext?.SaveChanges();
+                            var userTest = new List<UserTest>();
+
+                            // Iterate over userIds and create UserTest objects
+                            foreach (var id in createTestAndAssign.userids)
+                            {
+                                userTest.Add(new UserTest()
+                                {
+                                    UserId = id,          // Assign UserId from the loop
+                                    TestId = newtest.Id   // Assign the TestId (from newtest object)
+                                });
+                            }
+
+                            _oMTDataContext?.UserTest.AddRange(userTest);
+
+                            _oMTDataContext?.SaveChanges();
+
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "User Test Assigned Successfully";
+                            resultDTO.StatusCode = "201";
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "At least one user must be selected.";
+                            resultDTO.StatusCode = "400";
+                        }
                     }
-
-                    _oMTDataContext?.UserTest.AddRange(userTest); 
-
-                    _oMTDataContext?.SaveChanges();
-
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "User Test Assigned Successfully";
-                    resultDTO.StatusCode = "201";
-
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Test text cannot be null or empty.";
+                        resultDTO.StatusCode = "400";
+                    }
                 }
                 else
                 {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Please Create Text";
-                    resultDTO.StatusCode = "400";
+                    
+                    var alreadyassignedusers = _oMTDataContext.UserTest.Where(x=>x.TestId == existing_test_text.Id).Select(x => x.UserId).ToList();
+                    if (createTestAndAssign.userids.Count() > 0 && !createTestAndAssign.userids.Contains(0))
+                    {
+                        var userTest = new List<UserTest>();
+
+                        if (createTestAndAssign.userids.Any(userid => alreadyassignedusers.Contains(userid)))
+                        {
+
+                            //var users_result = from itest in _oMTDataContext.UserTest
+                            //             join user in _oMTDataContext.UserProfile
+                            //             on itest.UserId equals user.UserId
+                            //             where itest.TestId == existing_test_text.Id && createTestAndAssign.userids.Contains(itest.UserId)
+                            //             select new 
+                            //             {
+                            //                 username = user.FirstName + " " + user.LastName,
+                            //             };
+
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "This test has already been assigned to the specified users.";
+                            //resultDTO.Data= users_result;
+                            resultDTO.StatusCode = "400";
+                        }
+                        else
+                        {
+
+
+                            // Iterate over userIds and create UserTest objects
+                            foreach (var id in createTestAndAssign.userids)
+                            {
+                                userTest.Add(new UserTest()
+                                {
+                                    UserId = id,          // Assign UserId from the loop
+                                    TestId = existing_test_text.Id   // Assign the TestId (from newtest object)
+                                });
+                            }
+
+                            _oMTDataContext?.UserTest.AddRange(userTest);
+
+                            _oMTDataContext?.SaveChanges();
+
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "User Test Assigned Successfully";
+                            resultDTO.StatusCode = "201";
+                        }
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "At least one user must be selected.";
+                        resultDTO.StatusCode = "400";
+                    }
+
                 }
 
             }
@@ -175,7 +245,7 @@ namespace OMT.DataService.Service
             {
                 //DateOnly dobDateOnly = DateOnly.FromDateTime(userInterviewsDTO.DOB);
                 // Check if TypingUsers is not null to avoid NullReferenceException
-                if (numberofdays >= 0 && numberofdays != 0)
+                if (numberofdays >= 0 && numberofdays != null)
                 {
                     var result = from itest in _oMTDataContext.UserTest
                                  join test in _oMTDataContext.Tests
@@ -287,31 +357,22 @@ namespace OMT.DataService.Service
         }
 
 
-        public ResultDTO GetCountOfTestByUser(int userId)
+        public ResultDTO GetTotalOpenCount()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 // Fetch count of pending assessments (StartTime and EndTime are null)
                 int count = _oMTDataContext?.UserTest
-                    .Where(x => x.UserId == userId && x.StartTime == null && x.EndTime == null)
-                    .Count() ?? 0;
-
-                // Get the current month
-                var currentMonth = DateTime.Now.Month;
-
-                // Fetch count of completed assessments (StartTime and EndTime are not null, and the CreateTimestamp is from the current month)
-                int count_completed = _oMTDataContext?.UserTest
-                    .Where(x => x.UserId == userId && x.StartTime != null && x.EndTime != null && x.CreateTimestamp.Month == currentMonth)
+                    .Where(x =>  x.StartTime == null && x.EndTime == null)
                     .Count() ?? 0;
 
                 // Return success with the counts in a structured format
                 resultDTO.IsSuccess = true;
-                resultDTO.Message = "Fetched pending and completed assessments successfully.";
+                resultDTO.Message = "Fetched pending count successfully.";
                 resultDTO.Data = new
                 {
-                    AssessmentsPending = count,
-                    AssessmentsCompleted = count_completed
+                    TotalOpenOrdersCount = count
                 };
                 resultDTO.StatusCode = "200";
             }
@@ -337,33 +398,41 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var result = from itest in _oMTDataContext.UserTest
-                             join test in _oMTDataContext.Tests
-                             on itest.TestId equals test.Id
-                             join user in _oMTDataContext.UserProfile
-                             on itest.UserId equals user.UserId
-                             where agentProgressBarRequestDTO.userids.Contains(itest.UserId) &&
-                                   itest.StartTime != null &&
-                                   itest.EndTime != null &&
-                                   itest.CreateTimestamp >= agentProgressBarRequestDTO.startdate &&
-                                   itest.CreateTimestamp <= agentProgressBarRequestDTO.enddate
-                             orderby itest.CreateTimestamp descending
-                             select new AgentProgressBarResponseDTO()
-                             {
-                                 username = user.FirstName + " " + user.LastName,
-                                 email = user.Email,
-                                 wpm = (int)itest.WPM,
-                                 accuracy = (float)(itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f),
-                                 testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
-                             };
+                if (agentProgressBarRequestDTO.userids.Count() > 0) {
+                    var result = from itest in _oMTDataContext.UserTest
+                                 join test in _oMTDataContext.Tests
+                                 on itest.TestId equals test.Id
+                                 join user in _oMTDataContext.UserProfile
+                                 on itest.UserId equals user.UserId
+                                 where agentProgressBarRequestDTO.userids.Contains(itest.UserId) &&
+                                       itest.StartTime != null &&
+                                       itest.EndTime != null &&
+                                       itest.CreateTimestamp >= agentProgressBarRequestDTO.startdate &&
+                                       itest.CreateTimestamp <= agentProgressBarRequestDTO.enddate
+                                 orderby itest.CreateTimestamp descending
+                                 select new AgentProgressBarResponseDTO()
+                                 {
+                                     username = user.FirstName + " " + user.LastName,
+                                     email = user.Email,
+                                     wpm = (int)itest.WPM,
+                                     accuracy = (float)(itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f),
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
+                                 };
 
-                // Convert the result to a list
-                var joinedData = result.ToList();
+                    // Convert the result to a list
+                    var joinedData = result.ToList();
 
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = $"Filtered User Progress Data Count: {joinedData.Count}";
-                resultDTO.Data = joinedData;
-                resultDTO.StatusCode = "200";
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = $"Filtered User Progress Data Count: {joinedData.Count}";
+                    resultDTO.Data = joinedData;
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "At least one user must be selected.";
+                    resultDTO.StatusCode = "400";
+                }
 
             }
             catch (InvalidCastException ex)
@@ -382,41 +451,103 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-
-        public ResultDTO AgentProgressBar(int userId )
+        public ResultDTO GetCountOfTestBasedOnStatus()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+
+                // Get the current month
                 var currentMonth = DateTime.Now.Month;
-                var count = _oMTDataContext?.UserTest
-                    .Where(x => x.UserId == userId && x.StartTime != null && x.EndTime != null && x.CreateTimestamp.Month == currentMonth)
-                    .Count() ?? 0;
 
+                var result = new
+                {
+                    OpenTestsUsers = (from itest in _oMTDataContext.UserTest
+                                          join user in _oMTDataContext.UserProfile
+                                          on itest.UserId equals user.UserId
+                                          where itest.StartTime == null && itest.EndTime == null
+                                          select new
+                                          {
+                                              Username = user.FirstName + " " + user.LastName
+                                          }).Distinct().ToList(),
 
+                    OpenTestsCount = _oMTDataContext.UserTest
+                        .Where(x => (x.StartTime == null || x.EndTime == null) && x.CreateTimestamp.Month == currentMonth)
+                        .Select(x => x.TestId)
+                        .Distinct()
+                        .Count(),
 
+                    CompletedTestsCount = _oMTDataContext.UserTest
+                        .Where(x => x.StartTime != null && x.EndTime != null && x.CreateTimestamp.Month == currentMonth)
+                        .Select(x => x.TestId)
+                        .Distinct()
+                        .Count()
+                };
 
                 resultDTO.IsSuccess = true;
-                resultDTO.Message = $"Filtered User Progress Data Count: {count}";
-                resultDTO.Data = count;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "fetched successfully";
+                resultDTO.Data = result;
                 resultDTO.StatusCode = "200";
-
-            }
-            catch (InvalidCastException ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "400";
-                resultDTO.Message = $"Type casting error: {ex.Message}";
             }
             catch (Exception ex)
             {
+                // Handle exceptions and update the result DTO with error details
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = $"An error occurred: {ex.Message}";
             }
 
+            // Return the result DTO
             return resultDTO;
         }
+
+
+        public ResultDTO GetAgentStatusCount(int userId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var currentMonth = DateTime.Now.Month;
+
+                var result = (from user in _oMTDataContext.UserProfile
+                              join itest in _oMTDataContext.UserTest
+                              on user.UserId equals itest.UserId
+                              where itest.UserId == userId
+                              group new { itest, user } by new { user.UserId, user.FirstName, user.LastName } into userGroup
+                              select new
+                              {
+                                  Username = userGroup.Key.FirstName + " " + userGroup.Key.LastName,
+                                  OpenTestsCount = userGroup.Count(g => g.itest.StartTime == null && g.itest.EndTime == null && g.itest.CreateTimestamp.Month == currentMonth),
+                                  CompletedTestsCount = userGroup.Count(g => g.itest.StartTime != null && g.itest.EndTime != null && g.itest.CreateTimestamp.Month == currentMonth)
+                              }).Distinct().ToList();
+                if (result.Count() > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "fetched successfully";
+                    resultDTO.Data = result;
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "user id not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and update the result DTO with error details
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            // Return the result DTO
+            return resultDTO;
+        }
+
 
     }
 }
