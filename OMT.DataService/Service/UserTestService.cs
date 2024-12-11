@@ -247,12 +247,17 @@ namespace OMT.DataService.Service
                 // Check if TypingUsers is not null to avoid NullReferenceException
                 if (numberofdays >= 0 && numberofdays != null)
                 {
+                    var subday = DateTime.UtcNow.Date;
+                    if (numberofdays > 0)
+                    {
+                        subday = subday.AddDays(-numberofdays);
+                    }
                     var result = from itest in _oMTDataContext.UserTest
                                  join test in _oMTDataContext.Tests
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.CreateTimestamp >= DateTime.UtcNow.AddDays(-numberofdays)
+                                 where itest.CreateTimestamp >= subday && itest.StartTime != null && itest.EndTime != null
                                  orderby itest.CreateTimestamp descending
                                  select new LeaderboardUserTestDTO()
                                  {
