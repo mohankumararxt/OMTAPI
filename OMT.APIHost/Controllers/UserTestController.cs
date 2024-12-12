@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class UserTestController : ControllerBase
     {
         private readonly IUserTestService _userTestService;

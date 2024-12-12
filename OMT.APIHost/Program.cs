@@ -1,6 +1,8 @@
+//using Microsoft.AspNetCore.Authentkication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+//using OMT.APIHost.AuthMiddleWare;
 using OMT.Authorization;
 using OMT.DataAccess.Context;
 using OMT.DataService;
@@ -59,6 +61,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                          }
                      };
                  });
+
+//builder.Services.AddAuthentication("BasicAuthentication")
+//    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { });
+
+
+
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IInterviewService, InterviewService>();
@@ -122,6 +130,8 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "";
 });
 app.UseHttpsRedirection();
+
+//app.UseMiddleware<BasicAuthenticationMiddleware>();
 
 app.UseAuthorization();
 

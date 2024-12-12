@@ -411,6 +411,7 @@ namespace OMT.DataService.Service
                                  where userids.Contains(user.UserId) &&
                                        ((itest != null && itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate)
                                         || itest == null) // Include records with no matching tests
+                                orderby itest.CreateTimestamp ascending
                                  select new AgentProgressBarResponseDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,

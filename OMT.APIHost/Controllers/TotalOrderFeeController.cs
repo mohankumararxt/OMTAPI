@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class TotalOrderFeeController : ControllerBase
     {
         private readonly ITotalOrderFeesService _totalOrderFeesService;
