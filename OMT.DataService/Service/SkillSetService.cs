@@ -836,7 +836,9 @@ namespace OMT.DataService.Service
             {
                 var skillsetTimeline = (from ss in _oMTDataContext.SkillSet
                                         join tl in _oMTDataContext.Timeline on ss.SkillSetId equals tl.SkillSetId
-                                        where ss.IsActive && tl.IsActive
+                                        join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
+                                        where ss.IsActive && tl.IsActive && sr.IsActive
+                                        orderby sr.SystemofRecordName,ss.SkillSetName
                                         select new
                                         {
                                             ss.SkillSetId,

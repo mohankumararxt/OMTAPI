@@ -127,7 +127,6 @@ namespace OMT.DataService.Service
                     noStatusRecords.AddRange(querydt1);
 
                 }
-
                 if (noStatusRecords.Count > 0)
                 {
                     var orderedRecords = noStatusRecords
@@ -225,7 +224,6 @@ namespace OMT.DataService.Service
                             }
                         }
                     }
-
                 }
             }
             catch (Exception ex)
@@ -236,7 +234,6 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public dynamic GetOrderByPo(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1)
         {
             string po_assigned;
@@ -463,8 +460,6 @@ namespace OMT.DataService.Service
                 resultDTO.Message = "Order assigned successfully";
             }
         }
-
-
         public ResultDTO GetTrdPendingOrderForUser(int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -996,11 +991,11 @@ namespace OMT.DataService.Service
                         {
                             editable = false;
                         }
-                       
+
                         // allow to edit only if completiondate <= endtime and >= startime and DateTime.UtcNow < endtime
                         if (editable)
                         {
-                            
+
                             DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
 
                             string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
@@ -1269,16 +1264,19 @@ namespace OMT.DataService.Service
 
                 string IdList = string.Join(",", updateUnassignedOrderDTO.Id);
 
-                var Datetime = DateTime.Now;
+                var Datetime = DateTime.UtcNow;
 
-                string query = $"UPDATE {SkillsetTable} SET Status=@Status,Remarks = CONCAT(@Remarks, ' ', @Datetime) WHERE Id IN ({IdList})";
+                string query = $"UPDATE {SkillsetTable} SET Status=@Status,Remarks =@Remarks,UserId=@UserId," +
+                               $"CompletionDate=@CompletionDate,StartTime=@StartTime,EndTime=@EndTime WHERE Id IN ({IdList})";
 
                 using SqlCommand command = new SqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Status", updateUnassignedOrderDTO.Status);
                 command.Parameters.AddWithValue("@Remarks", updateUnassignedOrderDTO.Remarks);
-                command.Parameters.AddWithValue("@Datetime", Datetime.ToString("MM-dd-yyyy HH:mm:ss"));
-                command.Parameters.AddWithValue("@Id", IdList);
-
+                command.Parameters.AddWithValue("@UserId", userid);
+                command.Parameters.AddWithValue("@CompletionDate", Datetime);
+                command.Parameters.AddWithValue("@StartTime", Datetime);
+                command.Parameters.AddWithValue("@EndTime", Datetime);
+                
                 command.ExecuteNonQuery();
 
                 resultDTO.Message = "Unassigned Order Status Updated Successfully";
