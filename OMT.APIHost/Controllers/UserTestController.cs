@@ -82,6 +82,12 @@ namespace OMT.APIHost.Controllers
             return _userTestService.GetAgentStatusCount(userId);
         }
 
+        [HttpGet]
+        [Route("AgentTopFiveProgressBar")]
+        public ResultDTO AgentTopFiveProgressBar(DateTime? startdate, DateTime? enddate)
+        {
+            return _userTestService.AgentTopFiveProgressBar(startdate, enddate);
+        }
 
 
     }

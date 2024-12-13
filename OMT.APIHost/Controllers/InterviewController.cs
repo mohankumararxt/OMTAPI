@@ -3,6 +3,7 @@ using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,7 +11,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
- 
+    //[Authorize(AuthenticationSchemes = "BasicAuthentication")]
     public class InterviewController : ControllerBase
     {
         private readonly IInterviewService _interviewService;

@@ -320,7 +320,7 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.UserId == existingdata.UserId
+                                 where itest.Id == existingdata.Id 
                                  orderby itest.CreateTimestamp descending
                                  select new UserTestDTO()
                                  {
@@ -552,6 +552,73 @@ namespace OMT.DataService.Service
             // Return the result DTO
             return resultDTO;
         }
+
+
+
+        public ResultDTO AgentTopFiveProgressBar(DateTime? startdate, DateTime? enddate)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                if (startdate != null && enddate != null)
+                {
+                    var result = (from user in _oMTDataContext.UserProfile
+                                  join itest in _oMTDataContext.UserTest
+                                  on user.UserId equals itest.UserId into testGroup
+                                  from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
+                                  where (itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate)) // Include records with no matching tests
+                                  orderby itest.Accuracy descending, itest.WPM descending // Null-safe ordering
+                                  select new AgentProgressBarResponseDTO
+                                  {
+                                      username = user.FirstName + " " + user.LastName,
+                                      email = user.Email,
+                                      wpm = itest.WPM ?? 0, // Default to 0 if no test data
+                                      accuracy = (float?)(itest.Accuracy ?? 0f), // Default to 0f if no test data
+                                      testdate = itest.CreateTimestamp != null
+                                                  ? DateOnly.FromDateTime(itest.CreateTimestamp)
+                                                  : (DateOnly?)null // Null if no test data
+                                  })
+             .Take(5)
+             .ToList(); // Convert to a list
+
+
+
+
+
+
+
+                    // Convert the result to a list
+                    var joinedData = result;
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = $"Filtered User Progress Data Count: {joinedData.Count()}";
+                    resultDTO.Data = joinedData;
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "At least one user must be selected.";
+                    resultDTO.StatusCode = "400";
+                }
+
+            }
+            catch (InvalidCastException ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "400";
+                resultDTO.Message = $"Type casting error: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return resultDTO;
+        }
+
 
 
     }

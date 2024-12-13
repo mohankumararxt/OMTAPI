@@ -1,8 +1,7 @@
-//using Microsoft.AspNetCore.Authentkication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-//using OMT.APIHost.AuthMiddleWare;
 using OMT.Authorization;
 using OMT.DataAccess.Context;
 using OMT.DataService;
@@ -10,6 +9,7 @@ using OMT.DataService.Interface;
 using OMT.DataService.Service;
 using OMT.DataService.Settings;
 using OMT.DataService.Utility;
+using OMT.DTO;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,6 +75,7 @@ builder.Services.AddScoped<IUserTestService, UserTestService>();
 builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("AuthSettings"));
 builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
 builder.Services.Configure<EmailDetailsSettings>(builder.Configuration.GetSection("EmailConfig:Common")); //for sending email
+builder.Services.Configure<BasicAuthCredential>(builder.Configuration.GetSection("BasicAuthCredential"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
