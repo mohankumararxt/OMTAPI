@@ -311,7 +311,7 @@ namespace OMT.DataService.Service
                 //string decryptedUserIdString = Encryption.DecryptCipherTextToPlainText(encrytedUserId);
                 //int.TryParse(decryptedUserIdString, out int decryptedUserId);
                 var existingdata = _oMTDataContext?.UserTest
-                            .Where(x => x.UserId == userId && x.StartTime == null && x.EndTime == null).FirstOrDefault();
+                            .Where(x => x.UserId == userId &&  x.EndTime == null).FirstOrDefault();
                 if (existingdata != null)
                 {
 
@@ -566,7 +566,7 @@ namespace OMT.DataService.Service
                                    join itest in _oMTDataContext.UserTest
                                    on user.UserId equals itest.UserId into testGroup
                                    from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                   where itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate) // Filter test data
+                                   where itest.EndTime != null &&( itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate))
                                    select new
                                    {
                                        user.UserId,
