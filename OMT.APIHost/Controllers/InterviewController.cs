@@ -11,7 +11,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(AuthenticationSchemes = "BasicAuthentication")]
+    [Authorize(AuthenticationSchemes = "BasicAuthentication")]
     public class InterviewController : ControllerBase
     {
         private readonly IInterviewService _interviewService;
