@@ -586,7 +586,7 @@ namespace OMT.DataService.Service
                             username = g.Key.FirstName + " " + g.Key.LastName,
                             email = g.Key.Email,
                             wpm = (int)g.Average(x => x.WPM),
-                            accuracy = (float)g.Average(x => x.Accuracy)
+                            accuracy = (float)Math.Round(g.Average(x => x.Accuracy), 2)
                             //testdate = g.Max(x => x.TestDate ? DateOnly.FromDateTime(x.TestDate.Value) : (DateOnly?)null)
                         })
                         .OrderByDescending(x => x.accuracy)
