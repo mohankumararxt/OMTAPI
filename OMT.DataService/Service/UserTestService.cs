@@ -562,29 +562,37 @@ namespace OMT.DataService.Service
             {
                 if (startdate != null && enddate != null)
                 {
-                    var result = (from user in _oMTDataContext.UserProfile
-                                  join itest in _oMTDataContext.UserTest
-                                  on user.UserId equals itest.UserId into testGroup
-                                  from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                  where (itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate)) // Include records with no matching tests
-                                  orderby itest.Accuracy descending, itest.WPM descending // Null-safe ordering
-                                  select new AgentProgressBarResponseDTO
-                                  {
-                                      username = user.FirstName + " " + user.LastName,
-                                      email = user.Email,
-                                      wpm = itest.WPM ?? 0, // Default to 0 if no test data
-                                      accuracy = (float?)(itest.Accuracy ?? 0f), // Default to 0f if no test data
-                                      testdate = itest.CreateTimestamp != null
-                                                  ? DateOnly.FromDateTime(itest.CreateTimestamp)
-                                                  : (DateOnly?)null // Null if no test data
-                                  })
-             .Take(5)
-             .ToList(); // Convert to a list
+                    var rawData = (from user in _oMTDataContext.UserProfile
+                                   join itest in _oMTDataContext.UserTest
+                                   on user.UserId equals itest.UserId into testGroup
+                                   from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
+                                   where itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate) // Filter test data
+                                   select new
+                                   {
+                                       user.UserId,
+                                       user.FirstName,
+                                       user.LastName,
+                                       user.Email,
+                                       WPM = itest.WPM ?? 0,
+                                       Accuracy = itest.Accuracy ?? 0f,
+                                       //TestDate = itest.CreateTimestamp
+                                   }).ToList(); // Execute query on the database
 
-
-
-
-
+                    // Perform grouping and aggregation on the client side
+                    var result = rawData
+                        .GroupBy(x => new { x.UserId, x.FirstName, x.LastName, x.Email })
+                        .Select(g => new AgentProgressBarResponseDTO
+                        {
+                            username = g.Key.FirstName + " " + g.Key.LastName,
+                            email = g.Key.Email,
+                            wpm = (int)g.Average(x => x.WPM),
+                            accuracy = (float)g.Average(x => x.Accuracy)
+                            //testdate = g.Max(x => x.TestDate ? DateOnly.FromDateTime(x.TestDate.Value) : (DateOnly?)null)
+                        })
+                        .OrderByDescending(x => x.accuracy)
+                        .ThenByDescending(x => x.wpm)
+                        .Take(5) // Top 5 results
+                        .ToList();
 
 
                     // Convert the result to a list
