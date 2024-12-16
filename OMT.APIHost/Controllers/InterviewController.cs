@@ -11,7 +11,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = "BasicAuthentication")]
+    
     public class InterviewController : ControllerBase
     {
         private readonly IInterviewService _interviewService;
@@ -24,6 +24,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("SaveIntervieweeUserInformation")]
+        [Authorize(AuthenticationSchemes = "BasicAuthentication")]
         public ResultDTO SaveInterviewee(UserInterviewsDTO userInterviewsDTO)
         {
             return _interviewService.SaveInterviewee(userInterviewsDTO);
@@ -32,6 +33,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("UpdateInterviewStartTime")]
+        [Authorize(AuthenticationSchemes = "BasicAuthentication")]
         public ResultDTO UpdateInterviewStartTime(UpdateInterviewTestTimeDTO updateInterviewTestTime)
         {
             return _interviewService.UpdateInterviewStartTime(updateInterviewTestTime);
@@ -39,6 +41,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPut]
         [Route("UpdateInterviewTests")]
+        [Authorize(AuthenticationSchemes = "BasicAuthentication")]
         public ResultDTO UpdateInterviewTests(UpdateInterviewTestsDTO updateInterviewTestsDTO)
         {
             return _interviewService.UpdateInterviewTests(updateInterviewTestsDTO);
@@ -46,6 +49,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("IntervieweesLeaderboard")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         public ResultDTO GetIntervieweesLeaderboard(int numberofdays)
         {
             return _interviewService.GetIntervieweesLeaderboard(numberofdays);
