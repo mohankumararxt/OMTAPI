@@ -4095,6 +4095,8 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var pagination = skillsetWiseReportsDTO.Pagination;
+
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                 using SqlConnection connection = new(connectionstring);
@@ -4790,7 +4792,7 @@ namespace OMT.DataService.Service
                         sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
                     }
 
-                   
+
 
                     using SqlCommand sqlCommand = connection.CreateCommand();
                     sqlCommand.CommandText = sqlquery;
@@ -4817,9 +4819,35 @@ namespace OMT.DataService.Service
 
                 if (allCompletedRecords.Count > 0)
                 {
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Data = allCompletedRecords;
-                    resultDTO.Message = "Completed orders has been fetched successfully";
+                    if (pagination.IsPagination)
+                    {
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = allCompletedRecords.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = allCompletedRecords.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+                           
+                        };
+
+                        resultDTO.Data = paginationOutput;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
+                    }
+                    else
+                    {
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
+                    }
+
+
                 }
                 else
                 {
@@ -4838,7 +4866,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public  void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes)
+        public void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes)
         {
             string columnTypeQuery = $@"
                                                 SELECT COLUMN_NAME, DATA_TYPE 
