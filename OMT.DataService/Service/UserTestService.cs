@@ -524,7 +524,7 @@ namespace OMT.DataService.Service
                               select new
                               {
                                   Username = userGroup.Key.FirstName + " " + userGroup.Key.LastName,
-                                  OpenTestsCount = userGroup.Count(g => g.itest.StartTime == null && g.itest.EndTime == null && g.itest.CreateTimestamp.Month == currentMonth),
+                                  OpenTestsCount = userGroup.Count(g => (g.itest.StartTime == null || g.itest.EndTime == null) && g.itest.CreateTimestamp.Month == currentMonth),
                                   CompletedTestsCount = userGroup.Count(g => g.itest.StartTime != null && g.itest.EndTime != null && g.itest.CreateTimestamp.Month == currentMonth)
                               }).Distinct().ToList();
                 if (result.Count() > 0)
