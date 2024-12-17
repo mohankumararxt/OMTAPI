@@ -21,7 +21,11 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                _oMTDataContext.
+                var broadCostList = _oMTDataContext.BroadCastAnnoncement.ToList();
+                if (broadCostList != null)
+                {
+
+                }
             }
             catch (Exception ex)
             {
