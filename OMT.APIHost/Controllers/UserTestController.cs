@@ -84,7 +84,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("AgentTopFiveProgressBar")]
-        public ResultDTO AgentTopFiveProgressBar(DateTime? startdate, DateTime? enddate)
+        public ResultDTO AgentTopFiveProgressBar(DateTime startdate, DateTime enddate)
         {
             return _userTestService.AgentTopFiveProgressBar(startdate, enddate);
         }

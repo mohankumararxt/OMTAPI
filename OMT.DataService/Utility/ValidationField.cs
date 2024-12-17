@@ -31,7 +31,7 @@ namespace OMT.DataService.Utility
             return Regex.IsMatch(phone, phoneRegex);
         }
 
-        public static int CalculateTimeInSeconds(string testText, int wpm = 40)
+        public static int CalculateDuration(string testText, int wpm = 40)
         {
             if (string.IsNullOrEmpty(testText))
             {
