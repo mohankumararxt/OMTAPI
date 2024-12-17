@@ -91,16 +91,6 @@ namespace OMT.DataService.Service
 
                         if (createTestAndAssign.userids.Any(userid => alreadyassignedusers.Contains(userid)))
                         {
-
-                            //var users_result = from itest in _oMTDataContext.UserTest
-                            //             join user in _oMTDataContext.UserProfile
-                            //             on itest.UserId equals user.UserId
-                            //             where itest.TestId == existing_test_text.Id && createTestAndAssign.userids.Contains(itest.UserId)
-                            //             select new 
-                            //             {
-                            //                 username = user.FirstName + " " + user.LastName,
-                            //             };
-
                             resultDTO.IsSuccess = false;
                             resultDTO.Message = "This test has already been assigned to the specified users.";
                             //resultDTO.Data= users_result;
@@ -108,9 +98,6 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-
-
-                            // Iterate over userIds and create UserTest objects
                             foreach (var id in createTestAndAssign.userids)
                             {
                                 userTest.Add(new UserTest()
