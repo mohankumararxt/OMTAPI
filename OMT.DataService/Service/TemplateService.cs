@@ -1046,10 +1046,14 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var pagination = agentCompletedOrdersDTO.Pagination;
+
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
+
+                List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
                 {
@@ -1059,7 +1063,6 @@ namespace OMT.DataService.Service
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
-                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
                     foreach (string tablename in tablenames)
                     {
                         //new changes
@@ -1119,32 +1122,6 @@ namespace OMT.DataService.Service
                                 }
                             }
                         }
-
-
-                        //string commonSqlPart = $"ps.Status as Status, " +
-                        //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                        //$"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                        //$"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                        //$"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                        //$"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                        //$"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                        //$"ss.SkillSetName as SkillSet " +
-                        //$"FROM {skillSet.SkillSetName} t " +
-                        //$"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                        //$"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                        //$"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                        //$"WHERE t.UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-                        //if (query1 != null)
-                        //{
-                        //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                        //}
-
-                        //// Conditionally append the date filter part
-                        //string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                        //    ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                        //    : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
 
                         string commonSqlPart = $"ps.Status as Status, ";
 
@@ -1233,18 +1210,7 @@ namespace OMT.DataService.Service
                         allCompletedRecords.AddRange(querydt1);
 
                     }
-                    if (allCompletedRecords.Count > 0)
-                    {
-                        resultDTO.Data = allCompletedRecords;
-                        resultDTO.Message = "Completed orders fetched successfully";
-                        resultDTO.IsSuccess = true;
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
+
                 }
 
                 else if (agentCompletedOrdersDTO.SystemOfRecordId != null && agentCompletedOrdersDTO.SkillSetId != null)
@@ -1304,33 +1270,6 @@ namespace OMT.DataService.Service
                             }
                         }
                     }
-
-                    //string commonSqlPart = $"ps.Status as Status, " +
-                    //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                    //$"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                    //$"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                    //$"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                    //$"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                    //$"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                    //$"ss.SkillSetName as SkillSet " +
-                    //$"FROM {skillSet.SkillSetName} t " +
-                    //$"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                    //$"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                    //$"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                    //$"WHERE t.UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-                    //if (query1 != null)
-                    //{
-                    //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                    //}
-
-                    //// Conditionally append the date filter part
-                    //string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                    //    ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                    //    : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-                    //// Combine everything into the final query
-                    //string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                     string commonSqlPart = $"ps.Status as Status, ";
 
@@ -1419,18 +1358,9 @@ namespace OMT.DataService.Service
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
                                       column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-                    if (querydt2.Count > 0)
-                    {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Data = querydt2;
-                        resultDTO.Message = "Completed orders fetched successfully";
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
+
+                    allCompletedRecords.AddRange(querydt2);
+
                 }
 
                 else if (agentCompletedOrdersDTO.SystemOfRecordId != null && agentCompletedOrdersDTO.SkillSetId == null)
@@ -1441,7 +1371,6 @@ namespace OMT.DataService.Service
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
-                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
                     foreach (string tablename in tablenames)
                     {
                         //new changes
@@ -1500,33 +1429,6 @@ namespace OMT.DataService.Service
                                 }
                             }
                         }
-
-                        //string commonSqlPart = $"ps.Status as Status, " +
-                        //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                        //                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                        //                       $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                        //                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                        //                       $"ss.SkillSetName as SkillSet " +
-                        //                       $"FROM {skillSet.SkillSetName} t " +
-                        //                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                        //                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                        //                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                        //                       $"WHERE t.UserId = @userid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-                        //if (query1 != null)
-                        //{
-                        //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                        //}
-
-                        //// Conditionally append the date filter part
-                        //string dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                        //    ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                        //    : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-                        //// Combine everything into the final query
-                        //string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         string commonSqlPart = $"ps.Status as Status, ";
 
@@ -1618,18 +1520,45 @@ namespace OMT.DataService.Service
                         allCompletedRecords.AddRange(querydt1);
 
                     }
-                    if (allCompletedRecords.Count > 0)
+
+                }
+
+                if (allCompletedRecords.Count > 0)
+                {
+                    if (pagination.IsPagination)
                     {
-                        resultDTO.Data = allCompletedRecords;
-                        resultDTO.Message = "Completed orders fetched successfully";
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = allCompletedRecords.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = allCompletedRecords.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+
+                        };
+
+                        resultDTO.Data = paginationOutput;
                         resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
                     }
                     else
                     {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
                     }
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Completed orders not found";
+                    resultDTO.StatusCode = "404";
                 }
 
             }
@@ -1647,11 +1576,14 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var pagination = teamCompletedOrdersDTO.Pagination;
 
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
 
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
+
+                List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (teamCompletedOrdersDTO.SystemOfRecordId == null && teamCompletedOrdersDTO.SkillSetId == null)
                 {
@@ -1660,8 +1592,6 @@ namespace OMT.DataService.Service
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
                                                where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId
                                                select ss.SkillSetName).Distinct().ToList();
-
-                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                     foreach (string tablename in tablenames)
                     {
@@ -1720,33 +1650,6 @@ namespace OMT.DataService.Service
                                 }
                             }
                         }
-
-                        //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                        //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                        //                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                        //                       $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                        //                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                        //                       $"ss.SkillSetName as SkillSet " +
-                        //                       $"FROM {skillSet.SkillSetName} t " +
-                        //                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                        //                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                        //                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                        //                       $"WHERE t.TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-                        //if (query1 != null)
-                        //{
-                        //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                        //}
-
-                        //// Conditionally append the date filter part
-                        //string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                        //    ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                        //    : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-                        //// Combine everything into the final query
-                        //string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, ";
 
@@ -1836,18 +1739,6 @@ namespace OMT.DataService.Service
                         allCompletedRecords.AddRange(querydt1);
 
                     }
-                    if (allCompletedRecords.Count > 0)
-                    {
-                        resultDTO.Data = allCompletedRecords;
-                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
-                        resultDTO.IsSuccess = true;
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
 
                 }
 
@@ -1907,32 +1798,6 @@ namespace OMT.DataService.Service
                             }
                         }
                     }
-
-                    //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                    //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                    //                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                    //                       $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                    //                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                    //                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                    //                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                    //                       $"ss.SkillSetName as SkillSet " +
-                    //                       $"FROM {skillSet.SkillSetName} t " +
-                    //                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                    //                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                    //                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                    //                       $"WHERE t.TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-                    //if (query1 != null)
-                    //{
-                    //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                    //}
-
-                    //string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                    //                             ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                    //                             : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-                    //// Combine everything into the final query
-                    //string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                     string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, ";
 
@@ -2018,18 +1883,9 @@ namespace OMT.DataService.Service
                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                       column => column.ColumnName,
                                       column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-                    if (querydt2.Count > 0)
-                    {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Data = querydt2;
-                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
-                    }
+
+                    allCompletedRecords.AddRange(querydt2);
+
                 }
 
                 else if (teamCompletedOrdersDTO.SystemOfRecordId != null && teamCompletedOrdersDTO.SkillSetId == null)
@@ -2039,8 +1895,6 @@ namespace OMT.DataService.Service
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
                                                where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId
                                                select ss.SkillSetName).Distinct().ToList();
-
-                    List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                     foreach (string tablename in tablenames)
                     {
@@ -2099,34 +1953,6 @@ namespace OMT.DataService.Service
                                 }
                             }
                         }
-
-                        //string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, " +
-                        //                       $"CONVERT(VARCHAR(10), t.AllocationDate, 120) as CompletionDate, t.Remarks," +
-                        //                       $"CONVERT(VARCHAR(19), DATEADD(hour, 5, DATEADD(minute, 30, t.StartTime)), 120) as StartTime, " +
-                        //                       $"CONVERT(VARCHAR(19),  DATEADD(hour, 5, DATEADD(minute, 30, t.EndTime)), 120) as EndTime, " +
-                        //                       $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
-                        //                       $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                        //                       $"ss.SkillSetName as SkillSet " +
-                        //                       $"FROM {skillSet.SkillSetName} t " +
-                        //                       $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
-                        //                       $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
-                        //                       $"INNER JOIN UserProfile up on up.UserId = t.UserId " +
-                        //                       $"WHERE t.TeamLeadId = @Teamid AND t.Status IS NOT NULL AND t.Status <> '' ";
-
-
-                        //if (query1 != null)
-                        //{
-                        //    commonSqlPart += $"AND t.Status <> {query1.Id} ";
-                        //}
-
-                        //// Conditionally append the date filter part
-                        //string dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
-                        //    ? "AND CONVERT(DATE, CompletionDate) BETWEEN @FromDate AND @ToDate"
-                        //    : "AND AllocationDate BETWEEN @FromDate AND @ToDate";
-
-                        //// Combine everything into the final query
-                        //string sqlquery = sqlquery1 + commonSqlPart + dateFilterCondition;
 
                         string commonSqlPart = $"CONCAT(up.FirstName, ' ', up.LastName) as UserName,ps.Status as Status, ";
 
@@ -2216,18 +2042,45 @@ namespace OMT.DataService.Service
                         allCompletedRecords.AddRange(querydt1);
 
                     }
-                    if (allCompletedRecords.Count > 0)
+
+                }
+
+                if (allCompletedRecords.Count > 0)
+                {
+                    if (pagination.IsPagination)
                     {
-                        resultDTO.Data = allCompletedRecords;
-                        resultDTO.Message = "Completed orders of the team has been fetched successfully";
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = allCompletedRecords.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = allCompletedRecords.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+
+                        };
+
+                        resultDTO.Data = paginationOutput;
                         resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
                     }
                     else
                     {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Completed orders not found";
-                        resultDTO.StatusCode = "404";
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = allCompletedRecords;
+                        resultDTO.Message = "Completed orders has been fetched successfully";
                     }
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Completed orders not found";
+                    resultDTO.StatusCode = "404";
                 }
 
 
@@ -4832,7 +4685,7 @@ namespace OMT.DataService.Service
                             PageNo = pagination.PageNo,
                             NoOfPages = totalPages,
                             TotalCount = totalRecords,
-                           
+
                         };
 
                         resultDTO.Data = paginationOutput;
