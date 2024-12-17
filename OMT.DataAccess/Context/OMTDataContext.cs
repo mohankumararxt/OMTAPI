@@ -51,7 +51,7 @@ namespace OMT.DataAccess.Context
         public DbSet<InterviewTests> InterviewTests { get; set; }
         public DbSet<UserTest> UserTest { get; set; }
 
-        public DbSet<BroadCastAnnoncement> BroadCastAnnoncement { get; set; }
+        public DbSet<BroadCastAnnouncement> BroadCastAnnouncement { get; set; }
 
 
 
