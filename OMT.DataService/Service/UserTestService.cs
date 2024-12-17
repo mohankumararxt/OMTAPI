@@ -244,8 +244,8 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.CreateTimestamp >= subday && itest.StartTime != null && itest.EndTime != null
-                                 orderby itest.CreateTimestamp descending
+                                 where itest.CreateTimestamp.Date >= subday.Date && itest.StartTime != null && itest.EndTime != null
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardUserTestDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -308,7 +308,7 @@ namespace OMT.DataService.Service
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
                                  where itest.Id == existingdata.Id 
-                                 orderby itest.CreateTimestamp descending
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new UserTestDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -396,9 +396,9 @@ namespace OMT.DataService.Service
                                  on user.UserId equals itest.UserId into testGroup
                                  from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
                                  where userids.Contains(user.UserId) &&
-                                       ((itest != null && itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate)
+                                       ((itest != null && itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date)
                                         || itest == null) // Include records with no matching tests
-                                orderby itest.CreateTimestamp ascending
+                                orderby itest.CreateTimestamp.Date ascending
                                  select new AgentProgressBarResponseDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -542,7 +542,7 @@ namespace OMT.DataService.Service
 
 
 
-        public ResultDTO AgentTopFiveProgressBar(DateTime? startdate, DateTime? enddate)
+        public ResultDTO AgentTopFiveProgressBar(DateTime startdate, DateTime enddate)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -553,7 +553,7 @@ namespace OMT.DataService.Service
                                    join itest in _oMTDataContext.UserTest
                                    on user.UserId equals itest.UserId into testGroup
                                    from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                   where itest.EndTime != null &&( itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate))
+                                   where itest.EndTime != null &&( itest == null || (itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date))
                                    select new
                                    {
                                        user.UserId,

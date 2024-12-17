@@ -254,8 +254,8 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.CreateTimestamp.Date >= subday && itest.StartTime!=null && itest.EndTime!=null
-                                 orderby itest.CreateTimestamp descending
+                                 where itest.CreateTimestamp.Date >= subday.Date && itest.StartTime!=null && itest.EndTime!=null
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardDTO()
                                  {
                                      username = user.Firstname + " " + user.Lastname,

@@ -31,36 +31,20 @@ namespace OMT.DataService.Utility
             return Regex.IsMatch(phone, phoneRegex);
         }
 
-        public static int CalculateDuration(string testText)
+        public static int CalculateTimeInSeconds(string testText, int wpm = 40)
         {
-            string pattern = @"\b[\w.]+(?:\([\w.-]+\))?\b";
             if (string.IsNullOrEmpty(testText))
             {
-                // Return 0 if the text is null or empty
                 throw new ArgumentException("Test text cannot be null or empty.");
             }
-            MatchCollection matches = Regex.Matches(testText, pattern);
-            int wordCount = matches.Count;
-            int wpm = 40;
-            int durationSeconds = (wordCount * 60) / wpm;
 
+            // Total character count
+            int characterCount = testText.Length;
 
+            // Calculate time in seconds using the formula: (Total characters / (5 * WPM)) * 60
+            int timeInSeconds = ((int)characterCount / (5 * wpm)) * 60;
 
-
-            //if (string.IsNullOrEmpty(testText))
-            //{
-            //    // Return 0 if the text is null or empty
-            //    throw new ArgumentException("Test text cannot be null or empty.");
-            //}
-
-            //// Split the text and calculate the number of words
-            //int wordCount = testText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
-
-
-
-            //// Calculate the duration and round it
-            //return (int)Math.Round((double)(wordCount * 60) / 40);
-            return durationSeconds;
+            return timeInSeconds;
         }
 
     }
