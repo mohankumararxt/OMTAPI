@@ -18,33 +18,33 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-        public ResultDTO GetBroadCastAnnouncementMessages()
-        {
-            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-            try
-            {
-                var broadCostList = _oMTDataContext.BroadCastAnnouncement.ToList();
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "Successfully fetched all broad cost announcement messages.";
-                resultDTO.Data = broadCostList;
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions and update the result DTO with error details
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = $"An error occurred: {ex.Message}";
-            }
-            return resultDTO;
-        }
+        //public ResultDTO GetBroadCastAnnouncementMessages()
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        var broadCostList = _oMTDataContext.BroadCastAnnouncement.ToList();
+        //        resultDTO.IsSuccess = true;
+        //        resultDTO.Message = "Successfully fetched all broad cost announcement messages.";
+        //        resultDTO.Data = broadCostList;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Handle exceptions and update the result DTO with error details
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = $"An error occurred: {ex.Message}";
+        //    }
+        //    return resultDTO;
+        //}
 
-        public ResultDTO GetBroadCastAnnouncementBySoftDelete()
+        public ResultDTO GetBroadCastAnnouncementsBySoftDelete()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
                 var broadCostList = _oMTDataContext.BroadCastAnnouncement
-                                     .Where(x => x.SoftDelete == true)  // Assuming '1' means deleted or inactive
+                                     .Where(x => x.SoftDelete == false)  // Assuming '1' means deleted or inactive
                                      .ToList();
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "Successfully fetched broad cost announcement messages that are marked as deleted";

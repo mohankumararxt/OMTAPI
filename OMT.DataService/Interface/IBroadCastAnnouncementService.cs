@@ -9,9 +9,9 @@ namespace OMT.DataService.Interface
 {
     public interface IBroadCastAnnouncementService
     {
-        ResultDTO GetBroadCastAnnouncementMessages();
+        //ResultDTO GetBroadCastAnnouncementMessages();
 
-        ResultDTO GetBroadCastAnnouncementBySoftDelete();
+        ResultDTO GetBroadCastAnnouncementsBySoftDelete();
         ResultDTO CreateNewBroadCastMessages(BroadCastAnnouncementRequestDTO broadCastAnnouncementRequestDTO);
         ResultDTO FilterBroadCastWithStartDateAndEndDate();
         ResultDTO UpdateSoftDeleteFlag(int Id);

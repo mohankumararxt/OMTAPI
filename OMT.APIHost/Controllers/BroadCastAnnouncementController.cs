@@ -17,18 +17,18 @@ namespace OMT.APIHost.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GetBroadCastAnnouncementMessages")]
-        public ResultDTO GetBroadCastAnnouncementMessages()
-        {
-            return _broadCastAnnouncementService.GetBroadCastAnnouncementMessages();
-        }
+        //[HttpGet]
+        //[Route("GetBroadCastAnnouncementMessages")]
+        //public ResultDTO GetBroadCastAnnouncementMessages()
+        //{
+        //    return _broadCastAnnouncementService.GetBroadCastAnnouncementMessages();
+        //}
 
         [HttpGet]
-        [Route("GetBroadCastAnnouncementBySoftDelete")]
-        public ResultDTO GetBroadCastAnnouncementBySoftDelete()
+        [Route("GetBroadCastAnnouncementsBySoftDelete")]
+        public ResultDTO GetBroadCastAnnouncementsBySoftDelete()
         {
-            return _broadCastAnnouncementService.GetBroadCastAnnouncementBySoftDelete();
+            return _broadCastAnnouncementService.GetBroadCastAnnouncementsBySoftDelete();
         }
 
         [HttpPost]
