@@ -16,5 +16,6 @@ namespace OMT.DTO
         public Double? accuracy { get; set; }
         public int duration { get; set; }
         public DateOnly testdate { get; set; }
+        public DateOnly completiondate {  get; set; }
     }
 }

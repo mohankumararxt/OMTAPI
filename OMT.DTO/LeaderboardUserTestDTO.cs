@@ -14,6 +14,7 @@ namespace OMT.DTO
         public int duration { get; set; }
         public int? wpm { get; set; }
         public Double? accuracy { get; set; }
+        public DateOnly completiondate { get; set; }
         
         public DateOnly testdate { get; set; }
     }

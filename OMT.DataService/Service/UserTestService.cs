@@ -31,8 +31,9 @@ namespace OMT.DataService.Service
                 if (existing_test_text == null)
                 {
                     var trimmedString = createTestAndAssign.text.Trim();
+                    
 
-                    if (!trimmedString.IsNullOrEmpty() )
+                    if (!trimmedString.IsNullOrEmpty() && trimmedString.Length > 10)
                     {
                         
                         
@@ -77,7 +78,7 @@ namespace OMT.DataService.Service
                     else
                     {
                         resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Test text cannot be null or empty.";
+                        resultDTO.Message = "Test text must not be null, empty, or less than 10 characters.";
                         resultDTO.StatusCode = "400";
                     }
                 }
@@ -244,7 +245,7 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.CreateTimestamp.Date >= subday.Date && itest.StartTime != null && itest.EndTime != null
+                                 where itest.EndTime >= subday.Date && itest.StartTime != null && itest.EndTime != null
                                  orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardUserTestDTO()
                                  {
@@ -253,7 +254,7 @@ namespace OMT.DataService.Service
                                      duration = test.Duration,
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f,
-                                     // Handle nullable Double
+                                     completiondate = DateOnly.FromDateTime(itest.EndTime),
                                      testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
                                  };
 

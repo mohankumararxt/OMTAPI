@@ -42,7 +42,7 @@ namespace OMT.DataService.Utility
             int characterCount = testText.Length;
 
             // Calculate time in seconds using the formula: (Total characters / (5 * WPM)) * 60
-            int timeInSeconds = ((int)characterCount / (5 * wpm)) * 60;
+            int timeInSeconds = Math.Max(((int)characterCount / (5 * wpm)) * 60, 5);
 
             return timeInSeconds;
         }
