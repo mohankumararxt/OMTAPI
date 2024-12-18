@@ -32,5 +32,13 @@ namespace OMT.APIHost.Controllers
             ResultDTO resultDTO = _reportColumnsService.CreateReportColumns(createReportColumnsDTO);
             return resultDTO;
         }
+
+        [HttpPut]
+        [Route("UpdateReportColumns")]
+        public ResultDTO UpdateReportColumns([FromBody] UpdateReportColumnsDTO updateReportColumnsDTO)
+        {
+            ResultDTO resultDTO=_reportColumnsService.UpdateReportColumns(updateReportColumnsDTO);
+            return resultDTO;
+        }
     }
 }
