@@ -175,21 +175,38 @@ namespace OMT.DataService.Service
 
                 var totalCount =  _oMTDataContext.Notification.Count();
 
-                var notifications = _oMTDataContext.Notification
-                    .OrderByDescending(n => n.CreateTimeStamp)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(n => new
-                    {
-                        Id = n.Id,
-                        UserId = n.UserId,
-                        NotificationMessage = n.NotificationMessage,
-                        FileUrl = n.FileUrl,
-                        CreateTimeStamp = n.CreateTimeStamp
-                    })
-                    .ToList();
 
-                    resultDTO.IsSuccess = true;
+                var notifications = (from notification in _oMTDataContext.Notification
+                                     join user in _oMTDataContext.UserProfile
+                                     on notification.UserId equals user.UserId
+                                     orderby notification.CreateTimeStamp descending
+                                     select new
+                                     {
+                                         Id = notification.Id,
+                                         UserName = user.FirstName + " " + user.LastName,
+                                         NotificationMessage = notification.NotificationMessage,
+                                         FileUrl = notification.FileUrl,
+                                         CreateTimeStamp = notification.CreateTimeStamp,
+                                     })
+                      .Skip((pageNumber - 1) * pageSize)
+                      .Take(pageSize)
+                      .ToList();
+
+                //var notifications = from _oMTDataContext.Notification
+                //    .OrderByDescending(n => n.CreateTimeStamp)
+                //    .Skip((pageNumber - 1) * pageSize)
+                //    .Take(pageSize)
+                //    .Select(n => new
+                //    {
+                //        Id = n.Id,
+                //        UserId = n.UserId,
+                //        NotificationMessage = n.NotificationMessage,
+                //        FileUrl = n.FileUrl,
+                //        CreateTimeStamp = n.CreateTimeStamp
+                //    })
+                //    .ToList();
+
+                resultDTO.IsSuccess = true;
                 resultDTO.Message = notifications.Any()
                         ? "Notifications successfully retrieved based on the specified page parameters."
                         : "No notifications found.";
