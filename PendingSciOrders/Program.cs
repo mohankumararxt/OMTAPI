@@ -72,17 +72,20 @@ namespace PendingSciOrders
 
                     DataTable SkillsetDT = skillsetDS.Tables[0];
 
+                    DateTime dateTime = DateTime.Now;
+
                     foreach (DataRow Sciskillset in SkillsetDT.Rows)
                     {
                         int statusid = Convert.ToInt32(Sciskillset["Id"]);
                         string skillsetname = Convert.ToString(Sciskillset["SkillsetName"]);
 
-                        string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid WHERE UserId IS NULL AND Status IS NULL";
+                        string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
 
                         SqlCommand updateToPN = new SqlCommand(updateToPending, connection);
                         updateToPN.CommandType = CommandType.Text;
 
                         updateToPN.Parameters.AddWithValue("@statusid", statusid);
+                        updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
 
                         updateToPN.ExecuteNonQuery();
 
