@@ -10,5 +10,10 @@ namespace OMT.DataService.Interface
     public interface INotificationService
     {
         ResultDTO CreateNotification(NotificationDTO notificationDTO);
+        ResultDTO FetchFiveRecentNotifications();
+
+        ResultDTO GetAllNotifications(int pageNumber = 1, int pageSize = 10);
+        ResultDTO DownloadFile(int Id);
+
     }
 }

@@ -70,7 +70,7 @@ namespace OMT.DataService.Service
                 && x.StartDateTime == broadCastAnnouncementRequestDTO.StartDateTime
                 && x.EndDateTime == broadCastAnnouncementRequestDTO.EndDateTime).FirstOrDefault();
                 if (existBroadCast == null) {
-                    if (broadCastAnnouncementRequestDTO.StartDateTime <= broadCastAnnouncementRequestDTO.EndDateTime)
+                    if (broadCastAnnouncementRequestDTO.StartDateTime <= broadCastAnnouncementRequestDTO.EndDateTime && broadCastAnnouncementRequestDTO.BroadCastMessage != null)
                     {
                         var broadCastObj = new BroadCastAnnouncement()
                         {

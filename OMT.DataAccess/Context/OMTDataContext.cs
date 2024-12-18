@@ -119,6 +119,19 @@ namespace OMT.DataAccess.Context
             modelBuilder.Entity<UserTest>()
                 .Property(p => p.CreateTimestamp) 
                 .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.StartDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.EndDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Notification>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
         }
 
         //protected override void OnModelCreatingTest(ModelBuilder modelBuilder)

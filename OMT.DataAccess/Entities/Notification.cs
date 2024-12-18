@@ -14,6 +14,7 @@ namespace OMT.DataAccess.Entities
     {
         [Key]
         public int Id { get; set; } // Primary key
+        public int UserId { get; set; }
 
         [Required(ErrorMessage = "Notification message is required.")]
         public string NotificationMessage { get; set; } = string.Empty; // Required message

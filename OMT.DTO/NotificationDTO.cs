@@ -12,10 +12,11 @@ namespace OMT.DTO
 {
     public class NotificationDTO
     {
-        public string NotificationMessage { get; set; }
+        public int UserId { get; set; }
+        public string NotificationMessage { get; set; } = string.Empty;
 
         //[MaxFileSize(104857600)] // File size validation (100 MB)
 
-        public IFormFile FileUrl { get; set; }
+        public IFormFile? FileBlob { get; set; }
     }
 }
