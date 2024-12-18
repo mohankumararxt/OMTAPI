@@ -106,7 +106,7 @@ namespace OMT.DataService.Service
                         _oMTDataContext?.InterviewTests.Add(interviewTest);
 
                         // Save changes to the database
-                        _oMTDataContext?.SaveChanges();
+                        _oMTDataContext.SaveChanges();
                         int interviewtestid = interviewTest.Id;
 
                         var result = from itest in _oMTDataContext.InterviewTests
@@ -254,7 +254,7 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.EndTime >= subday.Date && itest.StartTime!=null && itest.EndTime!=null
+                                 where (itest.EndTime >= subday.Date || itest.CreateTimestamp >= subday.Date) && itest.EndTime != null  && itest.StartTime != null
                                  orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardDTO()
                                  {
@@ -266,7 +266,7 @@ namespace OMT.DataService.Service
                                      accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f, // Handling nullable
                                      duration = test.Duration,
                                      testdate = DateOnly.FromDateTime(itest.CreateTimestamp), // Convert to DateOnly
-                                     completiondate = DateOnly.FromDateTime(itest.EndTime)
+                                     completiondate = itest.EndTime != null ? DateOnly.FromDateTime(itest.EndTime ?? DateTime.Now) : null
                                  };
 
 

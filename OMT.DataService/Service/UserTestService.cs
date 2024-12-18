@@ -245,7 +245,7 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.EndTime >= subday.Date && itest.StartTime != null && itest.EndTime != null
+                                 where (itest.EndTime >= subday.Date || itest.CreateTimestamp >= subday.Date) && itest.EndTime != null && itest.StartTime != null
                                  orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardUserTestDTO()
                                  {
@@ -254,7 +254,7 @@ namespace OMT.DataService.Service
                                      duration = test.Duration,
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f,
-                                     completiondate = DateOnly.FromDateTime(itest.EndTime),
+                                     completiondate = itest.EndTime != null ? DateOnly.FromDateTime(itest.EndTime ?? DateTime.Now) : null,
                                      testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
                                  };
 
