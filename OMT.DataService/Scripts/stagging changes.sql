@@ -3185,3 +3185,9 @@
 --insert into ProcessStatus values
 --(3,'Not found',0),
 --(1,'System-Pending',1)
+
+-----------------------------------tiqe extra boxes---------------------
+--ALTER TABLE TIQE
+--ADD Number_Of_Documents INT;
+--ALTER TABLE TIQE
+--ADD Number_Of_Manual_Splits INT;
