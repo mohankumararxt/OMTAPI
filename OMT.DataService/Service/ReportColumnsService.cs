@@ -84,7 +84,7 @@ namespace OMT.DataService.Service
                 //Check Skillset Already Exists
                 var ExistingSkillset = (from rc in _oMTDataContext.ReportColumns
                                         join ss in _oMTDataContext.SkillSet on rc.SkillSetId equals ss.SkillSetId
-                                        where ss.SkillSetId == createReportColumnsDTO.SkillSetId
+                                        where ss.SkillSetId == createReportColumnsDTO.SkillSetId && rc.IsActive
                                         select rc).FirstOrDefault();
 
                 if (ExistingSkillset != null)
@@ -99,7 +99,7 @@ namespace OMT.DataService.Service
                 //Find Existing Names
                 var existingMasterRepCols = _oMTDataContext.MasterReportColumns
                                         .Where(mrc => createReportColumnsDTO.MasterReportColumnNames.Contains(mrc.ReportColumnName))
-                                        .ToDictionary(mrc => mrc.ReportColumnName, mrc => mrc.ReportColumnName);
+                                        .ToDictionary(mrc => mrc.ReportColumnName, mrc => mrc.MasterReportColumnsId);
 
                 var newColumns = createReportColumnsDTO.MasterReportColumnNames.Except(existingMasterRepCols.Keys).ToList();
 
