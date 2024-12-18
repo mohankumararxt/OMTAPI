@@ -22,7 +22,7 @@ namespace OMT.DataAccess.Entities
         //public DateOnly DOB { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreateTimestamp { get; set; }
-        [Range(0, 80, ErrorMessage = "Experience must be between 0 and 80.")]
+        
         public int Experience { get; set; }
     }
 }

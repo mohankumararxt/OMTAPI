@@ -16,7 +16,7 @@ namespace OMT.DTO
         public string Lastname { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string phone { get; set; } = string.Empty;
-
+        [Range(0, 80, ErrorMessage = "Experience must be between 0 and 80.")]
         public int Experience { get; set; }
 
         //public DateTime DOB { get; set; }
