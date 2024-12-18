@@ -12,5 +12,6 @@ namespace OMT.DataService.Interface
     {
         ResultDTO GetReportColumnlist(int? skillsetid);
         ResultDTO CreateReportColumns(CreateReportColumnsDTO createReportColumnsDTO);
+        ResultDTO UpdateReportColumns(UpdateReportColumnsDTO updateReportColumnsDTO);
     }
 }
