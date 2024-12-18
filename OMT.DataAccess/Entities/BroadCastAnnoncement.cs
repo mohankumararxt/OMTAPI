@@ -13,7 +13,7 @@ namespace OMT.DataAccess.Entities
     {
         [Key]   
         public int Id { get; set; }
-        public string BroadCastMessage { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
 
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }   

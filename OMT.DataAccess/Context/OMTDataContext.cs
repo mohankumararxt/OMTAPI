@@ -53,6 +53,7 @@ namespace OMT.DataAccess.Context
 
         public DbSet<BroadCastAnnouncement> BroadCastAnnouncement { get; set; }
 
+        public DbSet<Notification> Notification { get; set; }
 
 
         public override int SaveChanges()
