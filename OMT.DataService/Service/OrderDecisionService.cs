@@ -1008,16 +1008,17 @@ namespace OMT.DataService.Service
                             //Fetching Old Datas from the table
                             using (SqlCommand commands = new SqlCommand(ordersql, connection))
                             {
+                                
                                 commands.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
 
-                                using SqlDataAdapter dataAdapter = new(command);
+                                using SqlDataAdapter dataAdapter = new(commands);
 
-                                DataSet orderdetails = new DataSet();
+                                DataTable orderdetails = new DataTable();
                                 dataAdapter.Fill(orderdetails);
 
-                                if (orderdetails.Tables[0].Rows.Count > 0)
-                                {
-                                    DataRow row = orderdetails.Tables[0].Rows[0];
+                                if (orderdetails.Rows.Count > 0)
+                                { 
+                                    DataRow row = orderdetails.Rows[0];
                                     var oldUserId = row["UserId"];
                                     var oldOrderid = row["OrderId"];
                                     var oldSkillsetid = row["SkillSetId"];
@@ -1025,7 +1026,6 @@ namespace OMT.DataService.Service
                                     var oldSystemofRecordid = row["SystemofRecordId"];
                                     var oldStatus = row["Status"];
                                     string oldOrderDetails = row["OrderDetailsJson"] as string;
-
 
                                     // Insert old details into Order_History table   
                                     string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
