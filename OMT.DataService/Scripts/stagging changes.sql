@@ -3185,3 +3185,7 @@
 --insert into ProcessStatus values
 --(3,'Not found',0),
 --(1,'System-Pending',1)
+
+
+----------------------------------------TIQE AND TRD CHANGES----------------------
+--insert into DefaultTemplateColumns values (3,' ImageID','int',1,0,0,0,0)
