@@ -4059,7 +4059,9 @@ namespace OMT.DataService.Service
 
                             sqlquery += $" Union " +
                                         $"{sqlquery1} " +
-                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails.SkillSetName}' AS SkillSet FROM {skillsetdetails.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails.SkillSetName}' AS SkillSet FROM {skillsetdetails.SkillSetName} t WHERE t.Status = 17 " + 
+                                        $"{dateFilterCondition} " +
+                                        $"order by ps.Status ";
 
                         }
 
@@ -4243,7 +4245,9 @@ namespace OMT.DataService.Service
                         {
                             sqlquery += $" Union " +
                                     $"{sqlquery1} " +
-                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 " +
+                                    $"{dateFilterCondition} " +
+                                    $"order by ps.Status ";
 
 
                         }
@@ -4433,7 +4437,9 @@ namespace OMT.DataService.Service
                             {
                                 sqlquery += $" Union " +
                                         $"{sqlquery1} " +
-                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails2.SkillSetName}' AS SkillSet FROM {skillsetdetails2.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+                                        $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillsetdetails2.SkillSetName}' AS SkillSet FROM {skillsetdetails2.SkillSetName} t WHERE t.Status = 17 " +
+                                        $"{dateFilterCondition} " +
+                                        $"order by ps.Status ";
 
 
                             }
@@ -4600,7 +4606,9 @@ namespace OMT.DataService.Service
 
                         sqlquery += $" Union " +
                                     $"{sqlquery1} " +
-                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 order by ps.Status ";
+                                    $"NULL AS UserName, 'System-Pending' AS Status, NULL AS CompletionDate, NULL AS Remarks,NULL AS StartTime,NULL AS EndTime, NULL AS TimeTaken, '{skillset.SkillSetName}' AS SkillSet FROM {skillset.SkillSetName} t WHERE t.Status = 17 " +
+                                    $"{dateFilterCondition} " +
+                                    $"order by ps.Status ";
 
 
                     }
