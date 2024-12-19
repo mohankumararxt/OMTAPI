@@ -814,7 +814,7 @@ namespace OMT.DataService.Service
                                      $"CONCAT(RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 3600) AS VARCHAR), 2), ':', " +
                                      $"RIGHT('0' + CAST(((DATEDIFF(SECOND, t.StartTime, t.EndTime) / 60) % 60) AS VARCHAR), 2), ':', " +
                                      $"RIGHT('0' + CAST((DATEDIFF(SECOND, t.StartTime, t.EndTime) % 60) AS VARCHAR), 2)) as TimeTaken, " +
-                                     $"ss.SkillSetName as SkillSet,sr.SystemofRecordId,sr.SystemofRecordName " +
+                                     $"ss.SkillSetName as SkillSet,ss.SkillSetId,sr.SystemofRecordId,sr.SystemofRecordName " +
                                      $"FROM {skillset.SkillSetName} t " +
                                      $"INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId " +
                                      $"INNER JOIN ProcessStatus ps on ps.Id = t.Status " +
@@ -863,7 +863,7 @@ namespace OMT.DataService.Service
                                 {
                                     UpdatedId = UpdatedId,
                                     OrderDetails = orderDetails, // order details -> dynamic 
-
+                                    
                                 };
                             }).ToList();
 
