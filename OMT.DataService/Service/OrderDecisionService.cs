@@ -49,6 +49,25 @@ namespace OMT.DataService.Service
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).ToList();
 
+                //check if user has any TRD skillsets to show the getpendingorders button
+
+                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                             select ss.SkillSetName).ToList();
+
+                bool ispending = false;
+
+                if (trdskillsets.Count > 0)
+                {
+                    ispending = true;
+                }
+
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
+                // process pending orders if any for the user and send the details
                 List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
 
                 foreach (string tablename in tablenames)
@@ -129,7 +148,7 @@ namespace OMT.DataService.Service
                 }
                 if (noStatusRecords.Count > 0)
                 {
-                    var orderedRecords = noStatusRecords
+                    orderedRecords = noStatusRecords
                          .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
                          .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
                          .First();
@@ -138,10 +157,56 @@ namespace OMT.DataService.Service
 
                     var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
+                    //check if order is from trd pending
+                    var istrd_pending = false;
+                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                    var tableid = (int)orderedRecords["Id"];
+
+                    var tablename = orderedRecords["SkillSetName"].ToString();
+
+                    if (istrd)
+                    {
+                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
+
+                        using SqlCommand trd_command = connection.CreateCommand();
+                        trd_command.CommandText = pendingorder_query;
+
+                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                        DataSet trd_dataset = new DataSet();
+
+                        trd_dataAdapter.Fill(trd_dataset);
+
+                        DataTable trd_datatable = trd_dataset.Tables[0];
+
+                        var trd_pnd = trd_datatable.AsEnumerable()
+                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                       column => column.ColumnName,
+                                       column => row[column]));
+
+                        if (trd_pnd.Any())
+                        {
+                            istrd_pending = trd_pnd.Any(record =>
+                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                        }
+                    }
+
+                    // check if order is from TIQE 
+
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+
+
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        PendingOrder = dataToReturn,
+                        IsTiqe = istiqe_order,
+                        IsTrdPending = istrd_pending
+                    };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
                     resultDTO.StatusCode = "200";
-                    resultDTO.Data = JsonConvert.SerializeObject(dataToReturn);
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {
