@@ -3195,4 +3195,4 @@
 
 
 ----------------------------------------TIQE AND TRD CHANGES----------------------
---insert into DefaultTemplateColumns values (3,' ImageID','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'ImageID','int',1,0,0,0,0)
