@@ -106,7 +106,7 @@ namespace OMT.DataService.Service
                         _oMTDataContext?.InterviewTests.Add(interviewTest);
 
                         // Save changes to the database
-                        _oMTDataContext?.SaveChanges();
+                        _oMTDataContext.SaveChanges();
                         int interviewtestid = interviewTest.Id;
 
                         var result = from itest in _oMTDataContext.InterviewTests
@@ -254,8 +254,8 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.CreateTimestamp.Date >= subday && itest.StartTime!=null && itest.EndTime!=null
-                                 orderby itest.CreateTimestamp descending
+                                 where (itest.EndTime >= subday.Date || itest.CreateTimestamp >= subday.Date) && itest.EndTime != null  && itest.StartTime != null
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardDTO()
                                  {
                                      username = user.Firstname + " " + user.Lastname,
@@ -265,7 +265,8 @@ namespace OMT.DataService.Service
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f, // Handling nullable
                                      duration = test.Duration,
-                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp) // Convert to DateOnly
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp), // Convert to DateOnly
+                                     completiondate = itest.EndTime != null ? DateOnly.FromDateTime(itest.EndTime ?? DateTime.Now) : null
                                  };
 
 

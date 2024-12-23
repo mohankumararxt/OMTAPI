@@ -31,8 +31,9 @@ namespace OMT.DataService.Service
                 if (existing_test_text == null)
                 {
                     var trimmedString = createTestAndAssign.text.Trim();
+                    
 
-                    if (!trimmedString.IsNullOrEmpty() )
+                    if (!trimmedString.IsNullOrEmpty() && trimmedString.Length > 10)
                     {
                         
                         
@@ -77,7 +78,7 @@ namespace OMT.DataService.Service
                     else
                     {
                         resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Test text cannot be null or empty.";
+                        resultDTO.Message = "Test text must not be null, empty, or less than 10 characters.";
                         resultDTO.StatusCode = "400";
                     }
                 }
@@ -91,16 +92,6 @@ namespace OMT.DataService.Service
 
                         if (createTestAndAssign.userids.Any(userid => alreadyassignedusers.Contains(userid)))
                         {
-
-                            //var users_result = from itest in _oMTDataContext.UserTest
-                            //             join user in _oMTDataContext.UserProfile
-                            //             on itest.UserId equals user.UserId
-                            //             where itest.TestId == existing_test_text.Id && createTestAndAssign.userids.Contains(itest.UserId)
-                            //             select new 
-                            //             {
-                            //                 username = user.FirstName + " " + user.LastName,
-                            //             };
-
                             resultDTO.IsSuccess = false;
                             resultDTO.Message = "This test has already been assigned to the specified users.";
                             //resultDTO.Data= users_result;
@@ -108,9 +99,6 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-
-
-                            // Iterate over userIds and create UserTest objects
                             foreach (var id in createTestAndAssign.userids)
                             {
                                 userTest.Add(new UserTest()
@@ -257,8 +245,8 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.CreateTimestamp >= subday && itest.StartTime != null && itest.EndTime != null
-                                 orderby itest.CreateTimestamp descending
+                                 where (itest.EndTime >= subday.Date || itest.CreateTimestamp >= subday.Date) && itest.EndTime != null && itest.StartTime != null
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardUserTestDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -266,7 +254,7 @@ namespace OMT.DataService.Service
                                      duration = test.Duration,
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f,
-                                     // Handle nullable Double
+                                     completiondate = itest.EndTime != null ? DateOnly.FromDateTime(itest.EndTime ?? DateTime.Now) : null,
                                      testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
                                  };
 
@@ -311,7 +299,7 @@ namespace OMT.DataService.Service
                 //string decryptedUserIdString = Encryption.DecryptCipherTextToPlainText(encrytedUserId);
                 //int.TryParse(decryptedUserIdString, out int decryptedUserId);
                 var existingdata = _oMTDataContext?.UserTest
-                            .Where(x => x.UserId == userId && x.StartTime == null && x.EndTime == null).FirstOrDefault();
+                            .Where(x => x.UserId == userId &&  x.EndTime == null).FirstOrDefault();
                 if (existingdata != null)
                 {
 
@@ -321,7 +309,7 @@ namespace OMT.DataService.Service
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
                                  where itest.Id == existingdata.Id 
-                                 orderby itest.CreateTimestamp descending
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new UserTestDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -409,9 +397,9 @@ namespace OMT.DataService.Service
                                  on user.UserId equals itest.UserId into testGroup
                                  from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
                                  where userids.Contains(user.UserId) &&
-                                       ((itest != null && itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate)
+                                       ((itest != null && itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date)
                                         || itest == null) // Include records with no matching tests
-                                orderby itest.CreateTimestamp ascending
+                                orderby itest.CreateTimestamp.Date ascending
                                  select new AgentProgressBarResponseDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -524,7 +512,7 @@ namespace OMT.DataService.Service
                               select new
                               {
                                   Username = userGroup.Key.FirstName + " " + userGroup.Key.LastName,
-                                  OpenTestsCount = userGroup.Count(g => g.itest.StartTime == null && g.itest.EndTime == null && g.itest.CreateTimestamp.Month == currentMonth),
+                                  OpenTestsCount = userGroup.Count(g => (g.itest.StartTime == null || g.itest.EndTime == null) && g.itest.CreateTimestamp.Month == currentMonth),
                                   CompletedTestsCount = userGroup.Count(g => g.itest.StartTime != null && g.itest.EndTime != null && g.itest.CreateTimestamp.Month == currentMonth)
                               }).Distinct().ToList();
                 if (result.Count() > 0)
@@ -555,7 +543,7 @@ namespace OMT.DataService.Service
 
 
 
-        public ResultDTO AgentTopFiveProgressBar(DateTime? startdate, DateTime? enddate)
+        public ResultDTO AgentTopFiveProgressBar(DateTime startdate, DateTime enddate)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -566,7 +554,7 @@ namespace OMT.DataService.Service
                                    join itest in _oMTDataContext.UserTest
                                    on user.UserId equals itest.UserId into testGroup
                                    from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                   where itest == null || (itest.CreateTimestamp >= startdate && itest.CreateTimestamp <= enddate) // Filter test data
+                                   where itest.EndTime != null &&( itest == null || (itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date))
                                    select new
                                    {
                                        user.UserId,
@@ -586,7 +574,7 @@ namespace OMT.DataService.Service
                             username = g.Key.FirstName + " " + g.Key.LastName,
                             email = g.Key.Email,
                             wpm = (int)g.Average(x => x.WPM),
-                            accuracy = (float)g.Average(x => x.Accuracy)
+                            accuracy = (float)Math.Round(g.Average(x => x.Accuracy), 2)
                             //testdate = g.Max(x => x.TestDate ? DateOnly.FromDateTime(x.TestDate.Value) : (DateOnly?)null)
                         })
                         .OrderByDescending(x => x.accuracy)
