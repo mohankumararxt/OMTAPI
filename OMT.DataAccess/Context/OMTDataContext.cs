@@ -54,6 +54,12 @@ namespace OMT.DataAccess.Context
         public DbSet<BroadCastAnnouncement> BroadCastAnnouncement { get; set; }
 
         public DbSet<Notification> Notification { get; set; }
+        public DbSet<Tasks> Tasks { get; set; }
+        public DbSet<TaskHistory>  TaskHistories { get; set; }
+        public DbSet<TasksStatus>  TasksStatuses { get; set; }
+        public DbSet<TaskPriority>  TaskPriorities { get; set; }
+        public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
+
 
 
         public override int SaveChanges()
@@ -131,6 +137,26 @@ namespace OMT.DataAccess.Context
 
             modelBuilder.Entity<Notification>()
                 .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Tasks>()
+           .Property(t => t.Id)
+           .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskHistory>()
+                .Property(th => th.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TasksStatus>()
+                .Property(ts => ts.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskPriority>()
+                .Property(tp => tp.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<ActivityFeed>()
+                .Property(af => af.Id)
                 .ValueGeneratedOnAdd();
         }
 
