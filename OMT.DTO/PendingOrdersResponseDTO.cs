@@ -10,5 +10,7 @@ namespace OMT.DTO
     {
         public List<Dictionary<string, object>> PendingOrder { get; set; }
         public bool IsPending { get; set; }
+        public bool IsTiqe { get; set; }
+        public bool IsTrdPending { get; set; }
     }
 }
