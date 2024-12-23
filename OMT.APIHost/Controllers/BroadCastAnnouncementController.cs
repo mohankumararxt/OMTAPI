@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
 using OMT.DTO;
+using System.Threading.Tasks;
 
 namespace OMT.APIHost.Controllers
 {
@@ -9,48 +10,39 @@ namespace OMT.APIHost.Controllers
     [ApiController]
     public class BroadCastAnnouncementController : ControllerBase
     {
-
         private readonly IBroadCastAnnouncementService _broadCastAnnouncementService;
+
         public BroadCastAnnouncementController(IBroadCastAnnouncementService broadCastAnnouncementService)
         {
             _broadCastAnnouncementService = broadCastAnnouncementService;
         }
 
-
-        //[HttpGet]
-        //[Route("GetBroadCastAnnouncementMessages")]
-        //public ResultDTO GetBroadCastAnnouncementMessages()
-        //{
-        //    return _broadCastAnnouncementService.GetBroadCastAnnouncementMessages();
-        //}
-
         [HttpGet]
-        [Route("GetBroadCastAnnouncementsBySoftDelete")]
-        public ResultDTO GetBroadCastAnnouncementsBySoftDelete()
+        [Route("GetBroadCastAnnouncements")]
+        public async Task<ResultDTO> GetBroadCastAnnouncements()
         {
-            return _broadCastAnnouncementService.GetBroadCastAnnouncementsBySoftDelete();
+            return await _broadCastAnnouncementService.GetBroadCastAnnouncements();
         }
 
         [HttpPost]
         [Route("CreateNewBroadCastMessages")]
-        public ResultDTO CreateNewBroadCastMessages([FromBody] BroadCastAnnouncementRequestDTO broadCastAnnouncementRequestDTO)
+        public async Task<ResultDTO> CreateNewBroadCastMessages([FromBody] BroadCastAnnouncementRequestDTO broadCastAnnouncementRequestDTO)
         {
-            return _broadCastAnnouncementService.CreateNewBroadCastMessages(broadCastAnnouncementRequestDTO);
+            return await _broadCastAnnouncementService.CreateNewBroadCastMessages(broadCastAnnouncementRequestDTO);
         }
 
         [HttpGet]
         [Route("FilterBroadCastWithStartDateAndEndDate")]
-        public ResultDTO FilterBroadCastWithStartDateAndEndDate()
+        public async Task<ResultDTO> FilterBroadCastWithStartDateAndEndDate()
         {
-            return _broadCastAnnouncementService.FilterBroadCastWithStartDateAndEndDate();   
+            return await _broadCastAnnouncementService.FilterBroadCastWithStartDateAndEndDate();
         }
 
         [HttpPut]
         [Route("UpdateSoftDeleteFlag")]
-        public ResultDTO UpdateSoftDeleteFlag([FromQuery] int Id)
+        public async Task<ResultDTO> UpdateSoftDeleteFlag([FromQuery] int Id)
         {
-            return _broadCastAnnouncementService.UpdateSoftDeleteFlag(Id);  
+            return await _broadCastAnnouncementService.UpdateSoftDeleteFlag(Id);
         }
-
     }
 }

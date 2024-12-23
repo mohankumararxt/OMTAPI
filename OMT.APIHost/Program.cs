@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                          {
                              Console.WriteLine("OnTokenValidated: " + context.SecurityToken);
 
-                             var customClaimTypes = new List<string>() { "FirstName","Email", "OrganizationId", "UserId","RoleId" };
+                             var customClaimTypes = new List<string>() { "FirstName", "Email", "OrganizationId", "UserId", "RoleId" };
                              var userClaims = context.Principal.Claims.Where(_ => customClaimTypes.Contains(_.Type)).ToList();
 
                              IOptions<JwtAuthSettings> authSettings = Options.Create<JwtAuthSettings>(new JwtAuthSettings()
@@ -64,11 +65,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { });
+string blobConnectionString = builder.Configuration.GetSection("AzureConnectionSettings").GetValue<string>("ConnectionString");
 
+// Register BlobServiceClient
+builder.Services.AddSingleton(new BlobServiceClient(blobConnectionString));
+builder.Services.Configure<AzureConnectionSettings>(builder.Configuration.GetSection("AzureConnectionSettings"));
 
 
 
 builder.Services.AddControllers();
+
 builder.Services.AddScoped<IInterviewService, InterviewService>();
 builder.Services.AddScoped<IUserTestService, UserTestService>();
 //add the required settings from appsettings.json
@@ -80,6 +86,7 @@ builder.Services.Configure<BasicAuthCredential>(builder.Configuration.GetSection
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<AzureBlob>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeamsService, TeamsService>();
@@ -146,3 +153,4 @@ app.UseCors(builder => builder.AllowAnyOrigin()
 app.MapControllers();
 
 app.Run();
+

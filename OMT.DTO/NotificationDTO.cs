@@ -15,8 +15,5 @@ namespace OMT.DTO
         public int UserId { get; set; }
         public string NotificationMessage { get; set; } = string.Empty;
 
-        //[MaxFileSize(104857600)] // File size validation (100 MB)
-
-        public IFormFile? FileBlob { get; set; }
     }
 }

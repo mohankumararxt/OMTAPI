@@ -1,63 +1,66 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using System;
-using Azure.Storage;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace OMT.DataService.Utility
 {
-    public  class AzureBlob
+    public class AzureBlob
     {
+        private readonly BlobServiceClient _blobServiceClient;
 
-        public string DownloadBlobUsingSasToken(string connectionString, string containerName, string blobName, string downloadFilePath)
+        public AzureBlob(BlobServiceClient blobServiceClient)
         {
-            // Create a BlobServiceClient
-            var blobServiceClient = new BlobServiceClient(connectionString);
+            _blobServiceClient = blobServiceClient;
+        }
 
-            // Get the container client
-            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        // Upload file to a blob
+        public async Task<string> UploadFileAsync(string containerName, string blobName, Stream fileStream)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
             // Ensure the container exists
-            containerClient.CreateIfNotExistsAsync();
+            await containerClient.CreateIfNotExistsAsync();
 
-            // Get the blob client
             var blobClient = containerClient.GetBlobClient(blobName);
 
-            // Set SAS permissions and expiry time (default to 1 hour from now)
+            // Upload the file
+            await blobClient.UploadAsync(fileStream, overwrite: true);
+
+            return blobClient.Uri.ToString();
+        }
+
+        // Generate a SAS token for a blob
+        public string GetBlobSasUri(string containerName, string AccountKey, string blobName, DateTimeOffset expiryTime, BlobSasPermissions permissions)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+            Console.WriteLine(blobClient.Exists());
+            // Check if the blob exists
+            if (!blobClient.Exists())
+                throw new FileNotFoundException($"Blob '{blobName}' does not exist in container '{containerName}'.");
+
+            // Generate the SAS token
             var sasBuilder = new BlobSasBuilder
             {
                 BlobContainerName = containerName,
                 BlobName = blobName,
                 Resource = "b", // 'b' for blob
-                ExpiresOn = DateTimeOffset.UtcNow.AddHours(1) // Default expiry of 1 hour
+                ExpiresOn = expiryTime
             };
 
-            // Define permissions (read)
-            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+            sasBuilder.SetPermissions(permissions);
 
-            // Generate the SAS token
-            var sasToken = sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(
-                "<your-account-name>",
-                "<your-account-key>"
-            )).ToString();
+            // Get account credentials
+            var storageAccountName = _blobServiceClient.AccountName;
 
-            // Generate the Blob Uri with SAS token
-            var blobUriWithSas = new Uri($"{blobClient.Uri}?{sasToken}");
+            var sharedKeyCredential = new StorageSharedKeyCredential(storageAccountName, AccountKey);
 
-            // Create a new BlobClient using the SAS URI
-            var blobClientWithSas = new BlobClient(blobUriWithSas);
-
-            // Download the blob to the specified file path
-            Console.WriteLine($"Downloading blob to {downloadFilePath}...");
-            blobClientWithSas.DownloadToAsync(downloadFilePath).Wait(); // Wait for the async task to complete
-
-            return "Download completed successfully.";
+            return $"{blobClient.Uri}?{sasBuilder.ToSasQueryParameters(sharedKeyCredential)}";
         }
-
 
     }
 }
+

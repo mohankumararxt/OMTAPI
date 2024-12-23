@@ -4,9 +4,7 @@ using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OMT.DataService.Service
@@ -18,41 +16,21 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-        //public ResultDTO GetBroadCastAnnouncementMessages()
-        //{
-        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-        //    try
-        //    {
-        //        var broadCostList = _oMTDataContext.BroadCastAnnouncement.ToList();
-        //        resultDTO.IsSuccess = true;
-        //        resultDTO.Message = "Successfully fetched all broad cost announcement messages.";
-        //        resultDTO.Data = broadCostList;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Handle exceptions and update the result DTO with error details
-        //        resultDTO.IsSuccess = false;
-        //        resultDTO.StatusCode = "500";
-        //        resultDTO.Message = $"An error occurred: {ex.Message}";
-        //    }
-        //    return resultDTO;
-        //}
 
-        public ResultDTO GetBroadCastAnnouncementsBySoftDelete()
+        public async Task<ResultDTO> GetBroadCastAnnouncements()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var broadCostList = _oMTDataContext.BroadCastAnnouncement
-                                     .Where(x => x.SoftDelete == false)  // Assuming '1' means deleted or inactive
-                                     .ToList();
+                var broadCostList = await _oMTDataContext.BroadCastAnnouncement
+                                     .Where(x => x.SoftDelete == false)  // Assuming 'false' means not deleted or inactive
+                                     .ToListAsync();
                 resultDTO.IsSuccess = true;
-                resultDTO.Message = "Successfully fetched broad cost announcement messages that are marked as deleted";
+                resultDTO.Message = "Successfully fetched broad cost announcement messages that are not deleted";
                 resultDTO.Data = broadCostList;
             }
             catch (Exception ex)
             {
-                // Handle exceptions and update the result DTO with error details
                 resultDTO.IsSuccess = false;
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = $"An error occurred: {ex.Message}";
@@ -60,16 +38,19 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO CreateNewBroadCastMessages(BroadCastAnnouncementRequestDTO broadCastAnnouncementRequestDTO)
+        public async Task<ResultDTO> CreateNewBroadCastMessages(BroadCastAnnouncementRequestDTO broadCastAnnouncementRequestDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var existBroadCast = _oMTDataContext.BroadCastAnnouncement.Where(x => 
-                x.BroadCastMessage == broadCastAnnouncementRequestDTO.BroadCastMessage 
-                && x.StartDateTime == broadCastAnnouncementRequestDTO.StartDateTime
-                && x.EndDateTime == broadCastAnnouncementRequestDTO.EndDateTime).FirstOrDefault();
-                if (existBroadCast == null) {
+                var existBroadCast = await _oMTDataContext.BroadCastAnnouncement
+                    .Where(x => x.BroadCastMessage == broadCastAnnouncementRequestDTO.BroadCastMessage
+                             && x.StartDateTime == broadCastAnnouncementRequestDTO.StartDateTime
+                             && x.EndDateTime == broadCastAnnouncementRequestDTO.EndDateTime)
+                    .FirstOrDefaultAsync();
+
+                if (existBroadCast == null)
+                {
                     if (broadCastAnnouncementRequestDTO.StartDateTime <= broadCastAnnouncementRequestDTO.EndDateTime && broadCastAnnouncementRequestDTO.BroadCastMessage != null)
                     {
                         var broadCastObj = new BroadCastAnnouncement()
@@ -78,8 +59,8 @@ namespace OMT.DataService.Service
                             StartDateTime = broadCastAnnouncementRequestDTO.StartDateTime,
                             EndDateTime = broadCastAnnouncementRequestDTO.EndDateTime
                         };
-                        _oMTDataContext.Add(broadCastObj);
-                        _oMTDataContext.SaveChanges();
+                        await _oMTDataContext.AddAsync(broadCastObj);
+                        await _oMTDataContext.SaveChangesAsync();
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Created BroadCast Announcement Successfully.";
                         resultDTO.StatusCode = "201";
@@ -107,8 +88,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-
-        public ResultDTO FilterBroadCastWithStartDateAndEndDate()
+        public async Task<ResultDTO> FilterBroadCastWithStartDateAndEndDate()
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -119,22 +99,26 @@ namespace OMT.DataService.Service
                 // Get current IST time
                 var currentISTTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, istTimeZone);
 
-                var messages = _oMTDataContext.BroadCastAnnouncement
-                    .AsEnumerable() // Switch to in-memory filtering to use TimeZone conversion
+                // Fetch data from the database asynchronously
+                var messages = await _oMTDataContext.BroadCastAnnouncement
+                    .Where(msg => msg.SoftDelete == false) // Apply the SoftDelete filter in the DB
+                    .ToListAsync(); // Retrieve all records as a list
+
+                // Filter the results in-memory (client-side filtering)
+                var filteredMessages = messages
                     .Where(msg =>
                         TimeZoneInfo.ConvertTimeFromUtc(msg.StartDateTime.ToUniversalTime(), istTimeZone) <= currentISTTime
-                        && TimeZoneInfo.ConvertTimeFromUtc(msg.EndDateTime.ToUniversalTime(), istTimeZone) >= currentISTTime
-                        && msg.SoftDelete == false) // Apply filters
+                        && TimeZoneInfo.ConvertTimeFromUtc(msg.EndDateTime.ToUniversalTime(), istTimeZone) >= currentISTTime)
                     .Select(msg => new
                     {
-                        Message = msg.BroadCastMessage // Only return the content
+                        Message = msg.BroadCastMessage // Only return the message content
                     })
-                    .ToList();
+                    .ToList(); // Execute the final filtering in memory
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "Filtered BroadCast fetched Successfully.";
                 resultDTO.StatusCode = "200";
-                resultDTO.Data = messages;
+                resultDTO.Data = filteredMessages;
             }
             catch (Exception ex)
             {
@@ -146,12 +130,16 @@ namespace OMT.DataService.Service
         }
 
 
-        public ResultDTO UpdateSoftDeleteFlag(int Id)
+
+        public async Task<ResultDTO> UpdateSoftDeleteFlag(int Id)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var existBroadCast = _oMTDataContext.BroadCastAnnouncement.Where(x => x.Id == Id).FirstOrDefault(); ;
+                var existBroadCast = await _oMTDataContext.BroadCastAnnouncement
+                    .Where(x => x.Id == Id)
+                    .FirstOrDefaultAsync();
+
                 if (existBroadCast != null)
                 {
                     if (existBroadCast.SoftDelete == true)
@@ -164,9 +152,9 @@ namespace OMT.DataService.Service
                     {
                         existBroadCast.SoftDelete = true;
                         _oMTDataContext.BroadCastAnnouncement.Update(existBroadCast);
-                        _oMTDataContext.SaveChanges();
+                        await _oMTDataContext.SaveChangesAsync();
                         var message = "Broadcast marked as deleted successfully.";
-                        var data = new { Id = Id,  Message = message};
+                        var data = new { Id = Id, Message = message };
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Updated Successfully.";
                         resultDTO.StatusCode = "201";
@@ -187,8 +175,5 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
-
-
     }
 }

@@ -1,4 +1,5 @@
-﻿using OMT.DTO;
+﻿using Microsoft.AspNetCore.Http;
+using OMT.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,12 @@ namespace OMT.DataService.Interface
 {
     public interface INotificationService
     {
-        ResultDTO CreateNotification(NotificationDTO notificationDTO);
-        ResultDTO FetchFiveRecentNotifications();
+        Task<ResultDTO> CreateNotificationAsync(NotificationDTO notificationDTO, IFormFile file);
+        Task<ResultDTO> FetchFiveRecentNotificationsAsync();
 
-        ResultDTO GetAllNotifications(int pageNumber = 1, int pageSize = 10);
-        ResultDTO DownloadFile(int Id);
+        Task<ResultDTO> GetAllNotificationsAsync(int pageNumber = 1, int pageSize = 10);
+        Task<ResultDTO> DownloadFileAsync(int Id);
+        Task<ResultDTO> DeleteNotificationAsync(int notificationId);
 
     }
 }

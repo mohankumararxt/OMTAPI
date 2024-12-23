@@ -10,7 +10,7 @@ namespace OMT.DataService.Settings
     {
         public string ConnectionString { get; set; } = string.Empty;
         public string Container { get; set; } = string.Empty;
-        public string DownloadFilePath {  get; set; } = string.Empty;
+        public string AccountKey { get; set; } = string.Empty;
 
     }
 }
