@@ -14,6 +14,7 @@ using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -358,8 +359,25 @@ namespace OMT.DataService.Service
 
                     if (!string.IsNullOrWhiteSpace(uporder))
                     {
+                        var order_jarray = JArray.Parse(uporder);
+                        var firstitem = (JObject)order_jarray[0];
+
+                        string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+
+                        var is_tiqe = false;
+
+                        if (ssname == "TIQE")
+                        {
+                            is_tiqe = true;
+                        }
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                        {
+                            AssignedOrder = uporder,
+                            IsTiqe = is_tiqe
+                        };
+
                         // Order assigned successfully
-                        resultDTO.Data = uporder;
+                        resultDTO.Data = getOrderResponseDTO;
                         resultDTO.IsSuccess = true;
                         resultDTO.StatusCode = "200";
                         resultDTO.Message = "Order assigned successfully";
@@ -373,8 +391,24 @@ namespace OMT.DataService.Service
 
                     if (!string.IsNullOrWhiteSpace(uporder))
                     {
+                        var order_jarray = JArray.Parse(uporder);
+                        var firstitem = (JObject)order_jarray[0];
+
+                        string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+                        var is_tiqe = false;
+
+                        if (ssname == "TIQE")
+                        {
+                            is_tiqe = true;
+                        }
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                        {
+                            AssignedOrder = uporder,
+                            IsTiqe = is_tiqe
+                        };
+
                         // Order assigned successfully
-                        resultDTO.Data = uporder;
+                        resultDTO.Data = getOrderResponseDTO;
                         resultDTO.IsSuccess = true;
                         resultDTO.StatusCode = "200";
                         resultDTO.Message = "Order assigned successfully";
@@ -479,6 +513,9 @@ namespace OMT.DataService.Service
 
         private void UpdateUtilized(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, string updatedOrder, int userskillsetid)
         {
+            var istiqe = false;
+            GetOrderResponseDTO gordto = new GetOrderResponseDTO();
+
             if (string.IsNullOrWhiteSpace(updatedOrder))
             {
                 resultDTO.Data = "";
@@ -489,6 +526,7 @@ namespace OMT.DataService.Service
             else
             {
                 int? ssid = null;
+                string ssname = "";
 
                 //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
                 var jsonArray = JArray.Parse(updatedOrder);
@@ -497,10 +535,23 @@ namespace OMT.DataService.Service
                 if (firstItem != null)
                 {
                     ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
+                    ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
                 }
 
                 if (ssid.HasValue)
                 {
+                    //check if order is of TIQE 
+                    if (ssname == "TIQE")
+                    {
+                        istiqe = true;
+                    }
+
+                    gordto = new GetOrderResponseDTO
+                    {
+                        AssignedOrder = updatedOrder,
+                        IsTiqe = istiqe
+                    };
+
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
 
                     if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
@@ -519,7 +570,7 @@ namespace OMT.DataService.Service
 
                 }
 
-                resultDTO.Data = updatedOrder;
+                resultDTO.Data = gordto;
                 resultDTO.IsSuccess = true;
                 resultDTO.StatusCode = "200";
                 resultDTO.Message = "Order assigned successfully";
@@ -928,7 +979,7 @@ namespace OMT.DataService.Service
                                 {
                                     UpdatedId = UpdatedId,
                                     OrderDetails = orderDetails, // order details -> dynamic 
-                                    
+
                                 };
                             }).ToList();
 
@@ -1073,7 +1124,7 @@ namespace OMT.DataService.Service
                             //Fetching Old Datas from the table
                             using (SqlCommand commands = new SqlCommand(ordersql, connection))
                             {
-                                
+
                                 commands.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
 
                                 using SqlDataAdapter dataAdapter = new(commands);
@@ -1082,7 +1133,7 @@ namespace OMT.DataService.Service
                                 dataAdapter.Fill(orderdetails);
 
                                 if (orderdetails.Rows.Count > 0)
-                                { 
+                                {
                                     DataRow row = orderdetails.Rows[0];
                                     var oldUserId = row["UserId"];
                                     var oldOrderid = row["OrderId"];
@@ -1341,7 +1392,7 @@ namespace OMT.DataService.Service
                 command.Parameters.AddWithValue("@CompletionDate", Datetime);
                 command.Parameters.AddWithValue("@StartTime", Datetime);
                 command.Parameters.AddWithValue("@EndTime", Datetime);
-                
+
                 command.ExecuteNonQuery();
 
                 resultDTO.Message = "Unassigned Order Status Updated Successfully";
