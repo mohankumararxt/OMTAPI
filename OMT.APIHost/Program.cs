@@ -118,7 +118,7 @@ builder.Services.AddScoped<IOrderDecisionService, OrderDecisionService>();
 builder.Services.AddScoped<IUpdateGOCService, UpdateGOCService>();
 builder.Services.AddScoped<IBroadCastAnnouncementService, BroadCastAnnouncementService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
+builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));

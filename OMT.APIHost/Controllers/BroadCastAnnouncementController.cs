@@ -19,9 +19,9 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("GetBroadCastAnnouncements")]
-        public async Task<ResultDTO> GetBroadCastAnnouncements()
+        public async Task<ResultDTO> GetBroadCastAnnouncements([FromQuery] int pageNumber, int pageSize)
         {
-            return await _broadCastAnnouncementService.GetBroadCastAnnouncements();
+            return await _broadCastAnnouncementService.GetBroadCastAnnouncements(pageNumber, pageSize);
         }
 
         [HttpPost]

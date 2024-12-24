@@ -37,7 +37,7 @@ namespace OMT.DataService.Utility
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobClient = containerClient.GetBlobClient(blobName);
-            Console.WriteLine(blobClient.Exists());
+
             // Check if the blob exists
             if (!blobClient.Exists())
                 throw new FileNotFoundException($"Blob '{blobName}' does not exist in container '{containerName}'.");
@@ -61,6 +61,20 @@ namespace OMT.DataService.Utility
             return $"{blobClient.Uri}?{sasBuilder.ToSasQueryParameters(sharedKeyCredential)}";
         }
 
+        // Delete a blob
+        public async Task<bool> DeleteBlobAsync(string containerName, string blobName)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            // Check if the blob exists
+            if (!blobClient.Exists())
+                throw new FileNotFoundException($"Blob '{blobName}' does not exist in container '{containerName}'.");
+
+            // Delete the blob
+            var response = await blobClient.DeleteIfExistsAsync();
+
+            return response.Value; // Returns true if the blob was deleted
+        }
     }
 }
-

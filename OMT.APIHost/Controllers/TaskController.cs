@@ -52,13 +52,38 @@ namespace OMT.APIHost.Controllers
         }
 
         // Endpoint to Undo Task Change
-        [HttpPost("undo-change/{taskId}")]
+        [HttpPost("undo-change")]
         public async Task<ResultDTO> UndoTaskChange()
         {
             var result = await _taskService.UndoTaskChangeAsync();
             return result;
         }
 
-       
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportReports([FromQuery] ExportFilterDTO filters, [FromQuery] string format = "csv")
+        {
+            try
+            {
+                var result = await _taskService.ExportReportsAsync(filters, format);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new { result.Message, result.StatusCode });
+                }
+
+                var fileContent = (byte[])result.Data;
+                var fileName = $"TasksReport_{DateTime.UtcNow:yyyyMMddHHmmss}.{format}";
+
+                return File(fileContent, "application/octet-stream", fileName);
+            }
+            catch (NotSupportedException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
     }
 }

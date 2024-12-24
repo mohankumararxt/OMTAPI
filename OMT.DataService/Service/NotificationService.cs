@@ -30,31 +30,41 @@ namespace OMT.DataService.Service
             _azureSettings = azureSettings.Value;
         }
 
-        /// <summary>
-        /// Creates a notification with optional file upload to Azure Blob Storage.
-        /// </summary>
-        /// <param name="notificationDTO">Notification data transfer object.</param>
-        /// <param name="file">Optional file to be uploaded to Azure Blob Storage.</param>
-        /// <returns>Result DTO with success status and details.</returns>
+        private string ValidateNotification(NotificationDTO notificationDTO)
+        {
+            if (string.IsNullOrWhiteSpace(notificationDTO.NotificationMessage))
+                return "NotificationMessage cannot be empty.";
+            if (notificationDTO.NotificationMessage.Length > 500)
+                return "NotificationMessage exceeds the maximum allowed length of 500 characters.";
+            if (notificationDTO.UserId <= 0)
+                return "Invalid UserId.";
+            return string.Empty;
+        }
+
+        private string GetBlobNameFromUrl(string fileUrl)
+        {
+            return Uri.UnescapeDataString(new Uri(fileUrl).Segments.Last());
+        }
+
         public async Task<ResultDTO> CreateNotificationAsync(NotificationDTO notificationDTO, IFormFile file)
         {
+            var validationError = ValidateNotification(notificationDTO);
+            if (!string.IsNullOrEmpty(validationError))
+            {
+                return new ResultDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = "400",
+                    Message = validationError
+                };
+            }
+
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
 
             try
             {
-                // Validate notification data
-                if (string.IsNullOrWhiteSpace(notificationDTO.NotificationMessage) || notificationDTO.UserId <= 0)
-                {
-                    return new ResultDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = "Invalid input. Please ensure required fields are provided."
-                    };
-                }
+                const long MaxFileSize = 100 * 1024 * 1024; // 100MB
 
-                // File size validation (Max 100MB)
-                const long MaxFileSize = 100 * 1024 * 1024; // 100MB in bytes
                 if (file != null && file.Length > MaxFileSize)
                 {
                     return new ResultDTO
@@ -67,14 +77,11 @@ namespace OMT.DataService.Service
 
                 string fileUrl = null;
 
-                // Process file upload if a file is provided
                 if (file != null && file.Length > 0)
                 {
-                    // Upload the file to Azure Blob Storage
                     fileUrl = await _azureBlob.UploadFileAsync(_azureSettings.Container, file.FileName, file.OpenReadStream());
                 }
 
-                // Save notification to the database
                 var notification = new Notification
                 {
                     UserId = notificationDTO.UserId,
@@ -87,13 +94,13 @@ namespace OMT.DataService.Service
                 await _dbContext.SaveChangesAsync();
 
                 resultDTO.Message = "Notification created successfully.";
+                resultDTO.StatusCode = "201";
                 resultDTO.Data = new
                 {
                     Id = notification.Id,
                     UserId = notification.UserId,
                     NotificationMessage = notification.NotificationMessage
                 };
-                resultDTO.StatusCode = "201";
             }
             catch (Exception ex)
             {
@@ -105,11 +112,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-
-        /// <summary>
-        /// Fetches the five most recent notifications.
-        /// </summary>
-        /// <returns>Result DTO with recent notifications.</returns>
         public async Task<ResultDTO> FetchFiveRecentNotificationsAsync()
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
@@ -126,9 +128,9 @@ namespace OMT.DataService.Service
                     : "No notifications found.";
                 resultDTO.Data = notifications.Select(x => new
                 {
-                    Id = x.Id,  // Corrected from x.notification.Id to x.Id
-                    UserId = x.UserId,  // Corrected from x.notification.UserId to x.UserId
-                    NotificationMessage = x.NotificationMessage  // Corrected from x.notification.NotificationMessage to x.NotificationMessage
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    NotificationMessage = x.NotificationMessage
                 }).ToList();
             }
             catch (Exception ex)
@@ -141,12 +143,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        /// <summary>
-        /// Fetches paginated notifications with user details.
-        /// </summary>
-        /// <param name="pageNumber">Page number for pagination.</param>
-        /// <param name="pageSize">Number of items per page.</param>
-        /// <returns>Result DTO with paginated notifications.</returns>
         public async Task<ResultDTO> GetAllNotificationsAsync(int pageNumber = 1, int pageSize = 10)
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
@@ -176,7 +172,8 @@ namespace OMT.DataService.Service
                 resultDTO.Data = new
                 {
                     Notifications = notifications,
-                    TotalCount = totalCount
+                    TotalCount = totalCount,
+                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
                 };
             }
             catch (Exception ex)
@@ -189,11 +186,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        /// <summary>
-        /// Generates a SAS URL for downloading a file associated with a notification.
-        /// </summary>
-        /// <param name="id">Notification ID.</param>
-        /// <returns>Result DTO with the SAS URL.</returns>
         public async Task<ResultDTO> DownloadFileAsync(int id)
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
@@ -211,10 +203,8 @@ namespace OMT.DataService.Service
                     };
                 }
 
-                // Extract blob name from the URL
-                var blobName = Uri.UnescapeDataString(new Uri(notification.FileUrl).Segments.Last());
+                var blobName = GetBlobNameFromUrl(notification.FileUrl);
 
-                // Generate SAS URL
                 var sasUrl = _azureBlob.GetBlobSasUri(
                     _azureSettings.Container,
                     _azureSettings.AccountKey,
@@ -241,7 +231,6 @@ namespace OMT.DataService.Service
 
             try
             {
-                // Find the notification by ID
                 var notification = await _dbContext.Notification
                     .FirstOrDefaultAsync(n => n.Id == notificationId);
 
@@ -253,11 +242,16 @@ namespace OMT.DataService.Service
                     return resultDTO;
                 }
 
-                // Delete the notification record from the database
+                if (!string.IsNullOrEmpty(notification.FileUrl))
+                {
+                    var blobName = GetBlobNameFromUrl(notification.FileUrl);
+                    await _azureBlob.DeleteBlobAsync(_azureSettings.Container, blobName);
+                }
+
                 _dbContext.Notification.Remove(notification);
                 await _dbContext.SaveChangesAsync();
 
-                resultDTO.Message = "Notification deleted successfully.";
+                resultDTO.Message = "Notification and associated file deleted successfully.";
             }
             catch (Exception ex)
             {

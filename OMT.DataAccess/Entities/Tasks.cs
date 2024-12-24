@@ -57,10 +57,8 @@ namespace OMT.DataAccess.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public string StatusName { get; set; }
+        public string Status { get; set; }
 
-        // Navigation Properties
-        public ICollection<Tasks> Tasks { get; set; }
     }
 
     public class TaskPriority
@@ -69,10 +67,8 @@ namespace OMT.DataAccess.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public string PriorityName { get; set; }
+        public string Priority { get; set; }
 
-        // Navigation Properties
-        public ICollection<Tasks> Tasks { get; set; }
     }
 
     public class ActivityFeed

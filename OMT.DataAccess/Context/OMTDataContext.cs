@@ -55,9 +55,9 @@ namespace OMT.DataAccess.Context
 
         public DbSet<Notification> Notification { get; set; }
         public DbSet<Tasks> Tasks { get; set; }
-        public DbSet<TaskHistory>  TaskHistories { get; set; }
-        public DbSet<TasksStatus>  TasksStatuses { get; set; }
-        public DbSet<TaskPriority>  TaskPriorities { get; set; }
+        public DbSet<TaskHistory> TaskHistory { get; set; }
+        public DbSet<TasksStatus> TasksStatus { get; set; }
+        public DbSet<TaskPriority> TaskPriority { get; set; }
         public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
 
 

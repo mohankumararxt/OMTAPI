@@ -35,7 +35,10 @@ namespace OMT.DTO
         public DateTime? StartDate { get; set; }
         public int? Priority { get; set; }
         public DateTime? TargetClosureDate { get; set; }
+        public int PageNumber { get; set; } = 1; 
+        public int PageSize { get; set; } = 10; 
     }
+
     public class BatchUpdateTaskDTO
     {
         public List<int> TaskIDs { get; set; }
@@ -63,6 +66,13 @@ namespace OMT.DTO
         public string Action { get; set; }
         public int UpdatedBy { get; set; }
         public DateTime UpdatedAt { get; set; }
+    }
+    public class ExportFilterDTO
+    {
+        public int? Status { get; set; }
+        public int? Priority { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? TargetClosureDate { get; set; }
     }
 
 }
