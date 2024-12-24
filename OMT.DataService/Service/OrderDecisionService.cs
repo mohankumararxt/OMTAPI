@@ -15,6 +15,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -50,6 +51,25 @@ namespace OMT.DataService.Service
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).ToList();
 
+                //check if user has any TRD skillsets to show the getpendingorders button
+
+                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                             select ss.SkillSetName).ToList();
+
+                bool ispending = false;
+
+                if (trdskillsets.Count > 0)
+                {
+                    ispending = true;
+                }
+
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
+                // process pending orders if any for the user and send the details
                 List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
 
                 foreach (string tablename in tablenames)
@@ -130,7 +150,7 @@ namespace OMT.DataService.Service
                 }
                 if (noStatusRecords.Count > 0)
                 {
-                    var orderedRecords = noStatusRecords
+                    orderedRecords = noStatusRecords
                          .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
                          .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
                          .First();
@@ -139,10 +159,56 @@ namespace OMT.DataService.Service
 
                     var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
+                    //check if order is from trd pending
+                    var istrd_pending = false;
+                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                    var tableid = (int)orderedRecords["Id"];
+
+                    var tablename = orderedRecords["SkillSetName"].ToString();
+
+                    if (istrd)
+                    {
+                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
+
+                        using SqlCommand trd_command = connection.CreateCommand();
+                        trd_command.CommandText = pendingorder_query;
+
+                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                        DataSet trd_dataset = new DataSet();
+
+                        trd_dataAdapter.Fill(trd_dataset);
+
+                        DataTable trd_datatable = trd_dataset.Tables[0];
+
+                        var trd_pnd = trd_datatable.AsEnumerable()
+                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                       column => column.ColumnName,
+                                       column => row[column]));
+
+                        if (trd_pnd.Any())
+                        {
+                            istrd_pending = trd_pnd.Any(record =>
+                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                        }
+                    }
+
+                    // check if order is from TIQE 
+
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+
+
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        PendingOrder = dataToReturn,
+                        IsTiqe = istiqe_order,
+                        IsTrdPending = istrd_pending
+                    };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
                     resultDTO.StatusCode = "200";
-                    resultDTO.Data = JsonConvert.SerializeObject(dataToReturn);
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {
@@ -294,8 +360,25 @@ namespace OMT.DataService.Service
 
                     if (!string.IsNullOrWhiteSpace(uporder))
                     {
+                        var order_jarray = JArray.Parse(uporder);
+                        var firstitem = (JObject)order_jarray[0];
+
+                        string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+
+                        var is_tiqe = false;
+
+                        if (ssname == "TIQE")
+                        {
+                            is_tiqe = true;
+                        }
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                        {
+                            AssignedOrder = uporder,
+                            IsTiqe = is_tiqe
+                        };
+
                         // Order assigned successfully
-                        resultDTO.Data = uporder;
+                        resultDTO.Data = getOrderResponseDTO;
                         resultDTO.IsSuccess = true;
                         resultDTO.StatusCode = "200";
                         resultDTO.Message = "Order assigned successfully";
@@ -309,8 +392,24 @@ namespace OMT.DataService.Service
 
                     if (!string.IsNullOrWhiteSpace(uporder))
                     {
+                        var order_jarray = JArray.Parse(uporder);
+                        var firstitem = (JObject)order_jarray[0];
+
+                        string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+                        var is_tiqe = false;
+
+                        if (ssname == "TIQE")
+                        {
+                            is_tiqe = true;
+                        }
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                        {
+                            AssignedOrder = uporder,
+                            IsTiqe = is_tiqe
+                        };
+
                         // Order assigned successfully
-                        resultDTO.Data = uporder;
+                        resultDTO.Data = getOrderResponseDTO;
                         resultDTO.IsSuccess = true;
                         resultDTO.StatusCode = "200";
                         resultDTO.Message = "Order assigned successfully";
@@ -415,6 +514,9 @@ namespace OMT.DataService.Service
 
         private void UpdateUtilized(int userid, ResultDTO resultDTO, SqlConnection connection, bool iscycle1, string updatedOrder, int userskillsetid)
         {
+            var istiqe = false;
+            GetOrderResponseDTO gordto = new GetOrderResponseDTO();
+
             if (string.IsNullOrWhiteSpace(updatedOrder))
             {
                 resultDTO.Data = "";
@@ -425,6 +527,7 @@ namespace OMT.DataService.Service
             else
             {
                 int? ssid = null;
+                string ssname = "";
 
                 //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
                 var jsonArray = JArray.Parse(updatedOrder);
@@ -433,10 +536,23 @@ namespace OMT.DataService.Service
                 if (firstItem != null)
                 {
                     ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
+                    ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
                 }
 
                 if (ssid.HasValue)
                 {
+                    //check if order is of TIQE 
+                    if (ssname == "TIQE")
+                    {
+                        istiqe = true;
+                    }
+
+                    gordto = new GetOrderResponseDTO
+                    {
+                        AssignedOrder = updatedOrder,
+                        IsTiqe = istiqe
+                    };
+
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
 
                     if (UssDetails.OrdersCompleted == UssDetails.TotalOrderstoComplete)
@@ -455,7 +571,7 @@ namespace OMT.DataService.Service
 
                 }
 
-                resultDTO.Data = updatedOrder;
+                resultDTO.Data = gordto;
                 resultDTO.IsSuccess = true;
                 resultDTO.StatusCode = "200";
                 resultDTO.Message = "Order assigned successfully";
