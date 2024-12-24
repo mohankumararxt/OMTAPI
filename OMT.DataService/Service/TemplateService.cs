@@ -904,24 +904,43 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
-                        string sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
-
+                        string sql1 = "";
                         DateTime dateTime = DateTime.Now;
 
                         using (SqlCommand command = connection.CreateCommand())
                         {
+                            if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
+                            {
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, ImageId = @ImageId WHERE Id = @ID";
+                                command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
+                            }
+                            else if (table.SystemofRecordId == 2 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
+                            {
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
+                                command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
+                                command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
+                            }
+                            else
+                            {
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
+                            }
+
                             command.CommandText = sql1;
+
+                            // Add common parameters
                             command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
                             command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
                             command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
                             command.Parameters.AddWithValue("@EndTime", dateTime);
                             command.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                            // Execute the query
                             command.ExecuteNonQuery();
                         }
+
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
                         resultDTO.Data = pendingOrdersResponseDTO;
-
                     }
                     else
                     {
