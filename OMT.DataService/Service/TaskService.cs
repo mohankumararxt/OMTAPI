@@ -27,23 +27,63 @@ namespace OMT.DataService.Service
         {
             return await dbSet.AnyAsync(entity => EF.Property<int>(entity, "Id") == id);
         }
+        private async Task<bool> ValidateEntityUserAsync<T>(DbSet<T> dbSet, int id) where T : class
+        {
+            return await dbSet.AnyAsync(entity => EF.Property<int>(entity, "UserId") == id);
+        }
 
         private async Task<string> ValidateTaskDataAsync(TaskDTO taskDTO)
         {
+            // Validate Task Status
             if (!await ValidateEntityAsync(_dbContext.TasksStatus, taskDTO.Status))
                 return "Invalid Task Status.";
 
+            // Validate Task Priority
             if (!await ValidateEntityAsync(_dbContext.TaskPriority, taskDTO.Priority))
                 return "Invalid Task Priority.";
 
+            // Validate Topic Proposal uniqueness
             if (await _dbContext.Tasks.AnyAsync(t => t.TopicProposal == taskDTO.TopicProposal))
                 return "Topic Proposal already exists.";
 
+            // Validate Task Description uniqueness
             if (await _dbContext.Tasks.AnyAsync(t => t.TaskDescription == taskDTO.Description))
                 return "Task Description already exists.";
 
+            // Validate if Topic Proposal is empty
+            if (string.IsNullOrEmpty(taskDTO.TopicProposal))
+                return "Topic Proposal cannot be empty.";
+
+            // Validate if Task Description is empty
+            if (string.IsNullOrEmpty(taskDTO.Description))
+                return "Task Description cannot be empty.";
+
+            // Validate RequestedBy, ApprovalFrom, PrimaryContact, and CreatedBy
+            if (!await ValidateEntityUserAsync(_dbContext.UserProfile, taskDTO.RequestedBy))
+                return "Task Requested By is invalid.";
+            if (!await ValidateEntityUserAsync(_dbContext.UserProfile, taskDTO.ApprovalFrom))
+                return "Task Approval is invalid.";
+            if (!await ValidateEntityUserAsync(_dbContext.UserProfile, taskDTO.PrimaryContact))
+                return "Task Primary Contact is invalid.";
+            if (!await ValidateEntityUserAsync(_dbContext.UserProfile, taskDTO.CreatedBy))
+                return "Task Created By is invalid.";
+
+            // Validate Start Date (for DateTime objects)
+            if (taskDTO.StartDate == default(DateTime))
+                return "Task Start Date is invalid.";
+
+            // Validate Target Closure Date (for DateTime objects)
+            if (taskDTO.TargetClosureDate == default(DateTime))
+                return "Task Target Closure Date is invalid.";
+
+            // Ensure Start Date is earlier than Target Closure Date
+            if (taskDTO.StartDate > taskDTO.TargetClosureDate)
+                return "Task Start Date cannot be later than Target Closure Date.";
+
             return string.Empty;
         }
+
+
 
         public async Task<ResultDTO> AddTaskAsync(TaskDTO taskDTO)
         {
@@ -101,9 +141,99 @@ namespace OMT.DataService.Service
 
             try
             {
+                // Apply filters
+                if (filters.Status.HasValue)
+                {
+                    if (!await ValidateEntityAsync(_dbContext.TasksStatus, filters.Status ?? 0))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Status."
+                        };
+                    }
+                }
+
+                if (filters.PrimaryContact.HasValue)
+                {
+                    if (!await ValidateEntityUserAsync(_dbContext.UserProfile, filters.PrimaryContact ?? 0))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Primary Contact."
+                        };
+                    }
+                }
+
+                if (filters.RequestedBy.HasValue)
+                {
+                    if (!await ValidateEntityUserAsync(_dbContext.UserProfile, filters.RequestedBy ?? 0))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Requested By."
+                        };
+                    }
+                }
+
+                if (filters.Priority.HasValue)
+                {
+                    if (!await ValidateEntityAsync(_dbContext.TaskPriority, filters.Priority ?? 0))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Priority."
+                        };
+                    }
+                }
+
+                // Validate Start Date
+                if (filters.StartDate.HasValue)
+                {
+                    if (!DateTime.TryParse(filters.StartDate.ToString(), out _))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Start Date."
+                        };
+                    }
+                }
+
+                // Validate Target Closure Date
+                if (filters.TargetClosureDate.HasValue)
+                {
+                    if (!DateTime.TryParse(filters.TargetClosureDate.ToString(), out _))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Target Closure Date."
+                        };
+                    }
+                }
+                if (filters.StartDate.HasValue && filters.TargetClosureDate.HasValue && filters.StartDate >= filters.TargetClosureDate)
+                {
+                    return new ResultDTO
+                    {
+                        IsSuccess = false,
+                        StatusCode = "400",
+                        Message = "Start Date cannot be later than Target Closure Date."
+                    };
+                }
+                   
+                // Build query to apply filters
                 var query = _dbContext.Tasks.AsQueryable();
 
-                // Apply filters
                 query = filters.Status.HasValue ? query.Where(t => t.TaskStatus == filters.Status.Value) : query;
                 query = filters.PrimaryContact.HasValue ? query.Where(t => t.PrimaryContact == filters.PrimaryContact.Value) : query;
                 query = filters.RequestedBy.HasValue ? query.Where(t => t.RequestedBy == filters.RequestedBy.Value) : query;
@@ -113,7 +243,7 @@ namespace OMT.DataService.Service
                     ? query.Where(t => t.StartDate >= filters.StartDate.Value && t.TargetClosureDate <= filters.TargetClosureDate.Value)
                     : query;
 
-                // Pagination
+                // Pagination logic
                 var totalRecords = await query.CountAsync();
                 var tasks = await query.OrderBy(t => t.Id)
                                        .Skip((filters.PageNumber - 1) * filters.PageSize)
@@ -133,7 +263,7 @@ namespace OMT.DataService.Service
                                        })
                                        .ToListAsync();
 
-                // Fetching task history
+                // Fetching task history for each task
                 foreach (var task in tasks)
                 {
                     task.History = await _dbContext.TaskHistory
@@ -159,6 +289,7 @@ namespace OMT.DataService.Service
                         TotalPages = (int)Math.Ceiling((double)totalRecords / filters.PageSize)
                     }
                 };
+
                 resultDTO.Message = tasks.Any() ? "Tasks fetched successfully." : "No tasks found.";
             }
             catch (Exception ex)
@@ -170,6 +301,7 @@ namespace OMT.DataService.Service
 
             return resultDTO;
         }
+
 
         public async Task<ResultDTO> UpdateTaskAsync(int taskId, UpdateTaskDTO updateTaskDTO)
         {
@@ -188,31 +320,117 @@ namespace OMT.DataService.Service
                     };
                 }
 
-                if (updateTaskDTO.FieldName == "TaskStatus" &&
-                    !await ValidateEntityAsync(_dbContext.TasksStatus, int.Parse(updateTaskDTO.NewValue)))
+                // Field-specific validation
+                if (updateTaskDTO.FieldName == "TaskStatus")
+                {
+                    if (!await ValidateEntityAsync(_dbContext.TasksStatus, int.Parse(updateTaskDTO.NewValue)))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Status."
+                        };
+                    }
+                }
+                else if (updateTaskDTO.FieldName == "TaskPriority")
+                {
+                    if (!await ValidateEntityAsync(_dbContext.TaskPriority, int.Parse(updateTaskDTO.NewValue)))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Invalid Task Priority."
+                        };
+                    }
+                }
+                else if (updateTaskDTO.FieldName == "TopicProposal" || updateTaskDTO.FieldName == "TaskDescription")
+                {
+                    if (string.IsNullOrEmpty(updateTaskDTO.NewValue))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = $"{updateTaskDTO.FieldName} cannot be empty."
+                        };
+                    }
+                }
+                else if (updateTaskDTO.FieldName == "StartDate" || updateTaskDTO.FieldName == "TargetClosureDate")
+                {
+                    if (!DateTime.TryParse(updateTaskDTO.NewValue, out _))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = $"Invalid {updateTaskDTO.FieldName} format."
+                        };
+                    }
+
+                    if (updateTaskDTO.FieldName == "StartDate" &&
+                        DateTime.TryParse(updateTaskDTO.NewValue, out var startDate) &&
+                        startDate > task.TargetClosureDate)
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Start Date cannot be later than Target Closure Date."
+                        };
+                    }
+
+                    if (updateTaskDTO.FieldName == "TargetClosureDate" &&
+                        DateTime.TryParse(updateTaskDTO.NewValue, out var targetClosureDate) &&
+                        targetClosureDate < task.StartDate)
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Target Closure Date cannot be earlier than Start Date."
+                        };
+                    }
+                }
+                else if (updateTaskDTO.FieldName == "PrimaryContact" || updateTaskDTO.FieldName == "RequestedBy" || updateTaskDTO.FieldName == "ApprovalFrom" || updateTaskDTO.FieldName == "CreatedBy")
+                {
+                    if (!await ValidateEntityUserAsync(_dbContext.UserProfile, int.Parse(updateTaskDTO.NewValue)))
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = $"Invalid {updateTaskDTO.FieldName}."
+                        };
+                    }
+                }
+                else
                 {
                     return new ResultDTO
                     {
                         IsSuccess = false,
                         StatusCode = "400",
-                        Message = "Invalid Task Status."
+                        Message = "Invalid Task Field Name."
                     };
                 }
 
-                if (updateTaskDTO.FieldName == "TaskPriority" &&
-                    !await ValidateEntityAsync(_dbContext.TaskPriority, int.Parse(updateTaskDTO.NewValue)))
-                {
-                    return new ResultDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = "Invalid Task Priority."
-                    };
-                }
-
+                // Get the old value of the field to record the change
                 var oldValue = GetTaskFieldValue(task, updateTaskDTO.FieldName);
+                if (string.IsNullOrEmpty(oldValue))
+                {
+                    return new ResultDTO
+                    {
+                        IsSuccess = false,
+                        StatusCode = "400",
+                        Message = "Invalid Task Field Name."
+                    };
+                }
+
+                // Update the field value
                 SetTaskFieldValue(task, updateTaskDTO.FieldName, updateTaskDTO.NewValue);
 
+                // Log the task history
                 var taskHistory = new TaskHistory
                 {
                     TaskId = taskId,
@@ -238,6 +456,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+
         public async Task<ResultDTO> BatchUpdateTasksAsync(BatchUpdateTaskDTO batchUpdateTaskDTO)
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
@@ -250,6 +469,7 @@ namespace OMT.DataService.Service
 
                 foreach (var task in tasks)
                 {
+                    // Validate Task Status field
                     if (batchUpdateTaskDTO.FieldName == "TaskStatus" &&
                         !await ValidateEntityAsync(_dbContext.TasksStatus, int.Parse(batchUpdateTaskDTO.NewValue)))
                     {
@@ -261,6 +481,7 @@ namespace OMT.DataService.Service
                         };
                     }
 
+                    // Validate Task Priority field
                     if (batchUpdateTaskDTO.FieldName == "TaskPriority" &&
                         !await ValidateEntityAsync(_dbContext.TaskPriority, int.Parse(batchUpdateTaskDTO.NewValue)))
                     {
@@ -272,9 +493,78 @@ namespace OMT.DataService.Service
                         };
                     }
 
+                    // Validate Start Date field
+                    if (batchUpdateTaskDTO.FieldName == "StartDate")
+                    {
+                        if (!DateTime.TryParse(batchUpdateTaskDTO.NewValue, out var startDate))
+                        {
+                            return new ResultDTO
+                            {
+                                IsSuccess = false,
+                                StatusCode = "400",
+                                Message = "Invalid Task Start Date."
+                            };
+                        }
+
+                        // Ensure StartDate is before TargetClosureDate if both are being updated
+                        if ( startDate > task.TargetClosureDate)
+                        {
+                            return new ResultDTO
+                            {
+                                IsSuccess = false,
+                                StatusCode = "400",
+                                Message = "Start Date cannot be later than Target Closure Date."
+                            };
+                        }
+                    }
+
+                    // Validate Target Closure Date field
+                    if (batchUpdateTaskDTO.FieldName == "TargetClosureDate")
+                    {
+                        if (!DateTime.TryParse(batchUpdateTaskDTO.NewValue, out var targetClosureDate))
+                        {
+                            return new ResultDTO
+                            {
+                                IsSuccess = false,
+                                StatusCode = "400",
+                                Message = "Invalid Task Target Closure Date."
+                            };
+                        }
+
+                        // Ensure TargetClosureDate is after StartDate if both are being updated
+                        if ( targetClosureDate < task.StartDate)
+                        {
+                            return new ResultDTO
+                            {
+                                IsSuccess = false,
+                                StatusCode = "400",
+                                Message = "Target Closure Date cannot be earlier than Start Date."
+                            };
+                        }
+                    }
+
+                    // Validate other fields like PrimaryContact, RequestedBy, ApprovalFrom, CreatedBy
+                    if (batchUpdateTaskDTO.FieldName == "PrimaryContact" ||
+                        batchUpdateTaskDTO.FieldName == "RequestedBy" ||
+                        batchUpdateTaskDTO.FieldName == "ApprovalFrom" ||
+                        batchUpdateTaskDTO.FieldName == "CreatedBy")
+                    {
+                        if (!await ValidateEntityUserAsync(_dbContext.UserProfile, int.Parse(batchUpdateTaskDTO.NewValue)))
+                        {
+                            return new ResultDTO
+                            {
+                                IsSuccess = false,
+                                StatusCode = "400",
+                                Message = $"Invalid {batchUpdateTaskDTO.FieldName}."
+                            };
+                        }
+                    }
+
+                    // Get the old value of the field to record the change
                     var oldValue = GetTaskFieldValue(task, batchUpdateTaskDTO.FieldName);
                     SetTaskFieldValue(task, batchUpdateTaskDTO.FieldName, batchUpdateTaskDTO.NewValue);
 
+                    // Log the task history
                     var taskHistory = new TaskHistory
                     {
                         TaskId = task.Id,
@@ -301,6 +591,7 @@ namespace OMT.DataService.Service
 
             return resultDTO;
         }
+
 
         public async Task<ResultDTO> UndoTaskChangeAsync()
         {
@@ -356,17 +647,9 @@ namespace OMT.DataService.Service
 
             try
             {
-                // Validate inputs
-                if (filters == null)
-                {
-                    return new ResultDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = "Filters cannot be null."
-                    };
-                }
+               
 
+                // Validate format
                 if (string.IsNullOrWhiteSpace(format) || !(format.Equals("csv", StringComparison.OrdinalIgnoreCase) ||
                                                           format.Equals("excel", StringComparison.OrdinalIgnoreCase)))
                 {
@@ -380,7 +663,7 @@ namespace OMT.DataService.Service
 
                 var query = _dbContext.Tasks.AsQueryable();
 
-                // Apply filters
+                // Validate and apply Status filter
                 if (filters.Status.HasValue)
                 {
                     if (!await ValidateEntityAsync(_dbContext.TasksStatus, filters.Status.Value))
@@ -395,6 +678,7 @@ namespace OMT.DataService.Service
                     query = query.Where(t => t.TaskStatus == filters.Status);
                 }
 
+                // Validate and apply Priority filter
                 if (filters.Priority.HasValue)
                 {
                     if (!await ValidateEntityAsync(_dbContext.TaskPriority, filters.Priority.Value))
@@ -409,11 +693,35 @@ namespace OMT.DataService.Service
                     query = query.Where(t => t.TaskPriority == filters.Priority);
                 }
 
+                // Validate and apply StartDate filter
                 if (filters.StartDate.HasValue)
+                {
+                    if (filters.StartDate.Value > DateTime.UtcNow)
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Start Date cannot be in the future."
+                        };
+                    }
                     query = query.Where(t => t.StartDate >= filters.StartDate.Value);
+                }
 
+                // Validate and apply TargetClosureDate filter
                 if (filters.TargetClosureDate.HasValue)
+                {
+                    if (filters.TargetClosureDate.Value > DateTime.UtcNow)
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "Target Closure Date cannot be in the future."
+                        };
+                    }
                     query = query.Where(t => t.TargetClosureDate <= filters.TargetClosureDate.Value);
+                }
 
                 var tasks = await (from t in query
                                    join primaryContact in _dbContext.UserProfile on t.PrimaryContact equals primaryContact.UserId into pcGroup
@@ -464,6 +772,7 @@ namespace OMT.DataService.Service
 
             return resultDTO;
         }
+
 
 
         private byte[] GenerateCSV(IEnumerable<object> data)

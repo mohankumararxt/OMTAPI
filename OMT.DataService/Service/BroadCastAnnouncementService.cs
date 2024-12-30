@@ -142,8 +142,8 @@ namespace OMT.DataService.Service
 
                 var filteredMessages = await _oMTDataContext.BroadCastAnnouncement
                     .Where(msg => !msg.SoftDelete &&
-                                  msg.StartDateTime <= currentISTTime &&
-                                  msg.EndDateTime >= currentISTTime)
+                                  msg.StartDateTime.Date <= currentISTTime.Date &&
+                                  msg.EndDateTime.Date >= currentISTTime.Date )
                     .Select(msg => new { msg.BroadCastMessage })
                     .ToListAsync();
 
