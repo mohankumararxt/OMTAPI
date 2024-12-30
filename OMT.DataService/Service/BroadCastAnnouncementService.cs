@@ -25,9 +25,11 @@ namespace OMT.DataService.Service
 
             if (request.BroadCastMessage.Length > 255)
                 return "BroadCastMessage exceeds the maximum allowed length of 255 characters.";
+            if (request.StartDateTime >= DateTime.UtcNow || request.EndDateTime >= DateTime.UtcNow)
+                return "Start Date Time or End Date Time cannot be past.";
 
             if (request.StartDateTime > request.EndDateTime)
-                return "StartDateTime cannot be later than EndDateTime.";
+                return "Start Date Time cannot be later than End Date Time.";
 
             return string.Empty;
         }
@@ -43,7 +45,7 @@ namespace OMT.DataService.Service
 
                 var totalRecords = await query.CountAsync();
                 var announcements = await query
-                    .OrderBy(x => x.StartDateTime) // Sorting by StartDateTime
+                    .OrderByDescending(x => x.StartDateTime) // Sorting by StartDateTime
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -138,12 +140,13 @@ namespace OMT.DataService.Service
 
             try
             {
-                var currentISTTime = GetCurrentISTTime();
+                var indianTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                var currentISTTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indianTimeZone);
 
                 var filteredMessages = await _oMTDataContext.BroadCastAnnouncement
                     .Where(msg => !msg.SoftDelete &&
-                                  msg.StartDateTime.Date <= currentISTTime.Date &&
-                                  msg.EndDateTime.Date >= currentISTTime.Date )
+                                  TimeZoneInfo.ConvertTimeFromUtc(msg.StartDateTime, indianTimeZone).Date <= currentISTTime.Date &&
+                                  TimeZoneInfo.ConvertTimeFromUtc(msg.EndDateTime, indianTimeZone).Date >= currentISTTime.Date)
                     .Select(msg => new { msg.BroadCastMessage })
                     .ToListAsync();
 
@@ -211,10 +214,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        private DateTime GetCurrentISTTime()
-        {
-            var istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, istTimeZone);
-        }
+        
     }
 }

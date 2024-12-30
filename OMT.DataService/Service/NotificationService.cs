@@ -29,7 +29,10 @@ namespace OMT.DataService.Service
             _azureBlob = azureBlob;
             _azureSettings = azureSettings.Value;
         }
-
+        private bool ValidateEntityUserAsync<T>(DbSet<T> dbSet, int id) where T : class
+        {
+            return  dbSet.Any(entity => EF.Property<int>(entity, "UserId") == id);
+        }
         private string ValidateNotification(NotificationDTO notificationDTO)
         {
             if (string.IsNullOrWhiteSpace(notificationDTO.NotificationMessage))
@@ -37,6 +40,8 @@ namespace OMT.DataService.Service
             if (notificationDTO.NotificationMessage.Length > 500)
                 return "NotificationMessage exceeds the maximum allowed length of 500 characters.";
             if (notificationDTO.UserId <= 0)
+                return "Invalid UserId.";
+            if (!ValidateEntityUserAsync(_dbContext.UserProfile, notificationDTO.UserId))
                 return "Invalid UserId.";
             return string.Empty;
         }
