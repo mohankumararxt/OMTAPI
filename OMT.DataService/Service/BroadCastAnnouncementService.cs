@@ -140,15 +140,22 @@ namespace OMT.DataService.Service
 
             try
             {
-                var indianTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-                var currentISTTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indianTimeZone);
+                var currentISTTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
 
-                var filteredMessages = await _oMTDataContext.BroadCastAnnouncement
-                    .Where(msg => !msg.SoftDelete &&
-                                  TimeZoneInfo.ConvertTimeFromUtc(msg.StartDateTime, indianTimeZone).Date <= currentISTTime.Date &&
-                                  TimeZoneInfo.ConvertTimeFromUtc(msg.EndDateTime, indianTimeZone).Date >= currentISTTime.Date)
+                var messages = await _oMTDataContext.BroadCastAnnouncement
+                    .Where(msg => !msg.SoftDelete)
+                    .ToListAsync(); // Bring data into memory
+
+                var filteredMessages = messages
+                    .Where(msg =>
+                    {
+                        var startIST = TimeZoneInfo.ConvertTimeFromUtc(msg.StartDateTime, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                        var endIST = TimeZoneInfo.ConvertTimeFromUtc(msg.EndDateTime, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                        return startIST.Date <= currentISTTime.Date && endIST.Date >= currentISTTime.Date;
+                    })
                     .Select(msg => new { msg.BroadCastMessage })
-                    .ToListAsync();
+                    .ToList();
+
 
                 resultDTO.Message = "Filtered BroadCast fetched successfully.";
                 resultDTO.Data = filteredMessages;
