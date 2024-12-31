@@ -25,7 +25,7 @@ namespace OMT.DataService.Service
 
             if (request.BroadCastMessage.Length > 255)
                 return "BroadCastMessage exceeds the maximum allowed length of 255 characters.";
-            if (request.StartDateTime >= DateTime.UtcNow || request.EndDateTime >= DateTime.UtcNow)
+            if (request.StartDateTime <= DateTime.UtcNow || request.EndDateTime <= DateTime.UtcNow)
                 return "Start Date Time or End Date Time cannot be past.";
 
             if (request.StartDateTime > request.EndDateTime)
