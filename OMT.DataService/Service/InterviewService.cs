@@ -88,18 +88,18 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "User Inserted Successfully";
                         var userId = newUser.Id;
                         int randomTestId = 0;
-                        if (newUser.Experience == 0)
+                        if (newUser.Experience < 12)
                         {
                              randomTestId = _oMTDataContext.Tests
-                                .Where(t => t.IsSample && t.DifficultyLevel == 0) // Filter where IsSample is true and DifficultyLevel is 0
+                                .Where(t => t.IsSample && t.DifficultyLevel == 1) // Filter where IsSample is true and DifficultyLevel is 0
                                 .OrderBy(t => Guid.NewGuid()) // Randomize the order
                                 .Select(t => t.Id) // Select only the Id
                                 .FirstOrDefault(); // Take the first Id or default if no match
                         }
-                        else if (newUser.Experience > 0 && newUser.Experience < 3)
+                        else if (newUser.Experience > 12 && newUser.Experience < 36)
                         {
                              randomTestId = _oMTDataContext.Tests
-                                .Where(t => t.IsSample && t.DifficultyLevel == 1) // Filter where IsSample is true and DifficultyLevel is 1
+                                .Where(t => t.IsSample && t.DifficultyLevel == 2) // Filter where IsSample is true and DifficultyLevel is 1
                                 .OrderBy(t => Guid.NewGuid()) // Randomize the order
                                 .Select(t => t.Id) // Select only the Id
                                 .FirstOrDefault(); // Take the first Id or default if no match
@@ -107,7 +107,7 @@ namespace OMT.DataService.Service
                         else
                         {
                              randomTestId = _oMTDataContext.Tests
-                                .Where(t => t.IsSample && t.DifficultyLevel == 2) // Filter where IsSample is true and DifficultyLevel is 2
+                                .Where(t => t.IsSample && t.DifficultyLevel == 3) // Filter where IsSample is true and DifficultyLevel is 2
                                 .OrderBy(t => Guid.NewGuid()) // Randomize the order
                                 .Select(t => t.Id) // Select only the Id
                                 .FirstOrDefault(); // Take the first Id or default if no match
