@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Sas;
+﻿using Azure.Core;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -68,44 +69,56 @@ namespace OMT.DataService.Service
 
             try
             {
-                const long MaxFileSize = 100 * 1024 * 1024; // 100MB
+                var exist_notification = _dbContext?.Notification
+                 .Where(x => x.UserId == notificationDTO.UserId && x.NotificationMessage == notificationDTO.NotificationMessage).FirstOrDefault();
 
-                if (file != null && file.Length > MaxFileSize)
+                const long MaxFileSize = 100 * 1024 * 1024; // 100MB
+                if (exist_notification == null)
                 {
-                    return new ResultDTO
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "409";
+                    resultDTO.Message = $"Notification already exists.";
+                }
+                else
+                {
+
+                    if (file != null && file.Length > MaxFileSize)
                     {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = "File size exceeds the maximum allowed size of 100MB."
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = "File size exceeds the maximum allowed size of 100MB."
+                        };
+                    }
+
+                    string fileUrl = null;
+
+                    if (file != null && file.Length > 0)
+                    {
+                        fileUrl = await _azureBlob.UploadFileAsync(_azureSettings.Container, file.FileName, file.OpenReadStream());
+                    }
+
+                    var notification = new Notification
+                    {
+                        UserId = notificationDTO.UserId,
+                        NotificationMessage = notificationDTO.NotificationMessage,
+                        FileUrl = fileUrl,
+                        CreateTimeStamp = DateTime.UtcNow
+                    };
+
+                    await _dbContext.Notification.AddAsync(notification);
+                    await _dbContext.SaveChangesAsync();
+
+                    resultDTO.Message = "Notification created successfully.";
+                    resultDTO.StatusCode = "201";
+                    resultDTO.Data = new
+                    {
+                        Id = notification.Id,
+                        UserId = notification.UserId,
+                        NotificationMessage = notification.NotificationMessage
                     };
                 }
-
-                string fileUrl = null;
-
-                if (file != null && file.Length > 0)
-                {
-                    fileUrl = await _azureBlob.UploadFileAsync(_azureSettings.Container, file.FileName, file.OpenReadStream());
-                }
-
-                var notification = new Notification
-                {
-                    UserId = notificationDTO.UserId,
-                    NotificationMessage = notificationDTO.NotificationMessage,
-                    FileUrl = fileUrl,
-                    CreateTimeStamp = DateTime.UtcNow
-                };
-
-                await _dbContext.Notification.AddAsync(notification);
-                await _dbContext.SaveChangesAsync();
-
-                resultDTO.Message = "Notification created successfully.";
-                resultDTO.StatusCode = "201";
-                resultDTO.Data = new
-                {
-                    Id = notification.Id,
-                    UserId = notification.UserId,
-                    NotificationMessage = notification.NotificationMessage
-                };
             }
             catch (Exception ex)
             {
