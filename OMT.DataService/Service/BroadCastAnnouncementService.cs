@@ -100,7 +100,7 @@ namespace OMT.DataService.Service
                     return new ResultDTO
                     {
                         IsSuccess = false,
-                        StatusCode = "400",
+                        StatusCode = "409",
                         Message = "BroadCastMessage already exists. Please use a different message."
                     };
                 }
