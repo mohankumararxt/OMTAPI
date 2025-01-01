@@ -60,6 +60,7 @@ namespace OMT.DataAccess.Context
         public DbSet<TaskPriority> TaskPriority { get; set; }
         public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
 
+        public DbSet<Message> Message { get; set; }
 
 
         public override int SaveChanges()
