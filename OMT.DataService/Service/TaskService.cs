@@ -80,6 +80,11 @@ namespace OMT.DataService.Service
             if (taskDTO.StartDate > taskDTO.TargetClosureDate)
                 return "Task Start Date cannot be later than Target Closure Date.";
 
+            if (taskDTO.Status != 1)
+            {
+                return "The Task Status must be set to 'Not Started' to proceed. Please update the status accordingly.";
+            }
+
             return string.Empty;
         }
 
@@ -94,12 +99,22 @@ namespace OMT.DataService.Service
                 var validationError = await ValidateTaskDataAsync(taskDTO);
                 if (!string.IsNullOrEmpty(validationError))
                 {
-                    return new ResultDTO
+                    if (validationError == "Topic Proposal already exists." || validationError == "Task Description already exists.")
                     {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = validationError
-                    };
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = validationError;
+                        resultDTO.StatusCode = "409";
+                        return resultDTO;
+                    }
+                    else
+                    {
+                        return new ResultDTO
+                        {
+                            IsSuccess = false,
+                            StatusCode = "400",
+                            Message = validationError
+                        };
+                    }
                 }
 
                 var task = new Tasks
@@ -121,9 +136,12 @@ namespace OMT.DataService.Service
                 await _dbContext.Tasks.AddAsync(task);
                 await _dbContext.SaveChangesAsync();
 
+                resultDTO.IsSuccess = true;
                 resultDTO.Message = "Task added successfully.";
                 resultDTO.Data = task.Id;
                 resultDTO.StatusCode = "201";
+               
+
             }
             catch (Exception ex)
             {

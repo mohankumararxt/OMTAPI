@@ -12,13 +12,23 @@ namespace OMT.DataAccess.Entities
     public class Message
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MessageId { get; set; }
         public int SenderId { get; set; }
         public int ReceiverId { get; set; }
         public string ChatMessage { get; set; } = string.Empty;
         public DateTime CreateTimeStamp { get; set; }
-        public bool IsRead { get; set; }
-        public string Status { get; set; } = string.Empty;
+        public int MessageStatus { get; set; }
 
+    }
+
+    [Table("MessagesStatus")]
+    public class MessagesStatus
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        public string MessageStatus { get; set; } = string.Empty;
+   
     }
 }

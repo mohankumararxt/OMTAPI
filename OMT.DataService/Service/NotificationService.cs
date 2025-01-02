@@ -10,6 +10,7 @@ using OMT.DataService.Settings;
 using OMT.DataService.Utility;
 using OMT.DTO;
 using System;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -38,8 +39,8 @@ namespace OMT.DataService.Service
         {
             if (string.IsNullOrWhiteSpace(notificationDTO.NotificationMessage))
                 return "NotificationMessage cannot be empty.";
-            if (notificationDTO.NotificationMessage.Length > 500)
-                return "NotificationMessage exceeds the maximum allowed length of 500 characters.";
+            if (notificationDTO.NotificationMessage.Length > 50)
+                return "NotificationMessage exceeds the maximum allowed length of 50 characters.";
             if (notificationDTO.UserId <= 0)
                 return "Invalid UserId.";
             if (!ValidateEntityUserAsync(_dbContext.UserProfile, notificationDTO.UserId))
@@ -136,20 +137,27 @@ namespace OMT.DataService.Service
 
             try
             {
-                var notifications = await _dbContext.Notification
-                    .OrderByDescending(x => x.CreateTimeStamp)
-                    .Take(5)
-                    .ToListAsync();
+                var istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
+                var notifications = await (from notification in _dbContext.Notification
+                                           join user in _dbContext.UserProfile
+                                           on notification.UserId equals user.UserId
+                                           orderby notification.CreateTimeStamp descending
+                                           select new
+                                           {
+                                               Id = notification.Id,
+                                               UserName = $"{user.FirstName} {user.LastName}",
+                                               NotificationMessage = notification.NotificationMessage,
+                                               CreateTimeStamp = TimeZoneInfo.ConvertTimeFromUtc(notification.CreateTimeStamp, istTimeZone)
+                                           }).Take(5).ToListAsync();
 
                 resultDTO.Message = notifications.Any()
                     ? "Successfully fetched the most recent notifications."
                     : "No notifications found.";
-                resultDTO.Data = notifications.Select(x => new
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    NotificationMessage = x.NotificationMessage
-                }).ToList();
+
+                resultDTO.Data = notifications;
+
+
             }
             catch (Exception ex)
             {
@@ -169,6 +177,8 @@ namespace OMT.DataService.Service
             {
                 var totalCount = await _dbContext.Notification.CountAsync();
 
+                var istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
                 var notifications = await (from notification in _dbContext.Notification
                                            join user in _dbContext.UserProfile
                                            on notification.UserId equals user.UserId
@@ -184,12 +194,23 @@ namespace OMT.DataService.Service
                     .Take(pageSize)
                     .ToListAsync();
 
+                // Convert CreateTimeStamp to IST in memory
+                var notificationsWithIst = notifications.Select(n => new
+                {
+                    n.Id,
+                    n.UserName,
+                    n.NotificationMessage,
+                    CreateTimeStamp = TimeZoneInfo.ConvertTimeFromUtc(n.CreateTimeStamp, istTimeZone)
+                }).ToList();
+
+
+
                 resultDTO.Message = notifications.Any()
                     ? "Notifications successfully retrieved."
                     : "No notifications found.";
                 resultDTO.Data = new
                 {
-                    Notifications = notifications,
+                    Notifications = notificationsWithIst,
                     TotalCount = totalCount,
                     TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
                 };

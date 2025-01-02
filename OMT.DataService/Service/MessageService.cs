@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
@@ -20,6 +21,17 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
+        private async Task<bool> StatusOperations<T>(DbSet<T> dbSet, int status) where T : class
+        {
+            return await dbSet.AnyAsync(entity => EF.Property<int>(entity, "Id") == status);
+        }
+        private async Task<string> ValidateMessageStatus(int status)
+        {
+            if (!await StatusOperations(_oMTDataContext.MessagesStatus, status))
+                return "Invalid Status";
+            return string.Empty;
+        }
+
 
         private bool ValidateEntityUserAsync<T>(DbSet<T> dbSet, int id) where T : class
         {
@@ -28,45 +40,14 @@ namespace OMT.DataService.Service
         private string ValidateMessage(MessageRequestDTO messageRequestDTO)
         {
             if (string.IsNullOrWhiteSpace(messageRequestDTO.ChatMessage))
-                return "NotificationMessage cannot be empty.";
+                return "Message cannot be empty.";
             if (messageRequestDTO.SenderId <= 0 || messageRequestDTO.ReceiverId <= 0)
                 return "Invalid UserId.";
-            if (!ValidateEntityUserAsync(_oMTDataContext.UserProfile, messageRequestDTO.SenderId) || !ValidateEntityUserAsync(_oMTDataContext.UserProfile, messageRequestDTO.ReceiverId))
-                return "Invalid UserId.";
+            //if (!ValidateEntityUserAsync(_oMTDataContext.UserProfile, messageRequestDTO.SenderId) || !ValidateEntityUserAsync(_oMTDataContext.UserProfile, messageRequestDTO.ReceiverId))
+            //    return "Invalid UserId.";
             return string.Empty;
         }
-        public Task<ResultDTO> GetMessages(int UserId)
-        {
-
-            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
-
-            try
-            {
-                var existingMessages = _oMTDataContext.Message.Where(x => x.SenderId == UserId || x.SenderId == UserId).ToList();
-                if (existingMessages.Any())
-                {
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Fetched specific user's messages successfully.";
-                    resultDTO.Data = existingMessages;  // Assuming ResultDTO has a Data property to hold the messages
-                    resultDTO.StatusCode = "200";
-                }
-                else
-                {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.StatusCode = "404";
-                    resultDTO.Message = "No messages found for the specified user.";
-                }
-                
-            }
-            catch (Exception ex)
-            {
-                resultDTO.IsSuccess = false;
-                resultDTO.StatusCode = "500";
-                resultDTO.Message = $"An error occurred: {ex.Message}";
-            }
-
-            return Task.FromResult(resultDTO);
-        }
+        
 
 
         public async Task<ResultDTO> SendMessages(MessageRequestDTO messageRequestDTO)
@@ -113,29 +94,40 @@ namespace OMT.DataService.Service
         }
 
 
-        public async Task<ResultDTO> MarkMessagesAsRead(List<int> messageIds)
+        public async Task<ResultDTO> UpdateMessages( MessageUpdateDTO messageUpdate)
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
             try
             {
-                foreach (var messageId in messageIds)
+                var validationErrors = await ValidateMessageStatus(messageUpdate.Status);
+                if (!string.IsNullOrEmpty(validationErrors))
                 {
-
-                    var existingMessage = _oMTDataContext.Message.Where(x => x.MessageId == messageId).FirstOrDefault();
-                    if (existingMessage != null)
+                    return new ResultDTO
                     {
-                        existingMessage.IsRead = true;
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Messages marked as read.";
-                        resultDTO.StatusCode = "201";
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.StatusCode = "404";
-                        resultDTO.Message = "No messages found";
-                    }
+                        IsSuccess = false,
+                        StatusCode = "400",
+                        Message = validationErrors
+                    };
                 }
+
+                var status = _oMTDataContext.MessagesStatus.Where(x => x.Id == messageUpdate.Status).Select(t=> t.MessageStatus).FirstOrDefault();
+                var existingMessage = _oMTDataContext.Message.Where(x => x.MessageId == messageUpdate.Id).FirstOrDefault();
+                if (existingMessage != null)
+                {
+                    existingMessage.MessageStatus = messageUpdate.Status;
+                    _oMTDataContext.Message.Update(existingMessage);
+                    _oMTDataContext.SaveChanges();
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = $"Messages marked as {status}.";
+                    resultDTO.StatusCode = "201";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "No messages found";
+                }
+
             }
             catch (Exception ex)
             {
@@ -146,5 +138,39 @@ namespace OMT.DataService.Service
 
             return await Task.FromResult(resultDTO);
         }
+
+        public Task<ResultDTO> GetMessages(int SenderId, int ReceiverId)
+        {
+            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var existingMessages = _oMTDataContext.Message.Where(x => (x.SenderId == SenderId || x.SenderId ==  ReceiverId) && (x.ReceiverId == ReceiverId || x.ReceiverId == SenderId)).OrderBy(x=>x.CreateTimeStamp).ToList();
+                if (existingMessages.Any())
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Fetched specific user's messages successfully.";
+                    resultDTO.Data = existingMessages;  // Assuming ResultDTO has a Data property to hold the messages
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "No messages found for the specified user.";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return Task.FromResult(resultDTO);
+        }
+
+        
     }
 }

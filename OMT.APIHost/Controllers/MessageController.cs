@@ -19,11 +19,12 @@ namespace OMT.APIHost.Controllers
 
         [HttpGet]
         [Route("GetMessages")]
-        public async Task<ResultDTO> GetMessages(int UserId)
+        public async Task<ResultDTO> GetMessages(int SenderId,int ReceiverId)
         {
-            var messages = await _messageService.GetMessages(UserId);
+            var messages = await _messageService.GetMessages(SenderId, ReceiverId);
             return messages;
         }
+
 
         [HttpPost]
         [Route("SendMessages")]
@@ -33,11 +34,11 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPatch]
-        [Route("markAsRead")]
-        public async Task<ResultDTO> MarkMessagesAsRead([FromBody]List<int> messageIds)
+        [Route("UpdateMessages")]
+        public async Task<ResultDTO> UpdateMessages(MessageUpdateDTO messageUpdate)
         {
 
-           return await _messageService.MarkMessagesAsRead(messageIds);
+           return await _messageService.UpdateMessages(messageUpdate);
 
         }
 

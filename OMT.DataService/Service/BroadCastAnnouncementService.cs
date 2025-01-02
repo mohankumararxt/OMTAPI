@@ -44,16 +44,38 @@ namespace OMT.DataService.Service
                     .Where(x => !x.SoftDelete);
 
                 var totalRecords = await query.CountAsync();
+                var istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
                 var announcements = await query
-                    .OrderByDescending(x => x.StartDateTime) // Sorting by StartDateTime
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.BroadCastMessage,
+                        x.StartDateTime, // Fetch UTC StartDateTime
+                        x.EndDateTime ,   // Fetch UTC EndDateTime
+                        x.SoftDelete
+                    })
+                    .OrderByDescending(x => x.StartDateTime) // Sort by UTC StartDateTime
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
 
+                // Convert StartDateTime and EndDateTime to IST in memory
+                var announcementsWithIst = announcements.Select(x => new
+                {
+                    x.Id,
+                    x.BroadCastMessage,
+                    StartDateTime = TimeZoneInfo.ConvertTimeFromUtc(x.StartDateTime, istTimeZone),
+                    EndDateTime = TimeZoneInfo.ConvertTimeFromUtc(x.EndDateTime, istTimeZone),
+                    x.SoftDelete
+                }).ToList();
+
+
+
                 resultDTO.Message = "Successfully fetched active BroadCast Announcements with pagination.";
                 resultDTO.Data = new
                 {
-                    Announcements = announcements,
+                    Announcements = announcementsWithIst,
                     Pagination = new
                     {
                         CurrentPage = pageNumber,

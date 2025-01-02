@@ -12,4 +12,9 @@ namespace OMT.DTO
         public int ReceiverId { get; set; }
         public string ChatMessage { get; set; } = string.Empty;
     }
+    public class MessageUpdateDTO
+    {
+        public int Id { get; set; }
+        public int Status { get; set; }
+    }
 }

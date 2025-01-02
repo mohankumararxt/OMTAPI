@@ -9,8 +9,8 @@ namespace OMT.DataService.Interface
 {
     public interface IMessageService
     {
-        Task<ResultDTO> GetMessages(int UserId);
+        Task<ResultDTO> GetMessages(int SenderId, int ReceiverId);
         Task<ResultDTO> SendMessages(MessageRequestDTO messageRequestDTO);
-        Task<ResultDTO> MarkMessagesAsRead(List<int> messageIds);
+        Task<ResultDTO> UpdateMessages(MessageUpdateDTO messageUpdate);
     }
 }

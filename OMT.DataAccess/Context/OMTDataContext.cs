@@ -61,6 +61,7 @@ namespace OMT.DataAccess.Context
         public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
 
         public DbSet<Message> Message { get; set; }
+        public DbSet<MessagesStatus> MessagesStatus { get; set; }
 
 
         public override int SaveChanges()
@@ -137,6 +138,9 @@ namespace OMT.DataAccess.Context
                 .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<Notification>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<Message>()
                 .Property(p => p.CreateTimeStamp)
                 .ValueGeneratedOnAdd();
 
