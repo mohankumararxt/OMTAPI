@@ -87,11 +87,32 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "User Inserted Successfully";
                         var userId = newUser.Id;
-                        int randomTestId = _oMTDataContext.Tests
-                                .Where(t => t.IsSample) // Filter where IsSample is false
+                        int randomTestId = 0;
+                        if (newUser.Experience < 12)
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 1) // Filter where IsSample is true and DifficultyLevel is 0
                                 .OrderBy(t => Guid.NewGuid()) // Randomize the order
                                 .Select(t => t.Id) // Select only the Id
-                                .First(); // Take the first Id or default if no match
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+                        else if (newUser.Experience > 12 && newUser.Experience < 36)
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 2) // Filter where IsSample is true and DifficultyLevel is 1
+                                .OrderBy(t => Guid.NewGuid()) // Randomize the order
+                                .Select(t => t.Id) // Select only the Id
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+                        else
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 3) // Filter where IsSample is true and DifficultyLevel is 2
+                                .OrderBy(t => Guid.NewGuid()) // Randomize the order
+                                .Select(t => t.Id) // Select only the Id
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+
 
 
                         // Map DTO to entity and insert into the database
