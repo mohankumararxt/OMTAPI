@@ -20,7 +20,7 @@ namespace OMT.DataService.Service
         {
             _oMTDataContext = oMTDataContext;
         }
-        public ResultDTO GetReportColumnlist(int skillsetid)
+        public ResultDTO GetReportColumnlist(int? skillsetid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try

@@ -19,8 +19,8 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpGet]
-        [Route("GetReportColumnlist/{skillsetid:int}")]
-        public ResultDTO GetReportColumnlist(int skillsetid)
+        [Route("GetReportColumnlist/{skillsetid:int?}")]
+        public ResultDTO GetReportColumnlist(int? skillsetid)
         {
             return _reportColumnsService.GetReportColumnlist(skillsetid);
         }
