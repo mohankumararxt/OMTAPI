@@ -10,7 +10,7 @@ namespace OMT.DataService.Interface
 {
     public interface IReportColumnsService
     {
-        ResultDTO GetReportColumnlist(int? skillsetid);
+        ResultDTO GetReportColumnlist(int skillsetid);
         ResultDTO CreateReportColumns(CreateReportColumnsDTO createReportColumnsDTO);
         ResultDTO UpdateReportColumns(UpdateReportColumnsDTO updateReportColumnsDTO);
     }
