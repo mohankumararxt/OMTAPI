@@ -3196,3 +3196,16 @@
 
 ----------------------------------------TIQE AND TRD CHANGES----------------------
 --insert into DefaultTemplateColumns values (3,'ImageID','int',1,0,0,0,0)
+
+
+--insert into MasterReportColumns values('Number_Of_Documents'),('Number_Of_Manual_Splits'),('ImageID')
+
+--insert into reportcolumns values 
+--(2,1,173,37,7),
+--(2,1,173,38,8)
+
+--insert into reportcolumns values
+--(3,1,234,39,5)
+
+--alter createtrd details sp
+
