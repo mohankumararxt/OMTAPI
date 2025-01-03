@@ -15,5 +15,8 @@ namespace OMT.DataService.Interface
         Task<ResultDTO> BatchUpdateTasksAsync(BatchUpdateTaskDTO batchUpdateTaskDTO);
         Task<ResultDTO> UndoTaskChangeAsync();
         Task<ResultDTO> ExportReportsAsync(ExportFilterDTO filters, string format);
+
+        Task<ResultDTO> GetAllTaskStatus();
+        Task<ResultDTO> GetAllTaskPriorities();
     }
 }

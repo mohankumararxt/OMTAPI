@@ -85,5 +85,17 @@ namespace OMT.APIHost.Controllers
                 return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
             }
         }
+
+        [HttpGet("getalltaskstatuses")]
+        public async Task<ResultDTO> GetAllTaskStatus()
+        {
+            return await _taskService.GetAllTaskStatus();
+        }
+
+        [HttpGet("getalltaskpriorities")]
+        public async Task<ResultDTO> GetAllTaskPriorities()
+        {
+            return await _taskService.GetAllTaskPriorities();
+        }
     }
 }

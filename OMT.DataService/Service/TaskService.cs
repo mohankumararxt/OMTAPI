@@ -924,5 +924,51 @@ namespace OMT.DataService.Service
             };
         }
 
+        public async Task<ResultDTO> GetAllTaskStatus()
+        {
+            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var tasksStatus = _dbContext.TasksStatus.ToList();
+                resultDTO.IsSuccess = true;
+                resultDTO.Data = tasksStatus;
+                resultDTO.Message = "Task statuses fetched successfully.";
+                resultDTO.StatusCode = "200";
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return resultDTO;
+
+        }
+
+        public async Task<ResultDTO> GetAllTaskPriorities()
+        {
+            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var tasksPriorities = _dbContext.TaskPriority.ToList();
+                resultDTO.IsSuccess = true;
+                resultDTO.Data = tasksPriorities;
+                resultDTO.Message = "Task Priorities fetched successfully.";
+                resultDTO.StatusCode = "200";
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return resultDTO;
+
+        }
+
     }
 }
