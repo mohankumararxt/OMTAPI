@@ -1,23 +1,31 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
+using OMT.DataService.Settings;
 using OMT.DTO;
 using System.Data;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace OMT.DataService.Service
 {
     public class SkillSetService : ISkillSetService
     {
         private readonly OMTDataContext _oMTDataContext;
-        public SkillSetService(OMTDataContext oMTDataContext)
+
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        private readonly IConfiguration _configuration;
+        public SkillSetService(OMTDataContext oMTDataContext, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
         {
             _oMTDataContext = oMTDataContext;
+            _emailDetailsSettings = emailDetailsSettings;
+            _configuration = configuration;
         }
-
-        public ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO)
+        public ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -43,7 +51,6 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
 
                     // add harstatenames for skillset
-
                     var skillsetid = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName && x.IsActive).Select(_ => _.SkillSetId).FirstOrDefault();
 
                     if (isHardState)
@@ -61,9 +68,59 @@ namespace OMT.DataService.Service
                             _oMTDataContext.SaveChanges();
                         }
                     }
-                    resultDTO.Message = "SkillSet created successfully";
-                    resultDTO.IsSuccess = true;
+
                 }
+                // send details via mail
+                var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName).Select(x => x.SkillSetName).FirstOrDefault();
+                string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
+
+
+                IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                          .Select(c => c.Value)
+                                                          .ToList();
+
+                var skillsetdetails = $"New Skillset named '{skillsetname}' created by {username} at {uploadeddate}.Please Configure the required Invoice details in OMT as soon as possible before processing begins.";
+
+                SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                {
+                    ToEmailIds = toEmailIds1,
+                    Subject = $"Update Invoice details in OMT for newly added skillset - {skillsetname}",
+                    Body = skillsetdetails,
+                };
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                        var webApiUrl = new Uri(url);
+                        var response = client.PostAsync(webApiUrl, content).Result;
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseData = response.Content.ReadAsStringAsync().Result;
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+
+                resultDTO.Message = "SkillSet created successfully";
+                resultDTO.StatusCode = "200";
+                resultDTO.IsSuccess = true;
+
             }
             catch (Exception ex)
             {
@@ -74,7 +131,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DeleteSkillSet(int skillsetId)
+        public ResultDTO DeleteSkillSet(int skillsetId, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -170,6 +227,53 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                     }
 
+                    // send details via mail
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                    DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillsetId).Select(x => x.SkillSetName).FirstOrDefault();
+                    string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
+
+
+                    IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                    List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                              .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                              .Select(c => c.Value)
+                                                              .ToList();
+
+                    var message = $"{username} has deleted the skillset named '{skillsetname}' along with all its related details at {uploadeddate}.";
+
+                    SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                    {
+                        ToEmailIds = toEmailIds1,
+                        Subject = "Skillset has been Deleted",
+                        Body = message,
+                    };
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                            var webApiUrl = new Uri(url);
+                            var response = client.PostAsync(webApiUrl, content).Result;
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var responseData = response.Content.ReadAsStringAsync().Result;
+
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                        throw;
+                    }
+
                     var rpm = _oMTDataContext.ResWareProductDescriptionMap.Where(x => x.SkillSetId == skillSet.SkillSetId).ToList();
 
                     if (rpm.Any())
@@ -190,6 +294,7 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
 
                     resultDTO.Message = "Skill Set has been deleted successfully";
+                    resultDTO.StatusCode = "200";
                     resultDTO.IsSuccess = true;
                 }
             }
@@ -380,7 +485,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO)
+        public ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
             try
@@ -402,6 +507,16 @@ namespace OMT.DataService.Service
                     {
                         IsThresholdChanged = true;
                     }
+
+                    //Old Details
+                    var Olddetails = new
+                    {
+                        Threshold = skillset.Threshold,
+                        IsHardState = skillset.IsHardState,
+                        HardStates = _oMTDataContext.SkillSetHardStates.Where(hs => hs.SkillSetId == skillSetUpdateDTO.SkillSetId && hs.IsActive)
+                                     .Select(hs => hs.StateName).ToList()
+                    };
+
                     // Updating Skillset Details
                     skillset.Threshold = skillSetUpdateDTO.Threshold;
                     skillset.IsHardState = skillSetUpdateDTO.IsHardState;
@@ -465,7 +580,86 @@ namespace OMT.DataService.Service
                             _oMTDataContext.SaveChanges();
                         }
                     }
+
+                    //send details via mail
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                    DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == skillSetUpdateDTO.SkillSetId).Select(x => x.SkillSetName).FirstOrDefault();
+                    string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
+
+                    IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:toEmailId");
+
+                    List<string> toEmailIds = toEmailId.AsEnumerable()
+                                            .Where(c => !string.IsNullOrEmpty(c.Value))
+                                            .Select(c => c.Value)
+                                            .ToList();
+
+                    //New Details
+                    var Newdetails = new
+                    {
+                        Threshold = skillSetUpdateDTO.Threshold,
+                        IsHardState = skillSetUpdateDTO.IsHardState,
+                        HardStates = skillSetUpdateDTO.StateName ?? new List<string>()
+                    };
+
+                    var changes = new List<string>();
+
+                    //Compare Changes
+                    if (Olddetails.Threshold != Newdetails.Threshold)
+                    {
+                        changes.Add($"Threshold Updated from {Olddetails.Threshold} to {Newdetails.Threshold}");
+                    }
+                    if (Olddetails.IsHardState != Newdetails.IsHardState)
+                    {
+                        changes.Add($"IsHardState Updated from {Olddetails.IsHardState} to {Newdetails.IsHardState}");
+                    }
+                    if (Olddetails.HardStates != Newdetails.HardStates)
+                    {
+                        var oldHS = string.Join(", ", Olddetails.HardStates);
+                        var newHS = string.Join(", ", Newdetails.HardStates);
+                        changes.Add($"HardStates Updated from {oldHS} to {newHS}");
+                    }
+
+                    //changes message
+                    var changesmessage = changes.Any() ? $"{string.Join(", ", changes)}" : "No Changes Were Made.";
+
+                    //Email body
+                    var message = $"{username} has Updated the Skillset named '{skillsetname}' at {uploadeddate}. " + $"{changesmessage}";
+
+                    //Send Email
+                    SendEmailDTO sendEmailDTO = new SendEmailDTO
+                    {
+                        ToEmailIds = toEmailIds,
+                        Subject = "SkillsetUpdated Successfully",
+                        Body = message,
+                    };
+
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO);
+                            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                            var webApiUrl = new Uri(url);
+                            var response = client.PostAsync(webApiUrl, content).Result;
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var responseData = response.Content.ReadAsStringAsync().Result;
+
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw;
+                    }
+
                     resultDTO.IsSuccess = true;
+                    resultDTO.StatusCode = "200";
                     resultDTO.Message = "SkillSet Updated Successfully";
                 }
             }
@@ -537,7 +731,7 @@ namespace OMT.DataService.Service
                             SkillSetId = skillSetTimeLineDTO.SkillSetId,
                             Hardstatename = detail.HardStateName,
                             ExceedTime = detail.ExceedTime,
-                            IsHardState = detail.IsHardstate,
+                            IsHardState = true,
                             IsActive = true
                         };
                         _oMTDataContext.Timeline.Add(timeline);
@@ -550,7 +744,7 @@ namespace OMT.DataService.Service
                             SkillSetId = skillSetTimeLineDTO.SkillSetId,
                             Hardstatename = details.HardStateName,
                             ExceedTime = details.ExceedTime,
-                            IsHardState = details.IsHardstate,
+                            IsHardState = false,
                             IsActive = true
                         };
                         _oMTDataContext.Timeline.Add(timeline2);
@@ -635,66 +829,64 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
-
         public ResultDTO GetSkillSetTimelineList(int? skillsetid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<SkillSetTimelineResponseDTO> allSkillSetTimelines = new List<SkillSetTimelineResponseDTO>();
+                var skillsetTimeline = (from ss in _oMTDataContext.SkillSet
+                                        join tl in _oMTDataContext.Timeline on ss.SkillSetId equals tl.SkillSetId
+                                        join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
+                                        where ss.IsActive && tl.IsActive && sr.IsActive
+                                        orderby sr.SystemofRecordName,ss.SkillSetName
+                                        select new
+                                        {
+                                            ss.SkillSetId,
+                                            ss.SkillSetName,
+                                            tl.TimelineId,
+                                            tl.Hardstatename,
+                                            tl.ExceedTime,
+                                            tl.IsHardState,
+                                        }).ToList();
 
-                var SSid = _oMTDataContext.SkillSet.Where(ss => ss.IsActive && _oMTDataContext.Timeline.Any(tl => tl.SkillSetId == ss.SkillSetId && tl.IsActive));
-
-                var skillSetIds = (skillsetid == null) ? SSid.Select(ss => ss.SkillSetId).ToList()
-                                  : new List<int> { skillsetid.Value };
-
-
-                foreach (var id in skillSetIds)
+                if (skillsetid != null)
                 {
-                    // HardState 
-                    List<ResponseTimelineDetailDTO> Listof_HS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                 where tl.IsActive && tl.IsHardState && tl.SkillSetId == id
-                                                                                 orderby tl.TimelineId
-                                                                                 select new ResponseTimelineDetailDTO()
-                                                                                 {
-                                                                                     HardStateName = tl.Hardstatename,
-                                                                                     ExceedTime = tl.ExceedTime,
-                                                                                     IsHardstate = tl.IsHardState
-                                                                                 }).ToList();
-
-                    // NormalState 
-                    List<ResponseTimelineDetailDTO> Listof_NS_TimeLineDetails = (from tl in _oMTDataContext.Timeline
-                                                                                 where tl.IsActive && !tl.IsHardState && tl.SkillSetId == id
-                                                                                 orderby tl.TimelineId
-                                                                                 select new ResponseTimelineDetailDTO()
-                                                                                 {
-                                                                                     HardStateName = tl.Hardstatename,
-                                                                                     ExceedTime = tl.ExceedTime,
-                                                                                     IsHardstate = tl.IsHardState
-                                                                                 }).ToList();
-
-                    if (Listof_HS_TimeLineDetails.Count == 0 && Listof_NS_TimeLineDetails.Count == 0) //new
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "No timeline details found for this Skillsetid";
-                        return resultDTO;
-                    }
-
-                    //combine timeline details 
-                    SkillSetTimelineResponseDTO skillSetTimelineResponseDTO = new SkillSetTimelineResponseDTO()
-                    {
-                        SkillSetId = id,
-                        HardStateTimelineDetails = Listof_HS_TimeLineDetails,
-                        NormalStateTimelineDetails = Listof_NS_TimeLineDetails
-                    };
-
-                    allSkillSetTimelines.Add(skillSetTimelineResponseDTO); // Add list of all skillset timelines
+                    skillsetTimeline = skillsetTimeline.Where(t => t.SkillSetId == skillsetid.Value).ToList();
                 }
 
-                resultDTO.Data = allSkillSetTimelines;
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of Timeline Details Successfully Fetched";
+                //group by Skillsetid
+                var groupedTimelines = skillsetTimeline
+                                      .GroupBy(t => new { t.SkillSetId, t.SkillSetName })
+                                      .Select(g => new SkillSetTimelineResponseDTO
+                                      {
+                                          SkillSetId = g.Key.SkillSetId,
+                                          SkillSetName = g.Key.SkillSetName,
+                                          HardStateTimelineDetails = g.Where(t => t.IsHardState)
+                                                                    .Select(t => new ResponseTimelineDetailDTO
+                                                                    {
+                                                                        HardStateName = t.Hardstatename,
+                                                                        ExceedTime = t.ExceedTime,
+                                                                        IsHardstate = t.IsHardState,
+                                                                    }).ToList(),
+                                          NormalStateTimelineDetails = g.Where(t => !t.IsHardState)
+                                                                      .Select(t => new ResponseTimelineDetailDTO
+                                                                      {
+                                                                          HardStateName = t.Hardstatename,
+                                                                          ExceedTime = t.ExceedTime,
+                                                                          IsHardstate = t.IsHardState,
+                                                                      }).ToList()
+                                      }).ToList();
 
+                if (!groupedTimelines.Any())
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "No timeline details found for this Skillsetid";
+                    return resultDTO;
+                }
+
+                resultDTO.Data = groupedTimelines;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Timeline Details";
             }
             catch (Exception ex)
             {

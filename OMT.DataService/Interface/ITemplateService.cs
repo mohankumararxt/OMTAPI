@@ -1,4 +1,6 @@
-﻿using OMT.DTO;
+﻿using Microsoft.Data.SqlClient;
+using OMT.DataAccess.Entities;
+using OMT.DTO;
 
 namespace OMT.DataService.Interface
 {
@@ -22,9 +24,10 @@ namespace OMT.DataService.Interface
         ResultDTO GetTemplateColumns(int skillsetId);
         ResultDTO RejectOrder(RejectOrderDTO rejectOrderDTO);
         ResultDTO AssignOrderToUser(AssignOrderToUserDTO assignOrderToUserDTO);
-        ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO);
+        ResultDTO DeleteOrders(DeleteOrderDTO deleteOrderDTO, int userid);
         ResultDTO SkillsetWiseReports(SkillsetWiseReportsDTO skillsetWiseReportsDTO);
         ResultDTO GetMandatoryColumnNames(int skillsetid);
         ResultDTO GetTrdPendingOrders(int userid);
+        void GetDataType(SqlConnection connection, SkillSet skillset, out SqlCommand sqlCommand_columnTypeQuery, out SqlDataAdapter dataAdapter_columnTypeQuery, out List<Dictionary<string, object>> columnTypes);
     }
 }

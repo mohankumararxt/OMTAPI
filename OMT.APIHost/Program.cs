@@ -12,6 +12,7 @@ using OMT.DataService.Utility;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
 
@@ -61,6 +62,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                  });
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IInterviewService, InterviewService>();
+builder.Services.AddScoped<IUserTestService, UserTestService>();
 //add the required settings from appsettings.json
 builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("AuthSettings"));
 builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
@@ -98,6 +101,7 @@ builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
 builder.Services.AddScoped<ISciExceptionService, SciExceptionService>();
 builder.Services.AddScoped<IOrderDecisionService, OrderDecisionService>();
 builder.Services.AddScoped<IUpdateGOCService, UpdateGOCService>();
+builder.Services.AddScoped<IReportColumnsService, ReportColumnsService>();  
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
