@@ -65,11 +65,11 @@ namespace OMT.APIHost.Controllers
              return _orderdecisionservice.UpdateUnassignedOrder(userid,updateUnassignedOrderDTO);
          }*/
 
-        [HttpPost]
-        [Route("SkillsetOrderdetails")]
-        public ResultDTO GetSkillsetOrderdetails([FromBody] GetSkillsetOrderdetailsDTO getSkillsetOrderdetailsDTO)
-        {
-            return _orderdecisionservice.GetSkillsetOrderdetails(getSkillsetOrderdetailsDTO);
-        }
+        //[HttpPost]
+        //[Route("SkillsetOrderdetails")]
+        //public ResultDTO GetSkillsetOrderdetails([FromBody] GetSkillsetOrderdetailsDTO getSkillsetOrderdetailsDTO)
+        //{
+        //    return _orderdecisionservice.GetSkillsetOrderdetails(getSkillsetOrderdetailsDTO);
+        //}
     }
 }
