@@ -1045,11 +1045,12 @@ namespace OMT.DataService.Service
 
                 if (skillset != null)
                 {
-                    string details = $@"SELECT * FROM {skillset.Tablename} WHERE OrderId = @OrderId";
+                    string details = $@"SELECT * FROM {skillset.Tablename} WHERE OrderId = @OrderId AND Id = @Id";
 
                     using (SqlCommand detailscommand = new SqlCommand(details, connection))
                     {
                         detailscommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                        detailscommand.Parameters.AddWithValue("@Id", updateOrderStatusByTLDTO.UpdatedId);
 
                         using SqlDataAdapter detailsAdapter = new SqlDataAdapter(detailscommand);
 
@@ -1116,17 +1117,18 @@ namespace OMT.DataService.Service
                             DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
 
                             string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
-                                        (  SELECT {DynamicColumns} FROM {tableName}
-                                        WHERE OrderId = @OrderId
-                                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
-                                        FROM {tableName}  WHERE OrderId = @OrderId";
-
+                                                 (  SELECT {DynamicColumns} FROM {tableName}
+                                                 WHERE OrderId = @OrderId and Id = @Id
+                                                 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
+                                                 FROM {tableName}  WHERE OrderId = @OrderId and Id = @Id";
 
                             //Fetching Old Datas from the table
                             using (SqlCommand commands = new SqlCommand(ordersql, connection))
                             {
 
                                 commands.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                                commands.Parameters.AddWithValue("@Id", updateOrderStatusByTLDTO.UpdatedId);
+
 
                                 using SqlDataAdapter dataAdapter = new(commands);
 
