@@ -31,7 +31,8 @@ namespace OMT.DataService.Service
                                          join sr in _oMTDataContext.SystemofRecord on rc.SystemOfRecordId equals sr.SystemofRecordId
                                          where (ss.SkillSetId == skillsetid || skillsetid == null) && ss.IsActive == true && rc.IsActive == true && sr.IsActive == true
                                          select new
-                                         {
+                                         {   SkillSetName = ss.SkillSetName,
+                                             SystemofRecordName = sr.SystemofRecordName,
                                              SkillSetId = ss.SkillSetId,
                                              SystemofRecordId = sr.SystemofRecordId,
                                              ReportColumnName = mrc.ReportColumnName,
@@ -41,9 +42,11 @@ namespace OMT.DataService.Service
                                          .ThenBy(x => x.SkillSetId)
                                          .ThenBy(x => x.ColumnSequence)
                                          .ToList()
-                                         .GroupBy(x => new { x.SkillSetId, x.SystemofRecordId })
+                                         .GroupBy(x => new { x.SkillSetId, x.SystemofRecordId, x.SkillSetName, x.SystemofRecordName })
                                          .Select(g => new
                                          {
+                                             SkillSetName = g.Key.SkillSetName,
+                                             SystemofRecordName = g.Key.SystemofRecordName,
                                              SkillSetId = g.Key.SkillSetId,
                                              SystemofRecordId = g.Key.SystemofRecordId,
                                              ColumnDetails = g.Select(c => new
