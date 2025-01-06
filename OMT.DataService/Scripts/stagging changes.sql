@@ -3209,3 +3209,23 @@
 
 --alter createtrd details sp
 
+------------------------------------------------------------productivity dashboard -------------------------------
+
+--CREATE TABLE ShiftDetails (
+--ShiftCodeId INT PRIMARY KEY IDENTITY(1,1),
+--ShiftCode NVARCHAR(100) NOT NULL,
+--ShiftStartTime Time NOT NULL,
+--ShiftEndTime Time NOT NULL,
+--ShiftDays NVARCHAR(100) NOT NULL,
+--IsActive Bit NOT NULL,
+--CreatedDate DateTime NOT NULL,
+--ModifiedDate DateTime NOT NULL,
+--CreatedBy INT NOT NULL,
+--ModifiedBy INT NOT NULL
+
+--);
+
+
+ --insert into ShiftDetails values
+ --('SH3(G)','09:30','18:30','Monday - Friday',1,'2025-01-06 05:37:35.377','2025-01-06 05:37:35.377',10,10)
+

@@ -16,7 +16,7 @@ namespace OMT.DataAccess.Context
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
         public DbSet<SystemofRecord> SystemofRecord { get; set; }
-        public DbSet<ProcessStatus> ProcessStatus { get; set; } 
+        public DbSet<ProcessStatus> ProcessStatus { get; set; }
         public DbSet<SkillSetHardStates> SkillSetHardStates { get; set; }
         public DbSet<DefaultTemplateColumns> DefaultTemplateColumns { get; set; }
         public DbSet<BusinessGroup> BusinessGroup { get; set; }
@@ -50,6 +50,7 @@ namespace OMT.DataAccess.Context
 
         public DbSet<InterviewTests> InterviewTests { get; set; }
         public DbSet<UserTest> UserTest { get; set; }
+        public DbSet<ShiftDetails> ShiftDetails { get; set; }
 
         public override int SaveChanges()
         {
@@ -112,7 +113,7 @@ namespace OMT.DataAccess.Context
                 .Property(p => p.CreateTimestamp)
                 .ValueGeneratedOnAdd();
             modelBuilder.Entity<UserTest>()
-                .Property(p => p.CreateTimestamp) 
+                .Property(p => p.CreateTimestamp)
                 .ValueGeneratedOnAdd();
         }
 
