@@ -142,18 +142,18 @@ namespace OMT.DataService
                                                                          var value = row[column];
                                                                          if (value == DBNull.Value)
                                                                          {
-                                                                             return ""; 
+                                                                             return "";
                                                                          }
 
                                                                          if (column.DataType == typeof(DateTime))
                                                                          {
                                                                              DateTime dateValue = (DateTime)value;
                                                                              return dateValue.TimeOfDay == TimeSpan.Zero
-                                                                                 ? (object)dateValue.ToString("yyyy-MM-dd")   
-                                                                                 : (object)dateValue.ToString("yyyy-MM-dd HH:mm:ss");  
+                                                                                 ? (object)dateValue.ToString("yyyy-MM-dd")
+                                                                                 : (object)dateValue.ToString("yyyy-MM-dd HH:mm:ss");
                                                                          }
 
-                                                                         return (object)value.ToString(); 
+                                                                         return (object)value.ToString();
                                                                      }))
                                                              .ToList();
 
@@ -276,6 +276,157 @@ namespace OMT.DataService
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
             }
+            return resultDTO;
+        }
+
+        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO,int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                           where us.UserId == userid && us.IsActive
+                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                           select ss.SkillSetName).Distinct().ToList();
+
+                Dictionary<string, List<string>> statuses = new Dictionary<string, List<string>>();
+
+                foreach (string tableName in tablenames)
+                {
+                    var skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetName == tableName && x.IsActive).FirstOrDefault();
+
+                    var statusnames = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.IsActive).Select(_ => _.Status).ToList();
+
+                    statusnames.Remove("System-Pending");
+                    statuses[skillset.SkillSetName] = statusnames;
+                }
+
+                DateTime startDateTime = DateTime.UtcNow;
+                DateTime endDateTime = DateTime.UtcNow;
+
+                startDateTime = Convert.ToDateTime(agentDashDTO.StartTime);
+                endDateTime = Convert.ToDateTime(agentDashDTO.EndTime);
+
+                using SqlCommand command = new()
+                {
+                    Connection = connection,
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = "GetAgentCompletionCount"
+                };
+
+                command.Parameters.AddWithValue("@SkillSetNames", string.Join(",", tablenames));
+                command.Parameters.AddWithValue("@FromDate", startDateTime);
+                command.Parameters.AddWithValue("@ToDate", endDateTime);
+                command.Parameters.AddWithValue("@UserId", userid);
+
+                SqlParameter returnValue = new SqlParameter
+                {
+                    ParameterName = "@RETURN_VALUE",
+                    SqlDbType = SqlDbType.Int,
+                    Direction = ParameterDirection.ReturnValue
+                };
+                command.Parameters.Add(returnValue);
+
+                command.ExecuteNonQuery();
+
+                using SqlDataAdapter dataAdapter_acc = new SqlDataAdapter(command);
+                DataTable resultTable = new DataTable();
+
+                dataAdapter_acc.Fill(resultTable);
+
+                // Create resultList using the statuses dictionary
+                var resultList = resultTable.AsEnumerable()
+                    .Select(row =>
+                    {
+                        // Extract the SkillSetName from the current row
+                        string skillSetName = row["SkillSet"]?.ToString();
+
+                        // Normalize the column names for comparison (replace underscores and hyphens with spaces)
+                        var normalizedStatuses = statuses
+                            .ToDictionary(
+                                kvp => kvp.Key.ToLowerInvariant(),
+                                kvp => kvp.Value.Select(status => status.Replace("_", " ").Replace("-", " ").ToLowerInvariant()).ToList()
+                            );
+
+                        // Check if the SkillSetName exists in the normalized dictionary
+                        if (!string.IsNullOrEmpty(skillSetName) && normalizedStatuses.ContainsKey(skillSetName.ToLowerInvariant()))
+                        {
+                            // Get the valid statuses for the current skill set
+                            var validStatuses = normalizedStatuses[skillSetName.ToLowerInvariant()];
+
+                            // Transform the row into a dictionary
+                            return resultTable.Columns.Cast<DataColumn>()
+                                .ToDictionary(
+                                    column => column.ColumnName,
+                                    column =>
+                                    {
+                                        // Normalize the column name (replace underscores and hyphens with spaces)
+                                        string normalizedColumnName = column.ColumnName.Replace("_", " ").Replace("-", " ").ToLowerInvariant();
+
+                                        // If the column is a valid status, keep the count or 0
+                                        if (validStatuses.Contains(normalizedColumnName))
+                                        {
+                                            return row[column] == DBNull.Value ? 0 : row[column]; // Keep count or 0 for valid statuses
+                                        }
+                                        else
+                                        {
+                                            // Set all other status columns to null, except for SystemOfRecord and SkillSet
+                                            return (column.ColumnName == "SystemOfRecord" || column.ColumnName == "SkillSet")
+                                                ? row[column] // Retain these columns
+                                                : "";       
+                                        }
+                                    });
+                        }
+                        else
+                        {
+                            // If the SkillSetName is not found, set all status columns to null, except for SystemOfRecord and SkillSet
+                            return resultTable.Columns.Cast<DataColumn>()
+                                .ToDictionary(
+                                    column => column.ColumnName,
+                                    column =>
+                                        (column.ColumnName == "SystemOfRecord" || column.ColumnName == "SkillSet")
+                                            ? row[column]  // Retain values for these columns
+                                            : null         // Set null for all other status columns
+                                );
+                        }
+                    })
+                    .ToList();
+
+
+                // Check the return value to ensure success
+                int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                if (returnCode != 1)
+                {
+                    throw new InvalidOperationException("Something went wrong while fetching the completion data.");
+                }
+
+                if (resultList.Count > 0)
+                {
+                    resultDTO.Data = resultList;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Live reports fetched successfully";
+                }
+                else
+                {
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = $"No details found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+
             return resultDTO;
         }
     }
