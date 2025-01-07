@@ -906,7 +906,7 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
-                        DateTime dateTime = DateTime.Now;
+                        DateTime dateTime = DateTime.UtcNow;
                         var starttime = querydt1[0]["StartTime"]?.ToString();
 
                         if (!string.IsNullOrEmpty(starttime))

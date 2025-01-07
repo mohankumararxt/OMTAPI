@@ -337,7 +337,7 @@ namespace OMT.DataService.Service
             {
                 List<GetUserExcelDTO> TL_Above = (from up in _oMTDataContext.UserProfile
                                                   join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
-                                                  where up.IsActive && (up.RoleId == 1 || up.RoleId == 4)
+                                                  where up.IsActive && (up.RoleId == 1 || up.RoleId == 4) && r.IsActive
                                                   orderby up.FirstName
                                                   select new GetUserExcelDTO
                                                   {
@@ -348,7 +348,7 @@ namespace OMT.DataService.Service
 
                 List<GetUserExcelDTO> agent = (from up in _oMTDataContext.UserProfile
                                                join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
-                                               where up.IsActive && up.RoleId == 3
+                                               where up.IsActive && up.RoleId == 3 && r.IsActive
                                                orderby up.FirstName
                                                select new GetUserExcelDTO
                                                {
