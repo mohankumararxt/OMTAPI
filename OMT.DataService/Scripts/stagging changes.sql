@@ -3235,6 +3235,6 @@
 --ADD TimeTaken Time;
 
 --insert into DefaultTemplateColumns values (1,'TimeTaken','Time',1,0,0,0,0)
---insert into DefaultTemplateColumns values (1,'TimeTaken','Time',2,0,0,0,0)
---insert into DefaultTemplateColumns values (1,'TimeTaken','Time',3,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'TimeTaken','Time',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'TimeTaken','Time',1,0,0,0,0)
 
