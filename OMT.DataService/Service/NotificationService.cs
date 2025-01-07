@@ -74,7 +74,7 @@ namespace OMT.DataService.Service
                  .Where(x => x.UserId == notificationDTO.UserId && x.NotificationMessage == notificationDTO.NotificationMessage).FirstOrDefault();
 
                 const long MaxFileSize = 100 * 1024 * 1024; // 100MB
-                if (exist_notification == null)
+                if (exist_notification != null)
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "409";
