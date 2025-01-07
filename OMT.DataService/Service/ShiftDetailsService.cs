@@ -109,8 +109,9 @@ namespace OMT.DataService.Service
                                                                           {
                                                                               ShiftCodeId = sd.ShiftCodeId,
                                                                               ShiftCode = sd.ShiftCode,
-                                                                              ShiftTime = sd.ShiftStartTime.ToString(@"hh\:mm") + "-" + sd.ShiftEndTime.ToString(@"hh\:mm"),
                                                                               ShiftDays = sd.ShiftDays,
+                                                                              ShiftStartTime = sd.ShiftStartTime.ToString(@"hh\:mm"),
+                                                                              ShiftEndTime = sd.ShiftEndTime.ToString(@"hh\:mm")
 
                                                                           }).ToList();
 
