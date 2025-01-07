@@ -196,6 +196,23 @@ namespace OMT.DataService.Service
                     };
                     connection.Open();
                     command.ExecuteNonQuery();
+
+
+                    var reportcolumns = _oMTDataContext.ReportColumns.Where(x => x.SkillSetId == SkillSetId).ToList();
+
+                    if (reportcolumns.Count > 0)
+                    {
+                        using SqlConnection repcol = new(connectionstring);
+                        using SqlCommand repcolcmd = new()
+                        {
+                            Connection = connection,
+                            CommandType = CommandType.Text,
+                            CommandText = "Delete from ReportColumns where skillsetid = @SkillSetId"
+                        };
+
+                        repcolcmd.Parameters.AddWithValue("@SkillSetId", SkillSetId);
+                        repcolcmd.ExecuteNonQuery();
+                    }
                     resultDTO.Message = "Template Deleted Successfully";
                 }
             }
