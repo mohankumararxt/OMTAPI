@@ -3229,3 +3229,12 @@
  --insert into ShiftDetails values
  --('SH3(G)','09:30','18:30','Monday - Friday',1,'2025-01-06 05:37:35.377','2025-01-06 05:37:35.377',10,10)
 
+-------timetaken------------
+ 
+--ALTER TABLE LR_1ST_KEY
+--ADD TimeTaken Time;
+
+--insert into DefaultTemplateColumns values (1,'TimeTaken','Time',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'TimeTaken','Time',2,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'TimeTaken','Time',3,0,0,0,0)
+

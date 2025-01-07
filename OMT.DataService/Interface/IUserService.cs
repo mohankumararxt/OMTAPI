@@ -12,5 +12,6 @@ namespace OMT.DataService.Interface
         ResultDTO UpdatePasswordByUser(UpdatePasswordByUserDTO updatePasswordByUserDTO); 
         ResultDTO UpdateByHR(UpdateUserByHrDTO updateUserDTO);
         ResultDTO UpdatePasswordByHR(UpdateUserPasswordByHrDTO updateUserPasswordDTO);
+        ResultDTO GetUserExcel();
     }
 }

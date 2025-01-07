@@ -879,6 +879,8 @@ namespace OMT.DataService.Service
                                  SkillSetName = ss.SkillSetName
                              }).FirstOrDefault();
 
+                string timetaken = "";
+
                 if (exist != null)
                 {
                     string sql = $"SELECT * FROM {exist.SkillSetName} WHERE Id = @Id";
@@ -904,25 +906,40 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
-                        string sql1 = "";
                         DateTime dateTime = DateTime.Now;
+                        var starttime = querydt1[0]["StartTime"]?.ToString();
+
+                        if (!string.IsNullOrEmpty(starttime))
+                        {
+                            DateTime startDateTime;
+                            if (DateTime.TryParse(starttime, out startDateTime))
+                            {
+                                // Calculate the difference
+                                TimeSpan difference = dateTime - startDateTime;
+                                timetaken = difference.ToString(@"hh\:mm\:ss");
+
+                            }
+                        }
+
+                        string sql1 = "";
+
 
                         using (SqlCommand command = connection.CreateCommand())
                         {
                             if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, ImageId = @ImageId WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
                             }
                             else if (table.SystemofRecordId == 2 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
                                 command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
                             }
                             else
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken WHERE Id = @ID";
                             }
 
                             command.CommandText = sql1;
@@ -933,6 +950,7 @@ namespace OMT.DataService.Service
                             command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
                             command.Parameters.AddWithValue("@EndTime", dateTime);
                             command.Parameters.AddWithValue("@CompletionDate", dateTime);
+                            command.Parameters.AddWithValue("@TimeTaken", timetaken);
 
                             // Execute the query
                             command.ExecuteNonQuery();
@@ -2283,7 +2301,7 @@ namespace OMT.DataService.Service
 
                         using SqlCommand trd_command = connection.CreateCommand();
                         trd_command.CommandText = pendingorder_query;
-                    
+
                         using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
 
                         DataSet trd_dataset = new DataSet();

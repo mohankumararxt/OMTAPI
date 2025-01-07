@@ -74,5 +74,13 @@ namespace OMT.APIHost.Controllers
         {
             return _userService.UpdatePasswordByHR(updateUserPasswordDTO);
         }
+
+        [HttpGet]
+        [Route("GetUserExcel")]
+
+        public ResultDTO GetUserExcel()
+        {
+            return _userService.GetUserExcel();
+        }
     }
 }
