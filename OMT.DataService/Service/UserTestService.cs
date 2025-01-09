@@ -300,6 +300,9 @@ namespace OMT.DataService.Service
                 //int.TryParse(decryptedUserIdString, out int decryptedUserId);
                 var existingdata = _oMTDataContext?.UserTest
                             .Where(x => x.UserId == userId &&  x.EndTime == null).FirstOrDefault();
+                int count = _oMTDataContext?.UserTest
+                    .Where(x => x.UserId == userId && x.EndTime == null)
+                    .Count() ?? 0;
                 if (existingdata != null)
                 {
 
@@ -318,8 +321,8 @@ namespace OMT.DataService.Service
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f,
                                      userTestId = itest.Id,
-                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
-                                     
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp),
+                                     pendingCount = count > 0 ? count - 1 : 0
                                  };
 
 
@@ -458,7 +461,8 @@ namespace OMT.DataService.Service
                     OpenTestsUsers = (from itest in _oMTDataContext.UserTest
                                           join user in _oMTDataContext.UserProfile
                                           on itest.UserId equals user.UserId
-                                          where itest.StartTime == null && itest.EndTime == null
+                                          where itest.EndTime == null 
+                                          //&& itest.CreateTimestamp.Month == currentMonth
                                           select new
                                           {
                                               Username = user.FirstName + " " + user.LastName

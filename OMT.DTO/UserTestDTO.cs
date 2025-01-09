@@ -16,5 +16,7 @@ namespace OMT.DTO
         public Double? accuracy { get; set; }
         public int userTestId { get; set; }
         public DateOnly testdate { get; set; }
+
+        public int pendingCount { get; set; }
     }
 }
