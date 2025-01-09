@@ -1039,7 +1039,7 @@ namespace OMT.DataService.Service
                 var editable = false;
                 var completiondate = DateTime.UtcNow;
 
-                string[] ExcludedColumns = { "OrderId", "ProjectId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
+                string[] ExcludedColumns = { "OrderId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
 
                 string DynamicColumns = string.Empty;
 
@@ -1116,7 +1116,7 @@ namespace OMT.DataService.Service
 
                             DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
 
-                            string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
+                            string ordersql = $@"SELECT OrderId, SystemofRecordId, SkillSetId, UserId, Status,
                                                  (  SELECT {DynamicColumns} FROM {tableName}
                                                  WHERE OrderId = @OrderId and Id = @Id
                                                  FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
@@ -1141,26 +1141,26 @@ namespace OMT.DataService.Service
                                     var oldUserId = row["UserId"];
                                     var oldOrderid = row["OrderId"];
                                     var oldSkillsetid = row["SkillSetId"];
-                                    var oldProjectid = row["ProjectId"];
+                                    //var oldProjectid = orderdetails.Columns.Contains("ProjectId")? row["ProjectId"]: null;
                                     var oldSystemofRecordid = row["SystemofRecordId"];
                                     var oldStatus = row["Status"];
                                     string oldOrderDetails = row["OrderDetailsJson"] as string;
 
                                     // Insert old details into Order_History table   
-                                    string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
-                                                     VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
+                                    string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId,  SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
+                                                     VALUES (@Skillsetid, @Orderid, @UserId, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
 
                                     using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
                                     {
                                         insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
                                         insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
                                         insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
-                                        insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid);
+                                       // insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid ?? DBNull.Value);
                                         insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
                                         insertCommand.Parameters.AddWithValue("@Status", oldStatus);
                                         insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
                                         insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
-                                        insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now);
+                                        insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
 
                                         insertCommand.ExecuteNonQuery();
                                     }
