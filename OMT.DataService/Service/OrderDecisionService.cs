@@ -374,7 +374,8 @@ namespace OMT.DataService.Service
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
-                            IsTiqe = is_tiqe
+                            IsTiqe = is_tiqe,
+                            IsTrdPending = false
                         };
 
                         // Order assigned successfully
@@ -405,7 +406,8 @@ namespace OMT.DataService.Service
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
-                            IsTiqe = is_tiqe
+                            IsTiqe = is_tiqe,
+                            IsTrdPending = false
                         };
 
                         // Order assigned successfully
@@ -528,6 +530,9 @@ namespace OMT.DataService.Service
             {
                 int? ssid = null;
                 string ssname = "";
+                string sorname = "";
+                int? tableid = 0;
+                bool istrd_pending = false;
 
                 //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
                 var jsonArray = JArray.Parse(updatedOrder);
@@ -537,6 +542,8 @@ namespace OMT.DataService.Service
                 {
                     ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
                     ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
+                    sorname = firstItem[ "SystemOfRecordName"] != null ? firstItem["SystemOfRecordName"].ToString() : "";
+                    tableid = firstItem["Id"] != null ? (int)firstItem["Id"] : (int?)null;
                 }
 
                 if (ssid.HasValue)
@@ -547,10 +554,40 @@ namespace OMT.DataService.Service
                         istiqe = true;
                     }
 
+                    else if (sorname == "TRD")
+                    {
+                        var pendingorder_query = $"SELECT IsPending FROM {ssname} where Id = {tableid}";
+
+                        using SqlCommand trd_command = connection.CreateCommand();
+                        trd_command.CommandText = pendingorder_query;
+
+                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                        DataSet trd_dataset = new DataSet();
+
+                        trd_dataAdapter.Fill(trd_dataset);
+
+                        DataTable trd_datatable = trd_dataset.Tables[0];
+
+                        var trd_pnd = trd_datatable.AsEnumerable()
+                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                       column => column.ColumnName,
+                                       column => row[column]));
+
+                        if (trd_pnd.Any())
+                        {
+                            istrd_pending = trd_pnd.Any(record =>
+                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                        }
+
+
+                    }
+
                     gordto = new GetOrderResponseDTO
                     {
                         AssignedOrder = updatedOrder,
-                        IsTiqe = istiqe
+                        IsTiqe = istiqe,
+                        IsTrdPending = istrd_pending
                     };
 
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
