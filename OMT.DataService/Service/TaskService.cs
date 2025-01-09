@@ -339,7 +339,7 @@ namespace OMT.DataService.Service
                 }
 
                 // Field-specific validation
-                if (updateTaskDTO.FieldName == "TaskStatus")
+                if (updateTaskDTO.FieldName.ToLower() == "status")
                 {
                     if (!await ValidateEntityAsync(_dbContext.TasksStatus, int.Parse(updateTaskDTO.NewValue)))
                     {
@@ -351,7 +351,7 @@ namespace OMT.DataService.Service
                         };
                     }
                 }
-                else if (updateTaskDTO.FieldName == "TaskPriority")
+                else if (updateTaskDTO.FieldName.ToLower() == "priority")
                 {
                     if (!await ValidateEntityAsync(_dbContext.TaskPriority, int.Parse(updateTaskDTO.NewValue)))
                     {
@@ -363,7 +363,7 @@ namespace OMT.DataService.Service
                         };
                     }
                 }
-                else if (updateTaskDTO.FieldName == "TopicProposal" || updateTaskDTO.FieldName == "TaskDescription")
+                else if (updateTaskDTO.FieldName.ToLower() == "topicproposal" || updateTaskDTO.FieldName.ToLower() == "description")
                 {
                     if (string.IsNullOrEmpty(updateTaskDTO.NewValue))
                     {
@@ -375,7 +375,7 @@ namespace OMT.DataService.Service
                         };
                     }
                 }
-                else if (updateTaskDTO.FieldName == "StartDate" || updateTaskDTO.FieldName == "TargetClosureDate")
+                else if (updateTaskDTO.FieldName.ToLower() == "startdate" || updateTaskDTO.FieldName.ToLower() == "targetclosuredate")
                 {
                     if (!DateTime.TryParse(updateTaskDTO.NewValue, out _))
                     {
@@ -387,7 +387,7 @@ namespace OMT.DataService.Service
                         };
                     }
 
-                    if (updateTaskDTO.FieldName == "StartDate" &&
+                    if (updateTaskDTO.FieldName.ToLower() == "startdate" &&
                         DateTime.TryParse(updateTaskDTO.NewValue, out var startDate) &&
                         startDate > task.TargetClosureDate)
                     {
@@ -399,7 +399,7 @@ namespace OMT.DataService.Service
                         };
                     }
 
-                    if (updateTaskDTO.FieldName == "TargetClosureDate" &&
+                    if (updateTaskDTO.FieldName.ToLower() == "targetclosuredate" &&
                         DateTime.TryParse(updateTaskDTO.NewValue, out var targetClosureDate) &&
                         targetClosureDate < task.StartDate)
                     {
@@ -411,7 +411,7 @@ namespace OMT.DataService.Service
                         };
                     }
                 }
-                else if (updateTaskDTO.FieldName == "PrimaryContact" || updateTaskDTO.FieldName == "RequestedBy" || updateTaskDTO.FieldName == "ApprovalFrom" || updateTaskDTO.FieldName == "CreatedBy")
+                else if (updateTaskDTO.FieldName.ToLower() == "primarycontact" || updateTaskDTO.FieldName.ToLower() == "requestedby" || updateTaskDTO.FieldName.ToLower() == "approvalfrom" || updateTaskDTO.FieldName.ToLower() == "createdby")
                 {
                     if (!await ValidateEntityUserAsync(_dbContext.UserProfile, int.Parse(updateTaskDTO.NewValue)))
                     {
@@ -488,7 +488,7 @@ namespace OMT.DataService.Service
                 foreach (var task in tasks)
                 {
                     // Validate Task Status field
-                    if (batchUpdateTaskDTO.FieldName == "TaskStatus" &&
+                    if (batchUpdateTaskDTO.FieldName.ToLower() == "status" &&
                         !await ValidateEntityAsync(_dbContext.TasksStatus, int.Parse(batchUpdateTaskDTO.NewValue)))
                     {
                         return new ResultDTO
@@ -500,7 +500,7 @@ namespace OMT.DataService.Service
                     }
 
                     // Validate Task Priority field
-                    if (batchUpdateTaskDTO.FieldName == "TaskPriority" &&
+                    if (batchUpdateTaskDTO.FieldName.ToLower() == "priority" &&
                         !await ValidateEntityAsync(_dbContext.TaskPriority, int.Parse(batchUpdateTaskDTO.NewValue)))
                     {
                         return new ResultDTO
@@ -512,7 +512,7 @@ namespace OMT.DataService.Service
                     }
 
                     // Validate Start Date field
-                    if (batchUpdateTaskDTO.FieldName == "StartDate")
+                    if (batchUpdateTaskDTO.FieldName.ToLower() == "startdate")
                     {
                         if (!DateTime.TryParse(batchUpdateTaskDTO.NewValue, out var startDate))
                         {
@@ -537,7 +537,7 @@ namespace OMT.DataService.Service
                     }
 
                     // Validate Target Closure Date field
-                    if (batchUpdateTaskDTO.FieldName == "TargetClosureDate")
+                    if (batchUpdateTaskDTO.FieldName.ToLower() == "targetclosuredate")
                     {
                         if (!DateTime.TryParse(batchUpdateTaskDTO.NewValue, out var targetClosureDate))
                         {
@@ -562,10 +562,10 @@ namespace OMT.DataService.Service
                     }
 
                     // Validate other fields like PrimaryContact, RequestedBy, ApprovalFrom, CreatedBy
-                    if (batchUpdateTaskDTO.FieldName == "PrimaryContact" ||
-                        batchUpdateTaskDTO.FieldName == "RequestedBy" ||
-                        batchUpdateTaskDTO.FieldName == "ApprovalFrom" ||
-                        batchUpdateTaskDTO.FieldName == "CreatedBy")
+                    if (batchUpdateTaskDTO.FieldName.ToLower() == "primarycontact" ||
+                        batchUpdateTaskDTO.FieldName.ToLower() == "requestedby" ||
+                        batchUpdateTaskDTO.FieldName.ToLower() == "approvalfrom" ||
+                        batchUpdateTaskDTO.FieldName.ToLower() == "createdby")
                     {
                         if (!await ValidateEntityUserAsync(_dbContext.UserProfile, int.Parse(batchUpdateTaskDTO.NewValue)))
                         {
@@ -850,54 +850,54 @@ namespace OMT.DataService.Service
 
         private string GetTaskFieldValue(Tasks task, string fieldName)
         {
-            return fieldName switch
+            return fieldName.ToLower() switch
             {
-                "TopicProposal" => task.TopicProposal,
-                "TaskDescription" => task.TaskDescription,
-                "StartDate" => task.StartDate.ToString(),
-                "TargetClosureDate" => task.TargetClosureDate.ToString(),
-                "TaskStatus" => task.TaskStatus.ToString(),
-                "PrimaryContact" => task.PrimaryContact.ToString(),
-                "RequestedBy" => task.RequestedBy.ToString(),
-                "ApprovalFrom" => task.ApprovalFrom.ToString(),
-                "Remarks" => task.Remarks,
-                "TaskPriority" => task.TaskPriority.ToString(),
+                "topicproposal" => task.TopicProposal,
+                "description" => task.TaskDescription,
+                "startdate" => task.StartDate.ToString(),
+                "targetclosuredate" => task.TargetClosureDate.ToString(),
+                "status" => task.TaskStatus.ToString(),
+                "primarycontact" => task.PrimaryContact.ToString(),
+                "requestedby" => task.RequestedBy.ToString(),
+                "approvalfrom" => task.ApprovalFrom.ToString(),
+                "remarks" => task.Remarks,
+                "priority" => task.TaskPriority.ToString(),
                 _ => string.Empty
             };
         }
 
         private void SetTaskFieldValue(Tasks task, string fieldName, string newValue)
         {
-            switch (fieldName)
+            switch (fieldName.ToLower())
             {
-                case "TopicProposal":
+                case "topicproposal":
                     task.TopicProposal = newValue;
                     break;
-                case "TaskDescription":
+                case "description":
                     task.TaskDescription = newValue;
                     break;
-                case "StartDate":
+                case "startdate":
                     task.StartDate = DateTime.Parse(newValue);
                     break;
-                case "TargetClosureDate":
+                case "targetclosuredate":
                     task.TargetClosureDate = DateTime.Parse(newValue);
                     break;
-                case "TaskStatus":
+                case "status":
                     task.TaskStatus = int.Parse(newValue);
                     break;
-                case "PrimaryContact":
+                case "primarycontact":
                     task.PrimaryContact = int.Parse(newValue);
                     break;
-                case "RequestedBy":
+                case "requestedby":
                     task.RequestedBy = int.Parse(newValue);
                     break;
-                case "ApprovalFrom":
+                case "approvalfrom":
                     task.ApprovalFrom = int.Parse(newValue);
                     break;
-                case "Remarks":
+                case "remarks":
                     task.Remarks = newValue;
                     break;
-                case "TaskPriority":
+                case "priority":
                     task.TaskPriority = int.Parse(newValue);
                     break;
                 default:
@@ -908,18 +908,18 @@ namespace OMT.DataService.Service
         // Helper method to get the alias name of a task field dynamically
         private static string GetTaskAliasFieldname(string fieldName)
         {
-            return fieldName switch
+            return fieldName.ToLower() switch
             {
-                "TopicProposal" => "The Topic or Proposal had ",
-                "TaskDescription" => "The Task Description had ",
-                "StartDate" => "The Start Date had ",
-                "TargetClosureDate" => "The Target Closure Date had ",
-                "TaskStatus" => "The Task Status had ",
-                "PrimaryContact" => "The Task Primary Contact had ",
-                "RequestedBy" => "The Task Requested Name had ",
-                "ApprovalFrom" => "The Task Approver had ",
-                "Remarks" => "The Remarks had ",
-                "TaskPriority" => "The Task Priority had ",
+                "topicproposal" => "The Topic or Proposal had ",
+                "taskdescription" => "The Task Description had ",
+                "startdate" => "The Start Date had ",
+                "targetclosuredate" => "The Target Closure Date had ",
+                "status" => "The Task Status had ",
+                "primarycontact" => "The Task Primary Contact had ",
+                "requestedby" => "The Task Requested Name had ",
+                "approvalfrom" => "The Task Approver had ",
+                "remarks" => "The Remarks had ",
+                "priority" => "The Task Priority had ",
                 _ => string.Empty
             };
         }
