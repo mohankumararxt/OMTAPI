@@ -3238,3 +3238,51 @@
 --insert into DefaultTemplateColumns values (2,'TimeTaken','Time',1,0,0,0,0)
 --insert into DefaultTemplateColumns values (3,'TimeTaken','Time',1,0,0,0,0)
 
+----------------------------------invoice changes------------------------------
+--drop table Workflowstatus
+
+
+--CREATE TABLE [dbo].[WorkFlowStatus](
+--WorkFlowStatusId int IDENTITY(1,1) NOT NULL,
+--SkillSetId INT NOT NULL,
+--ProcessType NVARCHAR(100) NOT NULL,
+--IsProjectIdUsed BIT NOT NULL,
+--ProjectId NVARCHAR(100) NOT NULL,
+--IsWsDefault BIT NOT NULL,
+--WorkFlowStatus  NVARCHAR(100)
+
+--)
+
+
+
+--insert into Workflowstatus values
+--(1,'LR_1st_Key',0,'',0,''),
+--(1,'LR_BANA_1st_Key',1,'BA8050117IM',0,''),
+--(3,'LR_Verification',0,'',0,''),
+--(3,'LR_BANA_Verification',1,'BA8050117IM',0,''),
+--(77,'AOM_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
+--(78,'LR_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
+--(78,'LR_BANA_Doc_Prep_Verification',1,'BA8050117IM',1,'BANA Doc Prep Verification'),
+--(673,'LR_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
+--(673,'LR_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
+--(674,'AOM_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
+--(692,'LR_No Verification',0,'',1,'LR_No Verification'),
+--(693,'Collateral_File_Review',0,'',1,'Collateral_File_Review'),
+--(694,'LR_BANA_1st_Key',0,'',1,'Not Keyed'),
+--(695,'LR_BANA_1st_Key Verification',0,'',1,'Not Keyed'),
+--(696,'LR_BANA_1st_Key',0,'',1,'Not Keyed'),
+--(697,'LR_BANA_1st_Key_Verification',0,'',1,'Not Keyed')
+
+
+--ALTER TABLE InvoiceJointSci
+--ADD CONSTRAINT PK_InvoiceJointSci UNIQUE (SkillSetId);
+
+--ALTER TABLE WorkFlowStatus
+--ADD CONSTRAINT fk_WorkFlowStatus_Ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+
+--ALTER TABLE InvoiceDump
+--ADD InvoiceSkillsetName NVARCHAR(100)
+
