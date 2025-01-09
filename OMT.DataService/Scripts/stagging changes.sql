@@ -3099,6 +3099,9 @@
 --);
 
 --ALTER TABLE Order_History
+--ALTER COLUMN ProjectId VARCHAR(15) NULL;
+
+--ALTER TABLE Order_History
 --ADD CONSTRAINT fk_Order_History_ss
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
