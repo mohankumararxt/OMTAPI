@@ -10,5 +10,9 @@ namespace OMT.DTO
     {
         public string AssignedOrder { get; set; }
         public bool IsTiqe { get; set; }
+
+        public bool IsTrdPending { get; set; }
     }
+
+   
 }
