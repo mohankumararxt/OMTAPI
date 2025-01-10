@@ -3261,17 +3261,20 @@
 --(3,'LR_Verification',0,'',0,''),
 --(3,'LR_BANA_Verification',1,'BA8050117IM',0,''),
 --(77,'AOM_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
+--(77,'AOM_BANA_Doc_Prep_Verification',1,'BA8050117IM',1,'BANA Doc Prep Verification'),
 --(78,'LR_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
 --(78,'LR_BANA_Doc_Prep_Verification',1,'BA8050117IM',1,'BANA Doc Prep Verification'),
 --(673,'LR_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
 --(673,'LR_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
 --(674,'AOM_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
---(692,'LR_No Verification',0,'',1,'LR_No Verification'),
---(693,'Collateral_File_Review',0,'',1,'Collateral_File_Review'),
---(694,'LR_BANA_1st_Key',0,'',1,'Not Keyed'),
---(695,'LR_BANA_1st_Key Verification',0,'',1,'Not Keyed'),
---(696,'LR_BANA_1st_Key',0,'',1,'Not Keyed'),
---(697,'LR_BANA_1st_Key_Verification',0,'',1,'Not Keyed')
+--(674,'AOM_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
+--(692,'LR_No Verification',1,'BA8050117IM',1,'LR_No Verification'),
+--(693,'Collateral_File_Review',1,'BA8050117IM',1,'Collateral_File_Review'),
+--(694,'LR_BANA_1st_Key',1,'BA8050117IM',1,'Not Keyed'),
+--(695,'LR_BANA_1st_Key Verification',1,'BA8050117IM',1,'Not Keyed'),
+--(696,'LR_BANA_1st_Key',1,'BA8050117IM',1,'Not Keyed'),
+--(697,'LR_BANA_1st_Key_Verification',1,'BA8050117IM',1,'Not Keyed')
+
 
 
 --ALTER TABLE InvoiceJointSci
