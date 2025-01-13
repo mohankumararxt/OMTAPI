@@ -18,7 +18,7 @@ namespace OMT.DataAccess.Entities
         public string CostCenter { get; set; }
         public string ProcessType { get; set; }
         public string SourceType { get; set; }
-        public string Customer { get; set; }    
+        public string Customer { get; set; }
         public string Business { get; set; }
         public string Workflowstatus { get; set; }
         public string TotalOrderFees { get; set; }
@@ -29,8 +29,7 @@ namespace OMT.DataAccess.Entities
         public string CertifiedCopyFees { get; set; }
         public DateTime UpdatedDate { get; set; }
         public DateTime InvoiceDeleteDate { get; set; }
-
-
+        public string InvoiceSkillsetName { get; set; }
 
     }
 }

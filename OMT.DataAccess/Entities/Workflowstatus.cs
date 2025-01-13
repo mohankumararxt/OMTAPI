@@ -6,9 +6,13 @@ namespace OMT.DataAccess.Entities
     {
         [Key]
         public int WorkflowstatusId { get; set; }
-        public string WorkflowstatusName { get; set;}
-        public string WorkflowstatusAlias { get; set; }
-        public bool IsActive { get; set; }
+        public int SkillSetId { get; set; }
+        public string ProcessType { get; set; }
+        public bool IsProjectIdUsed { get; set; }
+        public string ProjectId { get; set; }
+        public bool IsWsDefault { get; set; }
+        public string WorkFlowStatus { get; set; }
+
     }
 }
     
