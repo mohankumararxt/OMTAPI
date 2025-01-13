@@ -3268,8 +3268,8 @@
 --(673,'LR_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
 --(674,'AOM_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
 --(674,'AOM_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
---(692,'LR_No Verification',1,'BA8050117IM',1,'LR_No Verification'),
---(693,'Collateral_File_Review',1,'BA8050117IM',1,'Collateral_File_Review'),
+--(692,'LR_No Verification',0,'',1,'LR_No Verification'),
+--(693,'Collateral_File_Review',0,'',1,'Collateral_File_Review'),
 --(694,'LR_BANA_1st_Key',1,'BA8050117IM',1,'Not Keyed'),
 --(695,'LR_BANA_1st_Key Verification',1,'BA8050117IM',1,'Not Keyed'),
 --(696,'LR_BANA_1st_Key',1,'BA8050117IM',1,'Not Keyed'),
@@ -3289,3 +3289,6 @@
 --ALTER TABLE InvoiceDump
 --ADD InvoiceSkillsetName NVARCHAR(100)
 
+
+--ALTER TABLE InvoiceDumpDeletedRecords
+--ADD InvoiceSkillsetName NVARCHAR(100)
