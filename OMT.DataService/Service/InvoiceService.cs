@@ -45,7 +45,7 @@ namespace OMT.DataService.Service
                                                                               .OrderBy(x => x.CompletionDate)
                                                                               .Select(_ => new SciInvoiceDTO()
                                                                               {
-                                                                                  SkillSet = _.SkillSet,
+                                                                                  SkillSet = _.InvoiceSkillsetName,
                                                                                   SystemOfRecord = _.SystemOfRecord,
                                                                                   OrderId = _.OrderId,
                                                                                   ProjectId = _.ProjectId,
@@ -100,7 +100,7 @@ namespace OMT.DataService.Service
                                                                               .OrderBy(x => x.CompletionDate)
                                                                               .Select(_ => new ReswareInvoiceDTO()
                                                                               {
-                                                                                  SkillSet = _.SkillSet,
+                                                                                  SkillSet = _.InvoiceSkillsetName,
                                                                                   SystemOfRecord = _.SystemOfRecord,
                                                                                   OrderId = _.OrderId,
                                                                                   ProcessType = _.ProcessType,
@@ -193,7 +193,7 @@ namespace OMT.DataService.Service
                             var commonmergerecords = _oMTDataContext.InvoiceDump.Where(x => mergeSkillSetNames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                          && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                          {
-                                                                             _.SkillSet,
+                                                                             _.InvoiceSkillsetName,
                                                                              _.SystemOfRecord,
                                                                              _.OrderId,
                                                                              _.ProcessType,
@@ -220,7 +220,7 @@ namespace OMT.DataService.Service
                             var commoncombrecords = _oMTDataContext.InvoiceDump.Where(x => compareskillsetnames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                           && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                           {
-                                                                              _.SkillSet,
+                                                                              _.InvoiceSkillsetName,
                                                                               _.SystemOfRecord,
                                                                               _.OrderId,
                                                                               _.ProcessType,
@@ -475,7 +475,7 @@ namespace OMT.DataService.Service
                                                                                   .OrderBy(x => x.CompletionDate)
                                                                                   .Select(_ => new SciInvoiceDTO()
                                                                                   {
-                                                                                      SkillSet = _.SkillSet,
+                                                                                      SkillSet = _.InvoiceSkillsetName,
                                                                                       SystemOfRecord = _.SystemOfRecord,
                                                                                       OrderId = _.OrderId,
                                                                                       ProjectId = _.ProjectId,
@@ -501,7 +501,7 @@ namespace OMT.DataService.Service
                                                                                   .OrderBy(x => x.CompletionDate)
                                                                                   .Select(_ => new ReswareInvoiceDTO()
                                                                                   {
-                                                                                      SkillSet = _.SkillSet,
+                                                                                      SkillSet = _.InvoiceSkillsetName,
                                                                                       SystemOfRecord = _.SystemOfRecord,
                                                                                       OrderId = _.OrderId,
                                                                                       ProcessType = _.ProcessType,
@@ -565,7 +565,7 @@ namespace OMT.DataService.Service
                                 var commonmergerecords = _oMTDataContext.InvoiceDump.Where(x => mergeSkillSetNames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                              && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                              {
-                                                                                 _.SkillSet,
+                                                                                 _.InvoiceSkillsetName,
                                                                                  _.SystemOfRecord,
                                                                                  _.OrderId,
                                                                                  _.ProcessType,
@@ -592,7 +592,7 @@ namespace OMT.DataService.Service
                                 var commoncombrecords = _oMTDataContext.InvoiceDump.Where(x => compareskillsetnames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                               && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                               {
-                                                                                  _.SkillSet,
+                                                                                  _.InvoiceSkillsetName,
                                                                                   _.SystemOfRecord,
                                                                                   _.OrderId,
                                                                                   _.ProcessType,
@@ -735,7 +735,7 @@ namespace OMT.DataService.Service
                             resultDTO.StatusCode = "200";
                             resultDTO.Data = invres;
                         }
-                        
+
                     }
                     else if (invscitrd.Count > 0)
                     {
@@ -764,7 +764,7 @@ namespace OMT.DataService.Service
                             resultDTO.StatusCode = "200";
                             resultDTO.Data = invscitrd;
                         }
-                        
+
                     }
                     else if (invres.Count == 0 || invscitrd.Count == 0)
                     {
