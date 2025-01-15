@@ -374,7 +374,8 @@ namespace OMT.DataService.Service
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
-                            IsTiqe = is_tiqe
+                            IsTiqe = is_tiqe,
+                            IsTrdPending = false
                         };
 
                         // Order assigned successfully
@@ -405,7 +406,8 @@ namespace OMT.DataService.Service
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
-                            IsTiqe = is_tiqe
+                            IsTiqe = is_tiqe,
+                            IsTrdPending = false
                         };
 
                         // Order assigned successfully
@@ -528,6 +530,9 @@ namespace OMT.DataService.Service
             {
                 int? ssid = null;
                 string ssname = "";
+                string sorname = "";
+                int? tableid = 0;
+                bool istrd_pending = false;
 
                 //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
                 var jsonArray = JArray.Parse(updatedOrder);
@@ -537,6 +542,8 @@ namespace OMT.DataService.Service
                 {
                     ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
                     ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
+                    sorname = firstItem[ "SystemOfRecordName"] != null ? firstItem["SystemOfRecordName"].ToString() : "";
+                    tableid = firstItem["Id"] != null ? (int)firstItem["Id"] : (int?)null;
                 }
 
                 if (ssid.HasValue)
@@ -547,10 +554,40 @@ namespace OMT.DataService.Service
                         istiqe = true;
                     }
 
+                    else if (sorname == "TRD")
+                    {
+                        var pendingorder_query = $"SELECT IsPending FROM {ssname} where Id = {tableid}";
+
+                        using SqlCommand trd_command = connection.CreateCommand();
+                        trd_command.CommandText = pendingorder_query;
+
+                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                        DataSet trd_dataset = new DataSet();
+
+                        trd_dataAdapter.Fill(trd_dataset);
+
+                        DataTable trd_datatable = trd_dataset.Tables[0];
+
+                        var trd_pnd = trd_datatable.AsEnumerable()
+                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                       column => column.ColumnName,
+                                       column => row[column]));
+
+                        if (trd_pnd.Any())
+                        {
+                            istrd_pending = trd_pnd.Any(record =>
+                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                        }
+
+
+                    }
+
                     gordto = new GetOrderResponseDTO
                     {
                         AssignedOrder = updatedOrder,
-                        IsTiqe = istiqe
+                        IsTiqe = istiqe,
+                        IsTrdPending = istrd_pending
                     };
 
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
@@ -594,7 +631,24 @@ namespace OMT.DataService.Service
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).ToList();
 
+                //check if user has any TRD skillsets to show the getpendingorders button
+
+                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                             select ss.SkillSetName).ToList();
+
+                bool ispending = false;
+
+                if (trdskillsets.Count > 0)
+                {
+                    ispending = true;
+                }
+
                 List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
                 foreach (string tablename in tablenames)
                 {
@@ -674,19 +728,66 @@ namespace OMT.DataService.Service
                 }
                 if (noStatusRecords.Count > 0)
                 {
-                    var orderedRecords = noStatusRecords
-                         .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
-                         .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
-                         .First();
+                    orderedRecords = noStatusRecords
+                                    .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                                    .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                                    .First();
 
                     orderedRecords.Remove("StartTime");
 
                     var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
+                    //check if order is from trd pending
+                    var istrd_pending = false;
+                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                    var tableid = (int)orderedRecords["Id"];
+
+                    var tablename = orderedRecords["SkillSetName"].ToString();
+
+                    if (istrd)
+                    {
+                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
+
+                        using SqlCommand trd_command = connection.CreateCommand();
+                        trd_command.CommandText = pendingorder_query;
+
+                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                        DataSet trd_dataset = new DataSet();
+
+                        trd_dataAdapter.Fill(trd_dataset);
+
+                        DataTable trd_datatable = trd_dataset.Tables[0];
+
+                        var trd_pnd = trd_datatable.AsEnumerable()
+                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                       column => column.ColumnName,
+                                       column => row[column]));
+
+                        if (trd_pnd.Any())
+                        {
+                            istrd_pending = trd_pnd.Any(record =>
+                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                        }
+                    }
+
+                    // check if order is from TIQE 
+
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+
+
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        PendingOrder = dataToReturn,
+                        IsTiqe = istiqe_order,
+                        IsTrdPending = istrd_pending
+                    };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have an order in your queue,please finish this first";
                     resultDTO.StatusCode = "200";
-                    resultDTO.Data = JsonConvert.SerializeObject(dataToReturn);
+                    resultDTO.Data = pendingOrdersResponseDTO;
+
                 }
                 else
                 {
@@ -713,6 +814,7 @@ namespace OMT.DataService.Service
                                                                       HardStateUtilized = goc.HardStateUtilized,
                                                                   }).ToList();
 
+                   // bool IsTrdPending = true;
                     bool iscycle1 = true;
                     var cycle = new List<GetOrderCalculation>();
 
@@ -1039,7 +1141,7 @@ namespace OMT.DataService.Service
                 var editable = false;
                 var completiondate = DateTime.UtcNow;
 
-                string[] ExcludedColumns = { "OrderId", "ProjectId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
+                string[] ExcludedColumns = { "OrderId", "SystemofRecordId", "SkillSetId", "UserId", "Status" };
 
                 string DynamicColumns = string.Empty;
 
@@ -1116,7 +1218,7 @@ namespace OMT.DataService.Service
 
                             DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
 
-                            string ordersql = $@"SELECT OrderId, ProjectId, SystemofRecordId, SkillSetId, UserId, Status,
+                            string ordersql = $@"SELECT OrderId, SystemofRecordId, SkillSetId, UserId, Status,
                                                  (  SELECT {DynamicColumns} FROM {tableName}
                                                  WHERE OrderId = @OrderId and Id = @Id
                                                  FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
@@ -1141,26 +1243,26 @@ namespace OMT.DataService.Service
                                     var oldUserId = row["UserId"];
                                     var oldOrderid = row["OrderId"];
                                     var oldSkillsetid = row["SkillSetId"];
-                                    var oldProjectid = row["ProjectId"];
+                                    //var oldProjectid = orderdetails.Columns.Contains("ProjectId")? row["ProjectId"]: null;
                                     var oldSystemofRecordid = row["SystemofRecordId"];
                                     var oldStatus = row["Status"];
                                     string oldOrderDetails = row["OrderDetailsJson"] as string;
 
                                     // Insert old details into Order_History table   
-                                    string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId, Projectid, SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
-                                                     VALUES (@Skillsetid, @Orderid, @UserId, @Projectid, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
+                                    string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId,  SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
+                                                     VALUES (@Skillsetid, @Orderid, @UserId, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
 
                                     using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
                                     {
                                         insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
                                         insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
                                         insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
-                                        insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid);
+                                       // insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid ?? DBNull.Value);
                                         insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
                                         insertCommand.Parameters.AddWithValue("@Status", oldStatus);
                                         insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
                                         insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
-                                        insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now);
+                                        insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
 
                                         insertCommand.ExecuteNonQuery();
                                     }
