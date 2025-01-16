@@ -1,4 +1,5 @@
-﻿using OMT.DataAccess.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
@@ -145,7 +146,7 @@ namespace OMT.DataService.Service
             {
                 ShiftDetails? shiftDetails = _oMTDataContext.ShiftDetails.Where(x => x.ShiftCodeId == editShiftDetailsDTO.ShiftCodeId && x.IsActive).FirstOrDefault();
 
-                if(shiftDetails != null)
+                if (shiftDetails != null)
                 {
                     shiftDetails.ShiftCode = editShiftDetailsDTO.ShiftCode;
                     shiftDetails.ShiftDays = editShiftDetailsDTO.ShiftDays;
@@ -169,6 +170,216 @@ namespace OMT.DataService.Service
                 }
 
 
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO CreateShiftAssociation(CreateShiftAssociationDTO createShiftAssociationDTO, int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var existingshiftass = _oMTDataContext.ShiftAssociation.Where(x => x.AgentEmployeeId == createShiftAssociationDTO.AgentEmployeeId).FirstOrDefault();
+
+                if (existingshiftass != null)
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Shift association already exists for this agent. Please edit the details";
+                    resultDTO.StatusCode = "404";
+                }
+                else
+                {
+                    ShiftAssociation shiftAssociation = new ShiftAssociation()
+                    {
+                        AgentEmployeeId = createShiftAssociationDTO.AgentEmployeeId,
+                        TlEmployeeId = createShiftAssociationDTO.TlEmployeeId,
+                        PrimarySystemOfRecordId = createShiftAssociationDTO.PrimarySystemOfRecordId,
+                        ShiftCode = createShiftAssociationDTO.ShiftCode,
+                        ShiftDate = createShiftAssociationDTO.ShiftDate,
+                        IsActive = true,
+                        CreatedDate = DateTime.Now,
+                        CreatedBy = userid,
+                        ModifiedDate = DateTime.Now,
+                        ModifiedBy = userid,
+
+                    };
+
+                    _oMTDataContext.ShiftAssociation.Add(shiftAssociation);
+                    _oMTDataContext.SaveChanges();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "ShiftAssociation details created successfully";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetShiftAssociation(GetShiftAssociationDTO getShiftAssociation)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var pagination = getShiftAssociation.Pagination;
+                List<ShiftAssociationResponseDTO> shiftAssociationResponseDTOs = new List<ShiftAssociationResponseDTO>();
+
+                if (getShiftAssociation.AgentEmployeeId == null && getShiftAssociation.TlEmployeeId == null)
+                {
+                    shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
+                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId // Join for Agent Name
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId    // Join for Team Lead Name
+                                                    where sd.IsActive
+                                                          && up1.IsActive
+                                                          && up2.IsActive
+                                                          && EF.Functions.DateDiffDay(sd.ShiftDate, getShiftAssociation.FromDate) >= 0
+                                                          && EF.Functions.DateDiffDay(sd.ShiftDate, getShiftAssociation.ToDate) <= 0
+                                                    orderby sd.ShiftDate
+                                                    select new ShiftAssociationResponseDTO()
+                                                    {
+                                                        ShiftAssociationId = sd.ShiftAssociationId,
+                                                        AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")",
+                                                        TlName = up2.FirstName + " " + up2.LastName + " (" + up2.EmployeeId + ")",
+                                                        ShiftDate = sd.ShiftDate,
+                                                        ShiftCode = sd.ShiftCode,
+                                                    }).ToList();
+                }
+
+                else if (getShiftAssociation.AgentEmployeeId != null && getShiftAssociation.TlEmployeeId != null)
+                {
+
+                }
+
+                else if (getShiftAssociation.AgentEmployeeId != null && getShiftAssociation.TlEmployeeId == null)
+                {
+
+                }
+                else if (getShiftAssociation.AgentEmployeeId == null && getShiftAssociation.TlEmployeeId != null)
+                {
+
+                }
+
+                if (shiftAssociationResponseDTOs.Count > 0)
+                {
+                    if (pagination.IsPagination)
+                    {
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = shiftAssociationResponseDTOs.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = shiftAssociationResponseDTOs.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+
+                        };
+
+                        resultDTO.Data = paginationOutput;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Shift association response has been fetched successfully";
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = shiftAssociationResponseDTOs;
+                        resultDTO.Message = "Shift association response has been fetched successfully";
+                    }
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "List of Shift association Details not found";
+
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO UpdateShiftAssociation(UpdateShiftAssociationDTO updateShiftAssociationDTO,int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                ShiftAssociation? shiftDetails = _oMTDataContext.ShiftAssociation.Where(x => x.ShiftAssociationId == updateShiftAssociationDTO.ShiftAssociationId && x.IsActive).FirstOrDefault();
+
+                if (shiftDetails != null)
+                {
+                    shiftDetails.TlEmployeeId = updateShiftAssociationDTO.TlEmployeeId;
+                    shiftDetails.PrimarySystemOfRecordId = (int)updateShiftAssociationDTO.PrimarySystemOfRecordId;
+                    shiftDetails.ShiftCode = updateShiftAssociationDTO.ShiftCode;
+                    shiftDetails.ModifiedBy = userid;
+                    shiftDetails.ModifiedDate = DateTime.UtcNow;
+
+                    _oMTDataContext.ShiftAssociation.Update(shiftDetails);
+                    _oMTDataContext.SaveChanges();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Shift association Details updated successfully";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Shift association Details not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO DeleteShiftAssociation(int ShiftAssociationId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                ShiftAssociation? shiftDetails = _oMTDataContext.ShiftAssociation.Where(x => x.ShiftAssociationId == ShiftAssociationId && x.IsActive).FirstOrDefault();
+
+                if (shiftDetails != null)
+                {
+                    shiftDetails.IsActive = false;
+
+                    _oMTDataContext.ShiftAssociation.Update(shiftDetails);
+                    _oMTDataContext.SaveChanges();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Shift association Details deleted successfully";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Shift association Details not found";
+                    resultDTO.StatusCode = "404";
+                }
             }
             catch (Exception ex)
             {

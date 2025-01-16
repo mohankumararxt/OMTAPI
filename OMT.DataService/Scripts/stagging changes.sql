@@ -3232,6 +3232,23 @@
  --insert into ShiftDetails values
  --('SH3(G)','09:30','18:30','Monday - Friday',1,'2025-01-06 05:37:35.377','2025-01-06 05:37:35.377',10,10)
 
+
+-- CREATE TABLE ShiftAssociation (
+--ShiftAssociationId INT PRIMARY KEY IDENTITY(1,1),
+--AgentEmployeeId NVARCHAR(200) NOT NULL,
+--TlEmployeeId NVARCHAR(200) NOT NULL,
+--PrimarySystemOfRecordId INT NOT NULL,
+--ShiftCode NVARCHAR(200) NOT NULL,
+--ShiftDate  DateTime NOT NULL,
+--IsActive Bit NOT NULL,
+--CreatedDate DateTime NOT NULL,
+--ModifiedDate DateTime NOT NULL,
+--CreatedBy INT NOT NULL,
+--ModifiedBy INT NOT NULL
+
+--);
+
+
 -------timetaken------------
  
 --ALTER TABLE LR_1ST_KEY

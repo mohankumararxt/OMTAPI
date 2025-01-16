@@ -23,7 +23,7 @@ namespace OMT.APIHost.Controllers
         public ResultDTO CreateShiftDetails(ShiftDetailsDTO shiftDetailsDTO)
         {
             var userid = UserId;
-            return _shiftDetailsService.CreateShiftDetails(shiftDetailsDTO,userid);
+            return _shiftDetailsService.CreateShiftDetails(shiftDetailsDTO, userid);
         }
 
         [HttpGet]
@@ -48,8 +48,40 @@ namespace OMT.APIHost.Controllers
         public ResultDTO UpdateShiftDetails(EditShiftDetailsDTO editShiftDetailsDTO)
         {
             var userid = UserId;
-            return _shiftDetailsService.UpdateShiftDetails(editShiftDetailsDTO,userid);
+            return _shiftDetailsService.UpdateShiftDetails(editShiftDetailsDTO, userid);
         }
 
+        [HttpPost]
+        [Route("CreateShiftAssociation")]
+        public ResultDTO CreateShiftAssociation(CreateShiftAssociationDTO createShiftAssociationDTO)
+        {
+            var userid = UserId;
+            return _shiftDetailsService.CreateShiftAssociation(createShiftAssociationDTO,userid);
+        }
+
+        [HttpPost]
+        [Route("GetShiftAssociation")]
+
+        public ResultDTO GetShiftAssociation(GetShiftAssociationDTO getShiftAssociation)
+        {
+            return _shiftDetailsService.GetShiftAssociation(getShiftAssociation);
+        }
+
+        [HttpPut]
+        [Route("UpdateShiftAssociation")]
+
+        public ResultDTO UpdateShiftAssociation(UpdateShiftAssociationDTO updateShiftAssociationDTO)
+        {
+            var userid = UserId;
+            return _shiftDetailsService.UpdateShiftAssociation(updateShiftAssociationDTO,userid);
+        }
+
+        [HttpDelete]
+        [Route("DeleteShiftAssociation/{ShiftAssociationId:int}")]
+
+        public ResultDTO DeleteShiftAssociation(int ShiftAssociationId)
+        {
+            return _shiftDetailsService.DeleteShiftAssociation(ShiftAssociationId);
+        }
     }
 }
