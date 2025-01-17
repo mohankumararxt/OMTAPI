@@ -51,6 +51,19 @@ namespace OMT.DataAccess.Context
         public DbSet<InterviewTests> InterviewTests { get; set; }
         public DbSet<UserTest> UserTest { get; set; }
 
+        public DbSet<BroadCastAnnouncement> BroadCastAnnouncement { get; set; }
+
+        public DbSet<Notification> Notification { get; set; }
+        public DbSet<Tasks> Tasks { get; set; }
+        public DbSet<TaskHistory> TaskHistory { get; set; }
+        public DbSet<TasksStatus> TasksStatus { get; set; }
+        public DbSet<TaskPriority> TaskPriority { get; set; }
+        public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
+
+        public DbSet<Message> Message { get; set; }
+        public DbSet<MessagesStatus> MessagesStatus { get; set; }
+
+
         public override int SaveChanges()
         {
             return base.SaveChanges();
@@ -113,6 +126,42 @@ namespace OMT.DataAccess.Context
                 .ValueGeneratedOnAdd();
             modelBuilder.Entity<UserTest>()
                 .Property(p => p.CreateTimestamp) 
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.StartDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.EndDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Notification>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<Message>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Tasks>()
+           .Property(t => t.Id)
+           .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskHistory>()
+                .Property(th => th.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TasksStatus>()
+                .Property(ts => ts.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskPriority>()
+                .Property(tp => tp.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<ActivityFeed>()
+                .Property(af => af.Id)
                 .ValueGeneratedOnAdd();
         }
 

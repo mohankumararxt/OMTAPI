@@ -10,8 +10,9 @@ namespace OMT.APIHost.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-    public class SkillSetController : BaseController
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public class SkillSetController : ControllerBase
+
     {
         private readonly ISkillSetService _skillsetService;
         public SkillSetController(ISkillSetService skillsetService)

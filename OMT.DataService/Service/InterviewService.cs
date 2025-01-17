@@ -44,6 +44,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "User already exists. Please try to add different User";
+                    resultDTO.StatusCode = "409";
                 }
                 else
                 {
@@ -51,7 +52,7 @@ namespace OMT.DataService.Service
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
-                        resultDTO.StatusCode = "500";
+                        resultDTO.StatusCode = "400";
                     }
                     else 
                     {
@@ -86,11 +87,32 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "User Inserted Successfully";
                         var userId = newUser.Id;
-                        int randomTestId = _oMTDataContext.Tests
-                                .Where(t => t.IsSample) // Filter where IsSample is false
+                        int randomTestId = 0;
+                        if (newUser.Experience < 12)
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 1) // Filter where IsSample is true and DifficultyLevel is 0
                                 .OrderBy(t => Guid.NewGuid()) // Randomize the order
                                 .Select(t => t.Id) // Select only the Id
-                                .First(); // Take the first Id or default if no match
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+                        else if (newUser.Experience > 12 && newUser.Experience < 36)
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 2) // Filter where IsSample is true and DifficultyLevel is 1
+                                .OrderBy(t => Guid.NewGuid()) // Randomize the order
+                                .Select(t => t.Id) // Select only the Id
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+                        else
+                        {
+                             randomTestId = _oMTDataContext.Tests
+                                .Where(t => t.IsSample && t.DifficultyLevel == 3) // Filter where IsSample is true and DifficultyLevel is 2
+                                .OrderBy(t => Guid.NewGuid()) // Randomize the order
+                                .Select(t => t.Id) // Select only the Id
+                                .FirstOrDefault(); // Take the first Id or default if no match
+                        }
+
 
 
                         // Map DTO to entity and insert into the database
@@ -105,7 +127,7 @@ namespace OMT.DataService.Service
                         _oMTDataContext?.InterviewTests.Add(interviewTest);
 
                         // Save changes to the database
-                        _oMTDataContext?.SaveChanges();
+                        _oMTDataContext.SaveChanges();
                         int interviewtestid = interviewTest.Id;
 
                         var result = from itest in _oMTDataContext.InterviewTests
@@ -129,6 +151,7 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "InterviewTest Inserted Successfully";
                         resultDTO.Data = joinedData;
+                        resultDTO.StatusCode = "201";
                     }
 
                 } 
@@ -164,11 +187,13 @@ namespace OMT.DataService.Service
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Updated Starttime Successfully";
+                    resultDTO.StatusCode = "200";
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Id not found";
+                    resultDTO.StatusCode = "404";
                 }
             }
             catch (Exception ex)
@@ -196,7 +221,7 @@ namespace OMT.DataService.Service
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Please fill all required fields";
-                        resultDTO.StatusCode = "500";
+                        resultDTO.StatusCode = "400";
                     }
                     else
                     {
@@ -208,6 +233,7 @@ namespace OMT.DataService.Service
                         _oMTDataContext.SaveChanges();
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Updated InterviewTests Successfully";
+                        resultDTO.StatusCode = "200";
                     }
 
                 }
@@ -215,6 +241,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "data not found";
+                    resultDTO.StatusCode = "404";
                 }
             }
             catch (Exception ex)
@@ -248,8 +275,8 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserInterviews
                                  on itest.UserId equals user.Id
-                                 where itest.CreateTimestamp.Date >= subday
-                                 orderby itest.CreateTimestamp descending
+                                 where (itest.EndTime >= subday.Date || itest.CreateTimestamp >= subday.Date) && itest.EndTime != null  && itest.StartTime != null
+                                 orderby itest.CreateTimestamp.Date descending
                                  select new LeaderboardDTO()
                                  {
                                      username = user.Firstname + " " + user.Lastname,
@@ -259,7 +286,8 @@ namespace OMT.DataService.Service
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy.HasValue ? Convert.ToDouble(itest.Accuracy.Value) : 0f, // Handling nullable
                                      duration = test.Duration,
-                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp) // Convert to DateOnly
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp), // Convert to DateOnly
+                                     completiondate = itest.EndTime != null ? DateOnly.FromDateTime(itest.EndTime ?? DateTime.Now) : null
                                  };
 
 
@@ -270,11 +298,13 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Leaderboard fetch successfully...";
                         resultDTO.Data = joinedData;
+                    resultDTO.StatusCode = "200";
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Invalid number of days please check again...";
+                    resultDTO.StatusCode = "400";
                 }
 
 
@@ -290,6 +320,9 @@ namespace OMT.DataService.Service
             // Return the result DTO
             return resultDTO;
         }
+
+
+        
 
     }
 }
