@@ -12,6 +12,6 @@ namespace OMT.DTO
         public string AgentName { get; set; }
         public string TlName{ get; set; }
         public string ShiftCode { get; set; }
-        public DateTime ShiftDate { get; set; }
+        public string ShiftDate { get; set; }
     }
 }

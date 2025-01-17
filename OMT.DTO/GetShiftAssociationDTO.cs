@@ -8,8 +8,8 @@ namespace OMT.DTO
 {
     public class GetShiftAssociationDTO
     {
-        public int? AgentEmployeeId { get; set; }
-        public int? TlEmployeeId { get; set; }
+        public string? AgentEmployeeId { get; set; }
+        public string? TlEmployeeId { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
         public PaginationInputDTO Pagination { get; set; }

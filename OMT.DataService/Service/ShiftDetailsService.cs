@@ -239,36 +239,84 @@ namespace OMT.DataService.Service
                 if (getShiftAssociation.AgentEmployeeId == null && getShiftAssociation.TlEmployeeId == null)
                 {
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
-                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId // Join for Agent Name
-                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId    // Join for Team Lead Name
+                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId   
                                                     where sd.IsActive
                                                           && up1.IsActive
                                                           && up2.IsActive
-                                                          && EF.Functions.DateDiffDay(sd.ShiftDate, getShiftAssociation.FromDate) >= 0
-                                                          && EF.Functions.DateDiffDay(sd.ShiftDate, getShiftAssociation.ToDate) <= 0
-                                                    orderby sd.ShiftDate
+                                                          && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date 
+                                                          && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
+                                                    orderby up1.EmployeeId ,sd.ShiftDate
                                                     select new ShiftAssociationResponseDTO()
                                                     {
                                                         ShiftAssociationId = sd.ShiftAssociationId,
                                                         AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")",
                                                         TlName = up2.FirstName + " " + up2.LastName + " (" + up2.EmployeeId + ")",
-                                                        ShiftDate = sd.ShiftDate,
+                                                        ShiftDate = sd.ShiftDate.ToString("MM/dd/yyyy"),
                                                         ShiftCode = sd.ShiftCode,
                                                     }).ToList();
                 }
 
                 else if (getShiftAssociation.AgentEmployeeId != null && getShiftAssociation.TlEmployeeId != null)
                 {
-
+                    shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
+                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    where sd.IsActive
+                                                          && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId 
+                                                          && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
+                                                          && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
+                                                          && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
+                                                    orderby up1.EmployeeId, sd.ShiftDate
+                                                    select new ShiftAssociationResponseDTO()
+                                                    {
+                                                        ShiftAssociationId = sd.ShiftAssociationId,
+                                                        AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")",
+                                                        TlName = up2.FirstName + " " + up2.LastName + " (" + up2.EmployeeId + ")",
+                                                        ShiftDate = sd.ShiftDate.ToString("MM/dd/yyyy"),
+                                                        ShiftCode = sd.ShiftCode,
+                                                    }).ToList();
                 }
 
                 else if (getShiftAssociation.AgentEmployeeId != null && getShiftAssociation.TlEmployeeId == null)
                 {
-
+                    shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
+                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    where sd.IsActive
+                                                          && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId
+                                                          && up2.IsActive 
+                                                          && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
+                                                          && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
+                                                    orderby up1.EmployeeId, sd.ShiftDate
+                                                    select new ShiftAssociationResponseDTO()
+                                                    {
+                                                        ShiftAssociationId = sd.ShiftAssociationId,
+                                                        AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")",
+                                                        TlName = up2.FirstName + " " + up2.LastName + " (" + up2.EmployeeId + ")",
+                                                        ShiftDate = sd.ShiftDate.ToString("MM/dd/yyyy"),
+                                                        ShiftCode = sd.ShiftCode,
+                                                    }).ToList();
                 }
                 else if (getShiftAssociation.AgentEmployeeId == null && getShiftAssociation.TlEmployeeId != null)
                 {
-
+                    shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
+                                                    join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    where sd.IsActive
+                                                          && up1.IsActive 
+                                                          && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
+                                                          && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
+                                                          && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
+                                                    orderby up1.EmployeeId, sd.ShiftDate
+                                                    select new ShiftAssociationResponseDTO()
+                                                    {
+                                                        ShiftAssociationId = sd.ShiftAssociationId,
+                                                        AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")",
+                                                        TlName = up2.FirstName + " " + up2.LastName + " (" + up2.EmployeeId + ")",
+                                                        ShiftDate = sd.ShiftDate.ToString("MM/dd/yyyy"),
+                                                        ShiftCode = sd.ShiftCode,
+                                                    }).ToList();
                 }
 
                 if (shiftAssociationResponseDTOs.Count > 0)
@@ -380,6 +428,22 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "Shift association Details not found";
                     resultDTO.StatusCode = "404";
                 }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+
             }
             catch (Exception ex)
             {
