@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "yOPuWhusxpg=",
+  "success": true,
+  "projectFilePath": "C:\\OMTprojects\\PendingSciOrders\\PendingSciOrders.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.azure.keyvault.core\\1.0.0\\microsoft.azure.keyvault.core.1.0.0.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.azure.webjobs\\1.1.2\\microsoft.azure.webjobs.1.1.2.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.azure.webjobs.core\\1.1.2\\microsoft.azure.webjobs.core.1.1.2.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.data.edm\\5.8.4\\microsoft.data.edm.5.8.4.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.data.odata\\5.8.4\\microsoft.data.odata.5.8.4.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.data.services.client\\5.8.4\\microsoft.data.services.client.5.8.4.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\microsoft.windowsazure.configurationmanager\\3.2.1\\microsoft.windowsazure.configurationmanager.3.2.1.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\system.spatial\\5.8.4\\system.spatial.5.8.4.nupkg.sha512",
+    "C:\\Users\\sowmi\\.nuget\\packages\\windowsazure.storage\\7.0.0\\windowsazure.storage.7.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -9,6 +9,7 @@ namespace OMT.DTO
     public class SkillSetTimelineResponseDTO
     {
         public int SkillSetId { get; set; }
+        public string SkillSetName { get; set; } 
         public List<ResponseTimelineDetailDTO> HardStateTimelineDetails { get; set; }
 
         public List<ResponseTimelineDetailDTO> NormalStateTimelineDetails { get; set; }

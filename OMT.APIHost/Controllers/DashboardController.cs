@@ -10,6 +10,7 @@ namespace OMT.APIHost.Controllers
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class DashboardController : ControllerBase
+
     {
         private readonly IDashboardService _dashboardService;
 
@@ -24,6 +25,15 @@ namespace OMT.APIHost.Controllers
         public ResultDTO LiveStatusReport(LiveStatusReportDTO liveStatusReportDTO)
         {
             return _dashboardService.LiveStatusReport(liveStatusReportDTO);
+        }
+
+        [HttpPost]
+        [Route("AgentCompletionCount")]
+
+        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO)
+        {
+            var userid = UserId;
+            return _dashboardService.AgentCompletionCount(agentDashDTO,userid);
         }
     }
 }

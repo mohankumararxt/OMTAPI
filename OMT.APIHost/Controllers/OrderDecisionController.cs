@@ -41,5 +41,35 @@ namespace OMT.APIHost.Controllers
         {
             return _orderdecisionservice.GetOrderInfo(orderInfoDTO);
         }
+
+        [HttpPut]
+        [Route("UpdateOrderStatusByTL")]
+        public ResultDTO UpdateOrderStatusByTL([FromBody] UpdateOrderStatusByTLDTO updateOrderStatusByTLDTO)
+        {
+            var userid = UserId;
+            return _orderdecisionservice.UpdateOrderStatusByTL(userid, updateOrderStatusByTLDTO);
+        }
+
+        /* [HttpPost]
+         [Route("GetUnassignedOrderInfo")]
+         public ResultDTO GetUnassignedOrderInfo([FromBody] UnassignedOrderInfoDTO unassignedOrderInfoDTO)
+         {
+             return _orderdecisionservice.GetUnassignedOrderInfo(unassignedOrderInfoDTO);
+         }
+
+         [HttpPut]
+         [Route("UpdateUnassignedOrder")]
+         public ResultDTO UpdateUnassignedOrder([FromBody] UpdateUnassignedOrderDTO updateUnassignedOrderDTO)
+         {
+             var userid = UserId;
+             return _orderdecisionservice.UpdateUnassignedOrder(userid,updateUnassignedOrderDTO);
+         }*/
+
+        //[HttpPost]
+        //[Route("SkillsetOrderdetails")]
+        //public ResultDTO GetSkillsetOrderdetails([FromBody] GetSkillsetOrderdetailsDTO getSkillsetOrderdetailsDTO)
+        //{
+        //    return _orderdecisionservice.GetSkillsetOrderdetails(getSkillsetOrderdetailsDTO);
+        //}
     }
 }

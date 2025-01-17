@@ -113,8 +113,8 @@ namespace OMT.APIHost.Controllers
         [Route("UpdateUserskillset")]
         public ResultDTO UpdateUserSkillSetThWt([FromBody] UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO)
         {
-            ResultDTO result = _userSkillSetService.UpdateUserSkillSetThWt(updateUserSkillSetThWtDTO);
-            return result;
+            ResultDTO resultDTO = _userSkillSetService.UpdateUserSkillSetThWt(updateUserSkillSetThWtDTO);
+            return resultDTO;
         }
     }
 }

@@ -24,5 +24,13 @@ namespace OMT.APIHost.Controllers
         {
             return _processStatusService.GetStatusList(systemofrecordid);
         }
+
+        [HttpGet]
+        [Route("UpdateOrderStatusList/{systemofrecordid:int}")]
+
+        public ResultDTO UpdateOrderStatusList(int systemofrecordid)
+        {
+            return _processStatusService.UpdateOrderStatusList(systemofrecordid);
+        }
     }
 }

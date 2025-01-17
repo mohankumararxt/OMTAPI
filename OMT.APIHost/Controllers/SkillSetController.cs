@@ -12,6 +12,7 @@ namespace OMT.APIHost.Controllers
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class SkillSetController : ControllerBase
+
     {
         private readonly ISkillSetService _skillsetService;
         public SkillSetController(ISkillSetService skillsetService)
@@ -50,7 +51,8 @@ namespace OMT.APIHost.Controllers
         [Route("new")]
         public ResultDTO CreateSkillSet([FromBody] SkillSetCreateDTO skillSetCreateDTO)
         {
-            ResultDTO resultDTO = _skillsetService.CreateSkillSet(skillSetCreateDTO);
+            var userid = UserId;
+            ResultDTO resultDTO = _skillsetService.CreateSkillSet(skillSetCreateDTO,userid);
             return resultDTO;
         }
 
@@ -63,7 +65,8 @@ namespace OMT.APIHost.Controllers
         [Route("delete/{skillsetId:int}")]
         public ResultDTO DeleteSkillSet(int skillsetId)
         {
-            return _skillsetService.DeleteSkillSet(skillsetId);
+            var userid= UserId;
+            return _skillsetService.DeleteSkillSet(skillsetId,userid);
         }
 
         /// <summary>
@@ -75,7 +78,8 @@ namespace OMT.APIHost.Controllers
         [Route("update")]
         public ResultDTO Update([FromBody] SkillSetUpdateDTO skillSetUpdateDTO)
         {
-            return _skillsetService.UpdateSkillSet(skillSetUpdateDTO);
+            var userid = UserId;
+            return _skillsetService.UpdateSkillSet(skillSetUpdateDTO,userid);
         }
 
         [HttpGet]

@@ -3099,6 +3099,9 @@
 --);
 
 --ALTER TABLE Order_History
+--ALTER COLUMN ProjectId VARCHAR(15) NULL;
+
+--ALTER TABLE Order_History
 --ADD CONSTRAINT fk_Order_History_ss
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
@@ -3150,3 +3153,62 @@
 --(1,1,'05:00 PM','Sat'),
 --(3,1,'05:00 PM','Sat'),
 --(78,1,'05:00 PM','Sat')
+--REFERENCES ProcessStatus(Id);
+
+
+----add tldescription,uploadedby,uploadeddate col in all skillset tables
+
+
+--ALTER TABLE LR_1ST_KEY
+--ADD TLDescription nvarchar(200);
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedBy INT;
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedDate datetime;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedBy INT;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedDate datetime;
+
+--insert into DefaultTemplateColumns values (1,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'TLDescription','nvarchar(200)',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'TLDescription','nvarchar(200)',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'TLDescription','nvarchar(200)',1,0,0,0,0)
+
+
+--insert into ProcessStatus values(1,'System-Pending',1)
+--(78,1,'05:00 PM','Sat')
+
+
+--insert into ProcessStatus values
+--(3,'Not found',0),
+--(1,'System-Pending',1)
+
+-----------------------------------tiqe extra boxes---------------------
+--ALTER TABLE TIQE
+--ADD Number_Of_Documents INT;
+--ALTER TABLE TIQE
+--ADD Number_Of_Manual_Splits INT;
+--(1,'System-Pending',1)
+
+
+----------------------------------------TIQE AND TRD CHANGES----------------------
+--insert into DefaultTemplateColumns values (3,'ImageID','int',1,0,0,0,0)
+
+
+--insert into MasterReportColumns values('Number_Of_Documents'),('Number_Of_Manual_Splits'),('ImageID')
+
+--insert into reportcolumns values 
+--(2,1,173,37,7),
+--(2,1,173,38,8)
+
+--insert into reportcolumns values
+--(3,1,234,39,5)
+
+--alter createtrd details sp
+

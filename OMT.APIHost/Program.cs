@@ -15,6 +15,7 @@ using OMT.DTO;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
 
@@ -120,6 +121,8 @@ builder.Services.AddScoped<IBroadCastAnnouncementService, BroadCastAnnouncementS
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IReportColumnsService, ReportColumnsService>();  
+
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
