@@ -1165,7 +1165,7 @@ namespace OMT.DataService.Service
                             completiondate = (DateTime)detailsrow["CompletionDate"];
                         }
 
-                        if ((completiondate <= endtime || completiondate >= starttime) && DateTime.UtcNow >= endtime)
+                        if ((completiondate <= endtime && completiondate >= starttime) && DateTime.UtcNow >= endtime)
                         {
                             editable = false;
                         }
