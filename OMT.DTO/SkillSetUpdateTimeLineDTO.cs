@@ -18,8 +18,6 @@ namespace OMT.DTO
     {
         public string? HardStateName { get; set; }
         public int ExceedTime { get; set; }
-        public bool IsHardstate { get; set; }
-
     }
 }
 

@@ -10,5 +10,6 @@ namespace OMT.DTO
     {
         public int SkillSetId {  get; set; }
         public string OrderId { get; set; }
+        public int SystemofRecordId { get; set; }  
     }
 }
