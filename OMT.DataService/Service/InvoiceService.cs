@@ -19,6 +19,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                var pagination = getinvoiceDTO.Pagination;
 
                 if (getinvoiceDTO.SkillSetId != null)
                 {
@@ -40,11 +41,11 @@ namespace OMT.DataService.Service
                         {
                             if (getinvoiceDTO.SystemofRecordId == 1 || getinvoiceDTO.SystemofRecordId == 3)
                             {
-                                var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
+                                var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
                                                                               .OrderBy(x => x.CompletionDate)
                                                                               .Select(_ => new SciInvoiceDTO()
                                                                               {
-                                                                                  SkillSet = _.SkillSet,
+                                                                                  SkillSet = _.InvoiceSkillsetName,
                                                                                   SystemOfRecord = _.SystemOfRecord,
                                                                                   OrderId = _.OrderId,
                                                                                   ProjectId = _.ProjectId,
@@ -57,12 +58,34 @@ namespace OMT.DataService.Service
                                                                                   Customer = _.Customer,
                                                                               }).ToList();
 
-                                if (invoiceDump.Count > 0)
+                                if (invoiceDump2.Count > 0)
                                 {
-                                    resultDTO.IsSuccess = true;
-                                    resultDTO.Message = "Invoice details fetched successfully";
-                                    resultDTO.StatusCode = "200";
-                                    resultDTO.Data = invoiceDump;
+                                    if (pagination.IsPagination)
+                                    {
+                                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                                        var paginatedData = invoiceDump2.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                                        var totalRecords = invoiceDump2.Count;
+                                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                                        var paginationOutput = new PaginationOutputDTO
+                                        {
+                                            Records = paginatedData.Cast<object>().ToList(),
+                                            PageNo = pagination.PageNo,
+                                            NoOfPages = totalPages,
+                                            TotalCount = totalRecords,
+                                        };
+
+                                        resultDTO.Data = paginationOutput;
+                                        resultDTO.IsSuccess = true;
+                                        resultDTO.Message = "Invoice details fetched successfully";
+                                    }
+                                    else
+                                    {
+                                        resultDTO.IsSuccess = true;
+                                        resultDTO.Message = "Invoice details fetched successfully";
+                                        resultDTO.StatusCode = "200";
+                                        resultDTO.Data = invoiceDump2;
+                                    }
+
                                 }
                                 else
                                 {
@@ -77,7 +100,7 @@ namespace OMT.DataService.Service
                                                                               .OrderBy(x => x.CompletionDate)
                                                                               .Select(_ => new ReswareInvoiceDTO()
                                                                               {
-                                                                                  SkillSet = _.SkillSet,
+                                                                                  SkillSet = _.InvoiceSkillsetName,
                                                                                   SystemOfRecord = _.SystemOfRecord,
                                                                                   OrderId = _.OrderId,
                                                                                   ProcessType = _.ProcessType,
@@ -98,10 +121,31 @@ namespace OMT.DataService.Service
 
                                 if (invoiceDump2.Count > 0)
                                 {
-                                    resultDTO.IsSuccess = true;
-                                    resultDTO.Message = "Invoice details fetched successfully";
-                                    resultDTO.StatusCode = "200";
-                                    resultDTO.Data = invoiceDump2;
+                                    if (pagination.IsPagination)
+                                    {
+                                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                                        var paginatedData = invoiceDump2.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                                        var totalRecords = invoiceDump2.Count;
+                                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                                        var paginationOutput = new PaginationOutputDTO
+                                        {
+                                            Records = paginatedData.Cast<object>().ToList(),
+                                            PageNo = pagination.PageNo,
+                                            NoOfPages = totalPages,
+                                            TotalCount = totalRecords,
+                                        };
+
+                                        resultDTO.Data = paginationOutput;
+                                        resultDTO.IsSuccess = true;
+                                        resultDTO.Message = "Invoice details fetched successfully";
+                                    }
+                                    else
+                                    {
+                                        resultDTO.IsSuccess = true;
+                                        resultDTO.Message = "Invoice details fetched successfully";
+                                        resultDTO.StatusCode = "200";
+                                        resultDTO.Data = invoiceDump2;
+                                    }
                                 }
                                 else
                                 {
@@ -149,7 +193,7 @@ namespace OMT.DataService.Service
                             var commonmergerecords = _oMTDataContext.InvoiceDump.Where(x => mergeSkillSetNames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                          && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                          {
-                                                                             _.SkillSet,
+                                                                             _.InvoiceSkillsetName,
                                                                              _.SystemOfRecord,
                                                                              _.OrderId,
                                                                              _.ProcessType,
@@ -176,7 +220,7 @@ namespace OMT.DataService.Service
                             var commoncombrecords = _oMTDataContext.InvoiceDump.Where(x => compareskillsetnames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                           && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                           {
-                                                                              _.SkillSet,
+                                                                              _.InvoiceSkillsetName,
                                                                               _.SystemOfRecord,
                                                                               _.OrderId,
                                                                               _.ProcessType,
@@ -235,10 +279,31 @@ namespace OMT.DataService.Service
 
                                     if (invoiceDump2.Count > 0)
                                     {
-                                        resultDTO.IsSuccess = true;
-                                        resultDTO.Message = "Invoice details fetched successfully";
-                                        resultDTO.StatusCode = "200";
-                                        resultDTO.Data = invoiceDump2;
+                                        if (pagination.IsPagination)
+                                        {
+                                            var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                                            var paginatedData = invoiceDump2.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                                            var totalRecords = invoiceDump2.Count;
+                                            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                                            var paginationOutput = new PaginationOutputDTO
+                                            {
+                                                Records = paginatedData.Cast<object>().ToList(),
+                                                PageNo = pagination.PageNo,
+                                                NoOfPages = totalPages,
+                                                TotalCount = totalRecords,
+                                            };
+
+                                            resultDTO.Data = paginationOutput;
+                                            resultDTO.IsSuccess = true;
+                                            resultDTO.Message = "Invoice details fetched successfully";
+                                        }
+                                        else
+                                        {
+                                            resultDTO.IsSuccess = true;
+                                            resultDTO.Message = "Invoice details fetched successfully";
+                                            resultDTO.StatusCode = "200";
+                                            resultDTO.Data = invoiceDump2;
+                                        }
                                     }
                                     else
                                     {
@@ -283,10 +348,31 @@ namespace OMT.DataService.Service
 
                                     if (invoiceDump2.Count > 0)
                                     {
-                                        resultDTO.IsSuccess = true;
-                                        resultDTO.Message = "Invoice details fetched successfully";
-                                        resultDTO.StatusCode = "200";
-                                        resultDTO.Data = invoiceDump2;
+                                        if (pagination.IsPagination)
+                                        {
+                                            var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                                            var paginatedData = invoiceDump2.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                                            var totalRecords = invoiceDump2.Count;
+                                            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                                            var paginationOutput = new PaginationOutputDTO
+                                            {
+                                                Records = paginatedData.Cast<object>().ToList(),
+                                                PageNo = pagination.PageNo,
+                                                NoOfPages = totalPages,
+                                                TotalCount = totalRecords,
+                                            };
+
+                                            resultDTO.Data = paginationOutput;
+                                            resultDTO.IsSuccess = true;
+                                            resultDTO.Message = "Invoice details fetched successfully";
+                                        }
+                                        else
+                                        {
+                                            resultDTO.IsSuccess = true;
+                                            resultDTO.Message = "Invoice details fetched successfully";
+                                            resultDTO.StatusCode = "200";
+                                            resultDTO.Data = invoiceDump2;
+                                        }
                                     }
                                     else
                                     {
@@ -385,11 +471,11 @@ namespace OMT.DataService.Service
                             {
                                 if (getinvoiceDTO.SystemofRecordId == 1 || getinvoiceDTO.SystemofRecordId == 3)
                                 {
-                                    var invoiceDump = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
+                                    var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
                                                                                   .OrderBy(x => x.CompletionDate)
                                                                                   .Select(_ => new SciInvoiceDTO()
                                                                                   {
-                                                                                      SkillSet = _.SkillSet,
+                                                                                      SkillSet = _.InvoiceSkillsetName,
                                                                                       SystemOfRecord = _.SystemOfRecord,
                                                                                       OrderId = _.OrderId,
                                                                                       ProjectId = _.ProjectId,
@@ -402,9 +488,9 @@ namespace OMT.DataService.Service
                                                                                       Customer = _.Customer,
                                                                                   }).ToList();
 
-                                    if (invoiceDump.Count > 0)
+                                    if (invoiceDump2.Count > 0)
                                     {
-                                        invscitrd.AddRange(invoiceDump);
+                                        invscitrd.AddRange(invoiceDump2);
 
                                     }
 
@@ -415,7 +501,7 @@ namespace OMT.DataService.Service
                                                                                   .OrderBy(x => x.CompletionDate)
                                                                                   .Select(_ => new ReswareInvoiceDTO()
                                                                                   {
-                                                                                      SkillSet = _.SkillSet,
+                                                                                      SkillSet = _.InvoiceSkillsetName,
                                                                                       SystemOfRecord = _.SystemOfRecord,
                                                                                       OrderId = _.OrderId,
                                                                                       ProcessType = _.ProcessType,
@@ -437,7 +523,7 @@ namespace OMT.DataService.Service
                                     if (invoiceDump2.Count > 0)
                                     {
                                         invres.AddRange(invoiceDump2);
-                                        
+
                                     }
 
                                 }
@@ -479,7 +565,7 @@ namespace OMT.DataService.Service
                                 var commonmergerecords = _oMTDataContext.InvoiceDump.Where(x => mergeSkillSetNames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                              && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                              {
-                                                                                 _.SkillSet,
+                                                                                 _.InvoiceSkillsetName,
                                                                                  _.SystemOfRecord,
                                                                                  _.OrderId,
                                                                                  _.ProcessType,
@@ -506,7 +592,7 @@ namespace OMT.DataService.Service
                                 var commoncombrecords = _oMTDataContext.InvoiceDump.Where(x => compareskillsetnames.Contains(x.SkillSet) && x.SystemOfRecord == systemofrecordname
                                                                               && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date).Select(_ => new
                                                                               {
-                                                                                  _.SkillSet,
+                                                                                  _.InvoiceSkillsetName,
                                                                                   _.SystemOfRecord,
                                                                                   _.OrderId,
                                                                                   _.ProcessType,
@@ -566,9 +652,9 @@ namespace OMT.DataService.Service
                                         if (invoiceDump2.Count > 0)
                                         {
                                             invres.AddRange(invoiceDump2);
-                                            
+
                                         }
-                                        
+
                                     }
                                 }
                                 else if (isinvoiceskillset.OperationType == 2)
@@ -607,9 +693,9 @@ namespace OMT.DataService.Service
                                         if (invoiceDump2.Count > 0)
                                         {
                                             invres.AddRange(invoiceDump2);
-                                            
+
                                         }
-                                        
+
                                     }
 
                                 }
@@ -624,17 +710,61 @@ namespace OMT.DataService.Service
                     }
                     if (invres.Count > 0)
                     {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Invoice details fetched successfully";
-                        resultDTO.StatusCode = "200";
-                        resultDTO.Data = invres;
+                        if (pagination.IsPagination)
+                        {
+                            var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                            var paginatedData = invres.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                            var totalRecords = invres.Count;
+                            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                            var paginationOutput = new PaginationOutputDTO
+                            {
+                                Records = paginatedData.Cast<object>().ToList(),
+                                PageNo = pagination.PageNo,
+                                NoOfPages = totalPages,
+                                TotalCount = totalRecords,
+                            };
+
+                            resultDTO.Data = paginationOutput;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Invoice details fetched successfully";
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Invoice details fetched successfully";
+                            resultDTO.StatusCode = "200";
+                            resultDTO.Data = invres;
+                        }
+
                     }
                     else if (invscitrd.Count > 0)
                     {
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Invoice details fetched successfully";
-                        resultDTO.StatusCode = "200";
-                        resultDTO.Data = invscitrd;
+                        if (pagination.IsPagination)
+                        {
+                            var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                            var paginatedData = invscitrd.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                            var totalRecords = invscitrd.Count;
+                            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+                            var paginationOutput = new PaginationOutputDTO
+                            {
+                                Records = paginatedData.Cast<object>().ToList(),
+                                PageNo = pagination.PageNo,
+                                NoOfPages = totalPages,
+                                TotalCount = totalRecords,
+                            };
+
+                            resultDTO.Data = paginationOutput;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Invoice details fetched successfully";
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Invoice details fetched successfully";
+                            resultDTO.StatusCode = "200";
+                            resultDTO.Data = invscitrd;
+                        }
+
                     }
                     else if (invres.Count == 0 || invscitrd.Count == 0)
                     {

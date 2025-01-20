@@ -12,6 +12,10 @@ namespace OMT.DataService.Interface
     {
         ResultDTO GetOrderForUser(int userid);
         ResultDTO GetTrdPendingOrderForUser(int userid);
-        ResultDTO GetOrderInfo(OrderInfoDTO orderInfoDTO);  
+        ResultDTO GetOrderInfo(OrderInfoDTO orderInfoDTO);
+        ResultDTO UpdateOrderStatusByTL(int userid,UpdateOrderStatusByTLDTO updateOrderStatusByTLDTO);
+        ResultDTO GetUnassignedOrderInfo(UnassignedOrderInfoDTO unassignedOrderInfoDTO);
+        ResultDTO UpdateUnassignedOrder(int userid,UpdateUnassignedOrderDTO updateUnassignedOrderDTO);
+        ResultDTO GetSkillsetOrderdetails(GetSkillsetOrderdetailsDTO getSkillsetOrderdetailsDTO);
     }
 }

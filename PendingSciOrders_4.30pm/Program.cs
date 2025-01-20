@@ -61,7 +61,7 @@ namespace PendingSciOrders_4._30pm
                                             INNER JOIN SciPendingStatusSkillsets SPS ON SPS.SkillSetId = SS.SkillSetId
                                             INNER JOIN ProcessStatus PS ON PS.SystemofRecordId = SS.SystemofRecordId
                                             INNER JOIN TemplateColumns TC ON TC.SkillSetId = SS.SkillSetId
-                                            WHERE SS.isactive = 1 AND PS.Status = 'Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '04.30 PM' AND SPS.Scheduled_Days = 'Mon-Sun'
+                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '04.30 PM' AND SPS.Scheduled_Days = 'Mon-Sun'
                                             ORDER BY SkillSetId";
 
                     SqlCommand GetSkillsets = new SqlCommand(SciSkillsets, connection);
@@ -72,17 +72,20 @@ namespace PendingSciOrders_4._30pm
 
                     DataTable SkillsetDT = skillsetDS.Tables[0];
 
+                    DateTime dateTime = DateTime.Now;
+
                     foreach (DataRow Sciskillset in SkillsetDT.Rows)
                     {
                         int statusid = Convert.ToInt32(Sciskillset["Id"]);
                         string skillsetname = Convert.ToString(Sciskillset["SkillsetName"]);
 
-                        string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid WHERE UserId IS NULL AND Status IS NULL";
+                        string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
 
                         SqlCommand updateToPN = new SqlCommand(updateToPending, connection);
                         updateToPN.CommandType = CommandType.Text;
 
                         updateToPN.Parameters.AddWithValue("@statusid", statusid);
+                        updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
 
                         updateToPN.ExecuteNonQuery();
 

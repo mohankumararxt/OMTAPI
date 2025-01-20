@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace OMT.DTO
 {
-    public class PendingOrdersResponseDTO
+    public class GetOrderResponseDTO
     {
-        public List<Dictionary<string, object>> PendingOrder { get; set; }
-        public bool IsPending { get; set; }
+        public string AssignedOrder { get; set; }
         public bool IsTiqe { get; set; }
+
         public bool IsTrdPending { get; set; }
     }
+
+   
 }

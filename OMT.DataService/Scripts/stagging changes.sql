@@ -3099,6 +3099,9 @@
 --);
 
 --ALTER TABLE Order_History
+--ALTER COLUMN ProjectId VARCHAR(15) NULL;
+
+--ALTER TABLE Order_History
 --ADD CONSTRAINT fk_Order_History_ss
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
@@ -3150,3 +3153,143 @@
 --(1,1,'05:00 PM','Sat'),
 --(3,1,'05:00 PM','Sat'),
 --(78,1,'05:00 PM','Sat')
+--REFERENCES ProcessStatus(Id);
+
+
+----add tldescription,uploadedby,uploadeddate col in all skillset tables
+
+
+--ALTER TABLE LR_1ST_KEY
+--ADD TLDescription nvarchar(200);
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedBy INT;
+--ALTER TABLE LR_1ST_KEY
+--ADD UploadedDate datetime;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedBy INT;
+--ALTER TABLE LR_BANA_Verification
+--ADD UploadedDate datetime;
+
+--insert into DefaultTemplateColumns values (1,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedBy','int',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'UploadedDate','DateTime',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (1,'TLDescription','nvarchar(200)',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'TLDescription','nvarchar(200)',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'TLDescription','nvarchar(200)',1,0,0,0,0)
+
+
+--insert into ProcessStatus values(1,'System-Pending',1)
+--(78,1,'05:00 PM','Sat')
+
+
+--insert into ProcessStatus values
+--(3,'Not found',0),
+--(1,'System-Pending',1)
+
+-----------------------------------tiqe extra boxes---------------------
+--ALTER TABLE TIQE
+--ADD Number_Of_Documents INT;
+--ALTER TABLE TIQE
+--ADD Number_Of_Manual_Splits INT;
+--(1,'System-Pending',1)
+
+
+----------------------------------------TIQE AND TRD CHANGES----------------------
+--insert into DefaultTemplateColumns values (3,'ImageID','int',1,0,0,0,0)
+
+
+--insert into MasterReportColumns values('Number_Of_Documents'),('Number_Of_Manual_Splits'),('ImageID')
+
+--insert into reportcolumns values 
+--(2,1,173,37,7),
+--(2,1,173,38,8)
+
+--insert into reportcolumns values
+--(3,1,234,39,5)
+
+--alter createtrd details sp
+
+----------------------------------invoice changes------------------------------
+--drop table Workflowstatus
+
+
+--CREATE TABLE [dbo].[WorkFlowStatus](
+--WorkFlowStatusId int IDENTITY(1,1) NOT NULL,
+--SkillSetId INT NOT NULL,
+--ProcessType NVARCHAR(100) NOT NULL,
+--IsProjectIdUsed BIT NOT NULL,
+--ProjectId NVARCHAR(100) NOT NULL,
+--IsWsDefault BIT NOT NULL,
+--WorkFlowStatus  NVARCHAR(100)
+
+--)
+
+
+
+--insert into Workflowstatus values
+--(1,'LR_1st_Key',0,'',0,''),
+--(1,'LR_BANA_1st_Key',1,'BA8050117IM',0,''),
+--(3,'LR_Verification',0,'',0,''),
+--(3,'LR_BANA_Verification',1,'BA8050117IM',0,''),
+--(77,'AOM_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
+--(77,'AOM_BANA_Doc_Prep_Verification',1,'BA8050117IM',1,'BANA Doc Prep Verification'),
+--(78,'LR_Doc_Prep_Verification',0,'',1,'Doc Prep Verification'),
+--(78,'LR_BANA_Doc_Prep_Verification',1,'BA8050117IM',1,'BANA Doc Prep Verification'),
+--(673,'LR_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
+--(673,'LR_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
+--(674,'AOM_Recording_Info_Capture',0,'',1,'Recording Info Capture'),
+--(674,'AOM_BANA_Recording_Info_Capture',1,'BA8050117IM',1,'Recording Info Capture'),
+--(692,'LR_No Verification',0,'',1,'LR_No Verification'),
+--(693,'Collateral_File_Review',0,'',1,'Collateral_File_Review'),
+--(694,'LR_BANA_1st_Key',1,'BA8050117IM',1,'Not Keyed'),
+--(695,'LR_BANA_1st_Key Verification',1,'BA8050117IM',1,'Not Keyed')
+
+
+
+--ALTER TABLE InvoiceJointSci
+--ADD CONSTRAINT PK_InvoiceJointSci UNIQUE (SkillSetId);
+
+--ALTER TABLE WorkFlowStatus
+--ADD CONSTRAINT fk_WorkFlowStatus_Ss
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+
+--ALTER TABLE InvoiceDump
+--ADD InvoiceSkillsetName NVARCHAR(100)
+
+--ALTER TABLE InvoiceDumpDeletedRecords
+--ADD InvoiceSkillsetName NVARCHAR(100)
+
+--CREATE TABLE [dbo].[Workflowstatus_TRD](
+--	[WorkflowstatusId] [int] IDENTITY(1,1) NOT NULL,
+--	[CustomerId] [int] NOT NULL,
+--	[WorkflowstatusName] [nvarchar](30) NULL,
+--	[WorkflowstatusAlias] [nvarchar](30) NULL,
+--	[IsActive] [bit] NOT NULL,
+-- CONSTRAINT [PK__Workflow__5AD215BB2C69DD20] PRIMARY KEY CLUSTERED 
+--(
+--	[WorkflowstatusId] ASC
+--)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+--) ON [PRIMARY]
+--GO
+
+
+
+--insert into Workflowstatus_TRD values
+--(2,'Not Keyed','Not Keyed',1),
+--(2,'','Not Keyed',1),
+--(2,'Keyed','Not Keyed',1),
+--(1,'','Not Keyed',1),
+--(1,'Not Keyed','Not Keyed',1),
+--(1,'Keyed','Keyed',1),
+--(1,'Trailing_Doc_Review','Trailing_Doc_Review',1),
+--(1,'NULL','Not Keyed',1),
+--(2,'NULL','Not Keyed',1)
+
+
+
+---------------ALTER ALL 3 INVOICE SP------------

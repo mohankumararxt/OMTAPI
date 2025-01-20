@@ -14,6 +14,7 @@ using OMT.DTO;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
 
@@ -109,6 +110,7 @@ builder.Services.AddScoped<IEmailDetailsService, EmailDetailsService>();
 builder.Services.AddScoped<ISciExceptionService, SciExceptionService>();
 builder.Services.AddScoped<IOrderDecisionService, OrderDecisionService>();
 builder.Services.AddScoped<IUpdateGOCService, UpdateGOCService>();
+builder.Services.AddScoped<IReportColumnsService, ReportColumnsService>();  
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {
