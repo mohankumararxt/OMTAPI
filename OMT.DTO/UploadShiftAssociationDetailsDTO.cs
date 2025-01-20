@@ -8,6 +8,6 @@ namespace OMT.DTO
 {
     public class UploadShiftAssociationDetailsDTO
     {
-
+        public string JsonData { get; set; }
     }
 }

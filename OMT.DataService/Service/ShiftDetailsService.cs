@@ -1,10 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
+using OMT.DataService.Settings;
 using OMT.DTO;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -438,11 +443,60 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO)
+        public ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+
+                var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadShiftAssociationDetailsDTO.JsonData);
+                var records = insertedJsonobject["Records"];
+
+                string uploadedDate = DateTime.UtcNow.ToString("MM-dd-yyyy HH:mm:ss");
+
+                for (int i = 0; i < records.Count; i++)
+                {
+                    // Cast each item to JObject so we can add new properties
+                    var item = records[i] as JObject;
+                    if (item != null)
+                    {
+                        item["CreatedBy"] = userid;
+                        item["CreatedDate"] = uploadedDate;
+                        item["ModifiedBy"] = userid;
+                        item["ModifiedDate"] = uploadedDate;
+                    }
+                }
+
+                string updatedJsonData = JsonConvert.SerializeObject(insertedJsonobject);
+
+                using SqlCommand command = new()
+                {
+                    Connection = connection,
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = "UploadShiftDetails"
+                };
+              
+                command.Parameters.AddWithValue("@jsonData", updatedJsonData);
+
+                SqlParameter returnValue = new()
+                {
+                    ParameterName = "@RETURN_VALUE",
+                    Direction = ParameterDirection.ReturnValue
+                };
+                command.Parameters.Add(returnValue);
+
+                connection.Open();
+                command.ExecuteNonQuery();
+
+                int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                if (returnCode != 1)
+                {
+                    throw new InvalidOperationException("Something went wrong while uploading the shift details,please check the shift details.");
+                }
+
 
             }
             catch (Exception ex)

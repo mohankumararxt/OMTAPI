@@ -84,12 +84,14 @@ namespace OMT.APIHost.Controllers
             return _shiftDetailsService.DeleteShiftAssociation(ShiftAssociationId);
         }
 
-        //[HttpPost]
-        //[Route("UploadShiftAssociationDetails")]
+        [HttpPost]
+        [Route("UploadShiftAssociationDetails")]
 
-        //public ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO)
-        //{
-        //    return _shiftDetailsService.UploadShiftAssociationDetails(uploadShiftAssociationDetailsDTO);
-        //}
+        public ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO)
+        {
+
+            var userid = UserId;
+            return _shiftDetailsService.UploadShiftAssociationDetails(uploadShiftAssociationDetailsDTO,userid);
+        }
     }
 }

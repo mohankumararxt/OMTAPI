@@ -13,6 +13,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetShiftAssociation(GetShiftAssociationDTO getShiftAssociation);
         ResultDTO UpdateShiftAssociation(UpdateShiftAssociationDTO updateShiftAssociationDTO, int userid);
         ResultDTO DeleteShiftAssociation(int ShiftAssociationId);
-        ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO);
+        ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO, int userid);
     }
 }
