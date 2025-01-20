@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using OMT.DataService.Interface;
 using OMT.DTO;
 
@@ -8,7 +9,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class UserTestController : ControllerBase
     {
         private readonly IUserTestService _userTestService;
@@ -50,5 +51,44 @@ namespace OMT.APIHost.Controllers
         {
             return _userTestService.Test(userId);
         }
+
+        [HttpGet]
+        [Route("GetTotalOpenCount")]
+        public ResultDTO GetTotalOpenCount()
+        {
+            return _userTestService.GetTotalOpenCount();
+        }
+
+
+        [HttpGet]
+        [Route("AgentProgressBar")]
+        public ResultDTO AgentProgressBar([FromQuery] string userids, [FromQuery] DateTime startdate, [FromQuery] DateTime enddate)
+        {
+            var userIdList = JsonConvert.DeserializeObject<List<int>>(userids);
+            return _userTestService.AgentProgressBar(userIdList, startdate, enddate);
+        }
+
+        [HttpGet]
+        [Route("GetCountOfTestBasedOnStatus")]
+        public ResultDTO GetCountOfTestBasedOnStatus()
+        {
+            return _userTestService.GetCountOfTestBasedOnStatus();
+        }
+
+        [HttpGet]
+        [Route("GetAgentStatusCount")]
+        public ResultDTO GetAgentStatusCount(int userId)
+        {
+            return _userTestService.GetAgentStatusCount(userId);
+        }
+
+        [HttpGet]
+        [Route("AgentTopFiveProgressBar")]
+        public ResultDTO AgentTopFiveProgressBar(DateTime startdate, DateTime enddate)
+        {
+            return _userTestService.AgentTopFiveProgressBar(startdate, enddate);
+        }
+
+
     }
 }
