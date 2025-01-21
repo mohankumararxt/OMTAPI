@@ -93,5 +93,14 @@ namespace OMT.APIHost.Controllers
             var userid = UserId;
             return _shiftDetailsService.UploadShiftAssociationDetails(uploadShiftAssociationDetailsDTO,userid);
         }
+
+        [HttpGet]
+        [Route("DownloadShiftDetailsTemplate")]
+
+        public ResultDTO DownloadShiftDetailsTemplate()
+        {
+            return _shiftDetailsService.DownloadShiftDetailsTemplate();
+        }
+
     }
 }

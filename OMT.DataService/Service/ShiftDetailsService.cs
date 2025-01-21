@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
@@ -13,6 +14,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace OMT.DataService.Service
 {
@@ -499,6 +501,59 @@ namespace OMT.DataService.Service
 
 
             }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO DownloadShiftDetailsTemplate()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+
+                List<ShiftAssociation> templateList = new List<ShiftAssociation>();
+                var tableName = "ShiftAssociation";
+                var dynamiclist = string.Empty;
+
+                var ExcludedColumns = new List<string>()
+                {
+                    "ShiftAssociationId","IsActive","CreatedDate","ModifiedDate","CreatedBy","ModifiedBy","ShiftCode"
+                };
+
+                string GetDynamicColumnssql = $@"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=@Tablename";
+                using (SqlCommand Colcommand = new SqlCommand(GetDynamicColumnssql, connection))
+                {
+                    Colcommand.Parameters.AddWithValue("@Tablename", tableName);
+                    var Columns = new List<string>();
+
+                    using SqlDataAdapter dataAdapter = new(Colcommand);
+                    DataSet dataset = new DataSet();
+                    dataAdapter.Fill(dataset);
+
+                    if (dataset != null && dataset.Tables.Count > 0 && dataset.Tables[0].Rows.Count > 0)
+                    {
+                        DataTable datatable = dataset.Tables[0];
+
+                        dynamiclist = string.Join(",", datatable.AsEnumerable()
+                                       .Select(row => row["COLUMN_NAME"].ToString())
+                                       .Where(columnName => !ExcludedColumns.Contains(columnName)));
+
+                        resultDTO.Message = "List of Order Details";
+                        resultDTO.IsSuccess = true;
+                    }
+
+                }
+
+                resultDTO.Data = dynamiclist;
+            }
+
             catch (Exception ex)
             {
                 resultDTO.IsSuccess = false;

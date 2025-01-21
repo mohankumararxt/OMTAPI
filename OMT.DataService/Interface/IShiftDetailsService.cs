@@ -14,5 +14,6 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateShiftAssociation(UpdateShiftAssociationDTO updateShiftAssociationDTO, int userid);
         ResultDTO DeleteShiftAssociation(int ShiftAssociationId);
         ResultDTO UploadShiftAssociationDetails(UploadShiftAssociationDetailsDTO uploadShiftAssociationDetailsDTO, int userid);
+        ResultDTO DownloadShiftDetailsTemplate();
     }
 }
