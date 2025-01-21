@@ -9,11 +9,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace OMT.DataService.Service
 {
-    public class UserTestService: IUserTestService
+    public class UserTestService : IUserTestService
     {
         private readonly OMTDataContext _oMTDataContext;
         public UserTestService(OMTDataContext oMTDataContext)
@@ -27,17 +28,17 @@ namespace OMT.DataService.Service
             try
             {
                 var duration = ValidationField.CalculateDuration(createTestAndAssign.text);
-                var existing_test_text = _oMTDataContext.Tests.Where(x=> x.Test_text == createTestAndAssign.text).FirstOrDefault();
+                var existing_test_text = _oMTDataContext.Tests.Where(x => x.Test_text == createTestAndAssign.text).FirstOrDefault();
                 if (existing_test_text == null)
                 {
                     var trimmedString = createTestAndAssign.text.Trim();
-                    
+
 
                     if (!trimmedString.IsNullOrEmpty() && trimmedString.Length > 10)
                     {
-                        
-                        
-                        if (createTestAndAssign.userids.Count()>0 && !createTestAndAssign.userids.Contains(0))
+
+
+                        if (createTestAndAssign.userids.Count() > 0 && !createTestAndAssign.userids.Contains(0))
                         {
                             var newtest = new Tests()
                             {
@@ -84,8 +85,8 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    
-                    var alreadyassignedusers = _oMTDataContext.UserTest.Where(x=>x.TestId == existing_test_text.Id).Select(x => x.UserId).ToList();
+
+                    var alreadyassignedusers = _oMTDataContext.UserTest.Where(x => x.TestId == existing_test_text.Id).Select(x => x.UserId).ToList();
                     if (createTestAndAssign.userids.Count() > 0 && !createTestAndAssign.userids.Contains(0))
                     {
                         var userTest = new List<UserTest>();
@@ -299,7 +300,10 @@ namespace OMT.DataService.Service
                 //string decryptedUserIdString = Encryption.DecryptCipherTextToPlainText(encrytedUserId);
                 //int.TryParse(decryptedUserIdString, out int decryptedUserId);
                 var existingdata = _oMTDataContext?.UserTest
-                            .Where(x => x.UserId == userId &&  x.EndTime == null).FirstOrDefault();
+                            .Where(x => x.UserId == userId && x.EndTime == null).FirstOrDefault();
+                int count = _oMTDataContext?.UserTest
+                    .Where(x => x.UserId == userId && x.EndTime == null)
+                    .Count() ?? 0;
                 if (existingdata != null)
                 {
 
@@ -308,7 +312,7 @@ namespace OMT.DataService.Service
                                  on itest.TestId equals test.Id
                                  join user in _oMTDataContext.UserProfile
                                  on itest.UserId equals user.UserId
-                                 where itest.Id == existingdata.Id 
+                                 where itest.Id == existingdata.Id
                                  orderby itest.CreateTimestamp.Date descending
                                  select new UserTestDTO()
                                  {
@@ -318,8 +322,8 @@ namespace OMT.DataService.Service
                                      wpm = itest.WPM,
                                      accuracy = itest.Accuracy != 0 ? Convert.ToDouble(itest.Accuracy) : 0f,
                                      userTestId = itest.Id,
-                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp)
-                                     
+                                     testdate = DateOnly.FromDateTime(itest.CreateTimestamp),
+                                     pendingCount = count > 0 ? count - 1 : 0
                                  };
 
 
@@ -357,7 +361,7 @@ namespace OMT.DataService.Service
             {
                 // Fetch count of pending assessments (StartTime and EndTime are null)
                 int count = _oMTDataContext?.UserTest
-                    .Where(x =>  x.StartTime == null && x.EndTime == null)
+                    .Where(x => x.StartTime == null && x.EndTime == null)
                     .Count() ?? 0;
 
                 // Return success with the counts in a structured format
@@ -391,7 +395,8 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                if (userids.Count() > 0) {
+                if (userids.Count() > 0)
+                {
                     var result = from user in _oMTDataContext.UserProfile
                                  join itest in _oMTDataContext.UserTest
                                  on user.UserId equals itest.UserId into testGroup
@@ -399,7 +404,7 @@ namespace OMT.DataService.Service
                                  where userids.Contains(user.UserId) &&
                                        ((itest != null && itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date)
                                         || itest == null) // Include records with no matching tests
-                                orderby itest.CreateTimestamp.Date ascending
+                                 orderby itest.CreateTimestamp.Date ascending
                                  select new AgentProgressBarResponseDTO()
                                  {
                                      username = user.FirstName + " " + user.LastName,
@@ -456,13 +461,14 @@ namespace OMT.DataService.Service
                 var result = new
                 {
                     OpenTestsUsers = (from itest in _oMTDataContext.UserTest
-                                          join user in _oMTDataContext.UserProfile
-                                          on itest.UserId equals user.UserId
-                                          where itest.StartTime == null && itest.EndTime == null
-                                          select new
-                                          {
-                                              Username = user.FirstName + " " + user.LastName
-                                          }).Distinct().ToList(),
+                                      join user in _oMTDataContext.UserProfile
+                                      on itest.UserId equals user.UserId
+                                      where itest.EndTime == null
+                                      //&& itest.CreateTimestamp.Month == currentMonth
+                                      select new
+                                      {
+                                          Username = user.FirstName + " " + user.LastName
+                                      }).Distinct().ToList(),
 
                     OpenTestsCount = _oMTDataContext.UserTest
                         .Where(x => (x.StartTime == null || x.EndTime == null) && x.CreateTimestamp.Month == currentMonth)
@@ -554,7 +560,7 @@ namespace OMT.DataService.Service
                                    join itest in _oMTDataContext.UserTest
                                    on user.UserId equals itest.UserId into testGroup
                                    from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                   where itest.EndTime != null &&( itest == null || (itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date))
+                                   where itest.EndTime != null && (itest == null || (itest.EndTime >= startdate.Date && itest.EndTime <= enddate.Date.AddHours(23).AddMinutes(59).AddSeconds(59)))
                                    select new
                                    {
                                        user.UserId,
@@ -565,6 +571,8 @@ namespace OMT.DataService.Service
                                        Accuracy = itest.Accuracy ?? 0f,
                                        //TestDate = itest.CreateTimestamp
                                    }).ToList(); // Execute query on the database
+
+
 
                     // Perform grouping and aggregation on the client side
                     var result = rawData

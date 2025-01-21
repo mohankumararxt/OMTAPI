@@ -20,7 +20,7 @@ namespace OMT.DataService.Interface
 
         ResultDTO AgentProgressBar(List<int> userids, DateTime startdate, DateTime enddate);
 
-         ResultDTO GetCountOfTestBasedOnStatus();
+        ResultDTO GetCountOfTestBasedOnStatus();
         ResultDTO GetAgentStatusCount(int userId);
         ResultDTO AgentTopFiveProgressBar(DateTime startdate, DateTime enddate);
     }
