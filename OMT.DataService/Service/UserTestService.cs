@@ -402,7 +402,7 @@ namespace OMT.DataService.Service
                                  on user.UserId equals itest.UserId into testGroup
                                  from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
                                  where userids.Contains(user.UserId) &&
-                                       ((itest != null && itest.CreateTimestamp.Date >= startdate.Date && itest.CreateTimestamp.Date <= enddate.Date)
+                                       ((itest != null && itest.CreateTimestamp.Date > startdate.Date.AddDays(-1) && itest.CreateTimestamp.Date < enddate.Date.AddDays(1))
                                         || itest == null) // Include records with no matching tests
                                  orderby itest.CreateTimestamp.Date ascending
                                  select new AgentProgressBarResponseDTO()
