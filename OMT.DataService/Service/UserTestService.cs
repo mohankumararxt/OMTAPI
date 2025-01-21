@@ -560,7 +560,7 @@ namespace OMT.DataService.Service
                                    join itest in _oMTDataContext.UserTest
                                    on user.UserId equals itest.UserId into testGroup
                                    from itest in testGroup.DefaultIfEmpty() // Simulates RIGHT JOIN
-                                   where itest.EndTime != null && (itest == null || (itest.EndTime >= startdate.Date && itest.EndTime <= enddate.Date.AddHours(23).AddMinutes(59).AddSeconds(59)))
+                                   where itest.EndTime != null && (itest == null || (itest.CreateTimestamp.Date > startdate.Date.AddDays(-1) && itest.CreateTimestamp.Date < enddate.Date.AddDays(1)))
                                    select new
                                    {
                                        user.UserId,
