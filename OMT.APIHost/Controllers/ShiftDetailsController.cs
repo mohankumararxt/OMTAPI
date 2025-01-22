@@ -94,12 +94,12 @@ namespace OMT.APIHost.Controllers
             return _shiftDetailsService.UploadShiftAssociationDetails(uploadShiftAssociationDetailsDTO,userid);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("DownloadShiftDetailsTemplate")]
 
-        public ResultDTO DownloadShiftDetailsTemplate()
+        public ResultDTO DownloadShiftDetailsTemplate(DownloadShiftDetailsTemplateDTO downloadShiftDetailsTemplateDTO)
         {
-            return _shiftDetailsService.DownloadShiftDetailsTemplate();
+            return _shiftDetailsService.DownloadShiftDetailsTemplate(downloadShiftDetailsTemplateDTO);
         }
 
     }

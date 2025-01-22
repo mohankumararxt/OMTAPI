@@ -510,7 +510,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO DownloadShiftDetailsTemplate()
+        public ResultDTO DownloadShiftDetailsTemplate(DownloadShiftDetailsTemplateDTO downloadShiftDetailsTemplateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -524,7 +524,7 @@ namespace OMT.DataService.Service
 
                 var ExcludedColumns = new List<string>()
                 {
-                    "ShiftAssociationId","IsActive","CreatedDate","ModifiedDate","CreatedBy","ModifiedBy","ShiftCode"
+                    "ShiftAssociationId","IsActive","CreatedDate","ModifiedDate","CreatedBy","ModifiedBy","ShiftCode","ShiftDate"
                 };
 
                 string GetDynamicColumnssql = $@"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=@Tablename";
@@ -550,6 +550,18 @@ namespace OMT.DataService.Service
                     }
 
                 }
+
+                // generate range of dates to be included in excel
+                List<string> dates = new List<string>();
+
+                DateTime fromDate = downloadShiftDetailsTemplateDTO.FromDate;
+                DateTime toDate = downloadShiftDetailsTemplateDTO.ToDate;
+
+                dates = Enumerable.Range(0, (toDate - fromDate).Days + 1)
+                                       .Select(i => fromDate.AddDays(i).ToString("yyyy-MM-dd"))
+                                       .ToList();
+
+                dynamiclist = dynamiclist + "," + string.Join(",", dates.Select(d => d.ToString()));
 
                 resultDTO.Data = dynamiclist;
             }
