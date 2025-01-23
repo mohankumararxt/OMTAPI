@@ -453,26 +453,6 @@ namespace OMT.DataService.Service
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
 
-                var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadShiftAssociationDetailsDTO.JsonData);
-                var records = insertedJsonobject["Records"];
-
-                string uploadedDate = DateTime.UtcNow.ToString("MM-dd-yyyy HH:mm:ss");
-
-                for (int i = 0; i < records.Count; i++)
-                {
-                    // Cast each item to JObject so we can add new properties
-                    var item = records[i] as JObject;
-                    if (item != null)
-                    {
-                        item["CreatedBy"] = userid;
-                        item["CreatedDate"] = uploadedDate;
-                        item["ModifiedBy"] = userid;
-                        item["ModifiedDate"] = uploadedDate;
-                    }
-                }
-
-                string updatedJsonData = JsonConvert.SerializeObject(insertedJsonobject);
-
                 using SqlCommand command = new()
                 {
                     Connection = connection,
@@ -480,7 +460,8 @@ namespace OMT.DataService.Service
                     CommandText = "UploadShiftDetails"
                 };
               
-                command.Parameters.AddWithValue("@jsonData", updatedJsonData);
+                command.Parameters.AddWithValue("@jsonData", uploadShiftAssociationDetailsDTO.JsonData);
+                command.Parameters.AddWithValue("@UserId", userid);
 
                 SqlParameter returnValue = new()
                 {
@@ -496,10 +477,12 @@ namespace OMT.DataService.Service
 
                 if (returnCode != 1)
                 {
-                    throw new InvalidOperationException("Something went wrong while uploading the shift details,please check the shift details.");
+                    throw new InvalidOperationException("Something went wrong while uploading the shift association details,please check the shift details.");
                 }
 
-
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "Shift association details uploaded successfully";
+                resultDTO.StatusCode = "200";
             }
             catch (Exception ex)
             {
