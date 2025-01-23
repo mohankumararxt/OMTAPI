@@ -99,7 +99,7 @@ namespace OMT.DataService.Service
                     {
                         fileUrl = await _azureBlob.UploadFileAsync(_azureSettings.Container, file.FileName, file.OpenReadStream());
                     }
-
+                    var existingUser = _dbContext?.UserProfile.Where(x => x.UserId == notificationDTO.UserId).FirstOrDefault();
                     var notification = new Notification
                     {
                         UserId = notificationDTO.UserId,
@@ -113,7 +113,7 @@ namespace OMT.DataService.Service
                     resultDTO.Data = new
                     {
                         Id = notification.Id,
-                        UserId = notification.UserId,
+                        Username = existingUser.FirstName + " " + existingUser.LastName,
                         NotificationMessage = notification.NotificationMessage,
                         CreateTimeStamp = notification.CreateTimeStamp
                     };
