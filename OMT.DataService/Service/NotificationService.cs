@@ -110,15 +110,16 @@ namespace OMT.DataService.Service
 
                     await _dbContext.Notification.AddAsync(notification);
                     await _dbContext.SaveChangesAsync();
-
-                    resultDTO.Message = "Notification created successfully.";
-                    resultDTO.StatusCode = "201";
                     resultDTO.Data = new
                     {
                         Id = notification.Id,
                         UserId = notification.UserId,
-                        NotificationMessage = notification.NotificationMessage
+                        NotificationMessage = notification.NotificationMessage,
+                        CreateTimeStamp = notification.CreateTimeStamp
                     };
+                    resultDTO.Message = "Notification created successfully.";
+                    resultDTO.StatusCode = "201";
+                    
                 }
             }
             catch (Exception ex)
