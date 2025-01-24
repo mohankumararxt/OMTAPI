@@ -80,7 +80,14 @@ namespace OMT.DataService.Service
                 {
                     IsSuccess = true,
                     StatusCode = "201",
-                    Message = "Message sent successfully."
+                    Message = "Message sent successfully.",
+                    Data = new
+                    {
+                        MessageId = sendMessage.MessageId,
+                        SenderId = sendMessage.SenderId,
+                        ReceiverId = sendMessage.ReceiverId,
+                        ChatMessage = sendMessage.ChatMessage
+                    }
                 };
             }
             catch (Exception ex)
