@@ -155,9 +155,10 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.StatusCode = "404";
-                    resultDTO.Message = "No messages found for the specified user.";
+                    resultDTO.IsSuccess = true;
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Message = "No messages found.";
+                    resultDTO.Data = existingMessages;
                 }
 
             }
