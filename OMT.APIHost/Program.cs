@@ -103,6 +103,7 @@ builder.Services.AddScoped<IOrderDecisionService, OrderDecisionService>();
 builder.Services.AddScoped<IUpdateGOCService, UpdateGOCService>();
 builder.Services.AddScoped<IReportColumnsService, ReportColumnsService>();
 builder.Services.AddScoped<IShiftDetailsService, ShiftDetailsService>();
+builder.Services.AddScoped<IProductivityDashboardService, ProductivityDashboardService>();
 
 builder.Services.AddDbContext<OMTDataContext>(options =>
 {

@@ -3212,76 +3212,7 @@
 
 --alter createtrd details sp
 
-------------------------------------------------------------productivity dashboard -------------------------------
 
---CREATE TABLE ShiftDetails (
---ShiftCodeId INT PRIMARY KEY IDENTITY(1,1),
---ShiftCode NVARCHAR(100) NOT NULL,
---ShiftStartTime Time NOT NULL,
---ShiftEndTime Time NOT NULL,
---ShiftDays NVARCHAR(100) NOT NULL,
---IsActive Bit NOT NULL,
---CreatedDate DateTime NOT NULL,
---ModifiedDate DateTime NOT NULL,
---CreatedBy INT NOT NULL,
---ModifiedBy INT NOT NULL
-
---);
-
---ALTER TABLE ShiftDetails ADD CONSTRAINT UQ_ShiftDetails_ShiftCode UNIQUE (ShiftCode);
-
- --insert into ShiftDetails values
- --('SH3(G)','09:30','18:30','Monday - Friday',1,'2025-01-06 05:37:35.377','2025-01-06 05:37:35.377',10,10)
-
-
--- CREATE TABLE ShiftAssociation (
---ShiftAssociationId INT PRIMARY KEY IDENTITY(1,1),
---AgentEmployeeId NVARCHAR(30) NOT NULL,
---TlEmployeeId NVARCHAR(30) NOT NULL,
---PrimarySystemOfRecordId INT NOT NULL,
---ShiftCode NVARCHAR(100) NOT NULL,
---ShiftDate  DateTime NOT NULL,
---IsActive Bit NOT NULL,
---CreatedDate DateTime NOT NULL,
---ModifiedDate DateTime NOT NULL,
---CreatedBy INT NOT NULL,
---ModifiedBy INT NOT NULL
-
---);
-
---------------add foreign keys------------
-
---ALTER TABLE UserProfile ADD CONSTRAINT UQ_UserProfile_EmployeeId UNIQUE (EmployeeId);
-
-
---ALTER TABLE ShiftAssociation
---ADD CONSTRAINT fk_ShiftAssociation_AgentEmployeeId
---FOREIGN KEY (AgentEmployeeId)
---REFERENCES UserProfile(EmployeeId);
-
---ALTER TABLE ShiftAssociation
---ADD CONSTRAINT fk_ShiftAssociation_TlEmployeeId
---FOREIGN KEY (TlEmployeeId)
---REFERENCES UserProfile(EmployeeId);
-
---ALTER TABLE ShiftAssociation
---ADD CONSTRAINT fk_ShiftAssociation_sor
---FOREIGN KEY (PrimarySystemOfRecordId)
---REFERENCES SystemOfRecord(SystemOfRecordId);
-
---ALTER TABLE ShiftAssociation
---ADD CONSTRAINT fk_ShiftAssociation_ShiftCode
---FOREIGN KEY (ShiftCode)
---REFERENCES ShiftDetails(ShiftCode);
-
--------timetaken------------
- 
---ALTER TABLE LR_1ST_KEY
---ADD TimeTaken Time;
-
---insert into DefaultTemplateColumns values (1,'TimeTaken','Time',1,0,0,0,0)
---insert into DefaultTemplateColumns values (2,'TimeTaken','Time',1,0,0,0,0)
---insert into DefaultTemplateColumns values (3,'TimeTaken','Time',1,0,0,0,0)
 
 ----------------------------------invoice changes------------------------------
 --drop table Workflowstatus
@@ -3418,3 +3349,104 @@
 
 
 ---------------ALTER ALL 3 INVOICE SP------------
+------------------------------------------------------------productivity dashboard -------------------------------
+
+--CREATE TABLE ShiftDetails (
+--ShiftCodeId INT PRIMARY KEY IDENTITY(1,1),
+--ShiftCode NVARCHAR(100) NOT NULL,
+--ShiftStartTime Time NOT NULL,
+--ShiftEndTime Time NOT NULL,
+--ShiftDays NVARCHAR(100) NOT NULL,
+--IsActive Bit NOT NULL,
+--CreatedDate DateTime NOT NULL,
+--ModifiedDate DateTime NOT NULL,
+--CreatedBy INT NOT NULL,
+--ModifiedBy INT NOT NULL
+
+--);
+
+--ALTER TABLE ShiftDetails ADD CONSTRAINT UQ_ShiftDetails_ShiftCode UNIQUE (ShiftCode);
+
+-- insert into ShiftDetails values
+-- ('SH3(G)','09:30','18:30','Monday - Friday',1,'2025-01-06 05:37:35.377','2025-01-06 05:37:35.377',10,10)
+
+
+-- CREATE TABLE ShiftAssociation (
+--ShiftAssociationId INT PRIMARY KEY IDENTITY(1,1),
+--AgentEmployeeId NVARCHAR(30) NOT NULL,
+--TlEmployeeId NVARCHAR(30) NOT NULL,
+--PrimarySystemOfRecordId INT NOT NULL,
+--ShiftCode NVARCHAR(100) NOT NULL,
+--ShiftDate  DateTime NOT NULL,
+--IsActive Bit NOT NULL,
+--CreatedDate DateTime NOT NULL,
+--ModifiedDate DateTime NOT NULL,
+--CreatedBy INT NOT NULL,
+--ModifiedBy INT NOT NULL
+
+--);
+
+--------------add foreign keys------------
+
+--ALTER TABLE UserProfile ADD CONSTRAINT UQ_UserProfile_EmployeeId UNIQUE (EmployeeId);
+
+
+--ALTER TABLE ShiftAssociation
+--ADD CONSTRAINT fk_ShiftAssociation_AgentEmployeeId
+--FOREIGN KEY (AgentEmployeeId)
+--REFERENCES UserProfile(EmployeeId);
+
+--ALTER TABLE ShiftAssociation
+--ADD CONSTRAINT fk_ShiftAssociation_TlEmployeeId
+--FOREIGN KEY (TlEmployeeId)
+--REFERENCES UserProfile(EmployeeId);
+
+--ALTER TABLE ShiftAssociation
+--ADD CONSTRAINT fk_ShiftAssociation_sor
+--FOREIGN KEY (PrimarySystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--ALTER TABLE ShiftAssociation
+--ADD CONSTRAINT fk_ShiftAssociation_ShiftCode
+--FOREIGN KEY (ShiftCode)
+--REFERENCES ShiftDetails(ShiftCode);
+
+-------timetaken------------
+ 
+--ALTER TABLE LR_1ST_KEY
+--ADD TimeTaken Time;
+
+--insert into DefaultTemplateColumns values (1,'TimeTaken','Time',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (2,'TimeTaken','Time',1,0,0,0,0)
+--insert into DefaultTemplateColumns values (3,'TimeTaken','Time',1,0,0,0,0)
+
+
+
+---------Prod_Util----------------
+
+-- CREATE TABLE Prod_Util (
+--Prod_UtilId INT PRIMARY KEY IDENTITY(1,1),
+--AgentUserId INT NOT NULL,
+--Total_Shift_Hours INT NOT NULL,
+--Productive_Hours INT NOT NULL,
+--Cross_Utilized_Hours INT NOT NULL,
+--Productivity_Percentage  INT NOT NULL,
+--Utilization_Percentage INT NOT NULL,
+--CrossUtilization INT NOT NULL,
+--Createddate DateTime NOT NULL
+
+--);
+
+--ALTER TABLE Prod_Util
+--ADD CONSTRAINT fk_Prod_Util_AgentUserId
+--FOREIGN KEY (AgentUserId)
+--REFERENCES UserProfile(UserId);
+
+--insert into Prod_Util values(4,9,7,3,20,77,33,'2025-01-24 06:05:06.438'),
+--(6,9,7.5,1,40,83,11,'2025-01-24 06:05:06.439'),
+--(57,9,6.5,2.5,0,72,27,'2025-01-24 06:05:06.440'),
+--(58,9,7,3.5,0,77,38,'2025-01-24 06:05:06.441')
+
+
+
+
