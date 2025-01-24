@@ -22,6 +22,7 @@ namespace OMT.APIHost.Controllers
 
         [HttpPost]
         [Route("new")]
+
         public ResultDTO CreateUser([FromBody] CreateUserDTO createUserDTO)
         {
             //int userid = this.UserId;
@@ -74,5 +75,14 @@ namespace OMT.APIHost.Controllers
         {
             return _userService.UpdatePasswordByHR(updateUserPasswordDTO);
         }
+
+        [HttpGet]
+        [Route("SocketIoUserList")]
+        [Authorize(AuthenticationSchemes = "BasicAuthentication")]
+        public ResultDTO GetSocketIoUserList()
+        {
+            return _userService.GetSocketIoUserList();
+        }
+
     }
 }

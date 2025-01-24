@@ -329,5 +329,52 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        public ResultDTO GetSocketIoUserList()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                List<UserListResponseDTO> userListResponse = (from up in _oMTDataContext.UserProfile
+                                                              join org in _oMTDataContext.Organization on up.OrganizationId equals org.OrganizationId
+                                                              join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                              where up.IsActive && org.IsActive && r.IsActive
+                                                              orderby up.FirstName
+                                                              select new UserListResponseDTO()
+                                                              {
+                                                                  UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                  UserId = up.UserId,
+                                                                  OrganizationId = org.OrganizationId,
+                                                                  OrganizationName = org.OrganizationName,
+                                                                  FirstName = up.FirstName,
+                                                                  LastName = up.LastName,
+                                                                  Mobile = up.Mobile,
+                                                                  Email = up.Email,
+                                                                  RoleId = r.RoleId,
+                                                                  RoleName = r.RoleName,
+                                                                  EmployeeId = up.EmployeeId,
+                                                              }).ToList();
+
+                if (userListResponse.Count > 0)
+                {
+                    resultDTO.Data = userListResponse;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Users";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "List of Users not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
