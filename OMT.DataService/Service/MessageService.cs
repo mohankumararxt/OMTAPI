@@ -125,6 +125,13 @@ namespace OMT.DataService.Service
                     _oMTDataContext.Message.Update(existingMessage);
                     _oMTDataContext.SaveChanges();
                     resultDTO.IsSuccess = true;
+                    resultDTO.Data = new
+                    {
+                        MessageId = existingMessage.MessageId,
+                        SenderId = existingMessage.SenderId,
+                        ReceiverId = existingMessage.ReceiverId,
+                        MessageStatus = existingMessage.MessageStatus
+                    };
                     resultDTO.Message = $"Messages marked as {status}.";
                     resultDTO.StatusCode = "201";
                 }
