@@ -20,9 +20,25 @@ namespace OMT.APIHost.Controllers
         [HttpPost]
         [Route("GetTeamProductivity")]
 
-        public ResultDTO GetTeamProductivity()
+        public ResultDTO GetTeamProductivity(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
         {
-            return _productivityDashboardService.GetTeamProductivity();
+            return _productivityDashboardService.GetTeamProductivity(getTeamProd_UtilDTO);
+        }
+
+        [HttpPost]
+        [Route("GetTeamUtilization")]
+
+        public ResultDTO GetTeamUtilization(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
+        {
+            return _productivityDashboardService.GetTeamUtilization(getTeamProd_UtilDTO);
+        }
+
+        [HttpPost]
+        [Route("GetTeamProdUtil")]
+
+        public ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
+        {
+            return _productivityDashboardService.GetTeamProdUtil(getTeamProd_UtilDTO);
         }
     }
 }
