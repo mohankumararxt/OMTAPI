@@ -8,8 +8,9 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class DashboardController : BaseController
+
     {
         private readonly IDashboardService _dashboardService;
 

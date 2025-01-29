@@ -18,7 +18,7 @@ namespace OMT.DataAccess.Entities
 
         public int TestId { get; set; }
 
-        public float? Accuracy { get; set; }
+        public double? Accuracy { get; set; }
 
         public int? WPM { get; set; }
 
