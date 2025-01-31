@@ -159,16 +159,7 @@ namespace OMT.DataService.Service
 
             try
             {
-                var validationErrors = await ValidateMessageStatus(messageUpdate.InputMessageStatus);
-                if (!string.IsNullOrEmpty(validationErrors))
-                {
-                    return new ResultDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = "400",
-                        Message = validationErrors
-                    };
-                }
+              
 
                 // Fetch all messages in one query
                 var messagesToUpdate = await _oMTDataContext.Message
