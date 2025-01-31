@@ -42,5 +42,12 @@ namespace OMT.APIHost.Controllers
 
         }
 
+        [HttpGet]
+        [Route("GetUpdateMessageStatus")]
+        public async Task<ResultDTO> GetUpdateMessageStatus(int ReceiverId)
+        {
+            return await _messageService.GetUpdateMessageStatus(ReceiverId);
+        }
+
     }
 }

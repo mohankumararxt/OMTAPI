@@ -14,7 +14,8 @@ namespace OMT.DTO
     }
     public class MessageUpdateDTO
     {
-        public int Id { get; set; }
-        public int Status { get; set; }
+        public List<int> MessageIds {  get; set; }
+        public int InputMessageStatus { get; set; }
+        public int OutputMessageStatus { get; set; }
     }
 }

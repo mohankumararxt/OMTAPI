@@ -101,12 +101,65 @@ namespace OMT.DataService.Service
         }
 
 
-        public async Task<ResultDTO> UpdateMessages( MessageUpdateDTO messageUpdate)
+        //public async Task<ResultDTO> UpdateMessages( MessageUpdateDTO messageUpdate)
+        //{
+        //    var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        var validationErrors = await ValidateMessageStatus(messageUpdate.Status);
+        //        if (!string.IsNullOrEmpty(validationErrors))
+        //        {
+        //            return new ResultDTO
+        //            {
+        //                IsSuccess = false,
+        //                StatusCode = "400",
+        //                Message = validationErrors
+        //            };
+        //        }
+
+        //        var status = _oMTDataContext.MessagesStatus.Where(x => x.Id == messageUpdate.Status).Select(t=> t.MessageStatus).FirstOrDefault();
+        //        var existingMessage = _oMTDataContext.Message.Where(x => x.MessageId == messageUpdate.Id).FirstOrDefault();
+        //        if (existingMessage != null)
+        //        {
+        //            existingMessage.MessageStatus = messageUpdate.Status;
+        //            _oMTDataContext.Message.Update(existingMessage);
+        //            _oMTDataContext.SaveChanges();
+        //            resultDTO.IsSuccess = true;
+        //            resultDTO.Data = new
+        //            {
+        //                MessageId = existingMessage.MessageId,
+        //                SenderId = existingMessage.SenderId,
+        //                ReceiverId = existingMessage.ReceiverId,
+        //                MessageStatus = existingMessage.MessageStatus
+        //            };
+        //            resultDTO.Message = $"Messages marked as {status}.";
+        //            resultDTO.StatusCode = "201";
+        //        }
+        //        else
+        //        {
+        //            resultDTO.IsSuccess = false;
+        //            resultDTO.StatusCode = "404";
+        //            resultDTO.Message = "No messages found";
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = $"An error occurred: {ex.Message}";
+        //    }
+
+        //    return await Task.FromResult(resultDTO);
+        //}
+
+        public async Task<ResultDTO> UpdateMessages(MessageUpdateDTO messageUpdate)
         {
             var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+
             try
             {
-                var validationErrors = await ValidateMessageStatus(messageUpdate.Status);
+                var validationErrors = await ValidateMessageStatus(messageUpdate.InputMessageStatus);
                 if (!string.IsNullOrEmpty(validationErrors))
                 {
                     return new ResultDTO
@@ -117,31 +170,38 @@ namespace OMT.DataService.Service
                     };
                 }
 
-                var status = _oMTDataContext.MessagesStatus.Where(x => x.Id == messageUpdate.Status).Select(t=> t.MessageStatus).FirstOrDefault();
-                var existingMessage = _oMTDataContext.Message.Where(x => x.MessageId == messageUpdate.Id).FirstOrDefault();
-                if (existingMessage != null)
+                // Fetch all messages in one query
+                var messagesToUpdate = await _oMTDataContext.Message
+                    .Where(m => m.MessageStatus == messageUpdate.InputMessageStatus && messageUpdate.MessageIds.Contains(m.MessageId))
+                    .ToListAsync();
+
+                if (messagesToUpdate.Any()) // Check if there are messages to update
                 {
-                    existingMessage.MessageStatus = messageUpdate.Status;
-                    _oMTDataContext.Message.Update(existingMessage);
-                    _oMTDataContext.SaveChanges();
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Data = new
+                    foreach (var message in messagesToUpdate)
                     {
-                        MessageId = existingMessage.MessageId,
-                        SenderId = existingMessage.SenderId,
-                        ReceiverId = existingMessage.ReceiverId,
-                        MessageStatus = existingMessage.MessageStatus
-                    };
-                    resultDTO.Message = $"Messages marked as {status}.";
+                        message.MessageStatus = messageUpdate.OutputMessageStatus; // Update status
+                    }
+
+                    await _oMTDataContext.SaveChangesAsync(); // Save changes in one batch
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = messagesToUpdate.Select(msg => new
+                    {
+                        MessageId = msg.MessageId,
+                        SenderId = msg.SenderId,
+                        ReceiverId = msg.ReceiverId,
+                        MessageStatus = msg.MessageStatus
+                    }).ToList();
+
+                    resultDTO.Message = $"Messages updated to status {messageUpdate.OutputMessageStatus}.";
                     resultDTO.StatusCode = "201";
                 }
                 else
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.StatusCode = "404";
-                    resultDTO.Message = "No messages found";
+                    resultDTO.Message = "No matching messages found for update.";
                 }
-
             }
             catch (Exception ex)
             {
@@ -150,8 +210,10 @@ namespace OMT.DataService.Service
                 resultDTO.Message = $"An error occurred: {ex.Message}";
             }
 
-            return await Task.FromResult(resultDTO);
+            return resultDTO;
         }
+
+
 
         public Task<ResultDTO> GetMessages(int SenderId, int ReceiverId)
         {
@@ -186,6 +248,37 @@ namespace OMT.DataService.Service
             return Task.FromResult(resultDTO);
         }
 
-        
+        public Task<ResultDTO> GetUpdateMessageStatus(int ReceiverId)
+        {
+            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var existingMessages = _oMTDataContext.Message.Where(x => x.ReceiverId == ReceiverId).OrderBy(x => x.CreateTimeStamp).ToList();
+                if (existingMessages.Any())
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Fetched specific receiver's messages status successfully.";
+                    resultDTO.Data = existingMessages;  // Assuming ResultDTO has a Data property to hold the messages
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Message = "No messages found.";
+                    resultDTO.Data = existingMessages;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return Task.FromResult(resultDTO);
+        }
     }
 }
