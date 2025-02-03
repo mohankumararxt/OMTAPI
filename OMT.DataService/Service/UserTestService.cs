@@ -456,7 +456,6 @@ namespace OMT.DataService.Service
             {
 
                 // Get the current month
-                var currentMonth = DateTime.Now.Month;
 
                 var result = new
                 {
@@ -471,13 +470,13 @@ namespace OMT.DataService.Service
                                       }).Distinct().ToList(),
 
                     OpenTestsCount = _oMTDataContext.UserTest
-                        .Where(x => (x.StartTime == null || x.EndTime == null) && x.CreateTimestamp.Month == currentMonth)
+                        .Where(x => (x.StartTime == null || x.EndTime == null) )
                         .Select(x => x.TestId)
                         .Distinct()
                         .Count(),
 
                     CompletedTestsCount = _oMTDataContext.UserTest
-                        .Where(x => x.StartTime != null && x.EndTime != null && x.CreateTimestamp.Month == currentMonth)
+                        .Where(x => x.StartTime != null && x.EndTime != null )
                         .Select(x => x.TestId)
                         .Distinct()
                         .Count()
@@ -508,7 +507,6 @@ namespace OMT.DataService.Service
 
             try
             {
-                var currentMonth = DateTime.Now.Month;
 
                 var result = (from user in _oMTDataContext.UserProfile
                               join itest in _oMTDataContext.UserTest
@@ -518,8 +516,8 @@ namespace OMT.DataService.Service
                               select new
                               {
                                   Username = userGroup.Key.FirstName + " " + userGroup.Key.LastName,
-                                  OpenTestsCount = userGroup.Count(g => (g.itest.StartTime == null || g.itest.EndTime == null) && g.itest.CreateTimestamp.Month == currentMonth),
-                                  CompletedTestsCount = userGroup.Count(g => g.itest.StartTime != null && g.itest.EndTime != null && g.itest.CreateTimestamp.Month == currentMonth)
+                                  OpenTestsCount = userGroup.Count(g => (g.itest.StartTime == null || g.itest.EndTime == null) ),
+                                  CompletedTestsCount = userGroup.Count(g => g.itest.StartTime != null && g.itest.EndTime != null)
                               }).Distinct().ToList();
                 if (result.Count() > 0)
                 {
