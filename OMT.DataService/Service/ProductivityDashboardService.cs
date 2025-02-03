@@ -28,48 +28,55 @@ namespace OMT.DataService.Service
                 // List<GetTeamProd_Util_DatewisedataDTO> datewisedetails = new List<GetTeamProd_Util_DatewisedataDTO>();
 
                 var prod_Util = _oMTDataContext.Prod_Util
-                                                          .Join(_oMTDataContext.TeamAssociation,
-                                                                pu => pu.AgentUserId,
-                                                                ta => ta.UserId,
-                                                                (pu, ta) => new { pu, ta })
-                                                          .Join(_oMTDataContext.UserProfile,
-                                                                pu_ta => pu_ta.pu.AgentUserId,
-                                                                up => up.UserId,
-                                                                (pu_ta, up) => new { pu_ta.pu, pu_ta.ta, up })
-                                                          .Where(data => data.ta.TeamId == getTeamProd_UtilDTO.TeamId
-                                                                      && data.up.IsActive == true
-                                                                      && data.pu.Createddate.Date >= getTeamProd_UtilDTO.FromDate.Date
-                                                                      && data.pu.Createddate.Date <= getTeamProd_UtilDTO.ToDate.Date)
-                                                          .GroupBy(data => new { data.pu.AgentUserId, data.up.FirstName, data.up.LastName })
-                                                          .Select(group => new
-                                                          {
-                                                              AgentId = group.Key.AgentUserId,
-                                                              AgentName = group.Key.FirstName + " " + group.Key.LastName,
-                                                              DatewiseData = group
-                                                                  .GroupBy(g => g.pu.Createddate.Date) // Group by Date
-                                                                  .Select(g => new
-                                                                  {
-                                                                      Date = g.Key,
-                                                                      Productivity = g.Sum(x => x.pu.Productivity_Percentage) // Sum of productivity for that day
-                                                                  })
-                                                                  .OrderBy(d => d.Date)
-                                                                  .ToList(),
-                                                              AverageProductivity = group.Average(g => g.pu.Productivity_Percentage) // Average across all dates for that agent
-                                                          })
-                                                          .ToList()
-                                                          .Select(x => new GetTeamProd_ResponseDTO
-                                                          {
-                                                              AgentName = x.AgentName,
-                                                              DatewiseData = x.DatewiseData
-                                                                  .Select(d => new GetTeamProd_DatewisedataDTO
-                                                                  {
-                                                                      Date = d.Date.ToString("MM-dd-yyyy"),
-                                                                      Productivity = d.Productivity
-                                                                  })
-                                                                  .ToList(),
-                                                              AverageProductivity = (decimal)x.AverageProductivity
-                                                          })
-                                                          .ToList();
+                                                         .Join(_oMTDataContext.TeamAssociation,
+                                                             pu => pu.AgentUserId,
+                                                             ta => ta.UserId,
+                                                             (pu, ta) => new { pu, ta })
+                                                         .Join(_oMTDataContext.UserProfile,
+                                                             pu_ta => pu_ta.pu.AgentUserId,
+                                                             up => up.UserId,
+                                                             (pu_ta, up) => new { pu_ta.pu, pu_ta.ta, up })
+                                                         .Where(data => data.ta.TeamId == getTeamProd_UtilDTO.TeamId
+                                                                     && data.up.IsActive == true
+                                                                     && data.pu.Createddate.Date >= getTeamProd_UtilDTO.FromDate.Date
+                                                                     && data.pu.Createddate.Date <= getTeamProd_UtilDTO.ToDate.Date)
+                                                         .GroupBy(data => new { data.pu.AgentUserId, data.up.FirstName, data.up.LastName })
+                                                         .Select(group => new
+                                                         {
+                                                             AgentId = group.Key.AgentUserId,
+                                                             AgentName = group.Key.FirstName + " " + group.Key.LastName,
+                                                             DatewiseData = group
+                                                                 .GroupBy(g => g.pu.Createddate.Date)
+                                                                 .Select(g => new
+                                                                 {
+                                                                     Date = g.Key,
+                                                                     Productivity = g.Sum(x => x.pu.Productivity_Percentage)
+                                                                 })
+                                                                 .OrderBy(d => d.Date)
+                                                                 .ToList(),
+
+                                                             // Calculate average ignoring 0 productivity values
+                                                             AverageProductivity = Math.Round(
+                                                         group
+                                                             .Where(g => g.pu.Productivity_Percentage > 0)
+                                                             .Select(g => (double?)g.pu.Productivity_Percentage)
+                                                             .Average() ?? 0)
+                                                         })
+                                                         .ToList()
+                                                         .Select(x => new GetTeamProd_ResponseDTO
+                                                         {
+                                                             AgentName = x.AgentName,
+                                                             DatewiseData = x.DatewiseData
+                                                                 .Select(d => new GetTeamProd_DatewisedataDTO
+                                                                 {
+                                                                     Date = d.Date.ToString("MM-dd-yyyy"),
+                                                                     Productivity = d.Productivity
+                                                                 })
+                                                                 .ToList(),
+                                                             AverageProductivity = (decimal)x.AverageProductivity
+                                                         })
+                                                         .ToList();
+
 
 
 
@@ -133,7 +140,15 @@ namespace OMT.DataService.Service
                                                                   })
                                                                   .OrderBy(d => d.Date)
                                                                   .ToList(),
-                                                              AverageUtilization = group.Average(g => g.pu.Utilization_Percentage) // Average across all dates for that agent
+
+                                                              // Calculate average ignoring 0 Utilization values
+                                                              AverageUtilization = Math.Round(
+                                                                                             group
+                                                                                                 .Where(g => g.pu.Utilization_Percentage > 0)
+                                                                                                 .Select(g => (double?)g.pu.Utilization_Percentage)
+                                                                                                 .Average() ?? 0)
+
+
                                                           })
                                                           .ToList()
                                                           .Select(x => new GetTeamUtil_ResponseDTO
