@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace OMT.DataService.Service
 {
@@ -56,11 +57,11 @@ namespace OMT.DataService.Service
                                                                  .ToList(),
 
                                                              // Calculate average ignoring 0 productivity values
-                                                             AverageProductivity = Math.Round(
+                                                             AverageProductivity = (int)Math.Round(
                                                          group
                                                              .Where(g => g.pu.Productivity_Percentage > 0)
-                                                             .Select(g => (double?)g.pu.Productivity_Percentage)
-                                                             .Average() ?? 0)
+                                                             .Select(g => g.pu.Productivity_Percentage)
+                                                             .Average())
                                                          })
                                                          .ToList()
                                                          .Select(x => new GetTeamProd_ResponseDTO
@@ -73,18 +74,20 @@ namespace OMT.DataService.Service
                                                                      Productivity = d.Productivity
                                                                  })
                                                                  .ToList(),
-                                                             AverageProductivity = (decimal)x.AverageProductivity
+                                                             OverallProductivity = x.AverageProductivity
                                                          })
                                                          .ToList();
 
-
-
-
-
-
                 if (prod_Util.Count > 0)
                 {
-                    resultDTO.Data = prod_Util;
+
+                    GetTeamProd_AverageDTO getTeamProd_AverageDTO = new GetTeamProd_AverageDTO();
+
+                    getTeamProd_AverageDTO.TeamProductivity = prod_Util;
+                    getTeamProd_AverageDTO.TotalAverageProductivity = (int)Math.Round(prod_Util.Average(x => x.OverallProductivity));
+
+
+                    resultDTO.Data = getTeamProd_AverageDTO;
                     resultDTO.StatusCode = "200";
                     resultDTO.Message = "Team productivity details fetched successfully";
                 }
@@ -145,8 +148,8 @@ namespace OMT.DataService.Service
                                                               AverageUtilization = Math.Round(
                                                                                              group
                                                                                                  .Where(g => g.pu.Utilization_Percentage > 0)
-                                                                                                 .Select(g => (double?)g.pu.Utilization_Percentage)
-                                                                                                 .Average() ?? 0)
+                                                                                                 .Select(g => g.pu.Utilization_Percentage)
+                                                                                                 .Average())
 
 
                                                           })
@@ -161,14 +164,20 @@ namespace OMT.DataService.Service
                                                                       Utilization = d.Utilization
                                                                   })
                                                                   .ToList(),
-                                                              AverageUtilization = (decimal)x.AverageUtilization
+                                                              OverallUtilization = (int)x.AverageUtilization
                                                           })
                                                           .ToList();
 
 
                 if (prod_Util.Count > 0)
                 {
-                    resultDTO.Data = prod_Util;
+                    GetTeamUtil_AverageDTO getTeamUtil_AverageDTO = new GetTeamUtil_AverageDTO();
+
+                    getTeamUtil_AverageDTO.TeamUtilization = prod_Util;
+                    getTeamUtil_AverageDTO.TotalAverageUtilization = (int)Math.Round(prod_Util.Average(x => x.OverallUtilization));
+
+
+                    resultDTO.Data = getTeamUtil_AverageDTO;
                     resultDTO.StatusCode = "200";
                     resultDTO.Message = "Team productivity details fetched successfully";
                 }
@@ -193,6 +202,55 @@ namespace OMT.DataService.Service
         public ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
         {
             throw new NotImplementedException();
+        }
+
+        public ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var agent_prod = (from pu in _oMTDataContext.Prod_Util
+                                  join up in _oMTDataContext.UserProfile on pu.AgentUserId equals up.UserId
+                                  where up.IsActive && pu.AgentUserId == UserId
+                                   && pu.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pu.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
+                                  group pu by pu.AgentUserId into agentGroup
+                                  select new GetAgentProd_ResponseDTO
+                                  {
+                                      DatewiseData = agentGroup.OrderBy(p => p.Createddate)
+                                                               .Select(p => new GetTeamProd_DatewisedataDTO
+                                                               {
+                                                                   Date = p.Createddate.ToString("MM/dd/yyyy"),
+                                                                   Productivity = p.Productivity_Percentage
+                                                               }).ToList(),
+
+                                      OverallProductivity = agentGroup
+                                                               .Where(p => p.Productivity_Percentage > 0)  // Exclude zero values
+                                                               .Any()
+                                                               ? (int)Math.Round((agentGroup.Where(p => p.Productivity_Percentage > 0).Average(p => p.Productivity_Percentage)))
+                                                               : 0}).ToList();
+
+                if (agent_prod.Count > 0)
+                {
+                    resultDTO.Data = agent_prod;
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Message = "Agent productivity details fetched successfully";
+                }
+
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Agent productivity details not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
         }
     }
 }

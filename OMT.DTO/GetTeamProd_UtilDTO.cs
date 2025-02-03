@@ -13,11 +13,33 @@ namespace OMT.DTO
         public int TeamId { get; set; }
     }
 
+    public class GetTeamProd_AverageDTO
+    {
+        public GetTeamProd_AverageDTO()
+        {
+            TeamProductivity = new List<GetTeamProd_ResponseDTO>();
+        }
+
+        public int TotalAverageProductivity { get; set; }
+        public List<GetTeamProd_ResponseDTO> TeamProductivity { get; set;}
+    }
+
+
+    public class GetTeamUtil_AverageDTO
+    {
+        public GetTeamUtil_AverageDTO()
+        {
+            TeamUtilization = new List<GetTeamUtil_ResponseDTO>();
+        }
+
+        public int TotalAverageUtilization { get; set; }
+        public List<GetTeamUtil_ResponseDTO> TeamUtilization { get; set; }
+    }
     public class GetTeamProd_ResponseDTO
     {
         public string AgentName { get; set; }
         public List<GetTeamProd_DatewisedataDTO> DatewiseData { get; set; }
-        public decimal AverageProductivity { get; set; }
+        public int OverallProductivity { get; set; }
 
     }
 
@@ -31,7 +53,7 @@ namespace OMT.DTO
     {
         public string AgentName { get; set; }
         public List<GetTeamUtil_DatewisedataDTO> DatewiseData { get; set; }
-        public decimal AverageUtilization { get; set; }
+        public int OverallUtilization { get; set; }
 
     }
 

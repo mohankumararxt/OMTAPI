@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class ProductivityDashboardController : ControllerBase
+    public class ProductivityDashboardController : BaseController
     {
         private readonly IProductivityDashboardService _productivityDashboardService;
 
@@ -39,6 +39,15 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
         {
             return _productivityDashboardService.GetTeamProdUtil(getTeamProd_UtilDTO);
+        }
+
+        [HttpPost]
+        [Route("GetAgentProductivity")]
+
+        public ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO)
+        {
+            var userid = this.UserId;
+            return _productivityDashboardService.GetAgentProductivity(getAgentProdUtilDTO,userid);
         }
     }
 }
