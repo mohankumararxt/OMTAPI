@@ -163,7 +163,7 @@ namespace OMT.DataService.Service
 
                 // Fetch all messages in one query
                 var messagesToUpdate = await _oMTDataContext.Message
-                    .Where(m => m.MessageStatus == messageUpdate.InputMessageStatus && messageUpdate.MessageIds.Contains(m.MessageId))
+                    .Where(m =>  messageUpdate.MessageIds.Contains(m.MessageId))
                     .ToListAsync();
 
                 if (messagesToUpdate.Any()) // Check if there are messages to update
