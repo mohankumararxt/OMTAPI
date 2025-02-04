@@ -259,7 +259,7 @@ namespace OMT.DataService.Service
 
             try
             {
-                var agent_prod = (from pu in _oMTDataContext.Prod_Util
+                var agent_util = (from pu in _oMTDataContext.Prod_Util
                                   join up in _oMTDataContext.UserProfile on pu.AgentUserId equals up.UserId
                                   where up.IsActive && pu.AgentUserId == UserId
                                    && pu.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pu.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
@@ -280,9 +280,9 @@ namespace OMT.DataService.Service
                                                                : 0
                                   }).ToList();
 
-                if (agent_prod.Count > 0)
+                if (agent_util.Count > 0)
                 {
-                    resultDTO.Data = agent_prod;
+                    resultDTO.Data = agent_util;
                     resultDTO.StatusCode = "200";
                     resultDTO.Message = "Agent Utilization details fetched successfully";
                 }
