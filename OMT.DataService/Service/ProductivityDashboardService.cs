@@ -252,5 +252,55 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var agent_prod = (from pu in _oMTDataContext.Prod_Util
+                                  join up in _oMTDataContext.UserProfile on pu.AgentUserId equals up.UserId
+                                  where up.IsActive && pu.AgentUserId == UserId
+                                   && pu.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pu.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
+                                  group pu by pu.AgentUserId into agentGroup
+                                  select new GetAgentUtil_ResponseDTO
+                                  {
+                                      DatewiseData = agentGroup.OrderBy(p => p.Createddate)
+                                                               .Select(p => new GetTeamUtil_DatewisedataDTO
+                                                               {
+                                                                   Date = p.Createddate.ToString("MM/dd/yyyy"),
+                                                                  Utilization = p.Utilization_Percentage
+                                                               }).ToList(),
+
+                                      OverallUtilization = agentGroup
+                                                               .Where(p => p.Utilization_Percentage > 0)  // Exclude zero values
+                                                               .Any()
+                                                               ? (int)Math.Round((agentGroup.Where(p => p.Utilization_Percentage > 0).Average(p => p.Utilization_Percentage)))
+                                                               : 0
+                                  }).ToList();
+
+                if (agent_prod.Count > 0)
+                {
+                    resultDTO.Data = agent_prod;
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Message = "Agent Utilization details fetched successfully";
+                }
+
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Agent Utilization details not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }

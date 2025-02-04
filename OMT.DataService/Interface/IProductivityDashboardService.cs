@@ -9,6 +9,7 @@ namespace OMT.DataService.Interface
         ResultDTO GetTeamUtilization(GetTeamProd_UtilDTO getTeamProd_UtilDTO);
         ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO);
         ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO,int UserId);
+        ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId);
 
     }
 }
