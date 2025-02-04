@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class InvoiceJointReswareController : ControllerBase
     {
         private readonly IInvoiceJointReswareService _invoiceJointReswareService;

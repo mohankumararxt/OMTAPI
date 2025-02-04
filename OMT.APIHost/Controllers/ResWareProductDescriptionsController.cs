@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ResWareProductDescriptionsController : ControllerBase
     {
         private readonly IResWareProductDescriptionsService _resWareProductDescriptionsService;

@@ -7,7 +7,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;

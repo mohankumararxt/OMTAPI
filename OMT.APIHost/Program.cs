@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,7 @@ using OMT.DataService.Interface;
 using OMT.DataService.Service;
 using OMT.DataService.Settings;
 using OMT.DataService.Utility;
+using OMT.DTO;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +63,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                      };
                  });
 
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { });
+
+
+
+
 builder.Services.AddControllers();
 builder.Services.AddScoped<IInterviewService, InterviewService>();
 builder.Services.AddScoped<IUserTestService, UserTestService>();
@@ -68,6 +76,7 @@ builder.Services.AddScoped<IUserTestService, UserTestService>();
 builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("AuthSettings"));
 builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
 builder.Services.Configure<EmailDetailsSettings>(builder.Configuration.GetSection("EmailConfig:Common")); //for sending email
+builder.Services.Configure<BasicAuthCredential>(builder.Configuration.GetSection("BasicAuthCredential"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -126,6 +135,8 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "";
 });
 app.UseHttpsRedirection();
+
+//app.UseMiddleware<BasicAuthenticationMiddleware>();
 
 app.UseAuthorization();
 

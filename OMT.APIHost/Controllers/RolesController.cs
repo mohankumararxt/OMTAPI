@@ -10,7 +10,7 @@ namespace OMT.APIHost.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class RolesController : ControllerBase
     {
         private readonly IRolesService _rolesService;
