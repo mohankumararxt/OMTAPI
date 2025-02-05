@@ -3488,8 +3488,15 @@
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
 
---ALTER TABLE Productivity_Percentage
---ADD CONSTRAINT fk_Productivity_Percentage_OrdersCompleted
---FOREIGN KEY (OrdersCompleted)
---REFERENCES GetOrderCalculation(OrdersCompleted);
+
+
+--insert into Productivity_Percentage values
+--(100,10,2,175,50,25,50,'2025-02-05 06:47:52.303',1),
+--(100,10,2,8,90,41,46,'2025-02-05 06:47:52.303',1),
+--(100,10,2,88,78,9,12,'2025-02-05 06:47:52.303',1)
+--(304,10,2,174,50,50,100,'2025-02-05 06:47:52.303',0),
+--(304,10,2,174,50,10,20,'2025-02-05 06:47:52.303',0)
+--(100,10,1,1,90,20,22,'2025-02-05 06:47:52.303',0),
+--(304,10,1,1,90,50,56,'2025-02-05 06:47:52.303',1)
+
 

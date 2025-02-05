@@ -58,5 +58,13 @@ namespace OMT.APIHost.Controllers
             var userid = this.UserId;
             return _productivityDashboardService.GetAgentUtilization(getAgentProdUtilDTO,userid);
         }
+
+        [HttpPost]
+        [Route("")]
+
+        public ResultDTO GetSkillSetWiseProductivity(GetSkillsetWiseProductivity_DTO getSkillsetWiseProductivity_DTO)
+        {
+            return _productivityDashboardService.GetSkillSetWiseProductivity(getSkillsetWiseProductivity_DTO);
+        }
     }
 }
