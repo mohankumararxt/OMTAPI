@@ -13,5 +13,7 @@ namespace OMT.DataService.Interface
         Task<ResultDTO> SendMessages(MessageRequestDTO messageRequestDTO);
         Task<ResultDTO> UpdateMessages(MessageUpdateDTO messageUpdate);
         Task<ResultDTO> GetUpdateMessageStatus(int ReceiverId);
+
+        Task<ResultDTO> GetLatestMessage(int ReceiverId);
     }
 }

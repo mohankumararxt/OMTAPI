@@ -49,5 +49,12 @@ namespace OMT.APIHost.Controllers
             return await _messageService.GetUpdateMessageStatus(ReceiverId);
         }
 
+        [HttpGet]
+        [Route("GetLatestMessage")]
+        public async Task<ResultDTO> GetLatestMessage(int ReceiverId)
+        {
+            return await _messageService.GetLatestMessage(ReceiverId);
+        }
+
     }
 }

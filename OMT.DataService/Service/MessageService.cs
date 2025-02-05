@@ -271,5 +271,46 @@ namespace OMT.DataService.Service
 
             return Task.FromResult(resultDTO);
         }
+
+        public Task<ResultDTO> GetLatestMessage(int ReceiverId)
+        {
+            var resultDTO = new ResultDTO { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var existingMessages = _oMTDataContext.Message
+                    .Where(x => x.ReceiverId == ReceiverId)
+                    .OrderByDescending(x => x.CreateTimeStamp)
+                    .ToList();
+
+                var existingSenderMessages = _oMTDataContext.Message
+                    .Where(x => x.SenderId == ReceiverId)
+                    .OrderByDescending(x => x.CreateTimeStamp)
+                    .ToList();
+
+                // Combine both lists
+                var allMessages = existingMessages.Concat(existingSenderMessages).ToList();
+
+                // Get latest message per unique sender-receiver pair (bi-directional check)
+                var latestMessages = allMessages
+                    .GroupBy(x => new { MinId = Math.Min(x.SenderId, x.ReceiverId), MaxId = Math.Max(x.SenderId, x.ReceiverId) }) // Group sender & receiver together
+                    .Select(g => g.OrderByDescending(x => x.CreateTimeStamp).First()) // Take latest message
+                    .ToList();
+                resultDTO.IsSuccess = true;
+                resultDTO.Data = latestMessages;
+                resultDTO.Message = "Fetch successfully..";
+                resultDTO.StatusCode = "200";
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = $"An error occurred: {ex.Message}";
+            }
+
+            return Task.FromResult(resultDTO);
+        }
+
     }
 }
