@@ -84,7 +84,7 @@ namespace OMT.DataService.Service
                     GetTeamProd_AverageDTO getTeamProd_AverageDTO = new GetTeamProd_AverageDTO();
 
                     getTeamProd_AverageDTO.TeamProductivity = prod_Util;
-                    getTeamProd_AverageDTO.TotalAverageProductivity = (int)Math.Round(prod_Util.Average(x => x.OverallProductivity));
+                    getTeamProd_AverageDTO.TotalOverallProductivity = (int)Math.Round(prod_Util.Average(x => x.OverallProductivity));
 
 
                     resultDTO.Data = getTeamProd_AverageDTO;
@@ -174,7 +174,7 @@ namespace OMT.DataService.Service
                     GetTeamUtil_AverageDTO getTeamUtil_AverageDTO = new GetTeamUtil_AverageDTO();
 
                     getTeamUtil_AverageDTO.TeamUtilization = prod_Util;
-                    getTeamUtil_AverageDTO.TotalAverageUtilization = (int)Math.Round(prod_Util.Average(x => x.OverallUtilization));
+                    getTeamUtil_AverageDTO.TotalOverallUtilization = (int)Math.Round(prod_Util.Average(x => x.OverallUtilization));
 
 
                     resultDTO.Data = getTeamUtil_AverageDTO;

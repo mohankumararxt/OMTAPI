@@ -3454,3 +3454,42 @@
 --(70,9,7,3.5,0,77,38,'2025-01-28 06:05:06.441')
 
 
+-- CREATE TABLE Productivity_Percentage (
+--Productivity_PercentageId INT PRIMARY KEY IDENTITY(1,1),
+--AgentUserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Threshold INT NOT NULL,
+--OrdersCompleted INT null,
+--Productivity_Percentage  INT NOT NULL,
+--Createddate DateTime NOT NULL,
+--IsPrimarySor BIT NOT NULL
+--);
+
+
+--ALTER TABLE Productivity_Percentage
+--ADD CONSTRAINT fk_Productivity_Percentage_AgentUserId
+--FOREIGN KEY (AgentUserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Productivity_Percentage
+--ADD CONSTRAINT fk_Productivity_Percentage_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Productivity_Percentage
+--ADD CONSTRAINT fk_Productivity_Percentage_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Productivity_Percentage
+--ADD CONSTRAINT fk_Productivity_Percentage_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Productivity_Percentage
+--ADD CONSTRAINT fk_Productivity_Percentage_OrdersCompleted
+--FOREIGN KEY (OrdersCompleted)
+--REFERENCES GetOrderCalculation(OrdersCompleted);
+

@@ -7,7 +7,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ShiftDetailsController : BaseController
     {
         private readonly IShiftDetailsService _shiftDetailsService;

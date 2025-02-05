@@ -7,7 +7,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ProductivityDashboardController : BaseController
     {
         private readonly IProductivityDashboardService _productivityDashboardService;

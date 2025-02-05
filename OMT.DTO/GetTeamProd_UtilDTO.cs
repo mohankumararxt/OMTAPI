@@ -20,7 +20,7 @@ namespace OMT.DTO
             TeamProductivity = new List<GetTeamProd_ResponseDTO>();
         }
 
-        public int TotalAverageProductivity { get; set; }
+        public int TotalOverallProductivity { get; set; }
         public List<GetTeamProd_ResponseDTO> TeamProductivity { get; set;}
     }
 
@@ -32,7 +32,7 @@ namespace OMT.DTO
             TeamUtilization = new List<GetTeamUtil_ResponseDTO>();
         }
 
-        public int TotalAverageUtilization { get; set; }
+        public int TotalOverallUtilization { get; set; }
         public List<GetTeamUtil_ResponseDTO> TeamUtilization { get; set; }
     }
     public class GetTeamProd_ResponseDTO
