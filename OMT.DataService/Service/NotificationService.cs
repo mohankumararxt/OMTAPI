@@ -113,6 +113,7 @@ namespace OMT.DataService.Service
                     resultDTO.Data = new
                     {
                         Id = notification.Id,
+                        UserId = existingUser.UserId,
                         Username = existingUser.FirstName + " " + existingUser.LastName,
                         NotificationMessage = notification.NotificationMessage,
                         CreateTimeStamp = notification.CreateTimeStamp
