@@ -212,8 +212,8 @@ namespace OMT.DataService.Service
 
             try
             {
-                //var existingMessages = _oMTDataContext.Message.Where(x => (x.SenderId == SenderId || x.SenderId ==  ReceiverId) && (x.ReceiverId == ReceiverId || x.ReceiverId == SenderId)).OrderBy(x=>x.CreateTimeStamp).ToList();
-                var existingMessages = _oMTDataContext.Message.Where(x => (x.SenderId == SenderId ) && (x.ReceiverId == ReceiverId)).OrderBy(x => x.CreateTimeStamp).ToList();
+                var existingMessages = _oMTDataContext.Message.Where(x => (x.SenderId == SenderId && x.ReceiverId == ReceiverId) || (x.SenderId == ReceiverId && x.ReceiverId == SenderId)).OrderBy(x => x.CreateTimeStamp).ToList();
+                //var existingMessages = _oMTDataContext.Message.Where(x => (x.SenderId == SenderId ) && (x.ReceiverId == ReceiverId)).OrderBy(x => x.CreateTimeStamp).ToList();
                 if (existingMessages.Any())
                 {
                     resultDTO.IsSuccess = true;
