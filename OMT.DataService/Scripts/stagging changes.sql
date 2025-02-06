@@ -3374,7 +3374,7 @@
 -- CREATE TABLE ShiftAssociation (
 --ShiftAssociationId INT PRIMARY KEY IDENTITY(1,1),
 --AgentEmployeeId NVARCHAR(30) NOT NULL,
---TlEmployeeId NVARCHAR(30) NOT NULL,
+--TLEmployeeId NVARCHAR(30) NOT NULL,
 --PrimarySystemOfRecordId INT NOT NULL,
 --ShiftCode NVARCHAR(100) NOT NULL,
 --ShiftDate  DateTime NOT NULL,
@@ -3385,6 +3385,7 @@
 --ModifiedBy INT NOT NULL
 
 --);
+
 
 --------------add foreign keys------------
 
@@ -3397,8 +3398,8 @@
 --REFERENCES UserProfile(EmployeeId);
 
 --ALTER TABLE ShiftAssociation
---ADD CONSTRAINT fk_ShiftAssociation_TlEmployeeId
---FOREIGN KEY (TlEmployeeId)
+--ADD CONSTRAINT fk_ShiftAssociation_TLEmployeeId
+--FOREIGN KEY (TLEmployeeId)
 --REFERENCES UserProfile(EmployeeId);
 
 --ALTER TABLE ShiftAssociation
@@ -3462,7 +3463,8 @@
 --SkillSetId INT NOT NULL,
 --Threshold INT NOT NULL,
 --OrdersCompleted INT null,
---Productivity_Percentage  INT NOT NULL,
+--ProductivityPercentage  INT NOT NULL,
+--HoursWorked INT NOT NULL,
 --Createddate DateTime NOT NULL,
 --IsPrimarySor BIT NOT NULL
 --);
@@ -3498,5 +3500,7 @@
 --(304,10,2,174,50,10,20,'2025-02-05 06:47:52.303',0)
 --(100,10,1,1,90,20,22,'2025-02-05 06:47:52.303',0),
 --(304,10,1,1,90,50,56,'2025-02-05 06:47:52.303',1)
-
-
+--(100,10,2,175,50,25,50,'2025-02-06 06:47:52.303',1),
+--(100,10,2,8,90,41,46,'2025-02-06 06:47:52.303',1),
+--(304,10,2,174,50,50,100,'2025-02-06 06:47:52.303',0),
+--(304,10,2,174,50,10,20,'2025-02-06 06:47:52.303',0)

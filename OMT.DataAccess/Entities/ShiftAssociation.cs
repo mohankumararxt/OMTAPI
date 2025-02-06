@@ -10,7 +10,7 @@ namespace OMT.DataAccess.Entities
     {
         public int ShiftAssociationId { get; set; }
         public string AgentEmployeeId { get; set; }
-        public string TlEmployeeId { get; set; }
+        public string TLEmployeeId { get; set; }
         public int PrimarySystemOfRecordId { get; set; }
         public string ShiftCode { get; set; }
         public DateTime ShiftDate { get; set; }

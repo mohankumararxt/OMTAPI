@@ -60,11 +60,27 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPost]
-        [Route("")]
+        [Route("GetSkillSetWiseProductivity")]
 
         public ResultDTO GetSkillSetWiseProductivity(GetSkillsetWiseProductivity_DTO getSkillsetWiseProductivity_DTO)
         {
             return _productivityDashboardService.GetSkillSetWiseProductivity(getSkillsetWiseProductivity_DTO);
+        }
+
+        [HttpPost]
+        [Route("GetSorWiseProductivity")]
+
+        public ResultDTO GetSorWiseProductivity(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO)
+        {
+            return _productivityDashboardService.GetSorWiseProductivity(getSorWiseProductivity_DTO);
+        }
+
+        [HttpPost]
+        [Route("GetSorWiseUtilization")]
+
+        public ResultDTO GetSorWiseUtilization(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO)
+        {
+            return _productivityDashboardService.GetSorWiseUtilization(getSorWiseProductivity_DTO);
         }
     }
 }

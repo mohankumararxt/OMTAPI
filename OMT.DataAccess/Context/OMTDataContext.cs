@@ -53,6 +53,7 @@ namespace OMT.DataAccess.Context
         public DbSet<ShiftDetails> ShiftDetails { get; set; }
         public DbSet<ShiftAssociation> ShiftAssociation { get; set; }
         public DbSet<Prod_Util> Prod_Util { get; set; }
+        public DbSet<Productivity_Percentage> Productivity_Percentage { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

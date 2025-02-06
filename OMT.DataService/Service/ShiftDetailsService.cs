@@ -206,7 +206,7 @@ namespace OMT.DataService.Service
                     ShiftAssociation shiftAssociation = new ShiftAssociation()
                     {
                         AgentEmployeeId = createShiftAssociationDTO.AgentEmployeeId,
-                        TlEmployeeId = createShiftAssociationDTO.TlEmployeeId,
+                        TLEmployeeId = createShiftAssociationDTO.TlEmployeeId,
                         PrimarySystemOfRecordId = createShiftAssociationDTO.PrimarySystemOfRecordId,
                         ShiftCode = createShiftAssociationDTO.ShiftCode,
                         ShiftDate = createShiftAssociationDTO.ShiftDate,
@@ -247,7 +247,7 @@ namespace OMT.DataService.Service
                 {
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
-                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
                                                     where sd.IsActive
                                                           && up1.IsActive
                                                           && up2.IsActive
@@ -274,7 +274,7 @@ namespace OMT.DataService.Service
                 {
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
-                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
                                                     where sd.IsActive
                                                           && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId
                                                           && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
@@ -302,7 +302,7 @@ namespace OMT.DataService.Service
                 {
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
-                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
                                                     where sd.IsActive
                                                           && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId
                                                           && up2.IsActive
@@ -329,7 +329,7 @@ namespace OMT.DataService.Service
                 {
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
-                                                    join up2 in _oMTDataContext.UserProfile on sd.TlEmployeeId equals up2.EmployeeId
+                                                    join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
                                                     where sd.IsActive
                                                           && up1.IsActive
                                                           && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
@@ -411,7 +411,7 @@ namespace OMT.DataService.Service
 
                 if (shiftDetails != null)
                 {
-                    shiftDetails.TlEmployeeId = updateShiftAssociationDTO.TlEmployeeId;
+                    shiftDetails.TLEmployeeId = updateShiftAssociationDTO.TlEmployeeId;
                     shiftDetails.PrimarySystemOfRecordId = (int)updateShiftAssociationDTO.PrimarySystemOfRecordId;
                     shiftDetails.ShiftCode = updateShiftAssociationDTO.ShiftCode;
                     shiftDetails.ModifiedBy = userid;

@@ -11,6 +11,8 @@ namespace OMT.DataService.Interface
         ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO,int UserId);
         ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId);
         ResultDTO GetSkillSetWiseProductivity(GetSkillsetWiseProductivity_DTO getSkillsetWiseProductivity_DTO);
+        ResultDTO GetSorWiseProductivity(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO);
+        ResultDTO GetSorWiseUtilization(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO);
 
     }
 }
