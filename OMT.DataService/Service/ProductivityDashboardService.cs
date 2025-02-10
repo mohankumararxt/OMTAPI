@@ -506,14 +506,14 @@ namespace OMT.DataService.Service
                                                                                 .Select(g => new
                                                                                 {
                                                                                     Date = g.Key,
-                                                                                    Utilization = g.Sum(x => x.pu.HoursWorked)
+                                                                                    Utilization = g.Sum(x => x.pu.Utilization)
                                                                                 })
                                                                                 .OrderBy(d => d.Date)
                                                                                 .ToList(),
 
                                                                             AverageUtilization = group
                                                                                 .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => g.Sum(x => x.pu.HoursWorked))
+                                                                                .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                 .Where(sum => sum > 0)
                                                                                 .DefaultIfEmpty(0)
                                                                                 .Average()
@@ -562,14 +562,14 @@ namespace OMT.DataService.Service
                                                                                 .Select(g => new
                                                                                 {
                                                                                     Date = g.Key,
-                                                                                    Utilization = g.Sum(x => x.pu.HoursWorked)
+                                                                                    Utilization = g.Sum(x => x.pu.Utilization)
                                                                                 })
                                                                                 .OrderBy(d => d.Date)
                                                                                 .ToList(),
 
                                                                             AverageUtilization = group
                                                                                 .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => g.Sum(x => x.pu.HoursWorked))
+                                                                                .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                 .Where(sum => sum > 0)
                                                                                 .DefaultIfEmpty(0)
                                                                                 .Average()
@@ -801,7 +801,7 @@ namespace OMT.DataService.Service
                                                                                   .Select(g => new
                                                                                   {
                                                                                       Date = g.Key,
-                                                                                      Utilization = g.Sum(x => x.pu.HoursWorked)
+                                                                                      Utilization = g.Sum(x => x.pu.Utilization)
 
                                                                                   })
                                                                                   .OrderBy(d => d.Date)
@@ -810,7 +810,7 @@ namespace OMT.DataService.Service
                                                                               // Calculate average ignoring 0 productivity values
                                                                               AverageUtilization = group
                                                                                   .GroupBy(g => g.pu.Createddate.Date)
-                                                                                  .Select(g => g.Sum(x => x.pu.HoursWorked))
+                                                                                  .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                   .Where(sum => sum > 0) // Ignore 0 values
                                                                                   .DefaultIfEmpty(0) // Avoid division by zero
                                                                                   .Average() // Compute average
@@ -854,7 +854,7 @@ namespace OMT.DataService.Service
                                                                                   .Select(g => new
                                                                                   {
                                                                                       Date = g.Key,
-                                                                                      Utilization = g.Sum(x => x.pu.HoursWorked)
+                                                                                      Utilization = g.Sum(x => x.pu.Utilization)
 
                                                                                   })
                                                                                   .OrderBy(d => d.Date)
@@ -863,7 +863,7 @@ namespace OMT.DataService.Service
                                                                            // Calculate average ignoring 0 productivity values
                                                                            AverageUtilization = group
                                                                                   .GroupBy(g => g.pu.Createddate.Date)
-                                                                                  .Select(g => g.Sum(x => x.pu.HoursWorked))
+                                                                                  .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                   .Where(sum => sum > 0) // Ignore 0 values
                                                                                   .DefaultIfEmpty(0) // Avoid division by zero
                                                                                   .Average() // Compute average

@@ -3466,7 +3466,10 @@
 --ProductivityPercentage  INT NOT NULL,
 --HoursWorked INT NOT NULL,
 --Createddate DateTime NOT NULL,
---IsPrimarySor BIT NOT NULL
+--IsPrimarySor BIT NOT NULL,
+--ShiftHours INT NOT NULL,
+--Utilization INT NOT NULL
+
 --);
 
 
