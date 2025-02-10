@@ -248,13 +248,14 @@ namespace OMT.DataService.Service
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
                                                     join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
+                                                    join ss in _oMTDataContext.SystemofRecord on sd.PrimarySystemOfRecordId equals ss.SystemofRecordId
                                                     where sd.IsActive
                                                           && up1.IsActive
                                                           && up2.IsActive
                                                           && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
                                                           && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
                                                     orderby up1.EmployeeId, sd.ShiftDate
-                                                    group new { sd, up2 } by new
+                                                    group new { sd, up2, ss } by new
                                                     {
                                                         AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")"
                                                     } into groupedData
@@ -263,6 +264,8 @@ namespace OMT.DataService.Service
                                                         AgentName = groupedData.Key.AgentName,
                                                         ShiftDetails = groupedData.Select(g => new ShiftDTO
                                                         {
+                                                            PrimarySystemOfRecordId = g.sd.PrimarySystemOfRecordId,
+                                                            PrimarySystemOfRecordName = g.ss.SystemofRecordName,
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
@@ -275,13 +278,14 @@ namespace OMT.DataService.Service
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
                                                     join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
+                                                    join ss in _oMTDataContext.SystemofRecord on sd.PrimarySystemOfRecordId equals ss.SystemofRecordId
                                                     where sd.IsActive
                                                           && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId
                                                           && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
                                                           && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
                                                           && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
                                                     orderby up1.EmployeeId, sd.ShiftDate
-                                                    group new { sd, up2 } by new
+                                                    group new { sd, up2, ss } by new
                                                     {
                                                         AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")"
                                                     } into groupedData
@@ -290,6 +294,8 @@ namespace OMT.DataService.Service
                                                         AgentName = groupedData.Key.AgentName,
                                                         ShiftDetails = groupedData.Select(g => new ShiftDTO
                                                         {
+                                                            PrimarySystemOfRecordId = g.sd.PrimarySystemOfRecordId,
+                                                            PrimarySystemOfRecordName = g.ss.SystemofRecordName,
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
@@ -303,13 +309,14 @@ namespace OMT.DataService.Service
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
                                                     join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
+                                                    join ss in _oMTDataContext.SystemofRecord on sd.PrimarySystemOfRecordId equals ss.SystemofRecordId
                                                     where sd.IsActive
                                                           && up1.IsActive && up1.EmployeeId == getShiftAssociation.AgentEmployeeId
                                                           && up2.IsActive
                                                           && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
                                                           && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
                                                     orderby up1.EmployeeId, sd.ShiftDate
-                                                    group new { sd, up2 } by new
+                                                    group new { sd, up2, ss } by new
                                                     {
                                                         AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")"
                                                     } into groupedData
@@ -318,6 +325,8 @@ namespace OMT.DataService.Service
                                                         AgentName = groupedData.Key.AgentName,
                                                         ShiftDetails = groupedData.Select(g => new ShiftDTO
                                                         {
+                                                            PrimarySystemOfRecordId = g.sd.PrimarySystemOfRecordId,
+                                                            PrimarySystemOfRecordName = g.ss.SystemofRecordName,
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
@@ -330,13 +339,14 @@ namespace OMT.DataService.Service
                     shiftAssociationResponseDTOs = (from sd in _oMTDataContext.ShiftAssociation
                                                     join up1 in _oMTDataContext.UserProfile on sd.AgentEmployeeId equals up1.EmployeeId
                                                     join up2 in _oMTDataContext.UserProfile on sd.TLEmployeeId equals up2.EmployeeId
+                                                    join ss in _oMTDataContext.SystemofRecord on sd.PrimarySystemOfRecordId equals ss.SystemofRecordId
                                                     where sd.IsActive
                                                           && up1.IsActive
                                                           && up2.IsActive && up2.EmployeeId == getShiftAssociation.TlEmployeeId
                                                           && sd.ShiftDate.Date >= getShiftAssociation.FromDate.Date
                                                           && sd.ShiftDate.Date <= getShiftAssociation.ToDate.Date
                                                     orderby up1.EmployeeId, sd.ShiftDate
-                                                    group new { sd, up2 } by new
+                                                    group new { sd, up2, ss } by new
                                                     {
                                                         AgentName = up1.FirstName + " " + up1.LastName + " (" + up1.EmployeeId + ")"
                                                     } into groupedData
@@ -345,6 +355,8 @@ namespace OMT.DataService.Service
                                                         AgentName = groupedData.Key.AgentName,
                                                         ShiftDetails = groupedData.Select(g => new ShiftDTO
                                                         {
+                                                            PrimarySystemOfRecordId = g.sd.PrimarySystemOfRecordId,
+                                                            PrimarySystemOfRecordName = g.ss.SystemofRecordName,
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
