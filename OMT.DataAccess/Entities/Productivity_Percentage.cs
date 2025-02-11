@@ -18,7 +18,7 @@ namespace OMT.DataAccess.Entities
         public int Threshold { get; set; }
         public int OrdersCompleted { get; set; }
         public int ProductivityPercentage { get; set; }
-        public int HoursWorked { get; set; }
+        public decimal HoursWorked { get; set; }
         public DateTime Createddate { get; set; }
         public bool IsPrimarySor { get; set; }
         public int ShiftHours { get; set; }

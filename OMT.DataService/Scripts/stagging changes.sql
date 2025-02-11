@@ -3429,8 +3429,8 @@
 --Prod_UtilId INT PRIMARY KEY IDENTITY(1,1),
 --AgentUserId INT NOT NULL,
 --Total_Shift_Hours INT NOT NULL,
---Productive_Hours INT NOT NULL,
---Cross_Utilized_Hours INT NOT NULL,
+--Productive_Hours  DECIMAL(10,2) NOT NULL,
+--Cross_Utilized_Hours  DECIMAL(10,2) NOT NULL,
 --Productivity_Percentage  INT NOT NULL,
 --Utilization_Percentage INT NOT NULL,
 --CrossUtilization INT NOT NULL,
@@ -3464,13 +3464,14 @@
 --Threshold INT NOT NULL,
 --OrdersCompleted INT null,
 --ProductivityPercentage  INT NOT NULL,
---HoursWorked INT NOT NULL,
+--HoursWorked DECIMAL(10,2) NOT NULL,
 --Createddate DateTime NOT NULL,
 --IsPrimarySor BIT NOT NULL,
 --ShiftHours INT NOT NULL,
 --Utilization INT NOT NULL
 
 --);
+
 
 
 --ALTER TABLE Productivity_Percentage
