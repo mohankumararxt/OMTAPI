@@ -10,13 +10,13 @@ namespace OMT.DTO
 {
     public class UserInterviewsDTO
     {
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = "Firstname should contain alphabets only.")]
+        [RegularExpression("^[a-zA-Z]+( [a-zA-Z]+)*$", ErrorMessage = "Firstname should contain alphabets only, with optional single spaces between words.")]
         public string Firstname { get; set; } = string.Empty;
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = "Lastname should contain alphabets only.")]
+        [RegularExpression("^[a-zA-Z]+( [a-zA-Z]+)*$", ErrorMessage = "Lastname should contain alphabets only, with optional single spaces between words.")]
         public string Lastname { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string phone { get; set; } = string.Empty;
-
+        [Range(0, 960, ErrorMessage = "Experience must be between 0 and 960.")]
         public int Experience { get; set; }
 
         //public DateTime DOB { get; set; }

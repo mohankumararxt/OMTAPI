@@ -20,5 +20,7 @@ namespace OMT.DataAccess.Entities
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreateTimestamp { get; set; }
+
+        public int DifficultyLevel { get; set; }
     }
 }

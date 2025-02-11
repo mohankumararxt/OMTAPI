@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace OMT.DataService.Utility
 {
@@ -30,21 +31,20 @@ namespace OMT.DataService.Utility
             return Regex.IsMatch(phone, phoneRegex);
         }
 
-        public static int CalculateDuration(string testText)
+        public static int CalculateDuration(string testText, int wpm = 40)
         {
             if (string.IsNullOrEmpty(testText))
             {
-                // Return 0 if the text is null or empty
                 throw new ArgumentException("Test text cannot be null or empty.");
             }
 
-            // Split the text and calculate the number of words
-            int wordCount = testText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            // Total character count
+            int characterCount = testText.Length;
+            int sec = (int)((characterCount * 60) / (5 * wpm));
+            // Calculate time in seconds using the formula: (Total characters / (5 * WPM)) * 60
+            int timeInSeconds = Math.Max(sec, 5);
 
-           
-
-            // Calculate the duration and round it
-            return Math.Max((int)Math.Round((double)wordCount / 40),1);
+            return timeInSeconds;
         }
 
     }

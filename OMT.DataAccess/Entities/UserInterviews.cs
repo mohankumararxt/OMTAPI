@@ -22,6 +22,7 @@ namespace OMT.DataAccess.Entities
         //public DateOnly DOB { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreateTimestamp { get; set; }
+        
         public int Experience { get; set; }
     }
 }
