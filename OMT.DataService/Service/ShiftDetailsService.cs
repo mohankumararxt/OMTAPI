@@ -269,7 +269,9 @@ namespace OMT.DataService.Service
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
-                                                            TlName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")"
+                                                            TLName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")",
+                                                            TLId = g.sd.TLEmployeeId
+                                                            
                                                         }).ToList()
                                                     }).ToList();
                 }
@@ -299,7 +301,8 @@ namespace OMT.DataService.Service
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
-                                                            TlName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")"
+                                                            TLName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")",
+                                                            TLId = g.sd.TLEmployeeId
                                                         }).ToList()
                                                     }).ToList();
                 }
@@ -330,7 +333,8 @@ namespace OMT.DataService.Service
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
-                                                            TlName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")"
+                                                            TLName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")",
+                                                            TLId = g.sd.TLEmployeeId
                                                         }).ToList()
                                                     }).ToList();
                 }
@@ -360,7 +364,8 @@ namespace OMT.DataService.Service
                                                             ShiftAssociationId = g.sd.ShiftAssociationId,
                                                             ShiftCode = g.sd.ShiftCode,
                                                             ShiftDate = g.sd.ShiftDate.ToString("MM/dd/yyyy"),
-                                                            TlName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")"
+                                                            TLName = g.up2.FirstName + " " + g.up2.LastName + " (" + g.up2.EmployeeId + ")",
+                                                            TLId = g.sd.TLEmployeeId
                                                         }).ToList()
                                                     }).ToList();
                 }

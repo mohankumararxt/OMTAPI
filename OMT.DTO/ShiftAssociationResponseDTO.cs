@@ -13,7 +13,8 @@ namespace OMT.DTO
     }
     public class ShiftDTO
     {
-        public string TlName { get; set; }
+        public string TLName { get; set; }
+        public string TLId { get; set; }
         public int PrimarySystemOfRecordId { get; set; }
         public string PrimarySystemOfRecordName { get; set; }
         public int ShiftAssociationId { get; set; }
