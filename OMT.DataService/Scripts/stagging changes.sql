@@ -3421,6 +3421,7 @@
 --insert into DefaultTemplateColumns values (2,'TimeTaken','Time',1,0,0,0,0)
 --insert into DefaultTemplateColumns values (3,'TimeTaken','Time',1,0,0,0,0)
 
+--EXEC sp_rename 'Prod_Util.CrossUtilization', 'CrossUtilization_Percentage', 'COLUMN';
 
 
 ---------Prod_Util----------------
@@ -3429,11 +3430,11 @@
 --Prod_UtilId INT PRIMARY KEY IDENTITY(1,1),
 --AgentUserId INT NOT NULL,
 --Total_Shift_Hours INT NOT NULL,
---Productive_Hours  DECIMAL(10,2) NOT NULL,
---Cross_Utilized_Hours  DECIMAL(10,2) NOT NULL,
+--Productive_Hours  DECIMAL(10,1) NOT NULL,
+--Cross_Utilized_Hours  DECIMAL(10,1) NOT NULL,
 --Productivity_Percentage  INT NOT NULL,
 --Utilization_Percentage INT NOT NULL,
---CrossUtilization INT NOT NULL,
+--CrossUtilization_Percentage INT NOT NULL,
 --Createddate DateTime NOT NULL
 
 --);
@@ -3464,7 +3465,7 @@
 --Threshold INT NOT NULL,
 --OrdersCompleted INT null,
 --ProductivityPercentage  INT NOT NULL,
---HoursWorked DECIMAL(10,2) NOT NULL,
+--HoursWorked DECIMAL(10,1) NOT NULL,
 --Createddate DateTime NOT NULL,
 --IsPrimarySor BIT NOT NULL,
 --ShiftHours INT NOT NULL,

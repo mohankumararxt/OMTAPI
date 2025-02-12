@@ -17,7 +17,7 @@ namespace OMT.DataAccess.Entities
         public decimal Cross_Utilized_Hours { get; set; }
         public int Productivity_Percentage { get; set; }
         public int Utilization_Percentage { get; set; }
-        public int CrossUtilization { get; set; }
+        public int CrossUtilization_Percentage { get; set; }
         public DateTime Createddate { get; set; }
 
 
