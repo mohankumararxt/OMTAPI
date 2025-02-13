@@ -57,13 +57,11 @@ namespace OMT.DataService.Service
                                                                  .OrderBy(d => d.Date)
                                                                  .ToList(),
 
-                                                             // Calculate average ignoring 0 productivity values
-                                                             AverageProductivity = (int)Math.Round(
-                                                         group
-                                                             .Where(g => g.pu.Productivity_Percentage > 0)
-                                                             .Select(g => g.pu.Productivity_Percentage)
-                                                             .Average())
-                                                         })
+                                                         // Calculate average ignoring 0 productivity values
+                                                         AverageProductivity = group.Any(g => g.pu.Productivity_Percentage > 0)
+                                                                                    ? (int)Math.Round(group.Where(g => g.pu.Productivity_Percentage > 0)
+                                                                                                           .Average(g => g.pu.Productivity_Percentage))
+                                                                                    : 0})
                                                          .ToList()
                                                          .Select(x => new GetTeamProd_ResponseDTO
                                                          {
@@ -145,16 +143,12 @@ namespace OMT.DataService.Service
                                                                   .OrderBy(d => d.Date)
                                                                   .ToList(),
 
-                                                              // Calculate average ignoring 0 Utilization values
-                                                              AverageUtilization = Math.Round(
-                                                                                             group
-                                                                                                 .Where(g => g.pu.Utilization_Percentage > 0)
-                                                                                                 .Select(g => g.pu.Utilization_Percentage)
-                                                                                                 .Average())
-
-
-                                                          })
-                                                          .ToList()
+                                                          // Calculate average ignoring 0 Utilization values
+                                                              
+                                                          AverageUtilization = group.Any(g => g.pu.Utilization_Percentage > 0)
+                                                                                    ? Math.Round(group.Where(g => g.pu.Utilization_Percentage > 0)
+                                                                                                      .Average(g => g.pu.Utilization_Percentage))
+                                                                                    : 0}).ToList()
                                                           .Select(x => new GetTeamUtil_ResponseDTO
                                                           {
                                                               AgentName = x.AgentName,
@@ -225,12 +219,10 @@ namespace OMT.DataService.Service
                                                                    Productivity = p.Productivity_Percentage
                                                                }).ToList(),
 
-                                      OverallProductivity = agentGroup
-                                                               .Where(p => p.Productivity_Percentage > 0)  // Exclude zero values
-                                                               .Any()
-                                                               ? (int)Math.Round((agentGroup.Where(p => p.Productivity_Percentage > 0).Average(p => p.Productivity_Percentage)))
-                                                               : 0
-                                  }).ToList();
+                                      OverallProductivity = agentGroup.Any(p => p.Productivity_Percentage > 0)
+                                                                      ? (int)Math.Round(agentGroup.Where(p => p.Productivity_Percentage > 0)
+                                                                                                  .Average(p => p.Productivity_Percentage))
+                                                                      : 0}).ToList();
 
                 if (agent_prod.Count > 0)
                 {
@@ -275,12 +267,10 @@ namespace OMT.DataService.Service
                                                                    Utilization = p.Utilization_Percentage
                                                                }).ToList(),
 
-                                      OverallUtilization = agentGroup
-                                                               .Where(p => p.Utilization_Percentage > 0)  // Exclude zero values
-                                                               .Any()
-                                                               ? (int)Math.Round((agentGroup.Where(p => p.Utilization_Percentage > 0).Average(p => p.Utilization_Percentage)))
-                                                               : 0
-                                  }).ToList();
+                                      OverallUtilization = agentGroup.Any(p => p.Utilization_Percentage > 0)
+                                                                     ? (int)Math.Round(agentGroup.Where(p => p.Utilization_Percentage > 0)
+                                                                                                 .Average(p => p.Utilization_Percentage))
+                                                                     : 0}).ToList();
 
                 if (agent_util.Count > 0)
                 {

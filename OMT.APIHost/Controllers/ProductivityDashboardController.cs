@@ -33,13 +33,13 @@ namespace OMT.APIHost.Controllers
             return _productivityDashboardService.GetTeamUtilization(getTeamProd_UtilDTO);
         }
 
-        [HttpPost]
-        [Route("GetTeamProdUtil")]
+        //[HttpPost]
+        //[Route("GetTeamProdUtil")]
 
-        public ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
-        {
-            return _productivityDashboardService.GetTeamProdUtil(getTeamProd_UtilDTO);
-        }
+        //public ResultDTO GetTeamProdUtil(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
+        //{
+        //    return _productivityDashboardService.GetTeamProdUtil(getTeamProd_UtilDTO);
+        //}
 
         [HttpPost]
         [Route("GetAgentProductivity")]
