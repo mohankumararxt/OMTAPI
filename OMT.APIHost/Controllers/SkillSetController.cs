@@ -12,7 +12,6 @@ namespace OMT.APIHost.Controllers
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class SkillSetController : BaseController
->>>>>>>>> Temporary merge branch 2
     {
         private readonly ISkillSetService _skillsetService;
         public SkillSetController(ISkillSetService skillsetService)
