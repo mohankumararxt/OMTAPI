@@ -291,7 +291,7 @@ namespace OMT.DataService
 
                 List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                            join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid && us.IsActive
+                                           where us.UserId == userid 
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).Distinct().ToList();
 
