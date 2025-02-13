@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\OMTprojects\\PendingSciOrders\\PendingSciOrders.csproj": {}
+    "C:\\PROJECTS\\OMT-API\\PendingSciOrders\\PendingSciOrders.csproj": {}
   },
   "projects": {
-    "C:\\OMTprojects\\PendingSciOrders\\PendingSciOrders.csproj": {
+    "C:\\PROJECTS\\OMT-API\\PendingSciOrders\\PendingSciOrders.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\OMTprojects\\PendingSciOrders\\PendingSciOrders.csproj",
+        "projectUniqueName": "C:\\PROJECTS\\OMT-API\\PendingSciOrders\\PendingSciOrders.csproj",
         "projectName": "PendingSciOrders",
-        "projectPath": "C:\\OMTprojects\\PendingSciOrders\\PendingSciOrders.csproj",
-        "packagesPath": "C:\\Users\\sowmi\\.nuget\\packages\\",
-        "outputPath": "C:\\OMTprojects\\PendingSciOrders\\obj\\",
+        "projectPath": "C:\\PROJECTS\\OMT-API\\PendingSciOrders\\PendingSciOrders.csproj",
+        "packagesPath": "C:\\Users\\arxtl\\.nuget\\packages\\",
+        "outputPath": "C:\\PROJECTS\\OMT-API\\PendingSciOrders\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\sowmi\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\arxtl\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,7 +22,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -91,7 +86,7 @@
               "version": "[7.0.0, )"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200\\RuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

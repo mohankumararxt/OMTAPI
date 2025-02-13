@@ -46,6 +46,9 @@
 /.gitignore
 >>>>>>> phase2
 /.gitignore
+/PendingSciOrders/obj/Release/net472/PendingSciOrders.AssemblyInfo.cs
+/.gitignore
+/TrdIntegrator/TrdIntegrator.csproj.user
 /PendingSciOrders/obj/Debug/net472/PendingSciOrders.csproj.AssemblyReference.cache
 /.gitignore
 /PendingSciOrders/obj/Debug/net472
@@ -55,4 +58,11 @@
 /CalculationForGOC/CalculationForGOC.csproj.user
 /CalculationForGOC/CalculationForGOC.csproj.user
 /PendingSciOrders_4.30pm/PendingSciOrders_4.30pm.csproj.user
+/PendingSciOrders_5pm/PendingSciOrders_5pm.csproj.user
+/CalculationForGOC/obj
+/CalculationForGOC/Properties/PublishProfiles
+/CalculationForGOC/CalculationForGOC.csproj.user
+/PendingSciOrders_4.30pm/Properties/PublishProfiles
+/PendingSciOrders_4.30pm/PendingSciOrders_4.30pm.csproj.user
+/PendingSciOrders_5pm/Properties/PublishProfiles
 /PendingSciOrders_5pm/PendingSciOrders_5pm.csproj.user
