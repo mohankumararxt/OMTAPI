@@ -193,13 +193,27 @@ namespace OMT.DataService.Service
 
             try
             {
-                var existingshiftass = _oMTDataContext.ShiftAssociation.Where(x => x.AgentEmployeeId == createShiftAssociationDTO.AgentEmployeeId).FirstOrDefault();
+                var existingshiftass = _oMTDataContext.ShiftAssociation.Where(x => x.AgentEmployeeId == createShiftAssociationDTO.AgentEmployeeId && x.ShiftDate.Date == createShiftAssociationDTO.ShiftDate.Date ).FirstOrDefault();
 
                 if (existingshiftass != null)
                 {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Shift association already exists for this agent. Please edit the details";
-                    resultDTO.StatusCode = "404";
+                    if (existingshiftass.IsActive)
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Shift association already exists for this agent. Please edit the details";
+                        resultDTO.StatusCode = "404";
+                    }
+                    else
+                    {
+                        existingshiftass.IsActive = true;
+
+                        _oMTDataContext.ShiftAssociation.Update(existingshiftass);
+                        _oMTDataContext.SaveChanges();
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "ShiftAssociation details created successfully";
+                    }
+                    
                 }
                 else
                 {
@@ -209,7 +223,7 @@ namespace OMT.DataService.Service
                         TLEmployeeId = createShiftAssociationDTO.TlEmployeeId,
                         PrimarySystemOfRecordId = createShiftAssociationDTO.PrimarySystemOfRecordId,
                         ShiftCode = createShiftAssociationDTO.ShiftCode,
-                        ShiftDate = createShiftAssociationDTO.ShiftDate,
+                        ShiftDate = createShiftAssociationDTO.ShiftDate.Date,
                         IsActive = true,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userid,
