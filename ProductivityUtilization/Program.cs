@@ -110,7 +110,7 @@ namespace ProductivityUtilization
                 EmailDetails sendEmail = new EmailDetails
                 {
                     ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
-                    Subject = "Daily update of Productivity_Utilization table.",
+                    Subject = "Daily update of Productivity_Utilization.",
                     Body = $"Productivity_Utilization webjob failed with the following exception:  {ex.Message}",
                 };
 
