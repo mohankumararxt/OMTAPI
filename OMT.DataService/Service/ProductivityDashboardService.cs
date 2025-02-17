@@ -83,7 +83,12 @@ namespace OMT.DataService.Service
                     GetTeamProd_AverageDTO getTeamProd_AverageDTO = new GetTeamProd_AverageDTO();
 
                     getTeamProd_AverageDTO.TeamProductivity = prod_Util;
-                    getTeamProd_AverageDTO.TotalOverallProductivity = (int)Math.Round(prod_Util.Average(x => x.OverallProductivity));
+                    getTeamProd_AverageDTO.TotalOverallProductivity = prod_Util
+                                                                               .Where(x => x.OverallProductivity > 0)   // Exclude zero values
+                                                                               .Any()                                   // Check if any non-zero values exist
+                                                                               ? (int)Math.Round(prod_Util.Where(x => x.OverallProductivity > 0)
+                                                                                                          .Average(x => x.OverallProductivity))  // Calculate average
+                                                                               : 0;
 
 
                     resultDTO.Data = getTeamProd_AverageDTO;
@@ -169,7 +174,13 @@ namespace OMT.DataService.Service
                     GetTeamUtil_AverageDTO getTeamUtil_AverageDTO = new GetTeamUtil_AverageDTO();
 
                     getTeamUtil_AverageDTO.TeamUtilization = prod_Util;
-                    getTeamUtil_AverageDTO.TotalOverallUtilization = (int)Math.Round(prod_Util.Average(x => x.OverallUtilization));
+
+                    getTeamUtil_AverageDTO.TotalOverallUtilization = prod_Util
+                                                                                .Where(x => x.OverallUtilization > 0)   
+                                                                                .Any()                                
+                                                                                ? (int)Math.Round(prod_Util.Where(x => x.OverallUtilization > 0)
+                                                                                                            .Average(x => x.OverallUtilization))  
+                                                                                : 0;
 
 
                     resultDTO.Data = getTeamUtil_AverageDTO;
@@ -429,8 +440,12 @@ namespace OMT.DataService.Service
 
                     GetSkillsetProd_AverageDTO getProd_AverageDTO = new GetSkillsetProd_AverageDTO();
 
-                    getProd_AverageDTO.Productivity = ss_prod;
-                    getProd_AverageDTO.TotalOverallProductivity = (int)Math.Round(ss_prod.Average(x => x.OverallProductivity));
+                    getProd_AverageDTO.Productivity = ss_prod; getProd_AverageDTO.TotalOverallProductivity = ss_prod
+                                                                                                                     .Where(x => x.OverallProductivity > 0)   // Exclude zero productivity values
+                                                                                                                     .Any()                                   // Check if there are any non-zero values
+                                                                                                                     ? (int)Math.Round(ss_prod.Where(x => x.OverallProductivity > 0)
+                                                                                                                                              .Average(x => x.OverallProductivity))  // Calculate average
+                                                                                                                     : 0;                                     // Default to 0 if no non-zero values
 
 
                     resultDTO.Data = getProd_AverageDTO;
@@ -586,7 +601,13 @@ namespace OMT.DataService.Service
                     GetSkillsetUtil_AverageDTO getProd_AverageDTO = new GetSkillsetUtil_AverageDTO();
 
                     getProd_AverageDTO.Utilization = ss_util;
-                    getProd_AverageDTO.TotalOverallUtilization = (int)Math.Round(ss_util.Average(x => x.OverallUtilization));
+                    getProd_AverageDTO.TotalOverallUtilization = ss_util
+                                                                        .Where(x => x.OverallUtilization > 0)   
+                                                                        .Any()                                
+                                                                        ? (int)Math.Round(ss_util.Where(x => x.OverallUtilization > 0)
+                                                                                                 .Average(x => x.OverallUtilization))  
+                                                                        : 0;                                    
+
 
 
                     resultDTO.Data = getProd_AverageDTO;
@@ -732,7 +753,13 @@ namespace OMT.DataService.Service
                     GetSorProd_AverageDTO getProd_AverageDTO = new GetSorProd_AverageDTO();
 
                     getProd_AverageDTO.Productivity = sor_prod;
-                    getProd_AverageDTO.TotalOverallProductivity = (int)Math.Round(sor_prod.Average(x => x.OverallProductivity));
+                    getProd_AverageDTO.TotalOverallProductivity = sor_prod
+                                                                          .Where(x => x.OverallProductivity > 0)   
+                                                                          .Any()                                   
+                                                                          ? (int)Math.Round(sor_prod.Where(x => x.OverallProductivity > 0)
+                                                                                                    .Average(x => x.OverallProductivity))  
+                                                                          : 0;                              
+
 
 
                     resultDTO.Data = getProd_AverageDTO;
@@ -880,7 +907,13 @@ namespace OMT.DataService.Service
                     GetSorUtil_AverageDTO getUtil_AverageDTO = new GetSorUtil_AverageDTO();
 
                     getUtil_AverageDTO.Utilization = sor_util;
-                    getUtil_AverageDTO.TotalOverallUtilization = (int)Math.Round(sor_util.Average(x => x.OverallUtilization));
+                    getUtil_AverageDTO.TotalOverallUtilization = sor_util
+                                                                         .Where(x => x.OverallUtilization > 0)   
+                                                                         .Any()                               
+                                                                         ? (int)Math.Round(sor_util.Where(x => x.OverallUtilization > 0)
+                                                                                                   .Average(x => x.OverallUtilization))   
+                                                                         : 0;                                   
+
 
 
                     resultDTO.Data = getUtil_AverageDTO;
