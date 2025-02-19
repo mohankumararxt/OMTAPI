@@ -216,28 +216,44 @@ namespace OMT.DataService.Service
 
             try
             {
-                var agent_prod = (from pu in _oMTDataContext.Prod_Util
-                                  join up in _oMTDataContext.UserProfile on pu.AgentUserId equals up.UserId
-                                  where up.IsActive && pu.AgentUserId == UserId
-                                   && pu.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pu.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
-                                  group pu by pu.AgentUserId into agentGroup
+                var agent_prod = (from pp in _oMTDataContext.Productivity_Percentage
+                                  join up in _oMTDataContext.UserProfile on pp.AgentUserId equals up.UserId
+                                  join ss in _oMTDataContext.SkillSet on pp.SkillSetId equals ss.SkillSetId
+                                  where up.IsActive && pp.AgentUserId == UserId
+                                        && pp.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date
+                                        && pp.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
+                                  group pp by new { pp.AgentUserId, pp.SkillSetId, ss.SkillSetName } into skillGroup
                                   select new GetAgentProd_ResponseDTO
                                   {
-                                      DatewiseData = agentGroup.OrderBy(p => p.Createddate)
+                                      SkillSet = skillGroup.Key.SkillSetName,
+                                      DatewiseData = skillGroup.OrderBy(p => p.Createddate)
                                                                .Select(p => new GetTeamProd_DatewisedataDTO
                                                                {
                                                                    Date = p.Createddate.ToString("MM/dd/yyyy"),
-                                                                   Productivity = p.Productivity_Percentage
+                                                                   Productivity = p.ProductivityPercentage
                                                                }).ToList(),
 
-                                      OverallProductivity = agentGroup.Any(p => p.Productivity_Percentage > 0)
-                                                                      ? (int)Math.Round(agentGroup.Where(p => p.Productivity_Percentage > 0)
-                                                                                                  .Average(p => p.Productivity_Percentage))
-                                                                      : 0}).ToList();
+                                      OverallProductivity = skillGroup.Any(p => p.ProductivityPercentage > 0)
+                                                                      ? (int)Math.Round(skillGroup.Where(p => p.ProductivityPercentage > 0)
+                                                                                                  .Average(p => p.ProductivityPercentage))
+                                                                      : 0
+                                  }).ToList();
+
 
                 if (agent_prod.Count > 0)
                 {
-                    resultDTO.Data = agent_prod;
+                    GetAgentProd_AverageDTO getAgentProd_AverageDTO = new GetAgentProd_AverageDTO();
+
+                    getAgentProd_AverageDTO.AgentProductivity = agent_prod;
+                    getAgentProd_AverageDTO.TotalOverallProductivity = agent_prod
+                                                                               .Where(x => x.OverallProductivity > 0)   
+                                                                               .Any()                                   
+                                                                               ? (int)Math.Round(agent_prod.Where(x => x.OverallProductivity > 0)
+                                                                                                          .Average(x => x.OverallProductivity))  
+                                                                               : 0;
+
+
+                    resultDTO.Data = getAgentProd_AverageDTO;
                     resultDTO.StatusCode = "200";
                     resultDTO.Message = "Agent productivity details fetched successfully";
                 }
@@ -264,28 +280,43 @@ namespace OMT.DataService.Service
 
             try
             {
-                var agent_util = (from pu in _oMTDataContext.Prod_Util
-                                  join up in _oMTDataContext.UserProfile on pu.AgentUserId equals up.UserId
-                                  where up.IsActive && pu.AgentUserId == UserId
-                                   && pu.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pu.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
-                                  group pu by pu.AgentUserId into agentGroup
+                var agent_util = (from pp in _oMTDataContext.Productivity_Percentage
+                                  join up in _oMTDataContext.UserProfile on pp.AgentUserId equals up.UserId
+                                  join ss in _oMTDataContext.SkillSet on pp.SkillSetId equals ss.SkillSetId
+                                  where up.IsActive && pp.AgentUserId == UserId
+                                   && pp.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pp.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
+                                  group pp by new { pp.AgentUserId, pp.SkillSetId, ss.SkillSetName } into skillGroup
                                   select new GetAgentUtil_ResponseDTO
                                   {
-                                      DatewiseData = agentGroup.OrderBy(p => p.Createddate)
-                                                               .Select(p => new GetTeamUtil_DatewisedataDTO
-                                                               {
-                                                                   Date = p.Createddate.ToString("MM/dd/yyyy"),
-                                                                   Utilization = p.Utilization_Percentage
-                                                               }).ToList(),
+                                      SkillSet = skillGroup.Key.SkillSetName,
+                                      DatewiseData = skillGroup.OrderBy(p => p.Createddate)
+                                                              .Select(p => new GetTeamUtil_DatewisedataDTO
+                                                              {
+                                                                  Date = p.Createddate.ToString("MM/dd/yyyy"),
+                                                                  Utilization = p.Utilization
+                                                              }).ToList(),
 
-                                      OverallUtilization = agentGroup.Any(p => p.Utilization_Percentage > 0)
-                                                                     ? (int)Math.Round(agentGroup.Where(p => p.Utilization_Percentage > 0)
-                                                                                                 .Average(p => p.Utilization_Percentage))
-                                                                     : 0}).ToList();
+                                      OverallUtilization = skillGroup.Any(p => p.Utilization > 0)
+                                                                     ? (int)Math.Round(skillGroup.Where(p => p.Utilization > 0)
+                                                                                                 .Average(p => p.Utilization))
+                                                                     : 0
+                                  }).ToList();
 
                 if (agent_util.Count > 0)
                 {
-                    resultDTO.Data = agent_util;
+
+                    GetAgentUtil_AverageDTO getAgentUtil_AverageDTO = new GetAgentUtil_AverageDTO();
+
+                    getAgentUtil_AverageDTO.AgentUtilization = agent_util;
+                    getAgentUtil_AverageDTO.TotalOverallUtilization = agent_util
+                                                                               .Where(x => x.OverallUtilization > 0)
+                                                                               .Any()
+                                                                               ? (int)Math.Round(agent_util.Where(x => x.OverallUtilization > 0)
+                                                                                                          .Average(x => x.OverallUtilization))
+                                                                               : 0;
+
+
+                    resultDTO.Data = getAgentUtil_AverageDTO;
                     resultDTO.StatusCode = "200";
                     resultDTO.Message = "Agent Utilization details fetched successfully";
                 }
