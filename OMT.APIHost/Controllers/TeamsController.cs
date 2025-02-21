@@ -25,7 +25,7 @@ namespace OMT.APIHost.Controllers
         /// <param name="createTeamsDTO"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("CreateTeams")]
+        [Route("new")]
         public ResultDTO CreateTeams([FromBody] TeamsCreateDTO createTeamsDTO)
         {
             ResultDTO resultDTO = _teamsService.CreateTeams(createTeamsDTO);
@@ -37,7 +37,7 @@ namespace OMT.APIHost.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("GetTeamsList")]
+        //[Route("list")]
         public ResultDTO GetTeamsList()
         {
             return _teamsService.GetTeamsList();
@@ -50,7 +50,6 @@ namespace OMT.APIHost.Controllers
         /// <param name="teamId"></param>
         /// <returns></returns>
         [HttpGet("{teamId:int}")]
-        [Route("GetTeamById")]
         public ResultDTO GetTeamById(int teamId)
         {
             return _teamsService.GetTeamById(teamId);
@@ -62,7 +61,7 @@ namespace OMT.APIHost.Controllers
         /// <param name="teamsResponseDTO"></param>
         /// <returns></returns>
         [HttpPut]
-        [Route("UpdateTeam")]
+        [Route("update")]
         public ResultDTO UpdateTeam([FromBody] TeamsResponseDTO teamsResponseDTO)
         {
             return _teamsService.UpdateTeams(teamsResponseDTO);
@@ -74,7 +73,7 @@ namespace OMT.APIHost.Controllers
         /// <param name="teamId"></param>
         /// <returns></returns>
         [HttpDelete]
-        [Route("DeleteTeam/{teamId:int}")]
+        [Route("delete/{teamId:int}")]
         public ResultDTO DeleteTeam(int teamId)
         {
             return _teamsService.DeleteTeam(teamId);
@@ -86,7 +85,7 @@ namespace OMT.APIHost.Controllers
         /// <param name="teamname"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("teamFilterBYKeyword/{teamname}")]
+        [Route("filter/{teamname}")]
         public ResultDTO teamFilterBYKeyword(string teamname)
         {
             return _teamsService.teamFilterBYKeyword(teamname);
