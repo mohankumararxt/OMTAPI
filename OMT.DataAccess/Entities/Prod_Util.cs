@@ -19,6 +19,7 @@ namespace OMT.DataAccess.Entities
         public int Utilization_Percentage { get; set; }
         public int CrossUtilization_Percentage { get; set; }
         public DateTime Createddate { get; set; }
+        public int TL_Userid { get; set; }  
 
 
     }

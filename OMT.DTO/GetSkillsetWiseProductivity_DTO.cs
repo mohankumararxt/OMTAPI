@@ -6,11 +6,19 @@
         public DateTime ToDate { get; set; }
         public List<int> SkillSetId { get; set; }
         public int? TeamId { get; set; }
+        public int IsSplit { get; set; }
     }
 
     public class GetSkillsetWiseProd_ResponseDTO
     {
         public string AgentName { get; set; }
+        public string SkillSet { get; set; }
+        public List<GetTeamProd_DatewisedataDTO> DatewiseData { get; set; }
+        public int OverallProductivity { get; set; }
+    }
+
+    public class GetSkillsetWiseProd_WithoutAgent_ResponseDTO
+    {
         public string SkillSet { get; set; }
         public List<GetTeamProd_DatewisedataDTO> DatewiseData { get; set; }
         public int OverallProductivity { get; set; }
@@ -24,7 +32,12 @@
         public int OverallUtilization { get; set; }
     }
 
-
+    public class GetSkillsetWiseUtil_WithoutAgent_ResponseDTO
+    {
+        public string SkillSet { get; set; }
+        public List<GetTeamUtil_DatewisedataDTO> DatewiseData { get; set; }
+        public int OverallUtilization { get; set; }
+    }
     public class GetSkillsetProd_AverageDTO
     {
         public GetSkillsetProd_AverageDTO()

@@ -10,7 +10,7 @@ namespace OMT.DTO
     {
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
-        public int TeamId { get; set; }
+        public int? TeamId { get; set; }
     }
 
     public class GetTeamProd_AverageDTO

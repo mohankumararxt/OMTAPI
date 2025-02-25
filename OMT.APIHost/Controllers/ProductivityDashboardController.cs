@@ -22,7 +22,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetTeamProductivity(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
         {
-            return _productivityDashboardService.GetTeamProductivity(getTeamProd_UtilDTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetTeamProductivity(getTeamProd_UtilDTO,userid);
         }
 
         [HttpPost]
@@ -30,7 +31,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetTeamUtilization(GetTeamProd_UtilDTO getTeamProd_UtilDTO)
         {
-            return _productivityDashboardService.GetTeamUtilization(getTeamProd_UtilDTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetTeamUtilization(getTeamProd_UtilDTO, userid);
         }
 
         //[HttpPost]

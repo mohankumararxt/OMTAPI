@@ -3513,3 +3513,17 @@
 ----------------------add tl to teams while creating -------------------
 --alter table teams
 --add TL_Userid int
+
+--ALTER TABLE teams
+--ADD CONSTRAINT fk_teams_TL_Userid
+--FOREIGN KEY (TL_Userid)
+--REFERENCES userprofile(Userid);
+
+--alter table Prod_Util
+--add TL_Userid int
+
+--ALTER TABLE Prod_Util
+--ADD CONSTRAINT fk_Prod_Util_TL_Userid
+--FOREIGN KEY (TL_Userid)
+--REFERENCES userprofile(Userid);
+
