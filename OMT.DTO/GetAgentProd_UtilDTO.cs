@@ -4,6 +4,7 @@
     {
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
+        public int UserId { get; set; }
     }
 
     public class GetAgentProd_ResponseDTO

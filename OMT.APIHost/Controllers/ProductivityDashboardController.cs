@@ -48,8 +48,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO)
         {
-            var userid = this.UserId;
-            return _productivityDashboardService.GetAgentProductivity(getAgentProdUtilDTO,userid);
+           
+            return _productivityDashboardService.GetAgentProductivity(getAgentProdUtilDTO);
         }
 
         [HttpPost]
@@ -57,8 +57,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO)
         {
-            var userid = this.UserId;
-            return _productivityDashboardService.GetAgentUtilization(getAgentProdUtilDTO,userid);
+           
+            return _productivityDashboardService.GetAgentUtilization(getAgentProdUtilDTO);
         }
 
         [HttpPost]

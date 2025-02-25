@@ -345,7 +345,7 @@ namespace OMT.DataService.Service
             throw new NotImplementedException();
         }
 
-        public ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId)
+        public ResultDTO GetAgentProductivity(GetAgentProd_UtilDTO getAgentProdUtilDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
@@ -354,7 +354,7 @@ namespace OMT.DataService.Service
                 var agent_prod = (from pp in _oMTDataContext.Productivity_Percentage
                                   join up in _oMTDataContext.UserProfile on pp.AgentUserId equals up.UserId
                                   join ss in _oMTDataContext.SkillSet on pp.SkillSetId equals ss.SkillSetId
-                                  where up.IsActive && pp.AgentUserId == UserId
+                                  where up.IsActive && pp.AgentUserId == getAgentProdUtilDTO.UserId
                                         && pp.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date
                                         && pp.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
                                   group pp by new { pp.AgentUserId, pp.SkillSetId, ss.SkillSetName } into skillGroup
@@ -409,7 +409,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO, int UserId)
+        public ResultDTO GetAgentUtilization(GetAgentProd_UtilDTO getAgentProdUtilDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
@@ -418,7 +418,7 @@ namespace OMT.DataService.Service
                 var agent_util = (from pp in _oMTDataContext.Productivity_Percentage
                                   join up in _oMTDataContext.UserProfile on pp.AgentUserId equals up.UserId
                                   join ss in _oMTDataContext.SkillSet on pp.SkillSetId equals ss.SkillSetId
-                                  where up.IsActive && pp.AgentUserId == UserId
+                                  where up.IsActive && pp.AgentUserId == getAgentProdUtilDTO.UserId
                                    && pp.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pp.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
                                   group pp by new { pp.AgentUserId, pp.SkillSetId, ss.SkillSetName } into skillGroup
                                   select new GetAgentUtil_ResponseDTO
