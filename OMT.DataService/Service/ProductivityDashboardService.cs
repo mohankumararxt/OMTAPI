@@ -509,7 +509,6 @@ namespace OMT.DataService.Service
 
                 if (getSkillsetWiseProductivity_DTO.IsSplit == 1)
                 {
-                    // Fetch data for IsSplit = 1
                     if (teamid != null)
                     {
                         ss_prod = _oMTDataContext.Productivity_Percentage
@@ -580,19 +579,24 @@ namespace OMT.DataService.Service
                                                              .Select(group => new
                                                              {
                                                                  SkillSet = group.Key,
-                                                                 OverallProductivity = Math.Round(group
-                                                                     .SelectMany(x => x.DatewiseData)
-                                                                     .GroupBy(d => d.Date)
-                                                                     .Select(d => d.Average(x => x.Productivity))
-                                                                     .Where(avg => avg > 0)
-                                                                     .DefaultIfEmpty(0)
-                                                                     .Average(),
-                                                                 MidpointRounding.AwayFromZero)
+                                                                 OverallProductivity = Math.Round(
+                                                                     group
+                                                                         .SelectMany(x => x.DatewiseData)
+                                                                         .GroupBy(d => d.Date) //  Group by Date
+                                                                         .Select(d => d.Where(x => x.Productivity > 0) //  Ignore 0 values per date
+                                                                                       .Select(x => x.Productivity)
+                                                                                       .DefaultIfEmpty() // Avoid empty sequences
+                                                                                       .Average()) //  Get average Productivity per Date
+                                                                         .Where(avg => avg > 0) //  Ignore 0 values in final calculation
+                                                                         .DefaultIfEmpty() // Avoid empty sequences
+                                                                         .Average(), //  Final Average across all Dates
+                                                                     MidpointRounding.AwayFromZero)
                                                              })
                                                              .ToList();
 
+
                     getProd_AverageDTO.TotalOverallProductivity = skillsetOverallProductivity.Where(x => x.OverallProductivity > 0).Any()
-                                                                  ? (int)Math.Round(skillsetOverallProductivity.Where(x => x.OverallProductivity > 0).Average(x => x.OverallProductivity),MidpointRounding.AwayFromZero)
+                                                                  ? (int)Math.Round(skillsetOverallProductivity.Where(x => x.OverallProductivity > 0).Average(x => x.OverallProductivity), MidpointRounding.AwayFromZero)
                                                                   : 0;
 
                 }
@@ -600,7 +604,6 @@ namespace OMT.DataService.Service
                 {
                     if (teamid == null)
                     {
-                        // Fetch data where teamid is NULL
                         ss_prod = _oMTDataContext.Productivity_Percentage
                                                                           .Join(_oMTDataContext.UserProfile, pu => pu.AgentUserId, up => up.UserId, (pu, up) => new { pu, up })
                                                                           .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.up, ss.SkillSetName })
@@ -640,45 +643,44 @@ namespace OMT.DataService.Service
                     }
                     else
                     {
-                        // Fetch data where teamid is NOT NULL
                         ss_prod = _oMTDataContext.Productivity_Percentage
-                                                                         .Join(_oMTDataContext.Teams, pu => pu.TlUserId, t => t.TL_Userid, (pu, t) => new { pu, t })
-                                                                         .Join(_oMTDataContext.UserProfile, pu_t => pu_t.pu.AgentUserId, up => up.UserId, (pu_t, up) => new { pu_t.pu, pu_t.t, up })
-                                                                         .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.t, data.up, ss.SkillSetName })
-                                                                         .Where(data => data.t.TeamId == teamid && data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
-                                                                                        data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
-                                                                                        data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
-                                                                         .AsEnumerable()
-                                                                         .GroupBy(data => data.SkillSetName) // Group by SkillSet only
-                                                                         .Select(group => new GetSkillsetWiseProd_ResponseDTO
-                                                                         {
-                                                                             SkillSet = group.Key,
-                                                                             DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
-                                                                                 .Select(g => new GetTeamProd_DatewisedataDTO
-                                                                                 {
-                                                                                     Date = g.Key.ToString("MM-dd-yyyy"),
-                                                                                     Productivity = (int)Math.Round(
-                                                                                         g.Select(x => x.pu.ProductivityPercentage)
-                                                                                             .Where(p => p > 0)
-                                                                                             .DefaultIfEmpty(0)
-                                                                                             .Average(),
-                                                                                         MidpointRounding.AwayFromZero)
-                                                                                 })
-                                                                                 .OrderBy(d => d.Date)
-                                                                                 .ToList(),
-                                                                             OverallProductivity = (int)Math.Round(
-                                                                                 group.GroupBy(g => g.pu.Createddate.Date)
-                                                                                     .Select(g => g.Select(x => x.pu.ProductivityPercentage)
-                                                                                         .Where(p => p > 0)
-                                                                                         .DefaultIfEmpty(0)
-                                                                                         .Average())
-                                                                                     .Where(avg => avg > 0)
-                                                                                     .DefaultIfEmpty(0)
-                                                                                     .Average(),
-                                                                                 MidpointRounding.AwayFromZero)
-                                                                         })
-                                                                         .ToList();
-                        
+                                                                          .Join(_oMTDataContext.Teams, pu => pu.TlUserId, t => t.TL_Userid, (pu, t) => new { pu, t })
+                                                                          .Join(_oMTDataContext.UserProfile, pu_t => pu_t.pu.AgentUserId, up => up.UserId, (pu_t, up) => new { pu_t.pu, pu_t.t, up })
+                                                                          .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.t, data.up, ss.SkillSetName })
+                                                                          .Where(data => data.t.TeamId == teamid && data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
+                                                                                         data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
+                                                                                         data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
+                                                                          .AsEnumerable()
+                                                                          .GroupBy(data => data.SkillSetName) // Group by SkillSet only
+                                                                          .Select(group => new GetSkillsetWiseProd_ResponseDTO
+                                                                          {
+                                                                              SkillSet = group.Key,
+                                                                              DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                  .Select(g => new GetTeamProd_DatewisedataDTO
+                                                                                  {
+                                                                                      Date = g.Key.ToString("MM-dd-yyyy"),
+                                                                                      Productivity = (int)Math.Round(
+                                                                                          g.Select(x => x.pu.ProductivityPercentage)
+                                                                                              .Where(p => p > 0)
+                                                                                              .DefaultIfEmpty(0)
+                                                                                              .Average(),
+                                                                                          MidpointRounding.AwayFromZero)
+                                                                                  })
+                                                                                  .OrderBy(d => d.Date)
+                                                                                  .ToList(),
+                                                                              OverallProductivity = (int)Math.Round(
+                                                                                  group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                      .Select(g => g.Select(x => x.pu.ProductivityPercentage)
+                                                                                          .Where(p => p > 0)
+                                                                                          .DefaultIfEmpty(0)
+                                                                                          .Average())
+                                                                                      .Where(avg => avg > 0)
+                                                                                      .DefaultIfEmpty(0)
+                                                                                      .Average(),
+                                                                                  MidpointRounding.AwayFromZero)
+                                                                          })
+                                                                          .ToList();
+
                     }
 
                     var validProductivities = ss_prod
@@ -731,151 +733,236 @@ namespace OMT.DataService.Service
             try
             {
                 List<GetSkillsetWiseUtil_ResponseDTO> ss_util = new List<GetSkillsetWiseUtil_ResponseDTO>();
+                GetSkillsetUtil_AverageDTO getUtil_AverageDTO = new GetSkillsetUtil_AverageDTO();
 
                 var skillsetIds = getSkillsetWiseProductivity_DTO.SkillSetId;
+                int? teamid = null;
+                int roleid = (int)_oMTDataContext.UserProfile
+                                                .Where(x => x.UserId == UserId && x.IsActive)
+                                                .Select(x => x.RoleId)
+                                                .FirstOrDefault();
 
-                if (getSkillsetWiseProductivity_DTO.TeamId != null)
+                if (getSkillsetWiseProductivity_DTO.TeamId == null)
                 {
-                    ss_util = _oMTDataContext.Productivity_Percentage
-                                                                        .Join(_oMTDataContext.TeamAssociation,
-                                                                            pu => pu.AgentUserId,
-                                                                            ta => ta.UserId,
-                                                                            (pu, ta) => new { pu, ta })
-                                                                        .Join(_oMTDataContext.UserProfile,
-                                                                            pu_ta => pu_ta.pu.AgentUserId,
-                                                                            up => up.UserId,
-                                                                            (pu_ta, up) => new { pu_ta.pu, pu_ta.ta, up })
-                                                                        .Join(_oMTDataContext.SkillSet,
-                                                                            data => data.pu.SkillSetId,
-                                                                            ss => ss.SkillSetId,
-                                                                            (data, ss) => new { data.pu, data.ta, data.up, ss.SkillSetName })
-                                                                        .Where(data => data.ta.TeamId == getSkillsetWiseProductivity_DTO.TeamId
-                                                                                    && data.up.IsActive == true
-                                                                                    && skillsetIds.Contains(data.pu.SkillSetId)
-                                                                                    && data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date
-                                                                                    && data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
+                    if (roleid == 1)
+                    {
+                        teamid = _oMTDataContext.Teams
+                                                .Where(x => x.TL_Userid == UserId && x.IsActive)
+                                                .Select(x => (int?)x.TeamId)
+                                                .FirstOrDefault() ?? 0;
+                    }
+                    else if (roleid == 2 || roleid == 4)
+                    {
+                        teamid = null;
+                    }
+                }
+                else
+                {
+                    teamid = (int)getSkillsetWiseProductivity_DTO.TeamId;
+                }
+
+                if (getSkillsetWiseProductivity_DTO.IsSplit == 0)
+                {
+                    if (teamid != null)
+                    {
+                        ss_util = _oMTDataContext.Productivity_Percentage
+                                                                        .Join(_oMTDataContext.Teams, pu => pu.TlUserId, t => t.TL_Userid, (pu, t) => new { pu, t })
+                                                                        .Join(_oMTDataContext.UserProfile, pu_t => pu_t.pu.AgentUserId, up => up.UserId, (pu_t, up) => new { pu_t.pu, pu_t.t, up })
+                                                                        .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.t, data.up, ss.SkillSetName })
+                                                                        .Where(data => data.t.TeamId == teamid && data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
+                                                                                       data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
+                                                                                       data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
+                                                                        .AsEnumerable()
+                                                                        .GroupBy(data => data.SkillSetName) // Group by SkillSet only
+                                                                        .Select(group => new GetSkillsetWiseUtil_ResponseDTO
+                                                                        {
+                                                                            SkillSet = group.Key,
+                                                                            DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                .Select(g => new GetTeamUtil_DatewisedataDTO
+                                                                                {
+                                                                                    Date = g.Key.ToString("MM-dd-yyyy"),
+                                                                                    Utilization = (int)Math.Round(
+                                                                                        g.Select(x => x.pu.Utilization)
+                                                                                            .Where(p => p > 0)
+                                                                                            .DefaultIfEmpty(0)
+                                                                                            .Average(),
+                                                                                        MidpointRounding.AwayFromZero)
+                                                                                })
+                                                                                .OrderBy(d => d.Date)
+                                                                                .ToList(),
+                                                                            OverallUtilization = (int)Math.Round(
+                                                                                group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                    .Select(g => g.Select(x => x.pu.Utilization)
+                                                                                        .Where(p => p > 0)
+                                                                                        .DefaultIfEmpty(0)
+                                                                                        .Average())
+                                                                                    .Where(avg => avg > 0)
+                                                                                    .DefaultIfEmpty(0)
+                                                                                    .Average(),
+                                                                                MidpointRounding.AwayFromZero)
+                                                                        })
+                                                                        .ToList();
+                    }
+                    else
+                    {
+                        ss_util = _oMTDataContext.Productivity_Percentage
+                                                                         .Join(_oMTDataContext.UserProfile, pu => pu.AgentUserId, up => up.UserId, (pu, up) => new { pu, up })
+                                                                         .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.up, ss.SkillSetName })
+                                                                         .Where(data => data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
+                                                                                        data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
+                                                                                        data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
+                                                                         .AsEnumerable()
+                                                                         .GroupBy(data => data.SkillSetName)
+                                                                         .Select(group => new GetSkillsetWiseUtil_ResponseDTO
+                                                                         {
+                                                                             SkillSet = group.Key,
+                                                                             DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                 .Select(g => new GetTeamUtil_DatewisedataDTO
+                                                                                 {
+                                                                                     Date = g.Key.ToString("MM-dd-yyyy"),
+                                                                                     Utilization = (int)Math.Round(
+                                                                                         g.Select(x => x.pu.Utilization)
+                                                                                             .Where(p => p > 0)
+                                                                                             .DefaultIfEmpty(0)
+                                                                                             .Average(),
+                                                                                         MidpointRounding.AwayFromZero)
+                                                                                 })
+                                                                                 .OrderBy(d => d.Date)
+                                                                                 .ToList(),
+                                                                             OverallUtilization = (int)Math.Round(
+                                                                                 group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                     .Select(g => g.Select(x => x.pu.Utilization)
+                                                                                         .Where(p => p > 0)
+                                                                                         .DefaultIfEmpty(0)
+                                                                                         .Average())
+                                                                                     .Where(avg => avg > 0)
+                                                                                     .DefaultIfEmpty(0)
+                                                                                     .Average(),
+                                                                                 MidpointRounding.AwayFromZero)
+                                                                         })
+                                                                         .ToList();
+                    }
+
+                    var validUtilization = ss_util
+                                                    .Select(x => x.OverallUtilization)
+                                                    .Where(p => p > 0)
+                                                    .ToList();
+
+                    getUtil_AverageDTO.TotalOverallUtilization = validUtilization.Any()
+                        ? (int)Math.Round(validUtilization.Average(), MidpointRounding.AwayFromZero)
+                        : 0;
+                }
+
+                else if (getSkillsetWiseProductivity_DTO.IsSplit == 1)
+                {
+                    if (teamid != null)
+                    {
+                        ss_util = _oMTDataContext.Productivity_Percentage
+                                                                         .Join(_oMTDataContext.Teams, pu => pu.TlUserId, t => t.TL_Userid, (pu, t) => new { pu, t })
+                                                                         .Join(_oMTDataContext.UserProfile, pu_t => pu_t.pu.AgentUserId, up => up.UserId, (pu_t, up) => new { pu_t.pu, pu_t.t, up })
+                                                                         .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.t, data.up, ss.SkillSetName })
+                                                                         .Where(data => data.t.TeamId == teamid && data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
+                                                                                        data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
+                                                                                        data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
+                                                                         .AsEnumerable()
+                                                                         .GroupBy(data => new { data.SkillSetName, data.pu.AgentUserId, data.up.FirstName, data.up.LastName })
+                                                                         .Select(group => new GetSkillsetWiseUtil_ResponseDTO
+                                                                         {
+                                                                             AgentName = group.Key.FirstName + " " + group.Key.LastName,
+                                                                             SkillSet = group.Key.SkillSetName,
+                                                                             DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                 .Select(g => new GetTeamUtil_DatewisedataDTO
+                                                                                 {
+                                                                                     Date = g.Key.ToString("MM-dd-yyyy"),
+                                                                                     Utilization = g.Sum(x => x.pu.Utilization)
+                                                                                 })
+                                                                                 .OrderBy(d => d.Date)
+                                                                                 .ToList(),
+                                                                             OverallUtilization = (int)Math.Round(
+                                                                                 group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                     .Select(g => g.Sum(x => x.pu.Utilization))
+                                                                                     .Where(sum => sum > 0)
+                                                                                     .DefaultIfEmpty(0)
+                                                                                     .Average())
+                                                                         })
+                                                                         .ToList();
+                    }
+                    else
+                    {
+                        ss_util = _oMTDataContext.Productivity_Percentage
+                                                                        .Join(_oMTDataContext.UserProfile, pu => pu.AgentUserId, up => up.UserId, (pu, up) => new { pu, up })
+                                                                        .Join(_oMTDataContext.SkillSet, data => data.pu.SkillSetId, ss => ss.SkillSetId, (data, ss) => new { data.pu, data.up, ss.SkillSetName })
+                                                                        .Where(data => data.up.IsActive && skillsetIds.Contains(data.pu.SkillSetId) &&
+                                                                                       data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date &&
+                                                                                       data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
                                                                         .AsEnumerable()
                                                                         .GroupBy(data => new { data.SkillSetName, data.pu.AgentUserId, data.up.FirstName, data.up.LastName })
-                                                                        .Select(group => new
-                                                                        {
-                                                                            AgentId = group.Key.AgentUserId,
-                                                                            AgentName = group.Key.FirstName + " " + group.Key.LastName,
-                                                                            SkillSet = group.Key.SkillSetName,
-                                                                            DatewiseData = group
-                                                                                .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => new
-                                                                                {
-                                                                                    Date = g.Key,
-                                                                                    Utilization = g.Sum(x => x.pu.Utilization)
-                                                                                })
-                                                                                .OrderBy(d => d.Date)
-                                                                                .ToList(),
+                                                                         .Select(group => new GetSkillsetWiseUtil_ResponseDTO
+                                                                         {
+                                                                             AgentName = group.Key.FirstName + " " + group.Key.LastName,
+                                                                             SkillSet = group.Key.SkillSetName,
+                                                                             DatewiseData = group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                 .Select(g => new GetTeamUtil_DatewisedataDTO
+                                                                                 {
+                                                                                     Date = g.Key.ToString("MM-dd-yyyy"),
+                                                                                     Utilization = g.Sum(x => x.pu.Utilization)
+                                                                                 })
+                                                                                 .OrderBy(d => d.Date)
+                                                                                 .ToList(),
+                                                                             OverallUtilization = (int)Math.Round(
+                                                                                 group.GroupBy(g => g.pu.Createddate.Date)
+                                                                                     .Select(g => g.Sum(x => x.pu.Utilization))
+                                                                                     .Where(sum => sum > 0)
+                                                                                     .DefaultIfEmpty(0)
+                                                                                     .Average())
+                                                                         })
+                                                                         .ToList();
+                    }
 
-                                                                            AverageUtilization = group
-                                                                                .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => g.Sum(x => x.pu.Utilization))
-                                                                                .Where(sum => sum > 0)
-                                                                                .DefaultIfEmpty(0)
-                                                                                .Average()
-                                                                        })
-                                                                        .ToList()
-                                                                        .Select(x => new GetSkillsetWiseUtil_ResponseDTO
-                                                                        {
-                                                                            AgentName = x.AgentName,
-                                                                            SkillSet = x.SkillSet,
-                                                                            DatewiseData = x.DatewiseData
-                                                                                .Select(d => new GetTeamUtil_DatewisedataDTO
-                                                                                {
-                                                                                    Date = d.Date.ToString("MM-dd-yyyy"),
-                                                                                    Utilization = d.Utilization
-                                                                                })
-                                                                                .ToList(),
-                                                                            OverallUtilization = (int)Math.Round(x.AverageUtilization)
-                                                                        })
-                                                                        .ToList();
+                    // Calculate total Utilization for IsSplit = 1
+                    var skillsetOverallUtilization = ss_util
+                                                            .GroupBy(x => x.SkillSet)
+                                                            .Select(group => new
+                                                            {
+                                                                SkillSet = group.Key,
+                                                                OverallUtilization = Math.Round(
+                                                                    group
+                                                                        .SelectMany(x => x.DatewiseData)
+                                                                        .GroupBy(d => d.Date)
+                                                                        .Select(d => d.Where(x => x.Utilization > 0)
+                                                                                      .Select(x => x.Utilization)
+                                                                                      .DefaultIfEmpty()
+                                                                                      .Average())
+                                                                        .Where(avg => avg > 0)
+                                                                        .DefaultIfEmpty()
+                                                                        .Average(),
+                                                                    MidpointRounding.AwayFromZero)
+                                                            })
+                                                            .ToList();
+
+                    getUtil_AverageDTO.TotalOverallUtilization = skillsetOverallUtilization.Where(x => x.OverallUtilization > 0).Any()
+                                                                  ? (int)Math.Round(skillsetOverallUtilization.Where(x => x.OverallUtilization > 0).Average(x => x.OverallUtilization), MidpointRounding.AwayFromZero)
+                                                                  : 0;
                 }
-
-                else if (getSkillsetWiseProductivity_DTO.TeamId == null)
-                {
-                    ss_util = _oMTDataContext.Productivity_Percentage
-                                                                      .Join(_oMTDataContext.UserProfile,
-                                                                           pu => pu.AgentUserId,
-                                                                           up => up.UserId,
-                                                                           (pu, up) => new { pu, up })
-                                                                      .Join(_oMTDataContext.SkillSet,
-                                                                          data => data.pu.SkillSetId,
-                                                                          ss => ss.SkillSetId,
-                                                                          (data, ss) => new { data.pu, data.up, ss.SkillSetName })
-                                                                      .Where(data => data.up.IsActive == true
-                                                                                  && skillsetIds.Contains(data.pu.SkillSetId)
-                                                                                  && data.pu.Createddate.Date >= getSkillsetWiseProductivity_DTO.FromDate.Date
-                                                                                  && data.pu.Createddate.Date <= getSkillsetWiseProductivity_DTO.ToDate.Date)
-                                                                       .AsEnumerable()
-                                                                        .GroupBy(data => new { data.SkillSetName, data.pu.AgentUserId, data.up.FirstName, data.up.LastName })
-                                                                        .Select(group => new
-                                                                        {
-                                                                            AgentId = group.Key.AgentUserId,
-                                                                            AgentName = group.Key.FirstName + " " + group.Key.LastName,
-                                                                            SkillSet = group.Key.SkillSetName,
-                                                                            DatewiseData = group
-                                                                                .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => new
-                                                                                {
-                                                                                    Date = g.Key,
-                                                                                    Utilization = g.Sum(x => x.pu.Utilization)
-                                                                                })
-                                                                                .OrderBy(d => d.Date)
-                                                                                .ToList(),
-
-                                                                            AverageUtilization = group
-                                                                                .GroupBy(g => g.pu.Createddate.Date)
-                                                                                .Select(g => g.Sum(x => x.pu.Utilization))
-                                                                                .Where(sum => sum > 0)
-                                                                                .DefaultIfEmpty(0)
-                                                                                .Average()
-                                                                        })
-                                                                        .ToList()
-                                                                        .Select(x => new GetSkillsetWiseUtil_ResponseDTO
-                                                                        {
-                                                                            AgentName = x.AgentName,
-                                                                            SkillSet = x.SkillSet,
-                                                                            DatewiseData = x.DatewiseData
-                                                                                .Select(d => new GetTeamUtil_DatewisedataDTO
-                                                                                {
-                                                                                    Date = d.Date.ToString("MM-dd-yyyy"),
-                                                                                    Utilization = d.Utilization
-                                                                                })
-                                                                                .ToList(),
-                                                                            OverallUtilization = (int)Math.Round(x.AverageUtilization)
-                                                                        })
-                                                                        .ToList();
-                }
-
                 if (ss_util.Count > 0)
                 {
-                    GetSkillsetUtil_AverageDTO getProd_AverageDTO = new GetSkillsetUtil_AverageDTO();
+                    GetSkillsetUtil_AverageDTO getUtil_AverageDTO1 = new GetSkillsetUtil_AverageDTO
+                    {
+                        Utilization = ss_util,
+                        TotalOverallUtilization = getUtil_AverageDTO.TotalOverallUtilization
+                    };
 
-                    getProd_AverageDTO.Utilization = ss_util;
-                    getProd_AverageDTO.TotalOverallUtilization = ss_util
-                                                                        .Where(x => x.OverallUtilization > 0)
-                                                                        .Any()
-                                                                        ? (int)Math.Round(ss_util.Where(x => x.OverallUtilization > 0)
-                                                                                                 .Average(x => x.OverallUtilization))
-                                                                        : 0;
-
-
-
-                    resultDTO.Data = getProd_AverageDTO;
+                    resultDTO.Data = getUtil_AverageDTO1;
                     resultDTO.StatusCode = "200";
-                    resultDTO.Message = "SkillSet Utilization details fetched successfully";
+                    resultDTO.Message = "SkillSet productivity details fetched successfully";
                 }
-
                 else
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "SkillSet Utilization details not found";
+                    resultDTO.Message = "SkillSet Productivity details not found";
                     resultDTO.StatusCode = "404";
                 }
+
             }
             catch (Exception ex)
             {
