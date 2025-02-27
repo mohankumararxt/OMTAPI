@@ -66,7 +66,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetSkillSetWiseProductivity(GetSkillsetWiseProductivity_DTO getSkillsetWiseProductivity_DTO)
         {
-            return _productivityDashboardService.GetSkillSetWiseProductivity(getSkillsetWiseProductivity_DTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetSkillSetWiseProductivity(getSkillsetWiseProductivity_DTO,userid);
         }
 
         [HttpPost]
@@ -74,7 +75,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetSkillSetWiseUtilization(GetSkillsetWiseProductivity_DTO getSkillsetWiseProductivity_DTO)
         {
-            return _productivityDashboardService.GetSkillSetWiseUtilization(getSkillsetWiseProductivity_DTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetSkillSetWiseUtilization(getSkillsetWiseProductivity_DTO, userid);
         }
 
         [HttpPost]
