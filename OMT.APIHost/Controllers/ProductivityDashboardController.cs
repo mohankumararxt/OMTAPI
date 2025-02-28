@@ -84,7 +84,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetSorWiseProductivity(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO)
         {
-            return _productivityDashboardService.GetSorWiseProductivity(getSorWiseProductivity_DTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetSorWiseProductivity(getSorWiseProductivity_DTO, userid);
         }
 
         [HttpPost]
@@ -92,7 +93,8 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetSorWiseUtilization(GetSorWiseProductivity_DTO getSorWiseProductivity_DTO)
         {
-            return _productivityDashboardService.GetSorWiseUtilization(getSorWiseProductivity_DTO);
+            var userid = this.UserId;
+            return _productivityDashboardService.GetSorWiseUtilization(getSorWiseProductivity_DTO, userid);
         }
 
         

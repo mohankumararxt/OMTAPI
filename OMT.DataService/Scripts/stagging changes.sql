@@ -3429,6 +3429,7 @@
 -- CREATE TABLE Prod_Util (
 --Prod_UtilId INT PRIMARY KEY IDENTITY(1,1),
 --AgentUserId INT NOT NULL,
+--TL_Userid INT NOT NULL,
 --Total_Shift_Hours INT NOT NULL,
 --Productive_Hours  DECIMAL(10,1) NOT NULL,
 --Cross_Utilized_Hours  DECIMAL(10,1) NOT NULL,
@@ -3443,6 +3444,11 @@
 --ADD CONSTRAINT fk_Prod_Util_AgentUserId
 --FOREIGN KEY (AgentUserId)
 --REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Prod_Util
+--ADD CONSTRAINT fk_Prod_Util_TL_Userid
+--FOREIGN KEY (TL_Userid)
+--REFERENCES userprofile(Userid);
 
 --insert into Prod_Util values(4,9,7,3,20,77,33,'2025-01-24 06:05:06.438'),
 --(6,9,7.5,1,40,83,11,'2025-01-24 06:05:06.439'),
@@ -3519,11 +3525,6 @@
 --FOREIGN KEY (TL_Userid)
 --REFERENCES userprofile(Userid);
 
---alter table Prod_Util
---add TL_Userid int
 
---ALTER TABLE Prod_Util
---ADD CONSTRAINT fk_Prod_Util_TL_Userid
---FOREIGN KEY (TL_Userid)
---REFERENCES userprofile(Userid);
+
 
