@@ -1113,7 +1113,7 @@ namespace OMT.DataService.Service
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive
+                                               where us.UserId == agentCompletedOrdersDTO.UserId //&& us.IsActive
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
@@ -1421,7 +1421,7 @@ namespace OMT.DataService.Service
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                               where us.UserId == agentCompletedOrdersDTO.UserId  && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
@@ -1644,7 +1644,7 @@ namespace OMT.DataService.Service
                     List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
                                                join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId
+                                               where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId //&& us.IsActive 
                                                select ss.SkillSetName).Distinct().ToList();
 
                     foreach (string tablename in tablenames)
@@ -1947,7 +1947,7 @@ namespace OMT.DataService.Service
                     List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
                                                join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                               where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
                                                select ss.SkillSetName).Distinct().ToList();
 
                     foreach (string tablename in tablenames)
