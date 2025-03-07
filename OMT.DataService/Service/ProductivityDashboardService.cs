@@ -124,7 +124,7 @@ namespace OMT.DataService.Service
                                                              // Calculate average ignoring 0 productivity values
                                                              AverageProductivity = group.Any(g => g.pu.Productivity_Percentage > 0)
                                                                                  ? (int)Math.Round(group.Where(g => g.pu.Productivity_Percentage > 0)
-                                                                                                        .Average(g => g.pu.Productivity_Percentage))
+                                                                                                        .Average(g => g.pu.Productivity_Percentage),MidpointRounding.AwayFromZero)
                                                                                  : 0
                                                          })
                                                          .ToList()
@@ -154,7 +154,7 @@ namespace OMT.DataService.Service
                                                                                .Where(x => x.OverallProductivity > 0)   // Exclude zero values
                                                                                .Any()                                   // Check if any non-zero values exist
                                                                                ? (int)Math.Round(prod_Util.Where(x => x.OverallProductivity > 0)
-                                                                                                          .Average(x => x.OverallProductivity))  // Calculate average
+                                                                                                          .Average(x => x.OverallProductivity), MidpointRounding.AwayFromZero)  // Calculate average
                                                                                : 0;
 
 
@@ -285,7 +285,7 @@ namespace OMT.DataService.Service
 
                                                                   AverageUtilization = group.Any(g => g.pu.Utilization_Percentage > 0)
                                                                                                                                   ? Math.Round(group.Where(g => g.pu.Utilization_Percentage > 0)
-                                                                                                                                                    .Average(g => g.pu.Utilization_Percentage))
+                                                                                                                                                    .Average(g => g.pu.Utilization_Percentage), MidpointRounding.AwayFromZero)
                                                                                                                                   : 0
                                                               }).ToList()
                                                                 .Select(x => new GetTeamUtil_ResponseDTO
@@ -314,7 +314,7 @@ namespace OMT.DataService.Service
                                                                                 .Where(x => x.OverallUtilization > 0)
                                                                                 .Any()
                                                                                 ? (int)Math.Round(prod_Util.Where(x => x.OverallUtilization > 0)
-                                                                                                            .Average(x => x.OverallUtilization))
+                                                                                                            .Average(x => x.OverallUtilization), MidpointRounding.AwayFromZero)
                                                                                 : 0;
 
 
@@ -370,7 +370,7 @@ namespace OMT.DataService.Service
 
                                       OverallProductivity = skillGroup.Any(p => p.ProductivityPercentage > 0)
                                                                       ? (int)Math.Round(skillGroup.Where(p => p.ProductivityPercentage > 0)
-                                                                                                  .Average(p => p.ProductivityPercentage))
+                                                                                                  .Average(p => p.ProductivityPercentage), MidpointRounding.AwayFromZero)
                                                                       : 0
                                   }).ToList();
 
@@ -384,7 +384,7 @@ namespace OMT.DataService.Service
                                                                                .Where(x => x.OverallProductivity > 0)
                                                                                .Any()
                                                                                ? (int)Math.Round(agent_prod.Where(x => x.OverallProductivity > 0)
-                                                                                                          .Average(x => x.OverallProductivity))
+                                                                                                          .Average(x => x.OverallProductivity), MidpointRounding.AwayFromZero)
                                                                                : 0;
 
 
@@ -433,7 +433,7 @@ namespace OMT.DataService.Service
 
                                       OverallUtilization = skillGroup.Any(p => p.Utilization > 0)
                                                                      ? (int)Math.Round(skillGroup.Where(p => p.Utilization > 0)
-                                                                                                 .Average(p => p.Utilization))
+                                                                                                 .Average(p => p.Utilization), MidpointRounding.AwayFromZero)
                                                                      : 0
                                   }).ToList();
 
@@ -447,7 +447,7 @@ namespace OMT.DataService.Service
                                                                                .Where(x => x.OverallUtilization > 0)
                                                                                .Any()
                                                                                ? (int)Math.Round(agent_util.Where(x => x.OverallUtilization > 0)
-                                                                                                          .Average(x => x.OverallUtilization))
+                                                                                                          .Average(x => x.OverallUtilization), MidpointRounding.AwayFromZero)
                                                                                : 0;
 
 
@@ -537,7 +537,7 @@ namespace OMT.DataService.Service
                                                                                      .Select(g => g.Sum(x => x.pu.ProductivityPercentage))
                                                                                      .Where(sum => sum > 0)
                                                                                      .DefaultIfEmpty(0)
-                                                                                     .Average())
+                                                                                     .Average(), MidpointRounding.AwayFromZero)
                                                                          })
                                                                          .ToList();
                     }
@@ -568,7 +568,7 @@ namespace OMT.DataService.Service
                                                                                      .Select(g => g.Sum(x => x.pu.ProductivityPercentage))
                                                                                      .Where(sum => sum > 0)
                                                                                      .DefaultIfEmpty(0)
-                                                                                     .Average())
+                                                                                     .Average(), MidpointRounding.AwayFromZero)
                                                                          })
                                                                          .ToList();
                     }
@@ -883,7 +883,7 @@ namespace OMT.DataService.Service
                                                                                      .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                      .Where(sum => sum > 0)
                                                                                      .DefaultIfEmpty(0)
-                                                                                     .Average())
+                                                                                     .Average(), MidpointRounding.AwayFromZero)
                                                                          })
                                                                          .ToList();
                     }
@@ -914,7 +914,7 @@ namespace OMT.DataService.Service
                                                                                      .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                      .Where(sum => sum > 0)
                                                                                      .DefaultIfEmpty(0)
-                                                                                     .Average())
+                                                                                     .Average(), MidpointRounding.AwayFromZero)
                                                                          })
                                                                          .ToList();
                     }
@@ -1039,7 +1039,7 @@ namespace OMT.DataService.Service
                                                                                                                  .Select(g => g.Sum(x => x.pu.ProductivityPercentage))
                                                                                                                  .Where(sum => sum > 0)
                                                                                                                  .DefaultIfEmpty(0)
-                                                                                                                 .Average())
+                                                                                                                 .Average(), MidpointRounding.AwayFromZero)
                                                                                  }).ToList();
 
 
@@ -1073,7 +1073,7 @@ namespace OMT.DataService.Service
                                                                                                                  .Select(g => g.Sum(x => x.pu.ProductivityPercentage))
                                                                                                                  .Where(sum => sum > 0)
                                                                                                                  .DefaultIfEmpty(0)
-                                                                                                                 .Average())
+                                                                                                                 .Average(), MidpointRounding.AwayFromZero)
                                                                                  }).ToList();
 
                     }
@@ -1102,16 +1102,16 @@ namespace OMT.DataService.Service
                                                                                      && data.pu.Createddate.Date >= getSorWiseProductivity_DTO.FromDate.Date
                                                                                      && data.pu.Createddate.Date <= getSorWiseProductivity_DTO.ToDate.Date)
                                                                                  .AsEnumerable()
-                                                                                 .GroupBy(g => g.pu.Createddate.Date) // ✅ Group by Date
+                                                                                 .GroupBy(g => g.pu.Createddate.Date) 
                                                                                  .Select(dateGroup => new GetTeamProd_DatewisedataDTO
                                                                                  {
                                                                                      Date = dateGroup.Key.ToString("MM-dd-yyyy"),
                                                                                      Productivity = (int)Math.Round(
-                                                                                         dateGroup.GroupBy(g => g.pu.AgentUserId) // ✅ Group by User within Date
-                                                                                             .Select(userGroup => userGroup.Sum(x => x.pu.ProductivityPercentage)) // ✅ Sum per User
-                                                                                             .Where(sum => sum > 0) // ✅ Ignore 0 values
+                                                                                         dateGroup.GroupBy(g => g.pu.AgentUserId)
+                                                                                             .Select(userGroup => userGroup.Sum(x => x.pu.ProductivityPercentage)) 
+                                                                                             .Where(sum => sum > 0) 
                                                                                              .DefaultIfEmpty(0)
-                                                                                             .Average(), // ✅ Average Productivity for the Date
+                                                                                             .Average(), 
                                                                                          MidpointRounding.AwayFromZero)
                                                                                  })
                                                                                  .OrderBy(d => d.Date)
@@ -1260,7 +1260,7 @@ namespace OMT.DataService.Service
                                                                                                                  .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                                                  .Where(sum => sum > 0)
                                                                                                                  .DefaultIfEmpty(0)
-                                                                                                                 .Average())
+                                                                                                                 .Average(), MidpointRounding.AwayFromZero)
                                                                                  }).ToList();
 
 
@@ -1294,7 +1294,7 @@ namespace OMT.DataService.Service
                                                                                                                  .Select(g => g.Sum(x => x.pu.Utilization))
                                                                                                                  .Where(sum => sum > 0)
                                                                                                                  .DefaultIfEmpty(0)
-                                                                                                                 .Average())
+                                                                                                                 .Average(), MidpointRounding.AwayFromZero)
                                                                                  }).ToList();
 
                     }
