@@ -758,12 +758,14 @@
 
 --insert into ProcessStatus (SystemofRecordId,Status,IsActive) values(3,'Completed',1),(3,'Pending',1)
 
--- create table DocType
---(
---DocTypeId int IDENTITY(1,1) primary key,
---DocumentName varchar(500) not null,
---IsActive bit not null DEFAULT 1
---)
+
+---- create table DocType
+----(
+----DocTypeId int IDENTITY(1,1) primary key,
+----DocumentName varchar(500) not null,
+----IsActive bit not null DEFAULT 1,
+----TrdDocTypeId int not null
+----)
 
 --insert into DocType (documentname,isactive) values('Recorded Mortgage',1),('Mortgage',1),('Recorded Release',1),('TitlePolicy',1),('Note',1),('Final Title Policy',1),('Miscellaneous',1),('Modification',1),('Power of Attorney',1),('Unrecorded Mortgage',1),('ASSIGNMENT',1),('CEMA',1),('Collateral File',1),('Non-Critical Documents - Collateral File',1),('Original Recorded Documents - Note and RMORT',1),('Rejection-Lien Release',1),('Accommodation Modification',1),('Colorado Deed of Trust',1),('POA',1),('Recorded Electronic Deed of Trust',1),('Legal Description',1),('Miscellaneous Documents',1),('Recorded Security Instrument',1),('Rejection',1),('Lien Release',1),('Lien Release Only',1),('Recorded Release Only',1)
 
@@ -914,6 +916,12 @@
 --)
 
 --insert into TrackTrdOrders values(0,GETDATE(),1)
+
+--ALTER TABLE DefaultTemplateColumns
+--ADD IsMandatoryColumn BIT ;
+
+--update DefaultTemplateColumns set ismandatorycolumn = 0
+--update DefaultTemplateColumns set ismandatorycolumn =  1 where id = 33 or id = 5 or id between 33 and 32 or id  between 1 and 3 or id between 15 and 19
 
 --insert into DefaultTemplateColumns (SystemofRecordId,DefaultColumnName,DataType,IsActive,IsDuplicateCheck,IsGetOrderColumn,isdefonlycolumn,ismandatorycolumn) values
 --(3,'ProjectId','nvarchar(100)',1,0,1,1,1),
@@ -1227,8 +1235,8 @@
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
 
---insert into ResWareProductDescriptions values('Assignment Verification Report',1),('Current Owner: 1 Owner - PIR',1),('Two Owner: 2 Owner - PIR',1),('Commercial Search-D2',1)
---insert into ProductDescription values ('1 Owner - PIR',1),('2 Owner - PIR',1),('Commercial Search',1)
+--insert into ResWareProductDescriptions values('Assignment Verification Report',1),('Commercial Search-D2',1)
+--insert into ProductDescription values ('Commercial Search',1)
 
 
 --insert into ResWareProductDescriptionMap values (1,1,5),     ----------for dev
@@ -1257,6 +1265,35 @@
 
 ----insert into DocType (documentname,isactive) values ('COOP',1),('Deed',1)
 
+--insert into ResWareProductDescriptionMap values  
+--(1,1,5),
+--(2,2,5),
+--(68,8,8),
+--(83,8,8),
+--(68,8,80),
+--(83,8,80),
+--(68,8,81),
+--(83,8,81),
+--(68,8,82),
+--(83,8,82),
+--(13,5,90),
+--(14,6,90),
+--(84,10,90),
+--(15,7,90),
+--(13,5,88),
+--(14,6,88),
+--(84,10,88),
+--(15,7,88),
+--(13,5,13),
+--(14,6,13),
+--(84,10,13),
+--(15,7,13),
+--(15,7,89)
+
+
+
+--insert into DocType (documentname,isactive) values ('COOP',1),('Deed',1)
+
 --insert into skillset (SystemofRecordId,SkillSetName,Threshold,IsActive) values 
 --(3,'AB8030122IM_Miscellaneous',100,1),
 --(3,'AP8090122PC_ASSIGNMENT',100,1),
@@ -1269,22 +1306,22 @@
 --(3,'PL8110117PC_UnRecorded_Mortgage',100,1),
 --(3,'BA8080121PC_Miscellaneous',100,1),
 --(3,'DB8010324PC_Collateral_File',100,1),
---(3,'PR8050118IM_ASSIGNMENT',100,1),
+--(3,'PR8050118IM_ASSIGNMENT',100,1)
 
 
 --insert into TrdMap (ProjectId,DoctypeId,SkillSetId,SystemOfRecordId,CreatedDate,IsActive) values 
---('AB8030122IM',7,270,3,'2024-08-27 07:07:23.000',1),
---('AP8090122PC',11,271,3,'2024-08-27 07:07:23.000',1),
---('BA8080121PC',12,272,3,'2024-08-27 07:07:23.000',1),
---('BA8080121PC',108,273,3,'2024-08-27 07:07:23.000',1),
---('BA8080121PC',107,274,3,'2024-08-27 07:07:23.000',1),
---('CC8020122PC',11,275,3,'2024-08-27 07:07:23.000',1),
---('HB8100116IM',10,276,3,'2024-08-27 07:07:23.000',1),
---('NA8120114IM',19,277,3,'2024-08-27 07:07:23.000',1),
---('PL8110117PC',10,278,3,'2024-08-27 07:07:23.000',1),
---('BA8080121PC',7,279,3,'2024-08-27 07:07:23.000',1),
---('DB8010324PC',13,280,3,'2024-08-27 07:07:23.000',1),
---('PR8050118IM',11,281,3,'2024-08-27 07:07:23.000',1)
+--('AB8030122IM',7,240,3,'2024-08-27 07:07:23.000',1),
+--('AP8090122PC',11,241,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',12,242,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',29,243,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',28,244,3,'2024-08-27 07:07:23.000',1),
+--('CC8020122PC',11,245,3,'2024-08-27 07:07:23.000',1),
+--('HB8100116IM',10,246,3,'2024-08-27 07:07:23.000',1),
+--('NA8120114IM',19,247,3,'2024-08-27 07:07:23.000',1),
+--('PL8110117PC',10,248,3,'2024-08-27 07:07:23.000',1),
+--('BA8080121PC',7,249,3,'2024-08-27 07:07:23.000',1),
+--('DB8010324PC',13,250,3,'2024-08-27 07:07:23.000',1),
+--('PR8050118IM',11,251,3,'2024-08-27 07:07:23.000',1)
 
 
 --CREATE TABLE AB8030122IM_Miscellaneous(Id int IDENTITY(1,1) primary key,DocType nvarchar(200),OrderId NVARCHAR(200),ProjectId NVARCHAR(100),DocImageDate DATE,HaStatus NVARCHAR(100),WorkflowStatus NVARCHAR(100),IsPriority bit default 0,UserId int,Status int,Remarks NVARCHAR(1000),CompletionDate DateTime,StartTime DateTime,EndTime DateTime,TeamLeadId int,SystemofRecordId int,SkillSetId int,AllocationDate date)
@@ -1302,46 +1339,46 @@
 
 
 --insert into TemplateColumns values 
---(270,3,'DocType','DocType','nvarchar(200)',0,1),
---(271,3,'DocType','DocType','nvarchar(200)',0,1),
---(272,3,'DocType','DocType','nvarchar(200)',0,1),
---(273,3,'DocType','DocType','nvarchar(200)',0,1),
---(274,3,'DocType','DocType','nvarchar(200)',0,1),
---(275,3,'DocType','DocType','nvarchar(200)',0,1),
---(276,3,'DocType','DocType','nvarchar(200)',0,1),
---(277,3,'DocType','DocType','nvarchar(200)',0,1),
---(278,3,'DocType','DocType','nvarchar(200)',0,1),
---(279,3,'DocType','DocType','nvarchar(200)',0,1),
---(280,3,'DocType','DocType','nvarchar(200)',0,1),
---(281,3,'DocType','DocType','nvarchar(200)',0,1),
+--(240,3,'DocType','DocType','nvarchar(200)',0,1),
+--(241,3,'DocType','DocType','nvarchar(200)',0,1),
+--(242,3,'DocType','DocType','nvarchar(200)',0,1),
+--(243,3,'DocType','DocType','nvarchar(200)',0,1),
+--(244,3,'DocType','DocType','nvarchar(200)',0,1),
+--(245,3,'DocType','DocType','nvarchar(200)',0,1),
+--(246,3,'DocType','DocType','nvarchar(200)',0,1),
+--(247,3,'DocType','DocType','nvarchar(200)',0,1),
+--(248,3,'DocType','DocType','nvarchar(200)',0,1),
+--(249,3,'DocType','DocType','nvarchar(200)',0,1),
+--(250,3,'DocType','DocType','nvarchar(200)',0,1),
+--(251,3,'DocType','DocType','nvarchar(200)',0,1)
 
 --insert into timeline values 
---(270,' ',3,0,1),
---(271,' ',3,0,1),
---(272,' ',3,0,1),
---(273,' ',3,0,1),
---(274,' ',3,0,1),
---(275,' ',3,0,1),
---(276,' ',3,0,1),
---(277,' ',3,0,1),
---(278,' ',3,0,1),
---(279,' ',3,0,1),
---(280,' ',3,0,1),
---(281,' ',3,0,1)
+--(240,' ',3,0,1),
+--(241,' ',3,0,1),
+--(242,' ',3,0,1),
+--(243,' ',3,0,1),
+--(244,' ',3,0,1),
+--(245,' ',3,0,1),
+--(246,' ',3,0,1),
+--(247,' ',3,0,1),
+--(248,' ',3,0,1),
+--(249,' ',3,0,1),
+--(250,' ',3,0,1),
+--(251,' ',3,0,1)
 
 --insert into InvoiceJointTrd values 
---(3,270,1,1,6,7,4),
---(3,271,1,1,6,7,4),
---(3,272,1,1,6,7,4),
---(3,273,1,1,6,7,4),
---(3,274,1,1,6,7,4),
---(3,275,1,1,6,7,4),
---(3,276,1,1,6,7,4),
---(3,277,1,1,6,7,4),
---(3,278,1,1,6,7,4),
---(3,279,1,1,6,7,4),
---(3,280,1,1,6,7,4),
---(3,281,1,1,6,7,4)
+--(3,240,1,1,6,7,4),
+--(3,241,1,1,6,7,4),
+--(3,242,1,1,6,7,4),
+--(3,243,1,1,6,7,4),
+--(3,244,1,1,6,7,4),
+--(3,245,1,1,6,7,4),
+--(3,246,1,1,6,7,4),
+--(3,247,1,1,6,7,4),
+--(3,248,1,1,6,7,4),
+--(3,249,1,1,6,7,4),
+--(3,250,1,1,6,7,4),
+--(3,251,1,1,6,7,4)
 
 
 
@@ -1375,8 +1412,10 @@
 --('Lien Release',1,25),
 --('Lien Release Only',1,26),
 --('Recorded Release Only',1,27),
---('COOP',1,108),
---('Deed',1,107)
+--('Deed',1,28),
+--('COOP',1,29),
+--('Assignment',1,30)
+
 
 --insert into ReportColumns (SystemOfRecordId,ReportColumnName,IsActive) values(3,'ProjectId',1),(3,'DocType',1),(3,'DocImageDate',1)
 

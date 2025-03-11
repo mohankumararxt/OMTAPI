@@ -13,5 +13,7 @@ namespace OMT.DataService.Interface
         ResultDTO UpdateByHR(UpdateUserByHrDTO updateUserDTO);
         ResultDTO UpdatePasswordByHR(UpdateUserPasswordByHrDTO updateUserPasswordDTO);
         ResultDTO GetUserExcel();
+
+        ResultDTO GetSocketIoUserList();
     }
 }
