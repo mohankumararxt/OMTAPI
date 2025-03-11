@@ -57,7 +57,7 @@ namespace DailyInvoiceGenerator
                                 SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName
                                 FROM skillset SS
                                 INNER JOIN templatecolumns TC ON TC.skillsetid = SS.skillsetid
-                                WHERE SS.isactive = 1 
+                                WHERE SS.isactive = 1 AND SS.InvoiceMandatory = 1 
                                 ORDER BY SystemofRecordId, SkillSetId";
 
                     SqlCommand command = new SqlCommand(query, connection);
