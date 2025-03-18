@@ -111,6 +111,7 @@ namespace DailyInvoiceGenerator
                             // Add parameters
                             spCommand.Parameters.Add("@SkillSetId", SqlDbType.Int).Value = skillSetId;
                             spCommand.Parameters.Add("@SystemOfRecordId", SqlDbType.Int).Value = systemOfRecordId;
+                            spCommand.CommandTimeout = 300;
 
                             SqlParameter returnValue = new SqlParameter
                             {
