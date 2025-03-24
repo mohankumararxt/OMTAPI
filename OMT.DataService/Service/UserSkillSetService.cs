@@ -418,6 +418,7 @@ namespace OMT.DataService.Service
                                     IsActive = true,
                                     IsCycle1 = true,
                                     CreatedDate = DateTime.Now,
+                                    ProjectId = detail.ProjectId,
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -433,6 +434,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = true,
                                 CreatedDate = DateTime.Now,
+                                ProjectId = detail.ProjectId,
                             };
                             _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -449,6 +451,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = true,
                                 CreatedDate = DateTime.Now,
+                                ProjectId = detail.ProjectId,
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -470,6 +473,7 @@ namespace OMT.DataService.Service
                                     IsActive = true,
                                     IsCycle1 = false,
                                     CreatedDate = DateTime.Now,
+                                    ProjectId = details.ProjectId,
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -485,6 +489,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = false,
                                 CreatedDate = DateTime.Now,
+                                ProjectId = details.ProjectId,
                             };
                             _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -501,6 +506,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = false,
                                 CreatedDate = DateTime.Now,
+                                ProjectId = details.ProjectId,
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                             _oMTDataContext.SaveChanges();
@@ -549,7 +555,7 @@ namespace OMT.DataService.Service
                     //Cycle1
 
                     List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
-
+                  
                     foreach (var ssid in ssids_c1)
                     {
                         List<UPdateHardStateDetailsDTO> details_hs_c1 = new List<UPdateHardStateDetailsDTO>();
@@ -558,6 +564,24 @@ namespace OMT.DataService.Service
                         var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
 
                         var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+                        var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
+
+                        var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+
+                        var projectnames = _oMTDataContext.MasterProjectName
+                            .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+                            .Select(mp => mp.ProjectName)
+                            .ToList();
+
+                        var projectDetailsList = _oMTDataContext.MasterProjectName
+                                                                .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+                                                                .Select(mp => new ProjectdetailsDTO
+                                                                {
+                                                                    ProjectId = mp.ProjectId,
+                                                                    ProjectName = mp.ProjectName
+                                                                })
+                                                                .ToList();
 
                         if (hs_ss.Count > 0)
                         {
@@ -574,6 +598,7 @@ namespace OMT.DataService.Service
 
                             }
 
+
                             UserSkillSetDetailsDTO c1_hs = new UserSkillSetDetailsDTO()
                             {
                                 UserSkillSetId = ns_ss.UserSkillSetId,
@@ -581,7 +606,9 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = true,
-                                HardStateDetails = details_hs_c1
+                                HardStateDetails = details_hs_c1,
+                                Projectdetails = projectDetailsList
+
                             };
 
                             FirstCycle1.Add(c1_hs);
@@ -595,6 +622,7 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = false,
+                                Projectdetails =projectDetailsList
                             };
 
                             FirstCycle1.Add(c1_ns);
@@ -613,6 +641,25 @@ namespace OMT.DataService.Service
                         var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
 
                         var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+
+                        var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
+
+                        var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+
+                        var projectnames = _oMTDataContext.MasterProjectName
+                            .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) 
+                            .Select(mp => mp.ProjectName)
+                            .ToList();
+
+                        var projectDetailsList = _oMTDataContext.MasterProjectName
+                                                               .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+                                                               .Select(mp => new ProjectdetailsDTO
+                                                               {
+                                                                   ProjectId = mp.ProjectId,
+                                                                   ProjectName = mp.ProjectName
+                                                               })
+                                                               .ToList();
 
                         if (hs_ss.Count > 0)
                         {
@@ -636,7 +683,8 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = true,
-                                HardStateDetails = details_hs_c2
+                                HardStateDetails = details_hs_c2,
+                                Projectdetails = projectDetailsList  
                             };
 
                             SecondCycle2.Add(c2_hs);
@@ -650,6 +698,7 @@ namespace OMT.DataService.Service
                                 SkillSetName = skillsetname,
                                 Weightage = ns_ss.Percentage,
                                 IsHardStateUser = ns_ss.IsHardStateUser,
+                                Projectdetails = projectDetailsList
                             };
 
                             SecondCycle2.Add(c2_ns);
@@ -669,7 +718,7 @@ namespace OMT.DataService.Service
                         Username = userName,
                         UserId = id,
                         FirstCycle = FirstCycle1,
-                        SecondCycle = SecondCycle2
+                        SecondCycle = SecondCycle2,
                     };
 
                     allUserSkillSet.Add(userSkillSetDetailsDTO);
