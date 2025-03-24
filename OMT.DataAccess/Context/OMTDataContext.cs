@@ -66,6 +66,7 @@ namespace OMT.DataAccess.Context
 
         public DbSet<Message> Message { get; set; }
         public DbSet<MessagesStatus> MessagesStatus { get; set; }
+        public DbSet<MasterProjectName> MasterProjectName { get; set; }
 
 
         public override int SaveChanges()

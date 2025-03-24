@@ -12,5 +12,6 @@ namespace OMT.DTO
         //public string? StateName {  get; set; } 
         public string[]? StateName { get; set; }
         public bool? IsHardState { get; set; }
+        public bool? GetOrderByProject { get; set; }
     }
 }

@@ -109,5 +109,12 @@ namespace OMT.APIHost.Controllers
         {
             return _skillsetService.GetSkillSetTimelineList(skillsetid);
         }
+
+        [HttpGet]
+        [Route("GetProjectNameList/{skillsetid:int?}")]
+        public ResultDTO GetProjectNameList(int? skillsetid)
+        {
+            return _skillsetService.GetProjectNameList(skillsetid);
+        }
     }
 }

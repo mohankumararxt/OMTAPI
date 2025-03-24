@@ -13,6 +13,7 @@ namespace OMT.DataService.Interface
         ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillsettimeLineDTO); 
         ResultDTO UpdateTimeLine(SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO); 
         ResultDTO GetSkillSetTimelineList(int? skillsetid); 
+        ResultDTO GetProjectNameList(int? skillsetid);
        
     } 
 }
