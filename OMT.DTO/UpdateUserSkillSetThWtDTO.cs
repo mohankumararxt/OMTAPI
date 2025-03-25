@@ -21,5 +21,6 @@ namespace OMT.DTO
         //public string? HardStateName { get; set; }
        // public List<string>? HardStateName { get; set; }
         public List<UPdateHardStateDetailsDTO> HardStateDetails { get; set; }
+        public string? ProjectId { get; set; }
     }
 }

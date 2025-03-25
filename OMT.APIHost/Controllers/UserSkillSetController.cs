@@ -11,7 +11,7 @@ namespace OMT.APIHost.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
+   // [Authorize(AuthenticationSchemes = "Bearer")]
     public class UserSkillSetController : BaseController  //inherited basecontroller
     {
         private readonly IUserSkillSetService _userSkillSetService;

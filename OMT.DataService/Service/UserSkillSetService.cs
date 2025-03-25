@@ -418,7 +418,7 @@ namespace OMT.DataService.Service
                                     IsActive = true,
                                     IsCycle1 = true,
                                     CreatedDate = DateTime.Now,
-                                    ProjectId = detail.ProjectId,
+                                    ProjectId = detail.ProjectId ?? ""//detail.ProjectId != null ? string.Join(",", detail.ProjectId) : null,
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -434,7 +434,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = true,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = detail.ProjectId,
+                                ProjectId = detail.ProjectId ?? "",
                             };
                             _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -451,7 +451,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = true,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = detail.ProjectId,
+                                ProjectId = detail.ProjectId ?? "",
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -473,7 +473,7 @@ namespace OMT.DataService.Service
                                     IsActive = true,
                                     IsCycle1 = false,
                                     CreatedDate = DateTime.Now,
-                                    ProjectId = details.ProjectId,
+                                    ProjectId = details.ProjectId ?? "",
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -489,7 +489,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = false,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = details.ProjectId,
+                                ProjectId = details.ProjectId ?? "",
                             };
                             _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -506,7 +506,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 IsCycle1 = false,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = details.ProjectId,
+                                ProjectId = details.ProjectId ?? "",
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                             _oMTDataContext.SaveChanges();
@@ -826,6 +826,7 @@ namespace OMT.DataService.Service
                                     is_hs.Percentage = h.Weightage;
                                     is_hs.IsHardStateUser = USS_ss.IsHardStateUser;
                                     is_hs.HardStateName = h.HardStateName;
+                                    is_hs.ProjectId = USS_ss.ProjectId ?? "";
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -842,7 +843,8 @@ namespace OMT.DataService.Service
                                         IsCycle1 = true,
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
-                                    };
+                                        ProjectId = USS_ss.ProjectId ?? ""
+                                };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
                                 }
@@ -859,6 +861,7 @@ namespace OMT.DataService.Service
                             not_hs.Percentage = (int)USS_ss.Weightage;
                             not_hs.IsHardStateUser = false;
                             not_hs.HardStateName = "";
+                            not_hs.ProjectId = USS_ss.ProjectId ?? "";
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -875,7 +878,8 @@ namespace OMT.DataService.Service
                                 IsCycle1 = true,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
-                            };
+                                ProjectId = USS_ss.ProjectId ?? ""
+                        };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
                         }
@@ -897,6 +901,7 @@ namespace OMT.DataService.Service
                                     is_hs.Percentage = h.Weightage;
                                     is_hs.IsHardStateUser = Uss_skillset.IsHardStateUser;
                                     is_hs.HardStateName = h.HardStateName;
+                                    is_hs.ProjectId = Uss_skillset.ProjectId ?? "";
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -913,6 +918,7 @@ namespace OMT.DataService.Service
                                         IsCycle1 = false,
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
+                                        ProjectId = Uss_skillset.ProjectId ?? ""
                                     };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
@@ -930,6 +936,7 @@ namespace OMT.DataService.Service
                             not_hs.Percentage = (int)Uss_skillset.Weightage;
                             not_hs.IsHardStateUser = false;
                             not_hs.HardStateName = "";
+                            not_hs.ProjectId = Uss_skillset.ProjectId ?? "";
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -946,6 +953,7 @@ namespace OMT.DataService.Service
                                 IsCycle1 = false,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
+                                ProjectId = Uss_skillset.ProjectId ?? ""
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();

@@ -25,7 +25,7 @@ namespace OMT.DTO
         public int? Weightage { get; set; }
         public bool IsHardStateUser { get; set; }
         public List<HardStateDetails> HardStateDetails { get; set; }
-        public string ProjectId { get; set; }
+        public string? ProjectId { get; set; }
 
     }
 }

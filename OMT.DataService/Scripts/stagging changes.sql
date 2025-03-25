@@ -5246,7 +5246,7 @@
 --alter table userskillset
 --add ProjectId NVARCHAR(200)
 
-
+--update userskillset set ProjectId = '' 
 
 --insert into MasterProjectName values
 --(697,'AB80301221M','Arvest Mortgage Division',1),
