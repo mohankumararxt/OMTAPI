@@ -531,6 +531,211 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        //public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
+        //{
+        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+        //    try
+        //    {
+        //        List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
+
+        //        var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct().ToList();
+
+        //        var active_users = _oMTDataContext.UserProfile.Where(x => x.IsActive && USSid.Contains(x.UserId)).Select(x => x.UserId).ToList();
+
+        //        var userids = (userid == null) ? active_users : new List<int> { userid.Value };
+
+        //        foreach (var id in userids)
+        //        {
+        //            List<UserSkillSetDetailsDTO> FirstCycle1 = new List<UserSkillSetDetailsDTO>();
+        //            List<UserSkillSetDetailsDTO> SecondCycle2 = new List<UserSkillSetDetailsDTO>();
+
+        //            var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
+        //            var userName = userProfile != null ? userProfile.FirstName + ' ' + userProfile.LastName : "User Not Found";
+
+        //            //Cycle1
+
+        //            List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
+
+        //            foreach (var ssid in ssids_c1)
+        //            {
+        //                List<UPdateHardStateDetailsDTO> details_hs_c1 = new List<UPdateHardStateDetailsDTO>();
+        //                var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
+
+        //                var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
+
+        //                var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+        //                var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
+
+        //                var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+
+        //                var projectnames = _oMTDataContext.MasterProjectName
+        //                    .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+        //                    .Select(mp => mp.ProjectName)
+        //                    .ToList();
+
+        //                var projectDetailsList = _oMTDataContext.MasterProjectName
+        //                                                        .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+        //                                                        .Select(mp => new ProjectdetailsDTO
+        //                                                        {
+        //                                                            ProjectId = mp.ProjectId,
+        //                                                            ProjectName = mp.ProjectName
+        //                                                        })
+        //                                                        .ToList();
+
+        //                if (hs_ss.Count > 0)
+        //                {
+        //                    foreach (var h in hs_ss)
+        //                    {
+        //                        var detail_add_hs = new UPdateHardStateDetailsDTO()
+        //                        {
+        //                            HardStateName = h.HardStateName,
+        //                            Weightage = h.Percentage,
+        //                            UserSkillSetId = h.UserSkillSetId,
+        //                        };
+
+        //                        details_hs_c1.Add(detail_add_hs);
+
+        //                    }
+
+
+        //                    UserSkillSetDetailsDTO c1_hs = new UserSkillSetDetailsDTO()
+        //                    {
+        //                        UserSkillSetId = ns_ss.UserSkillSetId,
+        //                        SkillSetId = ns_ss.SkillSetId,
+        //                        SkillSetName = skillsetname,
+        //                        Weightage = ns_ss.Percentage,
+        //                        IsHardStateUser = true,
+        //                        HardStateDetails = details_hs_c1,
+        //                        Projectdetails = projectDetailsList
+
+        //                    };
+
+        //                    FirstCycle1.Add(c1_hs);
+        //                }
+        //                else
+        //                {
+        //                    UserSkillSetDetailsDTO c1_ns = new UserSkillSetDetailsDTO()
+        //                    {
+        //                        UserSkillSetId = ns_ss.UserSkillSetId,
+        //                        SkillSetId = ns_ss.SkillSetId,
+        //                        SkillSetName = skillsetname,
+        //                        Weightage = ns_ss.Percentage,
+        //                        IsHardStateUser = false,
+        //                        Projectdetails =projectDetailsList
+        //                    };
+
+        //                    FirstCycle1.Add(c1_ns);
+        //                }
+        //            }
+
+        //            //Cycle2
+
+        //            List<int> ssids_c2 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
+
+        //            foreach (var ssid in ssids_c2)
+        //            {
+        //                List<UPdateHardStateDetailsDTO> details_hs_c2 = new List<UPdateHardStateDetailsDTO>();
+        //                var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
+
+        //                var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
+
+        //                var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
+
+
+        //                var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
+
+        //                var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+
+        //                var projectnames = _oMTDataContext.MasterProjectName
+        //                    .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) 
+        //                    .Select(mp => mp.ProjectName)
+        //                    .ToList();
+
+        //                var projectDetailsList = _oMTDataContext.MasterProjectName
+        //                                                       .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
+        //                                                       .Select(mp => new ProjectdetailsDTO
+        //                                                       {
+        //                                                           ProjectId = mp.ProjectId,
+        //                                                           ProjectName = mp.ProjectName
+        //                                                       })
+        //                                                       .ToList();
+
+        //                if (hs_ss.Count > 0)
+        //                {
+        //                    foreach (var h in hs_ss)
+        //                    {
+        //                        var detail_add_hs_c2 = new UPdateHardStateDetailsDTO()
+        //                        {
+        //                            HardStateName = h.HardStateName,
+        //                            Weightage = h.Percentage,
+        //                            UserSkillSetId = h.UserSkillSetId,
+        //                        };
+
+        //                        details_hs_c2.Add(detail_add_hs_c2);
+
+        //                    }
+
+        //                    UserSkillSetDetailsDTO c2_hs = new UserSkillSetDetailsDTO()
+        //                    {
+        //                        UserSkillSetId = ns_ss.UserSkillSetId,
+        //                        SkillSetId = ns_ss.SkillSetId,
+        //                        SkillSetName = skillsetname,
+        //                        Weightage = ns_ss.Percentage,
+        //                        IsHardStateUser = true,
+        //                        HardStateDetails = details_hs_c2,
+        //                        Projectdetails = projectDetailsList  
+        //                    };
+
+        //                    SecondCycle2.Add(c2_hs);
+        //                }
+        //                else
+        //                {
+        //                    UserSkillSetDetailsDTO c2_ns = new UserSkillSetDetailsDTO()
+        //                    {
+        //                        UserSkillSetId = ns_ss.UserSkillSetId,
+        //                        SkillSetId = ns_ss.SkillSetId,
+        //                        SkillSetName = skillsetname,
+        //                        Weightage = ns_ss.Percentage,
+        //                        IsHardStateUser = ns_ss.IsHardStateUser,
+        //                        Projectdetails = projectDetailsList
+        //                    };
+
+        //                    SecondCycle2.Add(c2_ns);
+        //                }
+        //            }
+
+        //            if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0)
+        //            {
+        //                resultDTO.IsSuccess = false;
+        //                resultDTO.Message = "No Consolidated Userskillset details found for this Userid";
+        //                return resultDTO;
+        //            }
+
+        //            //combine details 
+        //            ConsolidatedUserSkillSetlistDTO userSkillSetDetailsDTO = new ConsolidatedUserSkillSetlistDTO()
+        //            {
+        //                Username = userName,
+        //                UserId = id,
+        //                FirstCycle = FirstCycle1,
+        //                SecondCycle = SecondCycle2,
+        //            };
+
+        //            allUserSkillSet.Add(userSkillSetDetailsDTO);
+        //        }
+        //        resultDTO.Data = allUserSkillSet.OrderBy(x => x.Username);
+        //        resultDTO.IsSuccess = true;
+        //        resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        resultDTO.IsSuccess = false;
+        //        resultDTO.StatusCode = "500";
+        //        resultDTO.Message = ex.Message;
+        //    }
+        //    return resultDTO;
+        //}
+
         public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
@@ -538,191 +743,77 @@ namespace OMT.DataService.Service
             {
                 List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
 
-                var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct().ToList();
+                // Fetch all active users with skill sets 
+                var activeUserIds = _oMTDataContext.UserSkillSet
+                    .Where(uss => uss.IsActive)
+                    .Select(uss => uss.UserId)
+                    .Distinct()
+                    .ToList();
 
-                var active_users = _oMTDataContext.UserProfile.Where(x => x.IsActive && USSid.Contains(x.UserId)).Select(x => x.UserId).ToList();
-
-                var userids = (userid == null) ? active_users : new List<int> { userid.Value };
-
-                foreach (var id in userids)
+                if (userid != null)
                 {
-                    List<UserSkillSetDetailsDTO> FirstCycle1 = new List<UserSkillSetDetailsDTO>();
-                    List<UserSkillSetDetailsDTO> SecondCycle2 = new List<UserSkillSetDetailsDTO>();
-
-                    var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
-                    var userName = userProfile != null ? userProfile.FirstName + ' ' + userProfile.LastName : "User Not Found";
-
-                    //Cycle1
-
-                    List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
-                  
-                    foreach (var ssid in ssids_c1)
-                    {
-                        List<UPdateHardStateDetailsDTO> details_hs_c1 = new List<UPdateHardStateDetailsDTO>();
-                        var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
-
-                        var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
-
-                        var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
-
-                        var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
-
-                        var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
-
-                        var projectnames = _oMTDataContext.MasterProjectName
-                            .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-                            .Select(mp => mp.ProjectName)
-                            .ToList();
-
-                        var projectDetailsList = _oMTDataContext.MasterProjectName
-                                                                .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-                                                                .Select(mp => new ProjectdetailsDTO
-                                                                {
-                                                                    ProjectId = mp.ProjectId,
-                                                                    ProjectName = mp.ProjectName
-                                                                })
-                                                                .ToList();
-
-                        if (hs_ss.Count > 0)
-                        {
-                            foreach (var h in hs_ss)
-                            {
-                                var detail_add_hs = new UPdateHardStateDetailsDTO()
-                                {
-                                    HardStateName = h.HardStateName,
-                                    Weightage = h.Percentage,
-                                    UserSkillSetId = h.UserSkillSetId,
-                                };
-
-                                details_hs_c1.Add(detail_add_hs);
-
-                            }
-
-
-                            UserSkillSetDetailsDTO c1_hs = new UserSkillSetDetailsDTO()
-                            {
-                                UserSkillSetId = ns_ss.UserSkillSetId,
-                                SkillSetId = ns_ss.SkillSetId,
-                                SkillSetName = skillsetname,
-                                Weightage = ns_ss.Percentage,
-                                IsHardStateUser = true,
-                                HardStateDetails = details_hs_c1,
-                                Projectdetails = projectDetailsList
-
-                            };
-
-                            FirstCycle1.Add(c1_hs);
-                        }
-                        else
-                        {
-                            UserSkillSetDetailsDTO c1_ns = new UserSkillSetDetailsDTO()
-                            {
-                                UserSkillSetId = ns_ss.UserSkillSetId,
-                                SkillSetId = ns_ss.SkillSetId,
-                                SkillSetName = skillsetname,
-                                Weightage = ns_ss.Percentage,
-                                IsHardStateUser = false,
-                                Projectdetails =projectDetailsList
-                            };
-
-                            FirstCycle1.Add(c1_ns);
-                        }
-                    }
-
-                    //Cycle2
-
-                    List<int> ssids_c2 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
-
-                    foreach (var ssid in ssids_c2)
-                    {
-                        List<UPdateHardStateDetailsDTO> details_hs_c2 = new List<UPdateHardStateDetailsDTO>();
-                        var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
-
-                        var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
-
-                        var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
-
-
-                        var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
-
-                        var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
-
-                        var projectnames = _oMTDataContext.MasterProjectName
-                            .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) 
-                            .Select(mp => mp.ProjectName)
-                            .ToList();
-
-                        var projectDetailsList = _oMTDataContext.MasterProjectName
-                                                               .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-                                                               .Select(mp => new ProjectdetailsDTO
-                                                               {
-                                                                   ProjectId = mp.ProjectId,
-                                                                   ProjectName = mp.ProjectName
-                                                               })
-                                                               .ToList();
-
-                        if (hs_ss.Count > 0)
-                        {
-                            foreach (var h in hs_ss)
-                            {
-                                var detail_add_hs_c2 = new UPdateHardStateDetailsDTO()
-                                {
-                                    HardStateName = h.HardStateName,
-                                    Weightage = h.Percentage,
-                                    UserSkillSetId = h.UserSkillSetId,
-                                };
-
-                                details_hs_c2.Add(detail_add_hs_c2);
-
-                            }
-
-                            UserSkillSetDetailsDTO c2_hs = new UserSkillSetDetailsDTO()
-                            {
-                                UserSkillSetId = ns_ss.UserSkillSetId,
-                                SkillSetId = ns_ss.SkillSetId,
-                                SkillSetName = skillsetname,
-                                Weightage = ns_ss.Percentage,
-                                IsHardStateUser = true,
-                                HardStateDetails = details_hs_c2,
-                                Projectdetails = projectDetailsList  
-                            };
-
-                            SecondCycle2.Add(c2_hs);
-                        }
-                        else
-                        {
-                            UserSkillSetDetailsDTO c2_ns = new UserSkillSetDetailsDTO()
-                            {
-                                UserSkillSetId = ns_ss.UserSkillSetId,
-                                SkillSetId = ns_ss.SkillSetId,
-                                SkillSetName = skillsetname,
-                                Weightage = ns_ss.Percentage,
-                                IsHardStateUser = ns_ss.IsHardStateUser,
-                                Projectdetails = projectDetailsList
-                            };
-
-                            SecondCycle2.Add(c2_ns);
-                        }
-                    }
-
-                    if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0)
+                    if (!activeUserIds.Contains(userid.Value))
                     {
                         resultDTO.IsSuccess = false;
-                        resultDTO.Message = "No Consolidated Userskillset details found for this Userid";
+                        resultDTO.Message = "User not found or inactive.";
+                        return resultDTO;
+                    }
+                    activeUserIds = new List<int> { userid.Value };
+                }
+
+                // Fetch user profiles in a 
+                var userProfiles = _oMTDataContext.UserProfile
+                    .Where(up => activeUserIds.Contains(up.UserId) && up.IsActive)
+                    .ToDictionary(up => up.UserId, up => up.FirstName + " " + up.LastName);
+
+                // Fetch all UserSkillSet records 
+                var userSkillSets = _oMTDataContext.UserSkillSet
+                    .Where(x => activeUserIds.Contains(x.UserId) && x.IsActive)
+                    .ToList();
+
+                // Fetch all SkillSet names 
+                var skillSetNames = _oMTDataContext.SkillSet
+                    .ToDictionary(s => s.SkillSetId, s => s.SkillSetName);
+
+                // Fetch all MasterProjectName records 
+                var masterProjects = _oMTDataContext.MasterProjectName
+                    .ToList();
+
+                foreach (var id in activeUserIds)
+                {
+                    List<UserSkillSetDetailsDTO> firstCycleList = new List<UserSkillSetDetailsDTO>();
+                    List<UserSkillSetDetailsDTO> secondCycleList = new List<UserSkillSetDetailsDTO>();
+
+                    var userName = userProfiles.ContainsKey(id) ? userProfiles[id] : "User Not Found";
+
+                    // Get skill sets for user
+                    var userSkillSetForUser = userSkillSets.Where(x => x.UserId == id).ToList();
+
+                    // Group skill sets by cycle
+                    var skillSetsCycle1 = userSkillSetForUser.Where(x => x.IsCycle1).ToList();
+                    var skillSetsCycle2 = userSkillSetForUser.Where(x => !x.IsCycle1).ToList();
+
+                    
+                    ProcessSkillSetCycle(skillSetsCycle1, skillSetNames, masterProjects, firstCycleList);
+                    ProcessSkillSetCycle(skillSetsCycle2, skillSetNames, masterProjects, secondCycleList);
+
+                    if (!firstCycleList.Any() && !secondCycleList.Any())
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "No Consolidated Userskillset details found for this UserId";
                         return resultDTO;
                     }
 
-                    //combine details 
-                    ConsolidatedUserSkillSetlistDTO userSkillSetDetailsDTO = new ConsolidatedUserSkillSetlistDTO()
+                    // Add to final result
+                    allUserSkillSet.Add(new ConsolidatedUserSkillSetlistDTO()
                     {
                         Username = userName,
                         UserId = id,
-                        FirstCycle = FirstCycle1,
-                        SecondCycle = SecondCycle2,
-                    };
-
-                    allUserSkillSet.Add(userSkillSetDetailsDTO);
+                        FirstCycle = firstCycleList,
+                        SecondCycle = secondCycleList,
+                    });
                 }
+
                 resultDTO.Data = allUserSkillSet.OrderBy(x => x.Username);
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
@@ -735,6 +826,66 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+
+        private void ProcessSkillSetCycle(List<UserSkillSet> skillSets,Dictionary<int, string> skillSetNames,List<MasterProjectName> masterProjects,List<UserSkillSetDetailsDTO> cycleList)
+        {
+            foreach (var skillSet in skillSets.GroupBy(x => x.SkillSetId))
+            {
+                int ssid = skillSet.Key;
+                var userSkillSetList = skillSet.ToList();
+
+                var skillSetName = skillSetNames.ContainsKey(ssid) ? skillSetNames[ssid] : "Unknown Skill Set";
+
+                var hardStateUsers = userSkillSetList.Where(x => x.IsHardStateUser).ToList();
+                var normalUser = userSkillSetList.FirstOrDefault(x => !x.IsHardStateUser);
+
+                // Process ProjectIds 
+                var projectIds = userSkillSetList.SelectMany(x => x.ProjectId.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+                var projectDetailsList = masterProjects
+                    .Where(mp => projectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid)
+                    .Select(mp => new ProjectdetailsDTO
+                    {
+                        ProjectId = mp.ProjectId,
+                        ProjectName = mp.ProjectName
+                    })
+                    .ToList();
+
+                if (hardStateUsers.Any())
+                {
+                    List<UPdateHardStateDetailsDTO> details_hs = hardStateUsers.Select(h => new UPdateHardStateDetailsDTO
+                    {
+                        HardStateName = h.HardStateName,
+                        Weightage = h.Percentage,
+                        UserSkillSetId = h.UserSkillSetId,
+                    }).ToList();
+
+                    cycleList.Add(new UserSkillSetDetailsDTO
+                    {
+                        UserSkillSetId = normalUser?.UserSkillSetId ?? 0,
+                        SkillSetId = ssid,
+                        SkillSetName = skillSetName,
+                        Weightage = normalUser?.Percentage ?? 0,
+                        IsHardStateUser = true,
+                        HardStateDetails = details_hs,
+                        Projectdetails = projectDetailsList
+                    });
+                }
+                else if (normalUser != null)
+                {
+                    cycleList.Add(new UserSkillSetDetailsDTO
+                    {
+                        UserSkillSetId = normalUser.UserSkillSetId,
+                        SkillSetId = ssid,
+                        SkillSetName = skillSetName,
+                        Weightage = normalUser.Percentage,
+                        IsHardStateUser = false,
+                        Projectdetails = projectDetailsList
+                    });
+                }
+            }
+        }
+
         public ResultDTO UpdateUserSkillSetThWt(UpdateUserSkillSetThWtDTO updateUserSkillSetThWtDTO)
         {
             string? connectionstring = _oMTDataContext.Database.GetConnectionString();
@@ -844,7 +995,7 @@ namespace OMT.DataService.Service
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
                                         ProjectId = USS_ss.ProjectId ?? ""
-                                };
+                                    };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
                                 }
@@ -879,7 +1030,7 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
                                 ProjectId = USS_ss.ProjectId ?? ""
-                        };
+                            };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
                         }

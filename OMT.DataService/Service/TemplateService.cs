@@ -21,7 +21,9 @@ using OMT.DataService.Settings;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
-
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 
 namespace OMT.DataService.Service
@@ -30,15 +32,18 @@ namespace OMT.DataService.Service
     {
         private readonly OMTDataContext _oMTDataContext;
 
+        private readonly IOptions<HastatusSettings> _hastatusSettings;
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private readonly IOptions<TrdStatusSettings> _authSettings;
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
         private readonly IConfiguration _configuration;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
             _emailDetailsSettings = emailDetailsSettings;
             _configuration = configuration;
+            _hastatusSettings = hastatusSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -424,6 +429,16 @@ namespace OMT.DataService.Service
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
+
+                        if (skillSet.SkillSetName.Equals("RIC", StringComparison.OrdinalIgnoreCase))
+                        {
+                            HaStatusDTO haStatusDTO = new HaStatusDTO()
+                            {
+                                isauto = 0
+                            };
+
+                            CallAsyncHaStatusAPI(haStatusDTO);
+                        }
                     }
                     else
                     {
@@ -446,6 +461,41 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        public void CallAsyncHaStatusAPI(HaStatusDTO haStatusDTO)
+        {
+            // Fire-and-forget, ensuring the main thread is not blocked
+            _ = SendPostRequest_RIC_Async(haStatusDTO);
+        }
+
+        private async Task SendPostRequest_RIC_Async(HaStatusDTO haStatusDTO)
+        {
+            var url = _hastatusSettings.Value.HaUrl;
+
+            try
+            {
+
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(haStatusDTO);
+
+                var content = new StringContent(json, Encoding.UTF8);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+
+                using HttpClient httpClient = new HttpClient();
+                HttpResponseMessage response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                //if (response.IsSuccessStatusCode)
+                //{
+                //    var responseData = await response.Content.ReadAsStringAsync();
+
+                //}
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calling API: " + ex.Message);
+            }
         }
         public ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO)
         {
@@ -1421,7 +1471,7 @@ namespace OMT.DataService.Service
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.UserId == agentCompletedOrdersDTO.UserId  && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
+                                               where us.UserId == agentCompletedOrdersDTO.UserId && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
