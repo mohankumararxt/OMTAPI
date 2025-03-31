@@ -3769,7 +3769,7 @@
 --FOREIGN KEY (SystemofRecordId)
 --REFERENCES SystemofRecord(SystemofRecordId);
 
-
+--chnage sci stored procedure
 -------------------------------------project name inclusion in userskillset -------------------------
 
 
@@ -3779,6 +3779,8 @@
 --ALTER TABLE SkillSet  
 --ADD CONSTRAINT DF_SkillSet_GetOrderByProject DEFAULT 0 FOR GetOrderByProject;
 
+
+--update skillset set GetOrderByProject = 0
 --update skillset set GetOrderByProject = 1 where skillsetid in (
 --1,2,3,4,77,78,673,674,692,693,694,695,696,697)
 
@@ -5369,3 +5371,7 @@
 --(696,'VU8060717IM','Veterans United',1),
 --(696,'WF8060119PC','Wells Fargo',1),
 --(696,'WM8120319IM','WMC Mortgage, LLC',1)
+
+
+--change all getorder sp's
+
