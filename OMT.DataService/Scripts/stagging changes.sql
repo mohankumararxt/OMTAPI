@@ -5375,3 +5375,7 @@
 
 --change all getorder sp's
 
+-----------------------------------------drag n drop---------------------------------
+--alter table userskillset
+--add PriorityOrder int 
+
