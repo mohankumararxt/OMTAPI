@@ -5379,3 +5379,35 @@
 --alter table userskillset
 --add PriorityOrder int 
 
+-------------------------TIQE systemofrecord changes -----------------------------
+
+--insert into DefaultTemplateColumns values
+--(4,'StartedDate','DateTime',1,0,1,1,0),
+--(4,'CustomerId','nvarchar(30)',1,0,1,1,1),
+--(4,'ResWareProductDescriptions','nvarchar(200)',1,0,1,1,1),
+--(4,'OrderId','nvarchar(30)',1,1,1,1,1),
+--(4,'PropertyState','nvarchar(30)',1,0,1,1,1),
+--(4,'County','nvarchar(30)',1,0,1,1,1),
+--(4,'IsPriority','bit default 0',1,0,1,1,1),
+--(4,'UserId','int',1,0,0,0,0),
+--(4,'Status','int',1,0,0,0,0),
+--(4,'Remarks','nvarchar(1000)',1,0,0,0,0),
+--(4,'CompletionDate','DateTime',1,0,0,0,0),
+--(4,'StartTime','DateTime',1,0,0,0,0),
+--(4,'EndTime','DateTime',1,0,0,0,0),
+--(4,'TeamLeadId','int',1,0,0,0,0),
+--(4,'SystemofRecordId','int',1,0,0,0,0),
+--(4,'SkillSetId','int',1,0,0,0,0),
+--(4,'AllocationDate','Date',1,0,1,1,1),
+--(4,'UploadedBy','int',1,0,0,0,0),
+--(4,'UploadedDate','DateTime',1,0,0,0,0),
+--(4,'TLDescription','nvarchar(200)',1,0,0,0,0),
+--(4,'TimeTaken','Time',1,0,0,0,0)
+
+
+--insert into processstatus values
+--(4,'Completed',1),
+--(4,'Reject',1),
+--(4,'Pending',1),
+--(4,'Complex',1),
+--(4,'Completed-NoFind',1)
