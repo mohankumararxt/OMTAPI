@@ -998,7 +998,7 @@ namespace OMT.DataService.Service
                                 sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
                             }
-                            else if (table.SystemofRecordId == 2 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
+                            else if (table.SystemofRecordId == 4 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
                             {
                                 sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
