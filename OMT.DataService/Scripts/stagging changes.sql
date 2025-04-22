@@ -5411,3 +5411,9 @@
 --(4,'Pending',1),
 --(4,'Complex',1),
 --(4,'Completed-NoFind',1)
+
+--ALTER TABLE TIQELoanMod
+--ADD Number_Of_Documents INT
+
+--ALTER TABLE TIQELoanMod
+--ADD Number_Of_Manual_Splits INT

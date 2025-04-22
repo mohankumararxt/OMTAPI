@@ -341,7 +341,7 @@ namespace OMT.DataService.Service
                         }
 
 
-                        if (skillSet.SystemofRecordId == 2)
+                        if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
                         {
                             var message = "";
                             List<int> ExistingResWareProductDescriptionIds = new List<int>();
@@ -2391,7 +2391,7 @@ namespace OMT.DataService.Service
 
                     // check if order is from TIQE 
 
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
@@ -2497,6 +2497,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15";
                         }
+                        else if (tablename.SystemofRecordId == 4)
+                        {
+                            sqlquery =  $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 21";
+                        }
 
                         if (sqlquery != null)
                         {
@@ -2576,6 +2587,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15";
+                        }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 21";
                         }
 
                         if (sqlquery != null)
@@ -2679,6 +2701,18 @@ namespace OMT.DataService.Service
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15 and t.UserId = @UserId";
                         }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
+                                        ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status = 21 and t.UserId = @UserId";
+                        }
 
                         if (sqlquery != null)
                         {
@@ -2759,6 +2793,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15 and t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                                         CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                         FROM {skillset.SkillSetName} t 
+                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                         INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                         INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                         INNER JOIN UserProfile up on up.UserId = t.UserId
+                                         WHERE t.Status = 21 AND t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2945,7 +2990,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
-                        else if (tablename.SystemofRecordId == 2)
+                        else if (tablename.SystemofRecordId == 2 || tablename.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -2994,7 +3039,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2)
+                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2 || tablename.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
                         }
@@ -3076,7 +3121,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3125,7 +3170,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
@@ -3203,7 +3248,7 @@ namespace OMT.DataService.Service
 
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3251,7 +3296,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
                         }
@@ -3323,7 +3368,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3371,7 +3416,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
