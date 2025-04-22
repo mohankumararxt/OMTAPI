@@ -5417,3 +5417,53 @@
 
 --ALTER TABLE TIQELoanMod
 --ADD Number_Of_Manual_Splits INT
+
+
+
+--CREATE TABLE [dbo].[InvoiceJointTiqe](
+--	[InvoiceJointTiqeId] [int] IDENTITY(1,1) NOT NULL,
+--	[SystemOfRecordId] [int] NOT NULL,
+--	[SkillSetId] [int] NOT NULL,
+--	[BusinessGroupId] [int] NOT NULL,
+--	[ProcessTypeId] [int] NOT NULL,
+--	[SourceTypeId] [int] NOT NULL,
+--	[CostCenterId] [int] NOT NULL,
+--	[TotalOrderFeesId] [int] NULL,
+-- CONSTRAINT [PK__InvoiceTIQE__3E8D67004199292A] PRIMARY KEY CLUSTERED 
+--(
+--	[InvoiceJointTiqeId] ASC
+--)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+--) ON [PRIMARY]
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_BusinesGroupId_TIQE] FOREIGN KEY([BusinessGroupId])
+--REFERENCES [dbo].[BusinessGroup] ([BusinessGroupId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_CostCenterId_TIQE] FOREIGN KEY([CostCenterId])
+--REFERENCES [dbo].[CostCenter] ([CostCenterId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_InvoiceJoint_TIQE] FOREIGN KEY([SkillSetId])
+--REFERENCES [dbo].[SkillSet] ([SkillSetId])
+--GO
+
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_ProcessTypeId_TIQE] FOREIGN KEY([ProcessTypeId])
+--REFERENCES [dbo].[ProcessType] ([ProcessTypeId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_SourceTypeId_TIQE] FOREIGN KEY([SourceTypeId])
+--REFERENCES [dbo].[SourceType] ([SourceTypeId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_SystemOfRecordId_TIQE] FOREIGN KEY([SystemOfRecordId])
+--REFERENCES [dbo].[SystemOfRecord] ([SystemofRecordId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fkk_TotalOrderFeesId_TIQE] FOREIGN KEY([TotalOrderFeesId])
+--REFERENCES [dbo].[TotalOrderFees] ([TotalOrderFeesId])
+--GO
+
+
+

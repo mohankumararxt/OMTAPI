@@ -38,5 +38,26 @@ namespace OMT.APIHost.Controllers
         {
             return _invoiceJointReswareService.UpdateInvoiceJointResware(invoiceJointReswareUpdateDTO);
         }
+
+        [HttpGet]
+        [Route("GetInvoiceJointTiqe")]
+        public ResultDTO GetInvoiceJointTiqe()
+        {
+            return _invoiceJointReswareService.GetInvoiceJointTiqe();
+        }
+
+        [HttpPost]
+        [Route("CreateInvoiceJointTiqe")]
+        public ResultDTO CreateInvoiceJointTiqe([FromBody] InvoiceJointReswareCreateDTO invoiceJointReswareCreateDTO)
+        {
+            return _invoiceJointReswareService.CreateInvoiceJointTiqe(invoiceJointReswareCreateDTO);
+        }
+
+        [HttpPut]
+        [Route("UpdateInvoiceJointTiqe")]
+        public ResultDTO UpdateInvoiceJointTiqe([FromBody] InvoiceJointTiqeUpdateDTO invoiceJointTiqeUpdateDTO)
+        {
+            return _invoiceJointReswareService.UpdateInvoiceJointTiqe(invoiceJointTiqeUpdateDTO);
+        }
     }
 }

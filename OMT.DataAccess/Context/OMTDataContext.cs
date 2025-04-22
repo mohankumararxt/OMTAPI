@@ -62,13 +62,12 @@ namespace OMT.DataAccess.Context
         public DbSet<TaskHistory> TaskHistory { get; set; }
         public DbSet<TasksStatus> TasksStatus { get; set; }
         public DbSet<TaskPriority> TaskPriority { get; set; }
-        public DbSet<ActivityFeed>  ActivityFeeds { get; set; }
+        public DbSet<ActivityFeed> ActivityFeeds { get; set; }
 
         public DbSet<Message> Message { get; set; }
         public DbSet<MessagesStatus> MessagesStatus { get; set; }
         public DbSet<MasterProjectName> MasterProjectName { get; set; }
-
-
+        public DbSet<InvoiceJointTiqe> InvoiceJointTiqe { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
