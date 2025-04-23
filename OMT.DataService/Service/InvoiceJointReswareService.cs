@@ -214,7 +214,7 @@ namespace OMT.DataService.Service
                              {
                                  SkillSetId = ss.SkillSetId,
                                  SystemOfRecordId = sor.SystemofRecordId,
-                                 InvoiceJointReswareId = ijr.InvoiceJointTiqeId,
+                                 InvoiceJointTiqeId = ijr.InvoiceJointTiqeId,
                                  SystemOfRecord = sor.SystemofRecordName,
                                  SkillSet = ss.SkillSetName,
                                  BusinessGroup = bg.BusinessGroupName,
