@@ -5404,6 +5404,11 @@
 --(4,'TLDescription','nvarchar(200)',1,0,0,0,0),
 --(4,'TimeTaken','Time',1,0,0,0,0)
 
+--insert into systemofrecord values
+--('TIQE',1,'2025-04-24 10:43:01.913')
+
+--Update skillset set skillsetname = 'TIQELoanMod',systemofrecordid = 4 where skillsetid = 173
+
 
 --insert into processstatus values
 --(4,'Completed',1),
