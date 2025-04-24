@@ -94,7 +94,7 @@ namespace OMT.DataService.Service
                                     resultDTO.StatusCode = "404";
                                 }
                             }
-                            else if (getinvoiceDTO.SystemofRecordId == 2)
+                            else if (getinvoiceDTO.SystemofRecordId == 2 || getinvoiceDTO.SystemofRecordId == 4)
                             {
                                 var invoiceDump2 = _oMTDataContext.InvoiceDump.Where(x => x.SkillSet == skillSet.SkillSet && x.SystemOfRecord == skillSet.SystemOfRecord && x.CompletionDate.Date >= getinvoiceDTO.StartDate.Date && x.CompletionDate.Date <= getinvoiceDTO.EndDate.Date)
                                                                               .OrderBy(x => x.CompletionDate)
