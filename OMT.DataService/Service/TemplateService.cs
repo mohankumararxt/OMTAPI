@@ -341,6 +341,7 @@ namespace OMT.DataService.Service
                         }
 
 
+
                         if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
                         {
                             var message = "";
@@ -370,23 +371,59 @@ namespace OMT.DataService.Service
                                                                         && rpdm.SkillSetId == skillSet.SkillSetId)
                                                        select erpd).Distinct().ToList();
 
+
+
                             if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
                             {
-                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
                             }
 
                             else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please map the following Tiqe Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+
+                                }
                             }
 
                             else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
                             }
 
                             if (!string.IsNullOrEmpty(message))
                             {
+                                string subject = "";
+
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    subject = "Invoice - resware product description";
+                                }
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    subject = "Invoice - tiqe product description";
+                                }
                                 //  var url = _emailDetailsSettings.Value.SendEmailURL;
                                 IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
 
@@ -399,9 +436,10 @@ namespace OMT.DataService.Service
                                 SendEmailDTO sendEmailDTO = new SendEmailDTO
                                 {
                                     ToEmailIds = toEmailIds,
-                                    Subject = "Invoice - resware product description",
+                                    Subject = subject,
                                     Body = message,
                                 };
+
                                 try
                                 {
                                     using (HttpClient client = new HttpClient())
@@ -2499,7 +2537,7 @@ namespace OMT.DataService.Service
                         }
                         else if (tablename.SystemofRecordId == 4)
                         {
-                            sqlquery =  $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
                                             CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
                                             FROM {tablename.SkillSetName} t 
                                             INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
