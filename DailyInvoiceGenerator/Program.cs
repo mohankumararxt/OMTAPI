@@ -103,6 +103,11 @@ namespace DailyInvoiceGenerator
                         {
                             sp = "GetInvoice_Resware";
                         }
+
+                        if (systemOfRecordId == 4)
+                        {
+                            sp = "GetInvoice_TIQE";
+                        }
                         // Call the stored procedure with parameters derived from the current row
                         using (SqlCommand spCommand = new SqlCommand(sp, connection))
                         {

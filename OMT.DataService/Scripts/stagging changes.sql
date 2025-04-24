@@ -5375,3 +5375,102 @@
 
 --change all getorder sp's
 
+-----------------------------------------drag n drop---------------------------------
+--alter table userskillset
+--add PriorityOrder int 
+
+-------------------------TIQE systemofrecord changes -----------------------------
+
+--insert into DefaultTemplateColumns values
+--(4,'StartedDate','DateTime',1,0,1,1,0),
+--(4,'CustomerId','nvarchar(30)',1,0,1,1,1),
+--(4,'ResWareProductDescriptions','nvarchar(200)',1,0,1,1,1),
+--(4,'OrderId','nvarchar(30)',1,1,1,1,1),
+--(4,'PropertyState','nvarchar(30)',1,0,1,1,1),
+--(4,'County','nvarchar(30)',1,0,1,1,1),
+--(4,'IsPriority','bit default 0',1,0,1,1,1),
+--(4,'UserId','int',1,0,0,0,0),
+--(4,'Status','int',1,0,0,0,0),
+--(4,'Remarks','nvarchar(1000)',1,0,0,0,0),
+--(4,'CompletionDate','DateTime',1,0,0,0,0),
+--(4,'StartTime','DateTime',1,0,0,0,0),
+--(4,'EndTime','DateTime',1,0,0,0,0),
+--(4,'TeamLeadId','int',1,0,0,0,0),
+--(4,'SystemofRecordId','int',1,0,0,0,0),
+--(4,'SkillSetId','int',1,0,0,0,0),
+--(4,'AllocationDate','Date',1,0,1,1,1),
+--(4,'UploadedBy','int',1,0,0,0,0),
+--(4,'UploadedDate','DateTime',1,0,0,0,0),
+--(4,'TLDescription','nvarchar(200)',1,0,0,0,0),
+--(4,'TimeTaken','Time',1,0,0,0,0)
+
+--insert into systemofrecord values
+--('TIQE',1,'2025-04-24 10:43:01.913')
+
+--Update skillset set skillsetname = 'TIQELoanMod',systemofrecordid = 4 where skillsetid = 173
+
+
+--insert into processstatus values
+--(4,'Completed',1),
+--(4,'Reject',1),
+--(4,'Pending',1),
+--(4,'Complex',1),
+--(4,'Completed-NoFind',1)
+
+--ALTER TABLE TIQELoanMod
+--ADD Number_Of_Documents INT
+
+--ALTER TABLE TIQELoanMod
+--ADD Number_Of_Manual_Splits INT
+
+
+
+--CREATE TABLE [dbo].[InvoiceJointTiqe](
+--	[InvoiceJointTiqeId] [int] IDENTITY(1,1) NOT NULL,
+--	[SystemOfRecordId] [int] NOT NULL,
+--	[SkillSetId] [int] NOT NULL,
+--	[BusinessGroupId] [int] NOT NULL,
+--	[ProcessTypeId] [int] NOT NULL,
+--	[SourceTypeId] [int] NOT NULL,
+--	[CostCenterId] [int] NOT NULL,
+--	[TotalOrderFeesId] [int] NULL,
+-- CONSTRAINT [PK__InvoiceTIQE__3E8D67004199292A] PRIMARY KEY CLUSTERED 
+--(
+--	[InvoiceJointTiqeId] ASC
+--)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+--) ON [PRIMARY]
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_BusinesGroupId_TIQE] FOREIGN KEY([BusinessGroupId])
+--REFERENCES [dbo].[BusinessGroup] ([BusinessGroupId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_CostCenterId_TIQE] FOREIGN KEY([CostCenterId])
+--REFERENCES [dbo].[CostCenter] ([CostCenterId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_InvoiceJoint_TIQE] FOREIGN KEY([SkillSetId])
+--REFERENCES [dbo].[SkillSet] ([SkillSetId])
+--GO
+
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_ProcessTypeId_TIQE] FOREIGN KEY([ProcessTypeId])
+--REFERENCES [dbo].[ProcessType] ([ProcessTypeId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_SourceTypeId_TIQE] FOREIGN KEY([SourceTypeId])
+--REFERENCES [dbo].[SourceType] ([SourceTypeId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fk_SystemOfRecordId_TIQE] FOREIGN KEY([SystemOfRecordId])
+--REFERENCES [dbo].[SystemOfRecord] ([SystemofRecordId])
+--GO
+
+--ALTER TABLE [dbo].[InvoiceJointTiqe]  WITH CHECK ADD  CONSTRAINT [fkk_TotalOrderFeesId_TIQE] FOREIGN KEY([TotalOrderFeesId])
+--REFERENCES [dbo].[TotalOrderFees] ([TotalOrderFeesId])
+--GO
+
+
+
+--insert into livereporttiming values
+--(4,'19:30:00.0000000','19:30:00.0000000',1)
