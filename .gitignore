@@ -66,6 +66,14 @@
 /PendingSciOrders_4.30pm/PendingSciOrders_4.30pm.csproj.user
 /PendingSciOrders_5pm/Properties/PublishProfiles
 /PendingSciOrders_5pm/PendingSciOrders_5pm.csproj.user
+/PendingSciOrders_4.30pm
+/PendingSciOrders_5pm/bin/Debug/net472
+/PendingSciOrders_5pm/obj
+/ProductivityUtilization/bin/Debug/net472
+/ProductivityUtilization/obj/Debug/net472
+/ProductivityUtilization/obj
+/CalculationForGOC/bin/Debug/net472
+/PendingSciOrders/obj/Release/net472
 /CalculationForGOC/bin/Debug/net472
 /PendingSciOrders/bin/Debug/net472
 /PendingSciOrders_4.30pm/bin/Debug/net472
