@@ -5374,6 +5374,21 @@
 
 
 --change all getorder sp's
+-----------------------------------------------RIC CHANGES-----------------------------
+
+--insert into templatecolumns values(
+--531,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table RIC
+--add Ha_Status int 
+
+--ALTER TABLE RIC 
+--ADD CONSTRAINT DF_RIC_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update ric set ha_status = 0
+
+--alter insert data sp
 
 -----------------------------------------drag n drop---------------------------------
 --alter table userskillset

@@ -468,15 +468,15 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
 
-                        if (skillSet.SkillSetName.Equals("RIC", StringComparison.OrdinalIgnoreCase))
-                        {
-                            HaStatusDTO haStatusDTO = new HaStatusDTO()
-                            {
-                                isauto = 0
-                            };
+                        //if (skillSet.SkillSetName.Equals("RIC", StringComparison.OrdinalIgnoreCase))
+                        //{
+                        //    HaStatusDTO haStatusDTO = new HaStatusDTO()
+                        //    {
+                        //        isauto = 0
+                        //    };
 
-                            CallAsyncHaStatusAPI(haStatusDTO);
-                        }
+                        //    CallAsyncHaStatusAPI(haStatusDTO);
+                        //}
                     }
                     else
                     {
