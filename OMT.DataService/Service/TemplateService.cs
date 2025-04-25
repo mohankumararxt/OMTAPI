@@ -21,7 +21,9 @@ using OMT.DataService.Settings;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
-
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 
 namespace OMT.DataService.Service
@@ -30,15 +32,18 @@ namespace OMT.DataService.Service
     {
         private readonly OMTDataContext _oMTDataContext;
 
+        private readonly IOptions<HastatusSettings> _hastatusSettings;
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private readonly IOptions<TrdStatusSettings> _authSettings;
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
         private readonly IConfiguration _configuration;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
             _emailDetailsSettings = emailDetailsSettings;
             _configuration = configuration;
+            _hastatusSettings = hastatusSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -336,7 +341,8 @@ namespace OMT.DataService.Service
                         }
 
 
-                        if (skillSet.SystemofRecordId == 2)
+
+                        if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
                         {
                             var message = "";
                             List<int> ExistingResWareProductDescriptionIds = new List<int>();
@@ -365,23 +371,59 @@ namespace OMT.DataService.Service
                                                                         && rpdm.SkillSetId == skillSet.SkillSetId)
                                                        select erpd).Distinct().ToList();
 
+
+
                             if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
                             {
-                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
                             }
 
                             else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please map the following Tiqe Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+
+                                }
                             }
 
                             else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
                             {
-                                message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
+
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                }
                             }
 
                             if (!string.IsNullOrEmpty(message))
                             {
+                                string subject = "";
+
+                                if (skillSet.SystemofRecordId == 2)
+                                {
+                                    subject = "Invoice - resware product description";
+                                }
+                                else if (skillSet.SystemofRecordId == 4)
+                                {
+                                    subject = "Invoice - tiqe product description";
+                                }
                                 //  var url = _emailDetailsSettings.Value.SendEmailURL;
                                 IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
 
@@ -394,9 +436,10 @@ namespace OMT.DataService.Service
                                 SendEmailDTO sendEmailDTO = new SendEmailDTO
                                 {
                                     ToEmailIds = toEmailIds,
-                                    Subject = "Invoice - resware product description",
+                                    Subject = subject,
                                     Body = message,
                                 };
+
                                 try
                                 {
                                     using (HttpClient client = new HttpClient())
@@ -424,6 +467,16 @@ namespace OMT.DataService.Service
 
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Order uploaded successfully";
+
+                        //if (skillSet.SkillSetName.Equals("RIC", StringComparison.OrdinalIgnoreCase))
+                        //{
+                        //    HaStatusDTO haStatusDTO = new HaStatusDTO()
+                        //    {
+                        //        isauto = 0
+                        //    };
+
+                        //    CallAsyncHaStatusAPI(haStatusDTO);
+                        //}
                     }
                     else
                     {
@@ -446,6 +499,41 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        public void CallAsyncHaStatusAPI(HaStatusDTO haStatusDTO)
+        {
+            // Fire-and-forget, ensuring the main thread is not blocked
+            _ = SendPostRequest_RIC_Async(haStatusDTO);
+        }
+
+        private async Task SendPostRequest_RIC_Async(HaStatusDTO haStatusDTO)
+        {
+            var url = _hastatusSettings.Value.HaUrl;
+
+            try
+            {
+
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(haStatusDTO);
+
+                var content = new StringContent(json, Encoding.UTF8);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+
+                using HttpClient httpClient = new HttpClient();
+                HttpResponseMessage response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                //if (response.IsSuccessStatusCode)
+                //{
+                //    var responseData = await response.Content.ReadAsStringAsync();
+
+                //}
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calling API: " + ex.Message);
+            }
         }
         public ResultDTO ValidateOrders(ValidateOrderDTO validateorderDTO)
         {
@@ -896,6 +984,8 @@ namespace OMT.DataService.Service
                                  SkillSetName = ss.SkillSetName
                              }).FirstOrDefault();
 
+                string timetaken = "";
+
                 if (exist != null)
                 {
                     string sql = $"SELECT * FROM {exist.SkillSetName} WHERE Id = @Id";
@@ -921,25 +1011,40 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
+                        DateTime dateTime = DateTime.UtcNow;
+                        var starttime = querydt1[0]["StartTime"]?.ToString();
+
+                        if (!string.IsNullOrEmpty(starttime))
+                        {
+                            DateTime startDateTime;
+                            if (DateTime.TryParse(starttime, out startDateTime))
+                            {
+                                // Calculate the difference
+                                TimeSpan difference = dateTime - startDateTime;
+                                timetaken = difference.ToString(@"hh\:mm\:ss");
+
+                            }
+                        }
+
                         string sql1 = "";
-                        DateTime dateTime = DateTime.Now;
+
 
                         using (SqlCommand command = connection.CreateCommand())
                         {
                             if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, ImageId = @ImageId WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
                             }
-                            else if (table.SystemofRecordId == 2 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
+                            else if (table.SystemofRecordId == 4 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
                                 command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
                                 command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
                             }
                             else
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime WHERE Id = @ID";
+                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken WHERE Id = @ID";
                             }
 
                             command.CommandText = sql1;
@@ -950,6 +1055,7 @@ namespace OMT.DataService.Service
                             command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
                             command.Parameters.AddWithValue("@EndTime", dateTime);
                             command.Parameters.AddWithValue("@CompletionDate", dateTime);
+                            command.Parameters.AddWithValue("@TimeTaken", timetaken);
 
                             // Execute the query
                             command.ExecuteNonQuery();
@@ -1095,7 +1201,7 @@ namespace OMT.DataService.Service
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive
+                                               where us.UserId == agentCompletedOrdersDTO.UserId //&& us.IsActive
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
@@ -1403,7 +1509,7 @@ namespace OMT.DataService.Service
                 {
                     List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.UserId == agentCompletedOrdersDTO.UserId && us.IsActive && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId
+                                               where us.UserId == agentCompletedOrdersDTO.UserId && ss.SystemofRecordId == agentCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
                                                && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                select ss.SkillSetName).Distinct().ToList();
 
@@ -1626,7 +1732,7 @@ namespace OMT.DataService.Service
                     List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
                                                join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId
+                                               where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId //&& us.IsActive 
                                                select ss.SkillSetName).Distinct().ToList();
 
                     foreach (string tablename in tablenames)
@@ -1929,7 +2035,7 @@ namespace OMT.DataService.Service
                     List<string> tablenames = (from ta in _oMTDataContext.TeamAssociation
                                                join us in _oMTDataContext.UserSkillSet on ta.UserId equals us.UserId
                                                join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                               where us.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId
+                                               where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && ta.TeamId == teamCompletedOrdersDTO.TeamId && ss.SystemofRecordId == teamCompletedOrdersDTO.SystemOfRecordId //&& us.IsActive
                                                select ss.SkillSetName).Distinct().ToList();
 
                     foreach (string tablename in tablenames)
@@ -2300,7 +2406,7 @@ namespace OMT.DataService.Service
 
                         using SqlCommand trd_command = connection.CreateCommand();
                         trd_command.CommandText = pendingorder_query;
-                    
+
                         using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
 
                         DataSet trd_dataset = new DataSet();
@@ -2323,7 +2429,7 @@ namespace OMT.DataService.Service
 
                     // check if order is from TIQE 
 
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
@@ -2429,6 +2535,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15";
                         }
+                        else if (tablename.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {tablename.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 21";
+                        }
 
                         if (sqlquery != null)
                         {
@@ -2508,6 +2625,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15";
+                        }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord, ps.Status as Status,t.Remarks,
+                                            CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                            FROM {skillset.SkillSetName} t 
+                                            INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                            INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                            INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                            INNER JOIN UserProfile up on up.UserId = t.UserId
+                                            WHERE t.Status = 21";
                         }
 
                         if (sqlquery != null)
@@ -2611,6 +2739,18 @@ namespace OMT.DataService.Service
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15 and t.UserId = @UserId";
                         }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,
+                                        ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, 
+                                        ps.Status as Status, t.Remarks, CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                        FROM {skillset.SkillSetName} t 
+                                        INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                        INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                        INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                        INNER JOIN UserProfile up on up.UserId = t.UserId
+                                        WHERE t.Status = 21 and t.UserId = @UserId";
+                        }
 
                         if (sqlquery != null)
                         {
@@ -2691,6 +2831,17 @@ namespace OMT.DataService.Service
                                             INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
                                             INNER JOIN UserProfile up on up.UserId = t.UserId
                                             WHERE t.Status = 15 and t.UserId = @UserId";
+                        }
+                        else if (skillset.SystemofRecordId == 4)
+                        {
+                            sqlquery = $@"SELECT t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord, ps.Status as Status, t.Remarks,
+                                         CONVERT(VARCHAR(10), t.CompletionDate, 120) as CompletionDate
+                                         FROM {skillset.SkillSetName} t 
+                                         INNER JOIN SkillSet ss on ss.SkillSetId = t.SkillSetId
+                                         INNER JOIN ProcessStatus ps on ps.Id = t.Status
+                                         INNER JOIN SystemOfRecord sor on sor.SystemOfRecordId = ss.SystemOfRecordId
+                                         INNER JOIN UserProfile up on up.UserId = t.UserId
+                                         WHERE t.Status = 21 AND t.UserId = @UserId";
                         }
 
                         if (sqlquery != null)
@@ -2877,7 +3028,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
                         }
 
-                        else if (tablename.SystemofRecordId == 2)
+                        else if (tablename.SystemofRecordId == 2 || tablename.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -2926,7 +3077,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2)
+                        if (tablename.SystemofRecordId == 1 || tablename.SystemofRecordId == 2 || tablename.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
                         }
@@ -3008,7 +3159,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3057,7 +3208,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
@@ -3135,7 +3286,7 @@ namespace OMT.DataService.Service
 
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId,CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId,ss.SkillSetName as skillset,sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3183,7 +3334,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));
                         }
@@ -3255,7 +3406,7 @@ namespace OMT.DataService.Service
                                                 AND (tl.HardStateName = '' AND tl.IsHardState = 0 AND DATEDIFF(MINUTE, t.StartTime, GETDATE()) > tl.ExceedTime)))";
 
                         }
-                        else if (skillset.SystemofRecordId == 2)
+                        else if (skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             sqlquery = $@"SELECT 
                                                 t.Id,t.OrderId, CONCAT(up.FirstName, ' ', up.LastName) as UserName,t.UserId, ss.SkillSetName as skillset, sor.SystemofRecordName as SystemofRecord,CONVERT(VARCHAR(19), t.StartTime, 120) as StartTime,
@@ -3303,7 +3454,7 @@ namespace OMT.DataService.Service
                         using SqlCommand command = connection.CreateCommand();
                         command.CommandText = sqlquery;
 
-                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2)
+                        if (skillset.SystemofRecordId == 1 || skillset.SystemofRecordId == 2 || skillset.SystemofRecordId == 4)
                         {
                             command.Parameters.AddWithValue("@UserId", timeExceededOrdersDTO.UserId);
                             command.Parameters.AddWithValue("@hardstates", string.Join(",", hs));

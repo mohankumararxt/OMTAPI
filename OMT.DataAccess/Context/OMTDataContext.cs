@@ -16,7 +16,7 @@ namespace OMT.DataAccess.Context
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateColumns> TemplateColumns { get; set; }
         public DbSet<SystemofRecord> SystemofRecord { get; set; }
-        public DbSet<ProcessStatus> ProcessStatus { get; set; } 
+        public DbSet<ProcessStatus> ProcessStatus { get; set; }
         public DbSet<SkillSetHardStates> SkillSetHardStates { get; set; }
         public DbSet<DefaultTemplateColumns> DefaultTemplateColumns { get; set; }
         public DbSet<BusinessGroup> BusinessGroup { get; set; }
@@ -50,9 +50,24 @@ namespace OMT.DataAccess.Context
 
         public DbSet<InterviewTests> InterviewTests { get; set; }
         public DbSet<UserTest> UserTest { get; set; }
+        public DbSet<ShiftDetails> ShiftDetails { get; set; }
+        public DbSet<ShiftAssociation> ShiftAssociation { get; set; }
+        public DbSet<Prod_Util> Prod_Util { get; set; }
+        public DbSet<Productivity_Percentage> Productivity_Percentage { get; set; }
 
-        
+        public DbSet<BroadCastAnnouncement> BroadCastAnnouncement { get; set; }
 
+        public DbSet<Notification> Notification { get; set; }
+        public DbSet<Tasks> Tasks { get; set; }
+        public DbSet<TaskHistory> TaskHistory { get; set; }
+        public DbSet<TasksStatus> TasksStatus { get; set; }
+        public DbSet<TaskPriority> TaskPriority { get; set; }
+        public DbSet<ActivityFeed> ActivityFeeds { get; set; }
+
+        public DbSet<Message> Message { get; set; }
+        public DbSet<MessagesStatus> MessagesStatus { get; set; }
+        public DbSet<MasterProjectName> MasterProjectName { get; set; }
+        public DbSet<InvoiceJointTiqe> InvoiceJointTiqe { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
@@ -114,7 +129,43 @@ namespace OMT.DataAccess.Context
                 .Property(p => p.CreateTimestamp)
                 .ValueGeneratedOnAdd();
             modelBuilder.Entity<UserTest>()
-                .Property(p => p.CreateTimestamp) 
+                .Property(p => p.CreateTimestamp)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.StartDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.EndDateTime)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<BroadCastAnnouncement>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Notification>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<Message>()
+                .Property(p => p.CreateTimeStamp)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Tasks>()
+           .Property(t => t.Id)
+           .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskHistory>()
+                .Property(th => th.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TasksStatus>()
+                .Property(ts => ts.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<TaskPriority>()
+                .Property(tp => tp.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<ActivityFeed>()
+                .Property(af => af.Id)
                 .ValueGeneratedOnAdd();
         }
 

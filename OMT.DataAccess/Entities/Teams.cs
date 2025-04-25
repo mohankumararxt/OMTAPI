@@ -9,6 +9,7 @@ namespace OMT.DataAccess.Entities
         public string? TeamName { get; set; }
         public string? Description { get; set; }
         public bool IsActive { get; set; }
+        public int TL_Userid { get; set; }
 
     }
 }

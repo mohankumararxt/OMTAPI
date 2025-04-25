@@ -7,5 +7,8 @@ namespace OMT.DataService.Interface
         ResultDTO CreateInvoiceJointResware(InvoiceJointReswareCreateDTO invoiceJointReswareCreateDTO);
         ResultDTO UpdateInvoiceJointResware(InvoiceJointReswareUpdateDTO invoiceJointReswareUpdateDTO);
         ResultDTO GetInvoiceJointResware();
+        ResultDTO CreateInvoiceJointTiqe(InvoiceJointReswareCreateDTO invoiceJointReswareCreateDTO);
+        ResultDTO UpdateInvoiceJointTiqe(InvoiceJointTiqeUpdateDTO invoiceJointTiqeUpdateDTO);
+        ResultDTO GetInvoiceJointTiqe();
     }
 }
