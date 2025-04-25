@@ -57,7 +57,7 @@ namespace DailyInvoiceGenerator
                                 SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName
                                 FROM skillset SS
                                 INNER JOIN templatecolumns TC ON TC.skillsetid = SS.skillsetid
-                                WHERE SS.isactive = 1 
+                                WHERE SS.isactive = 1 AND SS.InvoiceMandatory = 1 
                                 ORDER BY SystemofRecordId, SkillSetId";
 
                     SqlCommand command = new SqlCommand(query, connection);
@@ -103,6 +103,11 @@ namespace DailyInvoiceGenerator
                         {
                             sp = "GetInvoice_Resware";
                         }
+
+                        if (systemOfRecordId == 4)
+                        {
+                            sp = "GetInvoice_TIQE";
+                        }
                         // Call the stored procedure with parameters derived from the current row
                         using (SqlCommand spCommand = new SqlCommand(sp, connection))
                         {
@@ -111,6 +116,7 @@ namespace DailyInvoiceGenerator
                             // Add parameters
                             spCommand.Parameters.Add("@SkillSetId", SqlDbType.Int).Value = skillSetId;
                             spCommand.Parameters.Add("@SystemOfRecordId", SqlDbType.Int).Value = systemOfRecordId;
+                            spCommand.CommandTimeout = 300;
 
                             SqlParameter returnValue = new SqlParameter
                             {

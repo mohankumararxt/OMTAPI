@@ -249,50 +249,50 @@ namespace OMT.DataService.Service
         }
 
         public ResultDTO UpdatePasswordByUser(UpdatePasswordByUserDTO updatePasswordByUserDTO)
-         {
-             ResultDTO resultDTO = new ResultDTO() { IsSuccess = false, StatusCode = "201" };
-             try
-             {
-                 UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updatePasswordByUserDTO.UserId && x.IsActive).FirstOrDefault();
-                 if (user != null)
-                 {
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = false, StatusCode = "201" };
+            try
+            {
+                UserProfile? user = _oMTDataContext.UserProfile.Where(x => x.UserId == updatePasswordByUserDTO.UserId && x.IsActive).FirstOrDefault();
+                if (user != null)
+                {
 
-                     //Checking Current Password with existing Password
-                     string encryptedCurrentPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.CurrentPassword);
-                     if (user.Password != encryptedCurrentPassword)
-                     {
-                         resultDTO.StatusCode = "401";
-                         resultDTO.Message = "Current password is incorrect";
-                         return resultDTO;
-                     }
+                    //Checking Current Password with existing Password
+                    string encryptedCurrentPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.CurrentPassword);
+                    if (user.Password != encryptedCurrentPassword)
+                    {
+                        resultDTO.StatusCode = "401";
+                        resultDTO.Message = "Current password is incorrect";
+                        return resultDTO;
+                    }
 
-                     // Encrypt and update new password
-                     string encryptedNewPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.ConfirmNewPassword);
-                     user.Password = encryptedNewPassword;
-                     _oMTDataContext.UserProfile.Update(user);
-                     _oMTDataContext.SaveChanges();
+                    // Encrypt and update new password
+                    string encryptedNewPassword = Encryption.EncryptPlainTextToCipherText(updatePasswordByUserDTO.ConfirmNewPassword);
+                    user.Password = encryptedNewPassword;
+                    _oMTDataContext.UserProfile.Update(user);
+                    _oMTDataContext.SaveChanges();
 
-                     resultDTO.IsSuccess = true;
-                     resultDTO.StatusCode = "200";
-                     resultDTO.Message = "Password updated successfully";
-                 }
-                 else
-                 {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.StatusCode = "200";
+                    resultDTO.Message = "Password updated successfully";
+                }
+                else
+                {
 
-                     resultDTO.IsSuccess = false;
-                     resultDTO.Message = "User not found";
-                     resultDTO.StatusCode = "404";
-                 }
-             }
-             catch (Exception ex)
-             {
-                 resultDTO.IsSuccess = false;
-                 resultDTO.StatusCode = "500";
-                 resultDTO.Message = ex.Message;
-             }
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "User not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
 
-             return resultDTO;
-         }
+            return resultDTO;
+        }
 
         public ResultDTO UpdatePasswordByHR(UpdateUserPasswordByHrDTO updateUserPasswordDTO)
         {
@@ -329,5 +329,112 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
+        public ResultDTO GetUserExcel()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+
+            try
+            {
+                List<GetUserExcelDTO> TL_Above = (from up in _oMTDataContext.UserProfile
+                                                  join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                  where up.IsActive && (up.RoleId == 1 || up.RoleId == 4) && r.IsActive
+                                                  orderby up.FirstName
+                                                  select new GetUserExcelDTO
+                                                  {
+                                                      UserName = up.FirstName + " " + up.LastName,
+                                                      Email = up.Email,
+                                                      EmployeeId = up.EmployeeId
+                                                  }).ToList();
+
+                List<GetUserExcelDTO> agent = (from up in _oMTDataContext.UserProfile
+                                               join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                               where up.IsActive && up.RoleId == 3 && r.IsActive
+                                               orderby up.FirstName
+                                               select new GetUserExcelDTO
+                                               {
+                                                   UserName = up.FirstName + " " + up.LastName,
+                                                   Email = up.Email,
+                                                   EmployeeId = up.EmployeeId
+                                               }).ToList();
+
+                if ((TL_Above.Count > 0 && agent.Count > 0) || TL_Above.Count > 0 || agent.Count > 0)
+                {
+                    CombinedUsersListDTO combinedUsersListDTO = new CombinedUsersListDTO
+                    {
+                        TlnAbove = TL_Above,
+                        Agent = agent,
+                    };
+
+                    resultDTO.Data = combinedUsersListDTO;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of user details fetched successfully.";
+
+                }
+                else 
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "List of user details not found";
+                    resultDTO.StatusCode = "404";
+                }
+
+
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+
+            return resultDTO;
+        }
+        public ResultDTO GetSocketIoUserList()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                List<UserListResponseDTO> userListResponse = (from up in _oMTDataContext.UserProfile
+                                                              join org in _oMTDataContext.Organization on up.OrganizationId equals org.OrganizationId
+                                                              join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                                                              where up.IsActive && org.IsActive && r.IsActive
+                                                              orderby up.FirstName
+                                                              select new UserListResponseDTO()
+                                                              {
+                                                                  UserName = (up.FirstName ?? "") + ' ' + (up.LastName ?? ""),
+                                                                  UserId = up.UserId,
+                                                                  OrganizationId = org.OrganizationId,
+                                                                  OrganizationName = org.OrganizationName,
+                                                                  FirstName = up.FirstName,
+                                                                  LastName = up.LastName,
+                                                                  Mobile = up.Mobile,
+                                                                  Email = up.Email,
+                                                                  RoleId = r.RoleId,
+                                                                  RoleName = r.RoleName,
+                                                                  EmployeeId = up.EmployeeId,
+                                                              }).ToList();
+
+                if (userListResponse.Count > 0)
+                {
+                    resultDTO.Data = userListResponse;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Users";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "List of Users not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }

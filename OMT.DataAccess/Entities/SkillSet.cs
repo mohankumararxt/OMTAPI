@@ -11,6 +11,8 @@ namespace OMT.DataAccess.Entities
         public int Threshold { get; set; }
         public bool IsActive { get; set; }
         public bool IsHardState {  get; set; }
+        public bool InvoiceMandatory { get; set; } = true;
+        public bool GetOrderByProject { get; set; } = false;
 
     }
 }

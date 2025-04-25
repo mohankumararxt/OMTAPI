@@ -15,7 +15,8 @@ namespace OMT.DataAccess.Entities
         public bool IsHardStateUser { get; set; }
         public string? HardStateName { get; set; }
         public bool IsCycle1 { get; set; }
-
+        public string ProjectId { get; set; }
+        public int PriorityOrder { get; set; }
 
     }
 }

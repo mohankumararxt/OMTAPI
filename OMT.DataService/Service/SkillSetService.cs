@@ -326,7 +326,8 @@ namespace OMT.DataService.Service
                                               ss.Threshold,
                                               sor.SystemofRecordName,
                                               ss.SystemofRecordId,
-                                              ss.IsHardState
+                                              ss.IsHardState,
+                                              ss.GetOrderByProject
                                           } into grp  //here grp is the grouping key
                                           select new SkillSetResponseDTO
                                           {
@@ -339,7 +340,8 @@ namespace OMT.DataService.Service
                                               StateName = grp
                                                             .Where(x => x.hs != null && x.hs.IsActive)
                                                             .Select(x => x.hs.StateName)
-                                                            .ToArray()  //Isactive only
+                                                            .ToArray(),  //Isactive only
+                                              GetOrderByProject = grp.Key.GetOrderByProject
                                           })
                                           .OrderBy(x => x.SystemofRecordName)
                                           .ThenBy(x => x.SkillSetName)//ordering here Bcoz we have used Grouping key
@@ -364,7 +366,8 @@ namespace OMT.DataService.Service
                                               ss.Threshold,
                                               sor.SystemofRecordName,
                                               ss.SystemofRecordId,
-                                              ss.IsHardState
+                                              ss.IsHardState,
+                                              ss.GetOrderByProject
                                           } into grp
                                           select new SkillSetResponseDTO
                                           {
@@ -377,7 +380,8 @@ namespace OMT.DataService.Service
                                               StateName = grp
                                                             .Where(x => x.hs != null && x.hs.IsActive)
                                                             .Select(x => x.hs.StateName)
-                                                            .ToArray()  //Isactive only
+                                                            .ToArray(),  //Isactive only
+                                              GetOrderByProject = grp.Key.GetOrderByProject
                                           })
                                          .OrderBy(x => x.SkillSetId)
                                          .ThenBy(x => x.SkillSetName)
@@ -415,7 +419,8 @@ namespace OMT.DataService.Service
                                           ss.Threshold,
                                           sor.SystemofRecordName,
                                           ss.SystemofRecordId,
-                                          ss.IsHardState
+                                          ss.IsHardState,
+                                          ss.GetOrderByProject
                                       } into grp
                                       select new SkillSetResponseDTO
                                       {
@@ -428,7 +433,8 @@ namespace OMT.DataService.Service
                                           StateName = grp
                                                             .Where(x => x.hs != null && x.hs.IsActive)
                                                             .Select(x => x.hs.StateName)
-                                                            .ToArray()  //Isactive only
+                                                            .ToArray(),  //Isactive only
+                                          GetOrderByProject = grp.Key.GetOrderByProject
                                       })
                                       .OrderBy(x => x.SystemofRecordId)
                                       .ThenBy(x => x.SkillSetName)
@@ -887,6 +893,63 @@ namespace OMT.DataService.Service
                 resultDTO.Data = groupedTimelines;
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Timeline Details";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetProjectNameList(int? skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var ProjectNameList = (from mpn in _oMTDataContext.MasterProjectName 
+                                       join ss in _oMTDataContext.SkillSet on mpn.SkillSetId equals ss.SkillSetId
+                                       where ss.IsActive && mpn.IsActive
+                                       orderby ss.SystemofRecordId,ss.SkillSetName,mpn.ProjectName
+                                       select new
+                                       {
+                                           mpn.MasterProjectNameId,
+                                           mpn.SkillSetId,
+                                           ss.SkillSetName,
+                                           mpn.ProjectId,
+                                           mpn.ProjectName
+                                       }).ToList();
+
+                if(skillsetid != null)
+                {
+                    ProjectNameList = ProjectNameList.Where(t => t.SkillSetId == skillsetid.Value).ToList();
+                }
+
+                var groupedProjectnames = ProjectNameList.GroupBy(t => new {t.SkillSetId,t.SkillSetName})
+                                                         .Select(g => new GetProjectNameListDTO
+                                                         {
+                                                             MasterProjectNameId = g.Select(t => t.MasterProjectNameId).FirstOrDefault(),
+                                                             SkillSetId = g.Key.SkillSetId,
+                                                             SkillSetName = g.Key.SkillSetName,
+                                                             ProjectNames = g.Select(t => new ProjectNamesDTO
+                                                             {
+                                                                 ProjectId = t.ProjectId,
+                                                                 ProjectName = t.ProjectName,
+                                                             }).ToList()
+
+                                                         }).ToList();
+
+                if (!groupedProjectnames.Any())
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "No Project Name details found for this Skillsetid";
+                    return resultDTO;
+                }
+
+                resultDTO.Data = groupedProjectnames;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Project Name Details";
             }
             catch (Exception ex)
             {

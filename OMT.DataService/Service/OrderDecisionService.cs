@@ -195,7 +195,7 @@ namespace OMT.DataService.Service
 
                     // check if order is from TIQE 
 
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
@@ -367,7 +367,7 @@ namespace OMT.DataService.Service
 
                         var is_tiqe = false;
 
-                        if (ssname == "TIQE")
+                        if (ssname == "TIQELoanMod")
                         {
                             is_tiqe = true;
                         }
@@ -399,7 +399,7 @@ namespace OMT.DataService.Service
                         string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
                         var is_tiqe = false;
 
-                        if (ssname == "TIQE")
+                        if (ssname == "TIQELoanMod")
                         {
                             is_tiqe = true;
                         }
@@ -549,7 +549,7 @@ namespace OMT.DataService.Service
                 if (ssid.HasValue)
                 {
                     //check if order is of TIQE 
-                    if (ssname == "TIQE")
+                    if (ssname == "TIQELoanMod")
                     {
                         istiqe = true;
                     }
@@ -773,7 +773,7 @@ namespace OMT.DataService.Service
 
                     // check if order is from TIQE 
 
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQE" && (int)orderedRecords["SystemOfRecordId"] == 2;
+                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO

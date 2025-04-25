@@ -25,16 +25,39 @@ namespace OMT.DataService.Service
             try
             {
                 string existingTeamName = _oMTDataContext.Teams.Where(x => x.TeamName == createTeamsDTO.TeamName && x.IsActive).Select(_ => _.TeamName).FirstOrDefault();
-                if (existingTeamName != null)
+                
+                string existingTeamLeadName = (from t in _oMTDataContext.Teams
+                                               join up in _oMTDataContext.UserProfile on t.TL_Userid equals up.UserId
+                                               where t.TL_Userid == createTeamsDTO.TL_Userid && t.IsActive
+                                               select up.FirstName + " " + up.LastName
+                                               ).FirstOrDefault();
+
+                Teams teams1 = _oMTDataContext.Teams.Where(x => x.TeamName == createTeamsDTO.TeamName && x.IsActive && x.TL_Userid == createTeamsDTO.TL_Userid).FirstOrDefault();
+
+                if (existingTeamName != null && existingTeamLeadName == null)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "The TeamName already exists. Please try to create with different name.";
+                    resultDTO.Message = "The Team " + existingTeamName + " already exists. Please try to create with different name.";
                 }
+
+                else if (teams1 != null)
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "The Team " + existingTeamName + " already exists and " + existingTeamLeadName + " is mapped to it. Please try to create with different team name and Team lead.";
+                }
+
+                else if (existingTeamName == null && existingTeamLeadName != null)
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message =  existingTeamLeadName + " is already mapped to a team. Please try to create with different Team lead.";
+                }
+
                 else
                 {
                     Teams teams  = new Teams()
                     {
                         TeamName = createTeamsDTO.TeamName,
+                        TL_Userid = createTeamsDTO.TL_Userid,
                         Description = createTeamsDTO.Description,
                         IsActive = true
                     };
@@ -44,7 +67,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "Teams Created Successfully.";
                     resultDTO.IsSuccess = true;
 
-                    resultDTO.Data = GetTeamsList().Data;
+                    //resultDTO.Data = GetTeamsList().Data;
                 }
             }
             catch (Exception ex)
@@ -108,7 +131,21 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                TeamsResponseDTO? teamsResponseDTO = _oMTDataContext.Teams.Where(x => x.TeamId == teamId && x.IsActive).Select(_=> new TeamsResponseDTO() { Description = _.Description, TeamId=_.TeamId, TeamName=_.TeamName }).FirstOrDefault();
+                // TeamsResponseDTO? teamsResponseDTO = _oMTDataContext.Teams.Where(x => x.TeamId == teamId && x.IsActive).Select(_=> new TeamsResponseDTO() { Description = _.Description, TeamId=_.TeamId, TeamName=_.TeamName }).FirstOrDefault();
+
+                TeamsResponseDTO? teamsResponseDTO = (from t in _oMTDataContext.Teams
+                                                      join up in _oMTDataContext.UserProfile on t.TL_Userid equals up.UserId
+                                                      where t.TeamId == teamId && t.IsActive
+                                                      orderby  up.FirstName
+                                                      select new TeamsResponseDTO()
+                                                      {
+                                                          Description = t.Description,
+                                                          TeamId = t.TeamId,
+                                                          TeamName = t.TeamName,
+                                                          TL_Userid = t.TL_Userid,
+                                                          TL_Name = up.FirstName + " " + up.LastName,
+                                                      }).FirstOrDefault();
+                                                      
                 if (teamsResponseDTO == null)
                 {
                     resultDTO.StatusCode = "404";
@@ -140,7 +177,21 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                List<TeamsResponseDTO> ListofTeams = _oMTDataContext.Teams.Where(x => x.IsActive).OrderBy(x => x.TeamName).Select(_ => new TeamsResponseDTO() { Description = _.Description, TeamId = _.TeamId, TeamName = _.TeamName }).ToList();
+                // List<TeamsResponseDTO> ListofTeams = _oMTDataContext.Teams.Where(x => x.IsActive).OrderBy(x => x.TeamName).Select(_ => new TeamsResponseDTO() { Description = _.Description, TeamId = _.TeamId, TeamName = _.TeamName }).ToList();
+
+                List<TeamsResponseDTO> ListofTeams = (from t in _oMTDataContext.Teams
+                                                      join up in _oMTDataContext.UserProfile on t.TL_Userid equals up.UserId
+                                                      where  t.IsActive
+                                                      orderby t.TeamName, up.FirstName
+                                                      select new TeamsResponseDTO()
+                                                      {
+                                                          Description = t.Description,
+                                                          TeamId = t.TeamId,
+                                                          TeamName = t.TeamName,
+                                                          TL_Userid = t.TL_Userid,
+                                                          TL_Name = up.FirstName + " " + up.LastName,
+                                                      }).ToList();
+
                 resultDTO.Data = ListofTeams;
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Teams";
@@ -173,8 +224,21 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
-                    List<TeamsResponseDTO> teamsList = _oMTDataContext.Teams.Where(x=>(x.TeamName.Contains(teamname) || x.Description.Contains(teamname)) && x.IsActive).OrderBy(x => x.TeamName).Select(_=> new TeamsResponseDTO() { Description=_.Description, TeamId=_.TeamId, TeamName=_.TeamName }).ToList();
-                    
+                    //  List<TeamsResponseDTO> teamsList = _oMTDataContext.Teams.Where(x=>(x.TeamName.Contains(teamname) || x.Description.Contains(teamname)) && x.IsActive).OrderBy(x => x.TeamName).Select(_=> new TeamsResponseDTO() { Description=_.Description, TeamId=_.TeamId, TeamName=_.TeamName }).ToList();
+
+                    List<TeamsResponseDTO> teamsList = (from t in _oMTDataContext.Teams
+                                                          join up in _oMTDataContext.UserProfile on t.TL_Userid equals up.UserId
+                                                          where t.IsActive && t.TeamName.Contains(teamname) || t.Description.Contains(teamname)
+                                                          orderby t.TeamName, up.FirstName
+                                                          select new TeamsResponseDTO()
+                                                          {
+                                                              Description = t.Description,
+                                                              TeamId = t.TeamId,
+                                                              TeamName = t.TeamName,
+                                                              TL_Userid = t.TL_Userid,
+                                                              TL_Name = up.FirstName + " " + up.LastName,
+                                                          }).ToList();
+
                     if (teamsList != null && teamsList.Count >0)
                     {
                         resultDTO.IsSuccess = true;
@@ -215,6 +279,7 @@ namespace OMT.DataService.Service
                     teams.TeamName = teamsResponseDTO.TeamName;
                     teams.Description = teamsResponseDTO.Description;
                     teams.IsActive = true;
+                    teams.TL_Userid = teamsResponseDTO.TL_Userid;
                     _oMTDataContext.Teams.Update(teams);
                     _oMTDataContext.SaveChanges();
                     resultDTO.Message = "Teams Updated Successfully.";
