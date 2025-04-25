@@ -388,22 +388,37 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+        
         public ResultDTO CreateMultipleUserSkillset(MultipleUserSkillSetCreateDTO multipleUserSkillSetCreateDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "201" };
+
             try
             {
-                var existingUserSkillSet = _oMTDataContext.UserSkillSet.Where(x => x.UserId == multipleUserSkillSetCreateDTO.UserId && x.IsActive).FirstOrDefault();
+                var existingUserSkillSet = _oMTDataContext.UserSkillSet
+                    .Where(x => x.UserId == multipleUserSkillSetCreateDTO.UserId && x.IsActive)
+                    .FirstOrDefault();
 
                 if (existingUserSkillSet != null)
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "The UserSkillSet already Exists for the User.Please! try to Update.";
+                    resultDTO.Message = "The UserSkillSet already exists for the user. Please try updating instead.";
                 }
                 else
                 {
+                    int priorityOrder = 1;
+                    Dictionary<int, int> assignedPriorities = new Dictionary<int, int>();
+
+                    // Assigning priority for FirstCycle
                     foreach (var detail in multipleUserSkillSetCreateDTO.FirstCycle)
                     {
+                        if (!assignedPriorities.ContainsKey(detail.SkillSetId))
+                        {
+                            assignedPriorities[detail.SkillSetId] = priorityOrder++;
+                        }
+
+                        int currentPriority = assignedPriorities[detail.SkillSetId];
+
                         if (detail.IsHardStateUser)
                         {
                             foreach (var hsdetails in detail.HardStateDetails)
@@ -418,47 +433,39 @@ namespace OMT.DataService.Service
                                     IsActive = true,
                                     IsCycle1 = true,
                                     CreatedDate = DateTime.Now,
-                                    ProjectId = detail.ProjectId ?? ""//detail.ProjectId != null ? string.Join(",", detail.ProjectId) : null,
+                                    ProjectId = detail.ProjectId ?? "",
+                                    PriorityOrder = currentPriority
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
                             }
+                        }
 
-                            UserSkillSet nr_userSkillSet = new UserSkillSet
-                            {
-                                UserId = multipleUserSkillSetCreateDTO.UserId,
-                                SkillSetId = detail.SkillSetId,
-                                Percentage = ((int)detail.Weightage != null && (int)detail.Weightage != 0) ? (int)detail.Weightage : 0,
-                                IsHardStateUser = false,
-                                HardStateName = "",
-                                IsActive = true,
-                                IsCycle1 = true,
-                                CreatedDate = DateTime.Now,
-                                ProjectId = detail.ProjectId ?? "",
-                            };
-                            _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                        }
-                        else
+                        UserSkillSet nr_userSkillSet = new UserSkillSet
                         {
-                            UserSkillSet userSkillSet = new UserSkillSet
-                            {
-                                UserId = multipleUserSkillSetCreateDTO.UserId,
-                                SkillSetId = detail.SkillSetId,
-                                Percentage = ((int)detail.Weightage != null && (int)detail.Weightage != 0) ? (int)detail.Weightage : 0,
-                                IsHardStateUser = detail.IsHardStateUser,
-                                HardStateName = "",
-                                IsActive = true,
-                                IsCycle1 = true,
-                                CreatedDate = DateTime.Now,
-                                ProjectId = detail.ProjectId ?? "",
-                            };
-                            _oMTDataContext.UserSkillSet.Add(userSkillSet);
-                            _oMTDataContext.SaveChanges();
-                        }
+                            UserId = multipleUserSkillSetCreateDTO.UserId,
+                            SkillSetId = detail.SkillSetId,
+                            Percentage = detail.Weightage ?? 0,
+                            IsHardStateUser = false,
+                            HardStateName = "",
+                            IsActive = true,
+                            IsCycle1 = true,
+                            CreatedDate = DateTime.Now,
+                            ProjectId = detail.ProjectId ?? "",
+                            PriorityOrder = currentPriority
+                        };
+                        _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
+                        _oMTDataContext.SaveChanges();
                     }
+
+                    // Determine max priority order from FirstCycle
+                    int maxPriorityOrder = assignedPriorities.Values.Count > 0 ? assignedPriorities.Values.Max() : 0;
+
+                    // Assigning highest priority order for SecondCycle
                     foreach (var details in multipleUserSkillSetCreateDTO.SecondCycle)
                     {
+                        int secondCyclePriority = maxPriorityOrder + 1; // Assign max priority + 1
+
                         if (details.IsHardStateUser)
                         {
                             foreach (var hsdetails in details.HardStateDetails)
@@ -474,48 +481,31 @@ namespace OMT.DataService.Service
                                     IsCycle1 = false,
                                     CreatedDate = DateTime.Now,
                                     ProjectId = details.ProjectId ?? "",
+                                    PriorityOrder = secondCyclePriority
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
                             }
-
-                            UserSkillSet nr_userSkillSet = new UserSkillSet
-                            {
-                                UserId = multipleUserSkillSetCreateDTO.UserId,
-                                SkillSetId = details.SkillSetId,
-                                Percentage = ((int)details.Weightage != null && (int)details.Weightage != 0) ? (int)details.Weightage : 0,
-                                IsHardStateUser = false,
-                                HardStateName = "",
-                                IsActive = true,
-                                IsCycle1 = false,
-                                CreatedDate = DateTime.Now,
-                                ProjectId = details.ProjectId ?? "",
-                            };
-                            _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
-                            _oMTDataContext.SaveChanges();
                         }
-                        else
+
+                        UserSkillSet userSkillSet2 = new UserSkillSet
                         {
-                            UserSkillSet userSkillSet2 = new UserSkillSet
-                            {
-                                UserId = multipleUserSkillSetCreateDTO.UserId,
-                                SkillSetId = details.SkillSetId,
-                                Percentage = ((int)details.Weightage != null && (int)details.Weightage != 0) ? (int)details.Weightage : 0,
-                                IsHardStateUser = details.IsHardStateUser,
-                                HardStateName = "",
-                                IsActive = true,
-                                IsCycle1 = false,
-                                CreatedDate = DateTime.Now,
-                                ProjectId = details.ProjectId ?? "",
-                            };
-                            _oMTDataContext.UserSkillSet.Add(userSkillSet2);
-                            _oMTDataContext.SaveChanges();
-                        }
-
+                            UserId = multipleUserSkillSetCreateDTO.UserId,
+                            SkillSetId = details.SkillSetId,
+                            Percentage = details.Weightage ?? 0,
+                            IsHardStateUser = details.IsHardStateUser,
+                            HardStateName = "",
+                            IsActive = true,
+                            IsCycle1 = false,
+                            CreatedDate = DateTime.Now,
+                            ProjectId = details.ProjectId ?? "",
+                            PriorityOrder = secondCyclePriority
+                        };
+                        _oMTDataContext.UserSkillSet.Add(userSkillSet2);
+                        _oMTDataContext.SaveChanges();
                     }
 
-                    // after adding userskillset for new user, call the insertintogoc table method 
-
+                    // After adding user skillset for new user, call the insertIntoGOC table method 
                     _updateGOCService.InsertGetOrderCalculation(resultDTO, multipleUserSkillSetCreateDTO.UserId);
 
                     resultDTO.IsSuccess = true;
@@ -531,210 +521,6 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        //public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
-        //{
-        //    ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
-        //    try
-        //    {
-        //        List<ConsolidatedUserSkillSetlistDTO> allUserSkillSet = new List<ConsolidatedUserSkillSetlistDTO>();
-
-        //        var USSid = _oMTDataContext.UserSkillSet.Where(uss => uss.IsActive).Select(uss => uss.UserId).Distinct().ToList();
-
-        //        var active_users = _oMTDataContext.UserProfile.Where(x => x.IsActive && USSid.Contains(x.UserId)).Select(x => x.UserId).ToList();
-
-        //        var userids = (userid == null) ? active_users : new List<int> { userid.Value };
-
-        //        foreach (var id in userids)
-        //        {
-        //            List<UserSkillSetDetailsDTO> FirstCycle1 = new List<UserSkillSetDetailsDTO>();
-        //            List<UserSkillSetDetailsDTO> SecondCycle2 = new List<UserSkillSetDetailsDTO>();
-
-        //            var userProfile = _oMTDataContext.UserProfile.FirstOrDefault(up => up.UserId == id);
-        //            var userName = userProfile != null ? userProfile.FirstName + ' ' + userProfile.LastName : "User Not Found";
-
-        //            //Cycle1
-
-        //            List<int> ssids_c1 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
-
-        //            foreach (var ssid in ssids_c1)
-        //            {
-        //                List<UPdateHardStateDetailsDTO> details_hs_c1 = new List<UPdateHardStateDetailsDTO>();
-        //                var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
-
-        //                var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
-
-        //                var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
-
-        //                var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
-
-        //                var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
-
-        //                var projectnames = _oMTDataContext.MasterProjectName
-        //                    .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-        //                    .Select(mp => mp.ProjectName)
-        //                    .ToList();
-
-        //                var projectDetailsList = _oMTDataContext.MasterProjectName
-        //                                                        .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-        //                                                        .Select(mp => new ProjectdetailsDTO
-        //                                                        {
-        //                                                            ProjectId = mp.ProjectId,
-        //                                                            ProjectName = mp.ProjectName
-        //                                                        })
-        //                                                        .ToList();
-
-        //                if (hs_ss.Count > 0)
-        //                {
-        //                    foreach (var h in hs_ss)
-        //                    {
-        //                        var detail_add_hs = new UPdateHardStateDetailsDTO()
-        //                        {
-        //                            HardStateName = h.HardStateName,
-        //                            Weightage = h.Percentage,
-        //                            UserSkillSetId = h.UserSkillSetId,
-        //                        };
-
-        //                        details_hs_c1.Add(detail_add_hs);
-
-        //                    }
-
-
-        //                    UserSkillSetDetailsDTO c1_hs = new UserSkillSetDetailsDTO()
-        //                    {
-        //                        UserSkillSetId = ns_ss.UserSkillSetId,
-        //                        SkillSetId = ns_ss.SkillSetId,
-        //                        SkillSetName = skillsetname,
-        //                        Weightage = ns_ss.Percentage,
-        //                        IsHardStateUser = true,
-        //                        HardStateDetails = details_hs_c1,
-        //                        Projectdetails = projectDetailsList
-
-        //                    };
-
-        //                    FirstCycle1.Add(c1_hs);
-        //                }
-        //                else
-        //                {
-        //                    UserSkillSetDetailsDTO c1_ns = new UserSkillSetDetailsDTO()
-        //                    {
-        //                        UserSkillSetId = ns_ss.UserSkillSetId,
-        //                        SkillSetId = ns_ss.SkillSetId,
-        //                        SkillSetName = skillsetname,
-        //                        Weightage = ns_ss.Percentage,
-        //                        IsHardStateUser = false,
-        //                        Projectdetails =projectDetailsList
-        //                    };
-
-        //                    FirstCycle1.Add(c1_ns);
-        //                }
-        //            }
-
-        //            //Cycle2
-
-        //            List<int> ssids_c2 = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1).Select(x => x.SkillSetId).Distinct().ToList();
-
-        //            foreach (var ssid in ssids_c2)
-        //            {
-        //                List<UPdateHardStateDetailsDTO> details_hs_c2 = new List<UPdateHardStateDetailsDTO>();
-        //                var skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid).Select(x => x.SkillSetName).FirstOrDefault();
-
-        //                var hs_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && x.IsHardStateUser).ToList();
-
-        //                var ns_ss = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && !x.IsCycle1 && x.SkillSetId == ssid && !x.IsHardStateUser).FirstOrDefault();
-
-
-        //                var projectIds = _oMTDataContext.UserSkillSet.Where(x => x.UserId == id && x.IsActive && x.IsCycle1 && x.SkillSetId == ssid).Select(x => x.ProjectId).Distinct().ToList();
-
-        //                var splitProjectIds = projectIds.SelectMany(p => p.Split(',')).Select(p => p.Trim()).Distinct().ToList();
-
-        //                var projectnames = _oMTDataContext.MasterProjectName
-        //                    .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) 
-        //                    .Select(mp => mp.ProjectName)
-        //                    .ToList();
-
-        //                var projectDetailsList = _oMTDataContext.MasterProjectName
-        //                                                       .Where(mp => splitProjectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid) // Match ProjectId
-        //                                                       .Select(mp => new ProjectdetailsDTO
-        //                                                       {
-        //                                                           ProjectId = mp.ProjectId,
-        //                                                           ProjectName = mp.ProjectName
-        //                                                       })
-        //                                                       .ToList();
-
-        //                if (hs_ss.Count > 0)
-        //                {
-        //                    foreach (var h in hs_ss)
-        //                    {
-        //                        var detail_add_hs_c2 = new UPdateHardStateDetailsDTO()
-        //                        {
-        //                            HardStateName = h.HardStateName,
-        //                            Weightage = h.Percentage,
-        //                            UserSkillSetId = h.UserSkillSetId,
-        //                        };
-
-        //                        details_hs_c2.Add(detail_add_hs_c2);
-
-        //                    }
-
-        //                    UserSkillSetDetailsDTO c2_hs = new UserSkillSetDetailsDTO()
-        //                    {
-        //                        UserSkillSetId = ns_ss.UserSkillSetId,
-        //                        SkillSetId = ns_ss.SkillSetId,
-        //                        SkillSetName = skillsetname,
-        //                        Weightage = ns_ss.Percentage,
-        //                        IsHardStateUser = true,
-        //                        HardStateDetails = details_hs_c2,
-        //                        Projectdetails = projectDetailsList  
-        //                    };
-
-        //                    SecondCycle2.Add(c2_hs);
-        //                }
-        //                else
-        //                {
-        //                    UserSkillSetDetailsDTO c2_ns = new UserSkillSetDetailsDTO()
-        //                    {
-        //                        UserSkillSetId = ns_ss.UserSkillSetId,
-        //                        SkillSetId = ns_ss.SkillSetId,
-        //                        SkillSetName = skillsetname,
-        //                        Weightage = ns_ss.Percentage,
-        //                        IsHardStateUser = ns_ss.IsHardStateUser,
-        //                        Projectdetails = projectDetailsList
-        //                    };
-
-        //                    SecondCycle2.Add(c2_ns);
-        //                }
-        //            }
-
-        //            if (FirstCycle1.Count == 0 && SecondCycle2.Count == 0)
-        //            {
-        //                resultDTO.IsSuccess = false;
-        //                resultDTO.Message = "No Consolidated Userskillset details found for this Userid";
-        //                return resultDTO;
-        //            }
-
-        //            //combine details 
-        //            ConsolidatedUserSkillSetlistDTO userSkillSetDetailsDTO = new ConsolidatedUserSkillSetlistDTO()
-        //            {
-        //                Username = userName,
-        //                UserId = id,
-        //                FirstCycle = FirstCycle1,
-        //                SecondCycle = SecondCycle2,
-        //            };
-
-        //            allUserSkillSet.Add(userSkillSetDetailsDTO);
-        //        }
-        //        resultDTO.Data = allUserSkillSet.OrderBy(x => x.Username);
-        //        resultDTO.IsSuccess = true;
-        //        resultDTO.Message = "List of Consolidated Userskillset Details Successfully Fetched";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        resultDTO.IsSuccess = false;
-        //        resultDTO.StatusCode = "500";
-        //        resultDTO.Message = ex.Message;
-        //    }
-        //    return resultDTO;
-        //}
 
         public ResultDTO ConsolidatedUserSkillSetlist(int? userid)
         {
@@ -790,10 +576,10 @@ namespace OMT.DataService.Service
                     var userSkillSetForUser = userSkillSets.Where(x => x.UserId == id).ToList();
 
                     // Group skill sets by cycle
-                    var skillSetsCycle1 = userSkillSetForUser.Where(x => x.IsCycle1).ToList();
-                    var skillSetsCycle2 = userSkillSetForUser.Where(x => !x.IsCycle1).ToList();
+                    var skillSetsCycle1 = userSkillSetForUser.Where(x => x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
+                    var skillSetsCycle2 = userSkillSetForUser.Where(x => !x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
 
-                    
+
                     ProcessSkillSetCycle(skillSetsCycle1, skillSetNames, masterProjects, firstCycleList);
                     ProcessSkillSetCycle(skillSetsCycle2, skillSetNames, masterProjects, secondCycleList);
 
@@ -828,7 +614,7 @@ namespace OMT.DataService.Service
         }
 
 
-        private void ProcessSkillSetCycle(List<UserSkillSet> skillSets,Dictionary<int, string> skillSetNames,List<MasterProjectName> masterProjects,List<UserSkillSetDetailsDTO> cycleList)
+        private void ProcessSkillSetCycle(List<UserSkillSet> skillSets, Dictionary<int, string> skillSetNames, List<MasterProjectName> masterProjects, List<UserSkillSetDetailsDTO> cycleList)
         {
             foreach (var skillSet in skillSets.GroupBy(x => x.SkillSetId))
             {
@@ -962,8 +748,18 @@ namespace OMT.DataService.Service
                     }
                     //cycle 1
 
+                    int priorityOrder = 1;
+                    Dictionary<int, int> assignedPriorities = new Dictionary<int, int>();
+
                     foreach (var USS_ss in updateUserSkillSetThWtDTO.FirstCycle)
                     {
+                        if (!assignedPriorities.ContainsKey(USS_ss.SkillSetId))
+                        {
+                            assignedPriorities[USS_ss.SkillSetId] = priorityOrder++;
+                        }
+
+                        int currentPriority = assignedPriorities[USS_ss.SkillSetId];
+
                         if (USS_ss.IsHardStateUser)
                         {
                             foreach (var h in USS_ss.HardStateDetails)
@@ -978,6 +774,7 @@ namespace OMT.DataService.Service
                                     is_hs.IsHardStateUser = USS_ss.IsHardStateUser;
                                     is_hs.HardStateName = h.HardStateName;
                                     is_hs.ProjectId = USS_ss.ProjectId ?? "";
+                                    is_hs.PriorityOrder = currentPriority;
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -994,7 +791,8 @@ namespace OMT.DataService.Service
                                         IsCycle1 = true,
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
-                                        ProjectId = USS_ss.ProjectId ?? ""
+                                        ProjectId = USS_ss.ProjectId ?? "",
+                                        PriorityOrder = currentPriority
                                     };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
@@ -1013,6 +811,7 @@ namespace OMT.DataService.Service
                             not_hs.IsHardStateUser = false;
                             not_hs.HardStateName = "";
                             not_hs.ProjectId = USS_ss.ProjectId ?? "";
+                            not_hs.PriorityOrder = currentPriority;
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -1029,7 +828,8 @@ namespace OMT.DataService.Service
                                 IsCycle1 = true,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = USS_ss.ProjectId ?? ""
+                                ProjectId = USS_ss.ProjectId ?? "",
+                                PriorityOrder = currentPriority,
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -1037,8 +837,14 @@ namespace OMT.DataService.Service
 
                     }
                     //cycle 2
+
+                    // Determine max priority order from FirstCycle
+                    int maxPriorityOrder = assignedPriorities.Values.Count > 0 ? assignedPriorities.Values.Max() : 0;
+
                     foreach (var Uss_skillset in updateUserSkillSetThWtDTO.SecondCycle)
                     {
+                        int secondCyclePriority = maxPriorityOrder + 1; // Assign max priority + 1
+
                         if (Uss_skillset.IsHardStateUser)
                         {
                             foreach (var h in Uss_skillset.HardStateDetails)
@@ -1053,6 +859,7 @@ namespace OMT.DataService.Service
                                     is_hs.IsHardStateUser = Uss_skillset.IsHardStateUser;
                                     is_hs.HardStateName = h.HardStateName;
                                     is_hs.ProjectId = Uss_skillset.ProjectId ?? "";
+                                    is_hs.PriorityOrder = secondCyclePriority;
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -1069,7 +876,8 @@ namespace OMT.DataService.Service
                                         IsCycle1 = false,
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
-                                        ProjectId = Uss_skillset.ProjectId ?? ""
+                                        ProjectId = Uss_skillset.ProjectId ?? "",
+                                        PriorityOrder = secondCyclePriority
                                     };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
@@ -1088,6 +896,7 @@ namespace OMT.DataService.Service
                             not_hs.IsHardStateUser = false;
                             not_hs.HardStateName = "";
                             not_hs.ProjectId = Uss_skillset.ProjectId ?? "";
+                            not_hs.PriorityOrder = secondCyclePriority;
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -1104,7 +913,8 @@ namespace OMT.DataService.Service
                                 IsCycle1 = false,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
-                                ProjectId = Uss_skillset.ProjectId ?? ""
+                                ProjectId = Uss_skillset.ProjectId ?? "",
+                                PriorityOrder = secondCyclePriority
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -1143,46 +953,20 @@ namespace OMT.DataService.Service
                 }
 
                 //cycle 1
-                List<Dictionary<int, int>> ss_per = new List<Dictionary<int, int>>();
 
-                foreach (var s in updateUserSkillSetThWtDTO.FirstCycle)
+                int priorityOrder = 1;
+                Dictionary<int, int> assignedPriorities = new Dictionary<int, int>();
+
+                foreach (var USS_ip in updateUserSkillSetThWtDTO.FirstCycle)
                 {
-                    var total_weightage = (int)s.Weightage;
-                    foreach (var hs in s.HardStateDetails)
+                    if (!assignedPriorities.ContainsKey(USS_ip.SkillSetId))
                     {
-                        total_weightage += hs.Weightage;
+                        assignedPriorities[USS_ip.SkillSetId] = priorityOrder++;
                     }
 
-                    var skillWeightageDict = new Dictionary<int, int>
-                    {
-                        { s.SkillSetId, total_weightage }
-                    };
+                    int currentPriority = assignedPriorities[USS_ip.SkillSetId];
 
-                    ss_per.Add(skillWeightageDict);
-                }
-
-                var sortedList = ss_per.OrderByDescending(dict => dict.Values.First()).Select(dict => dict.Keys.First()).ToList();
-
-                var cycle1_ss = updateUserSkillSetThWtDTO.FirstCycle.OrderBy(s => sortedList.IndexOf(s.SkillSetId)).ToList();
-
-                var PriorityOrder = 1;
-                int currentPriorityOrder;
-                int highestCycle1PriorityOrder = 0;
-                var skillSetPriorityMap_c1 = new Dictionary<int, int>();
-                var skillSetPriorityMap_c2 = new Dictionary<int, int>();
-
-                foreach (var USS_ip in cycle1_ss)
-                {
                     var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
-
-                    if (!skillSetPriorityMap_c1.TryGetValue(USS_ip.SkillSetId, out currentPriorityOrder))
-                    {
-                        // Assign the next available PriorityOrder for this SkillSetId
-                        currentPriorityOrder = PriorityOrder++;
-                        skillSetPriorityMap_c1[USS_ip.SkillSetId] = currentPriorityOrder;
-
-                    }
-                    highestCycle1PriorityOrder = Math.Max(highestCycle1PriorityOrder, currentPriorityOrder);
 
                     if (USS_ip.IsHardStateUser)
                     {
@@ -1199,7 +983,7 @@ namespace OMT.DataService.Service
                                 hs_present.UserSkillSetId = item.UserSkillSetId;
                                 hs_present.IsHardStateUser = USS_ip.IsHardStateUser;
                                 hs_present.Weightage = item.Weightage;
-                                hs_present.PriorityOrder = currentPriorityOrder;
+                                hs_present.PriorityOrder = currentPriority;
 
                                 if (item.Weightage != ExistingWeightage)
                                 {
@@ -1235,7 +1019,7 @@ namespace OMT.DataService.Service
                                     TotalOrderstoComplete = roundedtotalorders,
                                     OrdersCompleted = 0,
                                     Weightage = item.Weightage,
-                                    PriorityOrder = currentPriorityOrder,
+                                    PriorityOrder = currentPriority,
                                     Utilized = roundedtotalorders == 0 ? true : false,
                                     IsActive = true,
                                     UpdatedDate = DateTime.Now,
@@ -1263,7 +1047,7 @@ namespace OMT.DataService.Service
                         ns_present.UserSkillSetId = (int)USS_ip.UserSkillSetId;
                         ns_present.IsHardStateUser = false;
                         ns_present.Weightage = (int)USS_ip.Weightage;
-                        ns_present.PriorityOrder = currentPriorityOrder;
+                        ns_present.PriorityOrder = currentPriority;
 
                         if (USS_ip.Weightage != ExistingWeightage_n)
                         {
@@ -1299,7 +1083,7 @@ namespace OMT.DataService.Service
                             TotalOrderstoComplete = roundedtotalorders,
                             OrdersCompleted = 0,
                             Weightage = (int)USS_ip.Weightage,
-                            PriorityOrder = currentPriorityOrder,
+                            PriorityOrder = currentPriority,
                             Utilized = roundedtotalorders == 0 ? true : false,
                             IsActive = true,
                             UpdatedDate = DateTime.Now,
@@ -1313,19 +1097,18 @@ namespace OMT.DataService.Service
                     }
                 }
                 // cycle2
+
+                // Determine max priority order from FirstCycle
+                int maxPriorityOrder = assignedPriorities.Values.Count > 0 ? assignedPriorities.Values.Max() : 0;
+
                 var cycle2_ss = updateUserSkillSetThWtDTO.SecondCycle.ToList();
 
                 foreach (var USS_ip in cycle2_ss)
                 {
+                    int secondCyclePriority = maxPriorityOrder + 1; // Assign max priority + 1
+
                     var threshold = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == USS_ip.SkillSetId && x.IsActive).Select(_ => _.Threshold).FirstOrDefault();
 
-                    if (!skillSetPriorityMap_c2.TryGetValue(USS_ip.SkillSetId, out currentPriorityOrder))
-                    {
-                        // Assign the next available PriorityOrder for this SkillSetId
-                        currentPriorityOrder = highestCycle1PriorityOrder + 1;
-                        skillSetPriorityMap_c2[USS_ip.SkillSetId] = currentPriorityOrder;
-
-                    }
                     if (USS_ip.IsHardStateUser)
                     {
                         foreach (var item in USS_ip.HardStateDetails)
@@ -1339,7 +1122,7 @@ namespace OMT.DataService.Service
                                 hs_present.UserSkillSetId = item.UserSkillSetId;
                                 hs_present.IsHardStateUser = USS_ip.IsHardStateUser;
                                 hs_present.Weightage = 0; // item.Weightage;
-                                hs_present.PriorityOrder = currentPriorityOrder;
+                                hs_present.PriorityOrder = secondCyclePriority;
                                 hs_present.TotalOrderstoComplete = 0;
 
                                 _oMTDataContext.GetOrderCalculation.Update(hs_present);
@@ -1357,7 +1140,7 @@ namespace OMT.DataService.Service
                                     TotalOrderstoComplete = 0,
                                     OrdersCompleted = 0,
                                     Weightage = 0,
-                                    PriorityOrder = currentPriorityOrder,
+                                    PriorityOrder = secondCyclePriority,
                                     Utilized = false,
                                     IsActive = true,
                                     UpdatedDate = DateTime.Now,
@@ -1381,7 +1164,7 @@ namespace OMT.DataService.Service
                         ns_present.UserSkillSetId = (int)USS_ip.UserSkillSetId;
                         ns_present.IsHardStateUser = false;
                         ns_present.Weightage = 0;
-                        ns_present.PriorityOrder = currentPriorityOrder;
+                        ns_present.PriorityOrder = secondCyclePriority;
                         ns_present.TotalOrderstoComplete = 0;
 
                         _oMTDataContext.GetOrderCalculation.Update(ns_present);
@@ -1399,7 +1182,7 @@ namespace OMT.DataService.Service
                             TotalOrderstoComplete = 0,
                             OrdersCompleted = 0,
                             Weightage = 0,
-                            PriorityOrder = currentPriorityOrder,
+                            PriorityOrder = secondCyclePriority,
                             Utilized = false,
                             IsActive = true,
                             UpdatedDate = DateTime.Now,
