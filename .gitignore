@@ -74,3 +74,8 @@
 /ProductivityUtilization/obj
 /CalculationForGOC/bin/Debug/net472
 /PendingSciOrders/obj/Release/net472
+/PendingSciOrders/bin/Debug/net472
+/PendingSciOrders/obj/PendingSciOrders.csproj.nuget.dgspec.json
+/PendingSciOrders/obj/PendingSciOrders.csproj.nuget.g.props
+/PendingSciOrders/obj/project.assets.json
+/PendingSciOrders/obj/project.nuget.cache
