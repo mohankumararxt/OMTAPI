@@ -340,7 +340,83 @@ namespace OMT.DataService.Service
                             throw;
                         }
 
+                        // capture count of uploaded orders 
 
+                        DateTime update_date = DateTime.Now.Date;
+                        DateTime uploading_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                        Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
+                        // TimeSpan cutoff_endtime = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(x => x.EndTime).FirstOrDefault();
+
+
+                        DateTime yesterday_dt = uploading_time.Date.AddDays(-1);
+                        DateTime cutoff_start_dt = yesterday_dt + cutoff_time.StartTime;
+                        DateTime cutoff_end_dt = uploading_time.Date + cutoff_time.EndTime;
+
+
+                        if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
+                        {
+                            update_date = uploading_time.Date;
+                        }
+
+                        else if (uploading_time > cutoff_end_dt)
+                        {
+                            update_date = uploading_time.Date.AddDays(1);
+                        }
+
+                        var existing_ss_record = _oMTDataContext.DailyCount_SkillSet.Where(x => x.Date == update_date && x.SkillSetId == skillSet.SkillSetId && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_ss_record == null)
+                        {
+                            DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                SkillSetId = skillSet.SkillSetId,
+                                Date = update_date,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.DailyCount_SkillSet.Add(dailyCount_SkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_ss_record != null)
+                        {
+                            //DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                            //{
+                            //    Count =+ NoOfOrders
+                            //};
+
+                            existing_ss_record.Count = existing_ss_record.Count + NoOfOrders;
+
+                            _oMTDataContext.DailyCount_SkillSet.Update(existing_ss_record);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        var existing_sor_record = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == update_date && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_sor_record == null)
+                        {
+                            DailyCount_SOR dailyCount_Sor = new DailyCount_SOR
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                Date = update_date,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.DailyCount_SOR.Add(dailyCount_Sor);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_sor_record != null)
+                        {
+                            existing_sor_record.Count = existing_sor_record.Count + NoOfOrders;
+
+                            _oMTDataContext.DailyCount_SOR.Update(existing_sor_record);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        // send mail to map product descriptions
 
                         if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
                         {

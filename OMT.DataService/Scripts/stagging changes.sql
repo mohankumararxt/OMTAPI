@@ -5474,3 +5474,71 @@
 
 --insert into livereporttiming values
 --(4,'19:30:00.0000000','19:30:00.0000000',1)
+
+
+
+---------------------------------------------dashboard screens ---------------------------------
+
+
+-- CREATE TABLE Daywise_Cutoff_Timing (
+--Daywise_Cutoff_TimingId INT PRIMARY KEY IDENTITY(1,1),
+--SystemOfRecordId INT NOT NULL,
+--StartTime time not null,
+--EndTime time not null,
+--IsActive bit not null DEFAULT 1
+--);
+
+
+--ALTER TABLE Daywise_Cutoff_Timing
+--ADD CONSTRAINT fk_Daywise_Cutoff_Timing
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--insert into Daywise_Cutoff_Timing(SystemOfRecordId,StartTime,EndTime,isactive)
+--values (1,'13:00:00.000','13:00:00.000',1),
+-- (2,'18:00:00:000','18:00:00:000',1),
+-- (3,'13:30:00.000','13:30:00.000',1),
+-- (4,'18:00:00:000','18:00:00:000',1)
+
+
+-- CREATE TABLE DailyCount_SkillSet (
+--DailyCount_SkillSetId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table DailyCount_SkillSet
+--ADD CONSTRAINT fk_DailyCount_SkillSet_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table DailyCount_SkillSet
+--ADD CONSTRAINT fk_DailyCount_SkillSet_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--insert into DailyCount_SkillSet values
+--(1,1,'2025-04-01',10),
+--(2,174,'2025-04-01',10)
+
+-- CREATE TABLE DailyCount_SOR (
+--DailyCount_SORId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table DailyCount_SOR
+--ADD CONSTRAINT fk_DailyCount_SOR_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--insert into DailyCount_SOR values
+--(1,'2025-04-01',100),
+--(2,'2025-04-01',110)

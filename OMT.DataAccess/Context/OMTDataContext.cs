@@ -68,6 +68,9 @@ namespace OMT.DataAccess.Context
         public DbSet<MessagesStatus> MessagesStatus { get; set; }
         public DbSet<MasterProjectName> MasterProjectName { get; set; }
         public DbSet<InvoiceJointTiqe> InvoiceJointTiqe { get; set; }
+        public DbSet<DailyCount_SkillSet> DailyCount_SkillSet { get; set; }
+        public DbSet<DailyCount_SOR> DailyCount_SOR { get; set; }
+        public DbSet<Daywise_Cutoff_Timing> Daywise_Cutoff_Timing { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
