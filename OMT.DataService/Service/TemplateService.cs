@@ -985,6 +985,7 @@ namespace OMT.DataService.Service
                              }).FirstOrDefault();
 
                 string timetaken = "";
+                DateTime dateTime = DateTime.UtcNow;
 
                 if (exist != null)
                 {
@@ -1011,8 +1012,9 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
-                        DateTime dateTime = DateTime.UtcNow;
+
                         var starttime = querydt1[0]["StartTime"]?.ToString();
+                        var orderid = querydt1[0]["OrderId"]?.ToString();
 
                         if (!string.IsNullOrEmpty(starttime))
                         {
@@ -1064,6 +1066,36 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
                         resultDTO.Data = pendingOrdersResponseDTO;
+
+                        // capture details of order in Prod_Util_Tracker table 
+
+                        InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
+                        var productivity_date = DateTime.UtcNow.Date;
+
+                        if (dateTime.TimeOfDay >= invoiceTiming.StartTime && dateTime.TimeOfDay <= invoiceTiming.EndTime)
+                        {
+                            productivity_date = dateTime.Date.AddDays(-1);
+                        }
+                        else
+                        {
+                            productivity_date = dateTime.Date;
+                        }
+
+                        Prod_Util_Tracker prod_Util_Tracker = new Prod_Util_Tracker()
+                        {
+                            UserId = updateOrderStatusDTO.UserId,
+                            OrderId = orderid,
+                            SkillSetId = updateOrderStatusDTO.SkillSetId,
+                            SystemofRecordId = table.SystemofRecordId,
+                            StartDate = DateTime.Parse(starttime),
+                            EndDate = dateTime,
+                            TimeTaken = TimeSpan.Parse(timetaken),
+                            Productivity_Date = productivity_date
+
+                        };
+
+                        _oMTDataContext.Prod_Util_Tracker.Add(prod_Util_Tracker);
+                        _oMTDataContext.SaveChanges();
                     }
                     else
                     {
@@ -1142,6 +1174,8 @@ namespace OMT.DataService.Service
                         CallRestApiAsync(trdStatusDTO1);
                     }
                 }
+
+
 
             }
             catch (Exception ex)
