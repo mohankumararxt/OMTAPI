@@ -1070,16 +1070,13 @@ namespace OMT.DataService.Service
                         // capture details of order in Prod_Util_Tracker table 
 
                         InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
-                        var productivity_date = DateTime.UtcNow.Date;
+                       
+                        DateTime lowerBound = dateTime.Date.AddDays(-1).Add(invoiceTiming.StartTime);
+                        DateTime upperBound = dateTime.Date.Add(invoiceTiming.EndTime);
 
-                        if (dateTime.TimeOfDay >= invoiceTiming.StartTime && dateTime.TimeOfDay <= invoiceTiming.EndTime)
-                        {
-                            productivity_date = dateTime.Date.AddDays(-1);
-                        }
-                        else
-                        {
-                            productivity_date = dateTime.Date;
-                        }
+                        DateTime productivity_date = (dateTime >= lowerBound && dateTime <= upperBound)
+                            ? dateTime.Date.AddDays(-1)
+                            : dateTime.Date;
 
                         Prod_Util_Tracker prod_Util_Tracker = new Prod_Util_Tracker()
                         {
