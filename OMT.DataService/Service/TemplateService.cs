@@ -356,12 +356,12 @@ namespace OMT.DataService.Service
 
                         if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
                         {
-                            update_date = uploading_time.Date;
+                            update_date = uploading_time.Date.AddDays(-1);
                         }
 
                         else if (uploading_time > cutoff_end_dt)
                         {
-                            update_date = uploading_time.Date.AddDays(1);
+                            update_date = uploading_time.Date;
                         }
 
                         var existing_ss_record = _oMTDataContext.DailyCount_SkillSet.Where(x => x.Date == update_date && x.SkillSetId == skillSet.SkillSetId && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
