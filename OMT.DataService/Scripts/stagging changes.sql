@@ -5532,6 +5532,7 @@
 --UserId INT NOT NULL,
 --Checkin DateTime ,
 --Checkout DateTime ,
+--Prod_Util_Calculated BIT 
 --);
 
 
@@ -5540,3 +5541,5 @@
 --FOREIGN KEY (UserId)
 --REFERENCES UserProfile(UserId);
 
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT DF_User_Checkin_Prod_Util_Calculated DEFAULT 0 FOR Prod_Util_Calculated;

@@ -9,5 +9,6 @@ namespace OMT.DataAccess.Entities
         public int UserId { get; set; }
         public DateTime? Checkin { get; set; }
         public DateTime? Checkout { get; set; }
+        public bool Prod_Util_Calculated { get; set; }
     }
 }
