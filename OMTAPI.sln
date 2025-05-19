@@ -25,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PendingSciOrders_5pm", "Pen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PendingSciOrders_4.30pm", "PendingSciOrders_4.30pm\PendingSciOrders_4.30pm.csproj", "{51A6DFBA-3078-4C59-8D04-EFB135C7CAC4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductivityUtilization", "ProductivityUtilization\ProductivityUtilization.csproj", "{B3257377-6905-4A42-9234-03705D5F8508}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProductivityUtilization", "ProductivityUtilization\ProductivityUtilization.csproj", "{B3257377-6905-4A42-9234-03705D5F8508}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckOut", "CheckOut\CheckOut.csproj", "{EB1575C1-DC50-48BC-80CF-A95D4331C1ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{B3257377-6905-4A42-9234-03705D5F8508}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3257377-6905-4A42-9234-03705D5F8508}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B3257377-6905-4A42-9234-03705D5F8508}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB1575C1-DC50-48BC-80CF-A95D4331C1ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB1575C1-DC50-48BC-80CF-A95D4331C1ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB1575C1-DC50-48BC-80CF-A95D4331C1ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB1575C1-DC50-48BC-80CF-A95D4331C1ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
