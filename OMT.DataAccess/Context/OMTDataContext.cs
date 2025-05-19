@@ -70,6 +70,7 @@ namespace OMT.DataAccess.Context
         public DbSet<InvoiceJointTiqe> InvoiceJointTiqe { get; set; }
         public DbSet<Prod_Util_Tracker> Prod_Util_Tracker { get; set; }
         public DbSet<InvoiceTiming> InvoiceTiming { get; set; }
+        public DbSet<User_Checkin> User_Checkin { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

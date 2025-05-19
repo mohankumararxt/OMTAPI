@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OMT.DataAccess.Entities
 {
@@ -13,6 +8,7 @@ namespace OMT.DataAccess.Entities
         public int Prod_Util_Tracker_Id { get; set; }
         public int UserId { get; set; }
         public string OrderId { get; set; }
+        public int Status { get; set; }
         public int SkillSetId { get; set; }
         public int SystemofRecordId { get; set; }
         public DateTime StartDate { get; set; }

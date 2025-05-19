@@ -1015,6 +1015,7 @@ namespace OMT.DataService.Service
 
                         var starttime = querydt1[0]["StartTime"]?.ToString();
                         var orderid = querydt1[0]["OrderId"]?.ToString();
+                        var status = updateOrderStatusDTO.StatusId;
 
                         if (!string.IsNullOrEmpty(starttime))
                         {
@@ -1082,6 +1083,7 @@ namespace OMT.DataService.Service
                         {
                             UserId = updateOrderStatusDTO.UserId,
                             OrderId = orderid,
+                            Status = status,
                             SkillSetId = updateOrderStatusDTO.SkillSetId,
                             SystemofRecordId = table.SystemofRecordId,
                             StartDate = DateTime.Parse(starttime),

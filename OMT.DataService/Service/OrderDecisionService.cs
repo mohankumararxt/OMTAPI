@@ -200,10 +200,10 @@ namespace OMT.DataService.Service
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
-                        IsPending = ispending,
-                        PendingOrder = dataToReturn,
-                        IsTiqe = istiqe_order,
-                        IsTrdPending = istrd_pending
+                        IsPending = ispending,  // trd skillsets presence
+                        PendingOrder = dataToReturn, // any order pending
+                        IsTiqe = istiqe_order, // if that order is tiqe
+                        IsTrdPending = istrd_pending // pending trd orders
                     };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";

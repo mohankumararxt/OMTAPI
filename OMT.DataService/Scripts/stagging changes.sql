@@ -5482,6 +5482,7 @@
 --Prod_Util_Tracker_Id INT PRIMARY KEY IDENTITY(1,1),
 --UserId INT NOT NULL,
 --OrderId VARCHAR(100) NOT NULL,
+--Status INT NOT NULL,
 --SkillSetId INT NOT NULL,
 --SystemofRecordId INT NOT NULL,
 --StartDate DateTime NOT NULL,
@@ -5505,7 +5506,10 @@
 --FOREIGN KEY (SkillSetId)
 --REFERENCES SkillSet(SkillSetId);
 
-
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
 
 --create table InvoiceTiming
 --(
@@ -5522,4 +5526,17 @@
 -- (3,'08:00:00.0000000','08:00:00.0000000',1),
 -- (4,'08:00:00.0000000','08:00:00.0000000',1)
 
+
+--CREATE TABLE User_Checkin (
+--Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--Checkin DateTime ,
+--Checkout DateTime ,
+--);
+
+
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT fk_User_Checkin_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
 
