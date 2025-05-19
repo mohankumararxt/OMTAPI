@@ -74,8 +74,8 @@ namespace CheckOut
                 EmailDetails sendEmail = new EmailDetails
                 {
                     ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
-                    Subject = "Daily update of Productivity_Utilization.",
-                    Body = $"Productivity_Utilization webjob failed with the following exception:  {ex.Message}",
+                    Subject = "Auto check out of users.",
+                    Body = $"CheckOut webjob failed with the following exception:  {ex.Message}",
                 };
 
                 using (HttpClient client = new HttpClient())
