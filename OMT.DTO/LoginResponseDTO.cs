@@ -16,4 +16,13 @@
 
 
     }
+
+    public class CheckinResponseDTO
+    {
+       public bool Checked_In { get; set; }
+
+
+    }
+
+
 }

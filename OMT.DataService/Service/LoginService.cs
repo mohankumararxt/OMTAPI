@@ -102,6 +102,12 @@ namespace OMT.DataService.Service
 
                 _oMTDataContext.SaveChanges();
 
+                CheckinResponseDTO responseDTO = new CheckinResponseDTO()
+                {
+                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == checkinRequestDTO.UserId && uc.Checkin != null && uc.Checkout == null)
+                };
+
+                resultDTO.Data = responseDTO;
                 resultDTO.Message = "Checkin / checkout successful";
                 resultDTO.IsSuccess = true;
             }
