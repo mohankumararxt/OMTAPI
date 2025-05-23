@@ -5476,6 +5476,76 @@
 --(4,'19:30:00.0000000','19:30:00.0000000',1)
 
 
+---------------------------------new productivity/utilization changes------------------------
+
+--CREATE TABLE Prod_Util_Tracker (
+--Prod_Util_Tracker_Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--OrderId VARCHAR(100) NOT NULL,
+--Status INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--StartDate DateTime NOT NULL,
+--EndDate DateTime NOT NULL,
+--TimeTaken Time NOT NULL,
+--Productivity_Date DATE NOT NULL
+--);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+--create table InvoiceTiming
+--(
+--InvoiceTimingId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--StartTime time not null,
+--EndTime time not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--insert into InvoiceTiming (SystemOfRecordId,StartTime,EndTime,isactive)
+--values (1,'07:00:00.0000000','07:00:00.0000000',1),
+-- (2,'08:00:00.0000000','08:00:00.0000000',1),
+-- (3,'08:00:00.0000000','08:00:00.0000000',1),
+-- (4,'08:00:00.0000000','08:00:00.0000000',1)
+
+
+--CREATE TABLE User_Checkin (
+--Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--Checkin DateTime ,
+--Checkout DateTime ,
+--Prod_Util_Calculated BIT 
+--);
+
+
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT fk_User_Checkin_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT DF_User_Checkin_Prod_Util_Calculated DEFAULT 0 FOR Prod_Util_Calculated;
+--(4,'19:30:00.0000000','19:30:00.0000000',1)
+
+
 
 ---------------------------------------------dashboard screens ---------------------------------
 

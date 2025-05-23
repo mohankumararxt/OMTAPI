@@ -12,7 +12,17 @@
         public int? RoleId { get; set; }
         public string? Role { get; set; }
         public LoginResponseDTO() { }
+        public bool Checked_In { get; set; }
 
 
     }
+
+    public class CheckinResponseDTO
+    {
+       public bool Checked_In { get; set; }
+
+
+    }
+
+
 }
