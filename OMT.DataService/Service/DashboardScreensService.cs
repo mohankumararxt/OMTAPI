@@ -104,12 +104,10 @@ namespace OMT.DataService.Service
 
                 var not_Assigned = (int)cmd.ExecuteScalar();
 
-                var completed = _oMTDataContext.Daily_Status_Count.Where(x => x.SystemofRecordId == volumeProjectionInputDTO.SystemOfRecordId && x.Date == today_date).Sum(x => x.Count);
-                
                 VolumeProjectionOutputDTO volumeProjectionOutputDTO = new VolumeProjectionOutputDTO()
                 {
                     Received = received,
-                    Completed = completed,
+                    Completed = received - not_Assigned,
                     Not_Assigned = not_Assigned,
                 };
 
