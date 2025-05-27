@@ -5612,3 +5612,28 @@
 --insert into DailyCount_SOR values
 --(1,'2025-04-01',100),
 --(2,'2025-04-01',110)
+
+
+-- CREATE TABLE Daily_Status_Count (
+--Daily_Status_CountId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Status INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
