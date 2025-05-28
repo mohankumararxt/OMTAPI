@@ -123,8 +123,11 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var skillsets = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.IsActive).ToList();
+                var pagination = sorCompletionCountInputDTO.Pagination;
 
+                var skillsets = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.IsActive).ToList();
+                var counts = _oMTDataContext.Daily_Status_Count.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.Date >= sorCompletionCountInputDTO.FromDate && x.Date <= sorCompletionCountInputDTO.ToDate).ToList();
+               
                 List<SorCompletionCountDTO> sorCompletionCountDTOs = new List<SorCompletionCountDTO>();
 
                 foreach (var skillset in skillsets)
@@ -133,7 +136,7 @@ namespace OMT.DataService.Service
                     {
                         SkillsetId = skillset.SkillSetId,
                         SkillsetName = skillset.SkillSetName,
-                        Count = _oMTDataContext.Daily_Status_Count.Where(x => x.SkillSetId == skillset.SkillSetId && x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.Date >= sorCompletionCountInputDTO.FromDate && x.Date <= sorCompletionCountInputDTO.ToDate).Sum(x => x.Count),
+                        Count = counts.Where(x => x.SkillSetId == skillset.SkillSetId).Sum(x => x.Count),
                     };
 
                     sorCompletionCountDTOs.Add(sorCompletionCountDTO);
@@ -142,9 +145,34 @@ namespace OMT.DataService.Service
 
                 if (sorCompletionCountDTOs.Count > 0)
                 {
-                    resultDTO.Data = sorCompletionCountDTOs;
-                    resultDTO.Message = "Sor completion count fetched successfully";
-                    resultDTO.IsSuccess = true;
+                    if (pagination.IsPagination)
+                    {
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = sorCompletionCountDTOs.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = sorCompletionCountDTOs.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+
+                        };
+
+                        resultDTO.Data = paginationOutput;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Sor completion count fetched successfully";
+                    }
+                    else
+                    {
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Data = sorCompletionCountDTOs;
+                        resultDTO.Message = "Sor completion count fetched successfully";
+                    }
+                   
                 }
                 else
                 {

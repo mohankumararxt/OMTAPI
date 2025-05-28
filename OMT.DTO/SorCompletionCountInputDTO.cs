@@ -5,6 +5,7 @@
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
         public int SystemOfRecordId { get; set; }
+        public PaginationInputDTO Pagination { get; set; }
 
     }
 
