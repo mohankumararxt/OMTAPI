@@ -3,14 +3,8 @@ using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OMT.DataService.Service
 {
@@ -28,7 +22,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                DateTime today_date = DateTime.Now.Date;
+                DateTime today_date = DateTime.UtcNow.Date;
                 DateTime yeserday_date = today_date.AddDays(-1);
 
                 List<int> SOR = new List<int>()
@@ -36,14 +30,14 @@ namespace OMT.DataService.Service
                     1,2,3,4
                 };
 
-                List <SorCountDTO> ordercounts = new List<SorCountDTO>();
+                List<SorCountDTO> ordercounts = new List<SorCountDTO>();
 
                 foreach (int i in SOR)
                 {
                     var count = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == today_date && x.SystemofRecordId == i).Select(x => x.Count).FirstOrDefault();
                     var diff = (count - _oMTDataContext.DailyCount_SOR.Where(x => x.Date == yeserday_date && x.SystemofRecordId == i).Select(x => x.Count).FirstOrDefault()) / 100;
                     var sorname = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == i && x.IsActive).Select(x => x.SystemofRecordName).FirstOrDefault();
-                    
+
                     SorCountDTO sorCount = new SorCountDTO()
                     {
                         SorId = i,
@@ -67,8 +61,8 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "No details found.";
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                }    
-                
+                }
+
 
 
             }
@@ -92,10 +86,10 @@ namespace OMT.DataService.Service
 
                 DateTime today_date = DateTime.UtcNow.Date;
 
-                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x =>x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.IsActive).FirstOrDefault();
 
                 var received = _oMTDataContext.DailyCount_SkillSet.Where(x => x.SystemofRecordId == volumeProjectionInputDTO.SystemOfRecordId && x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.Date == today_date).Select(x => x.Count).FirstOrDefault();
-               
+
                 string sql = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Userid IS NULL AND Status IS NULL";
 
                 using SqlCommand cmd = connection.CreateCommand();
@@ -114,6 +108,50 @@ namespace OMT.DataService.Service
                 resultDTO.Data = volumeProjectionOutputDTO;
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "Volume Projection details fetched successfully.";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetSorCompletionCount(SorCompletionCountInputDTO sorCompletionCountInputDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var skillsets = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.IsActive).ToList();
+
+                List<SorCompletionCountDTO> sorCompletionCountDTOs = new List<SorCompletionCountDTO>();
+
+                foreach (var skillset in skillsets)
+                {
+                    SorCompletionCountDTO sorCompletionCountDTO = new SorCompletionCountDTO()
+                    {
+                        SkillsetId = skillset.SkillSetId,
+                        SkillsetName = skillset.SkillSetName,
+                        Count = _oMTDataContext.Daily_Status_Count.Where(x => x.SkillSetId == skillset.SkillSetId && x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.Date >= sorCompletionCountInputDTO.FromDate && x.Date <= sorCompletionCountInputDTO.ToDate).Sum(x => x.Count),
+                    };
+
+                    sorCompletionCountDTOs.Add(sorCompletionCountDTO);
+
+                }
+
+                if (sorCompletionCountDTOs.Count > 0)
+                {
+                    resultDTO.Data = sorCompletionCountDTOs;
+                    resultDTO.Message = "Sor completion count fetched successfully";
+                    resultDTO.IsSuccess = true;
+                }
+                else
+                {
+                    resultDTO.Message = "Sor completion count not found.";
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                }
             }
             catch (Exception ex)
             {

@@ -27,12 +27,20 @@ namespace OMT.APIHost.Controllers
             return _dashboardScreensService.GetTodaysOrders();
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetVolumeProjection")]
 
         public ResultDTO GetVolumeProjection(VolumeProjectionInputDTO volumeProjectionInputDTO)
         {
             return _dashboardScreensService.GetVolumeProjection(volumeProjectionInputDTO);
+        }
+
+        [HttpPost]
+        [Route("GetSorCompletionCount")]
+
+        public ResultDTO GetSorCompletionCount(SorCompletionCountInputDTO sorCompletionCountInputDTO)
+        {
+            return _dashboardScreensService.GetSorCompletionCount(sorCompletionCountInputDTO);
         }
     }
 }
