@@ -127,7 +127,7 @@ namespace OMT.DataService.Service
 
                 var skillsets = _oMTDataContext.SkillSet.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.IsActive).ToList();
                 var counts = _oMTDataContext.Daily_Status_Count.Where(x => x.SystemofRecordId == sorCompletionCountInputDTO.SystemOfRecordId && x.Date >= sorCompletionCountInputDTO.FromDate && x.Date <= sorCompletionCountInputDTO.ToDate).ToList();
-               
+
                 List<SorCompletionCountDTO> sorCompletionCountDTOs = new List<SorCompletionCountDTO>();
 
                 foreach (var skillset in skillsets)
@@ -172,11 +172,73 @@ namespace OMT.DataService.Service
                         resultDTO.Data = sorCompletionCountDTOs;
                         resultDTO.Message = "Sor completion count fetched successfully";
                     }
-                   
+
                 }
                 else
                 {
                     resultDTO.Message = "Sor completion count not found.";
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetWeeklyCompletion(WeeklyCompletionDTO weeklyCompletionDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var statusid = _oMTDataContext.Skillset_Status.Where(x => x.SystemofRecordId == weeklyCompletionDTO.SystemOfRecordId && x.IsActive).Select(x => x.StatusId).ToList();
+
+                var counts = _oMTDataContext.Daily_Status_Count.Where(x => x.SystemofRecordId == weeklyCompletionDTO.SystemOfRecordId && x.SkillSetId == weeklyCompletionDTO.SkillsetId && x.Date >= weeklyCompletionDTO.FromDate && x.Date <= weeklyCompletionDTO.ToDate).ToList();
+
+                var dates = counts.Select(x => x.Date).Distinct().OrderBy(x => x.Date).ToList();
+
+                var uploaded = _oMTDataContext.DailyCount_SkillSet.Where(x => x.SkillSetId == weeklyCompletionDTO.SkillsetId && x.Date >= weeklyCompletionDTO.FromDate && x.Date <= weeklyCompletionDTO.ToDate).ToList();
+
+                var weeklyCount = new List<WeeklyCompletionResponseDTO>();
+
+                foreach (var date in dates)
+                {
+                    var statusCount = new Dictionary<string, int>();
+
+                    var assigned = uploaded.Where(x => x.Date == date).Sum(x => x.Count);
+
+                    foreach (var sid in statusid)
+                    {
+                        var statusname = _oMTDataContext.ProcessStatus.Where(x => x.Id == sid).Select(x => x.Status).FirstOrDefault();
+
+                        var cnt = counts.Where(x => x.Status == sid && x.Date == date).Sum(x => x.Count);
+
+                        statusCount[statusname] = cnt;
+
+                    }
+
+                    statusCount["Assigned"] = assigned;
+
+                    weeklyCount.Add(new WeeklyCompletionResponseDTO
+                    {
+                        Date = date.ToString("yyyy-MM-dd"),
+                        StatusCount = statusCount
+                    });
+                }
+
+                if (weeklyCount.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = weeklyCount;
+                    resultDTO.Message = "Weekly completion count fetched successfully";
+                }
+                else
+                {
+                    resultDTO.Message = "Weekly completion count not found.";
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                 }

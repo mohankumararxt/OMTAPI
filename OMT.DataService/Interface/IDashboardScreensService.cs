@@ -12,6 +12,7 @@ namespace OMT.DataService.Interface
         ResultDTO GetTodaysOrders();
         ResultDTO GetVolumeProjection(VolumeProjectionInputDTO volumeProjectionInputDTO);
         ResultDTO GetSorCompletionCount(SorCompletionCountInputDTO sorCompletionCountInputDTO);
-       
+        ResultDTO GetWeeklyCompletion(WeeklyCompletionDTO weeklyCompletionDTO);
+
     }
 }

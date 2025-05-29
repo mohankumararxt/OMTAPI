@@ -5637,3 +5637,39 @@
 --ADD CONSTRAINT fk_Daily_Status_Count_Status
 --FOREIGN KEY (Status)
 --REFERENCES ProcessStatus(Id);
+
+
+-- CREATE TABLE Skillset_Status (
+--Skillset_StatusId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--StatusId INT NOT NULL,
+--IsActive BIT NOT NULL
+--);
+
+--alter table Skillset_Status
+--ADD CONSTRAINT fk_Skillset_Status_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Skillset_Status
+--ADD CONSTRAINT fk_Skillset_Status_StatusId
+--FOREIGN KEY (StatusId)
+--REFERENCES ProcessStatus(Id);
+
+--insert into Skillset_Status values
+--(1,1,1),
+--(1,2,1),
+--(1,3,1),
+--(1,4,1),
+--(1,11,1),
+--(2,6,1),
+--(2,7,1),
+--(2,8,1),
+--(2,10,1),
+--(3,12,1),
+--(3,13,1),
+--(3,14,1),
+--(4,18,1),
+--(4,19,1),
+--(4,20,1)
+
