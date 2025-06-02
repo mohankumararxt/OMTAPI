@@ -76,6 +76,8 @@ namespace OMT.DataAccess.Context
         public DbSet<Daywise_Cutoff_Timing> Daywise_Cutoff_Timing { get; set; }
         public DbSet<Daily_Status_Count> Daily_Status_Count { get; set; }
         public DbSet<Skillset_Status> Skillset_Status { get; set; }
+        public DbSet<MonthlyCount_SkillSet> MonthlyCount_SkillSet { get; set; }
+        public DbSet<MonthlyCount_SOR> MonthlyCount_SOR { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

@@ -5673,3 +5673,78 @@
 --(4,19,1),
 --(4,20,1)
 
+-- CREATE TABLE MonthlyCount_SkillSet (
+--MonthlyCount_SkillSetId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table MonthlyCount_SkillSet
+--ADD CONSTRAINT fk_MonthlyCount_SkillSet_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table MonthlyCount_SkillSet
+--ADD CONSTRAINT fk_MonthlyCount_SkillSet_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+-- CREATE TABLE MonthlyCount_SOR (
+--MonthlyCount_SORId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table MonthlyCount_SOR
+--ADD CONSTRAINT fk_MonthlyCount_SOR_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--Insert into MonthlyCount_SOR values
+--(1,1,2024,5000),
+--(2,1,2024,6000),
+--(3,1,2024,1000),
+--(3,2,2024,2000),
+--(3,3,2024,1500),
+--(3,4,2024,1600),
+--(3,5,2024,1700),
+--(3,6,2024,1800),
+--(3,7,2024,500),
+--(3,8,2024,400),
+--(3,9,2024,1000),
+--(3,10,2024,1000)
+
+--insert into MonthlyCount_SkillSet values
+--(1,1,1,2024,100),
+--(1,1,2,2024,100),
+--(1,1,3,2024,100),
+--(1,1,4,2024,100),
+--(1,1,6,2024,100),
+--(1,1,7,2024,100),
+--(1,1,8,2024,100),
+--(1,1,9,2024,100),
+--(1,1,10,2024,100),
+--(1,1,11,2024,100),
+--(1,1,12,2024,100),
+--(1,3,1,2024,100)
+
+--insert into MonthlyCount_SkillSet values
+
+--(1,3,2,2024,200),
+--(1,3,3,2024,200),
+--(1,3,4,2024,200),
+--(1,3,6,2024,200),
+--(1,3,7,2024,200),
+--(1,3,8,2024,200),
+--(1,3,9,2024,200),
+--(1,3,10,2024,200),
+--(1,3,11,2024,200),
+--(1,3,12,2024,200)

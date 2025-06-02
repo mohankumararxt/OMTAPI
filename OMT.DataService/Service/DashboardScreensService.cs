@@ -25,10 +25,7 @@ namespace OMT.DataService.Service
                 DateTime today_date = DateTime.UtcNow.Date;
                 DateTime yeserday_date = today_date.AddDays(-1);
 
-                List<int> SOR = new List<int>()
-                {
-                    1,2,3,4
-                };
+                List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
 
                 List<SorCountDTO> ordercounts = new List<SorCountDTO>();
 
@@ -242,6 +239,196 @@ namespace OMT.DataService.Service
                     resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                 }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetMonthlyVolumeTrend(MonthlyVolumeTrendDTO monthlyVolumeTrendDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                DateTime today = DateTime.Today;
+
+                DateTime startDate = today.AddMonths(-12).AddDays(1);  
+                DateTime endDate = today;  
+
+                Console.WriteLine($"Start Date: {startDate:yyyy-MM-dd}");
+                Console.WriteLine($"End Date: {endDate:yyyy-MM-dd}");
+
+                List<(int Year, int Month)> yearMonthList = new List<(int, int)>();
+
+                DateTime iterDate = new DateTime(startDate.Year, startDate.Month, 1);
+                DateTime endMonth = new DateTime(endDate.Year, endDate.Month, 1);
+
+                while (iterDate <= endMonth)
+                {
+                    yearMonthList.Add((iterDate.Year, iterDate.Month));
+                    iterDate = iterDate.AddMonths(1);
+                }
+
+                MonthlyVolumeTrendResponseDTO monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO();
+                List<MonthlyVolumeTrendResponseDTO> monthvt = new List<MonthlyVolumeTrendResponseDTO>();
+
+                List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
+
+                if (monthlyVolumeTrendDTO.SystemOfRecordId == null && monthlyVolumeTrendDTO.SkillsetId == null)
+                {
+                    foreach (int sorid in SOR)
+                    {
+                        var monthly_count = _oMTDataContext.MonthlyCount_SOR
+                                                                       .Where(x => x.SystemofRecordId == sorid)
+                                                                       .AsEnumerable()
+                                                                       .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                       .ToList();
+
+
+                        var monthlyCounts = monthly_count
+                            .GroupBy(x => new { x.Year, x.Month })
+                            .Select(g => new
+                            {
+                                Year = g.Key.Year,
+                                Month = g.Key.Month,
+                                Count = g.Sum(x => x.Count)
+                            })
+                            .ToList();
+
+                        monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
+                        {
+                            SystemOfRecordId = sorid,
+                            SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == sorid).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                            MonthlyCount = monthlyCounts
+                                                                         .Select(m => new MonthCountDTO
+                                                                         {
+                                                                             Year = m.Year,
+                                                                             Month = m.Month,
+                                                                             Count = m.Count
+                                                                         }).ToList()
+
+                        };
+
+                        monthvt.Add(monthlyVolumeTrendResponseDTO);
+                    }
+
+                    if (monthvt.Count > 0)
+                    {
+                        resultDTO.Data = monthvt;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Monthly volume trend fetched successfully";
+                    }
+
+                    else
+                    {
+                        resultDTO.Message = "Monthly volume trend count not found.";
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                    }
+                }
+
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId == null)
+                {
+                    var monthly_count = _oMTDataContext.MonthlyCount_SOR
+                                                                        .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId)
+                                                                        .AsEnumerable()
+                                                                        .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                        .ToList();
+
+
+                    var monthlyCounts = monthly_count
+                        .GroupBy(x => new { x.Year, x.Month })
+                        .Select(g => new
+                        {
+                            Year = g.Key.Year,
+                            Month = g.Key.Month,
+                            Count = g.Sum(x => x.Count)
+                        })
+                        .ToList();
+
+                    monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
+                    {
+                        SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
+                        SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                        MonthlyCount = monthlyCounts
+                                                                     .Select(m => new MonthCountDTO
+                                                                     {
+                                                                         Year = m.Year,
+                                                                         Month = m.Month,
+                                                                         Count = m.Count
+                                                                     }).ToList()
+
+                    };
+
+                    if (monthlyVolumeTrendResponseDTO != null)
+                    {
+                        resultDTO.Data = monthlyVolumeTrendResponseDTO;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Monthly volume trend fetched successfully";
+                    }
+
+                    else
+                    {
+                        resultDTO.Message = "Monthly volume trend count not found.";
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                    }
+                }
+
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId != null)
+                {
+                    var monthly_count = _oMTDataContext.MonthlyCount_SkillSet
+                                                                        .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId && x.SkillSetId == monthlyVolumeTrendDTO.SkillsetId)
+                                                                        .AsEnumerable()
+                                                                        .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                        .ToList();
+
+
+                    var monthlyCounts = monthly_count
+                        .GroupBy(x => new { x.Year, x.Month })
+                        .Select(g => new
+                        {
+                            Year = g.Key.Year,
+                            Month = g.Key.Month,
+                            Count = g.Sum(x => x.Count)
+                        })
+                        .ToList();
+
+                    monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
+                    {
+                        SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
+                        SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                        MonthlyCount = monthlyCounts
+                                                                     .Select(m => new MonthCountDTO
+                                                                     {
+                                                                         Year = m.Year,
+                                                                         Month = m.Month,
+                                                                         Count = m.Count
+                                                                     }).ToList()
+
+                    };
+
+                    if (monthlyVolumeTrendResponseDTO != null)
+                    {
+                        resultDTO.Data = monthlyVolumeTrendResponseDTO;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Monthly volume trend fetched successfully";
+                    }
+
+                    else
+                    {
+                        resultDTO.Message = "Monthly volume trend count not found.";
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                    }
+                }
+
+               
             }
             catch (Exception ex)
             {

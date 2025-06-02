@@ -50,5 +50,13 @@ namespace OMT.APIHost.Controllers
         {
             return _dashboardScreensService.GetWeeklyCompletion(weeklyCompletionDTO);
         }
+
+        [HttpPost]
+        [Route("GetMonthlyVolumeTrend")]
+
+        public ResultDTO GetMonthlyVolumeTrend(MonthlyVolumeTrendDTO monthlyVolumeTrendDTO)
+        {
+            return _dashboardScreensService.GetMonthlyVolumeTrend(monthlyVolumeTrendDTO);
+        }
     }
 }
