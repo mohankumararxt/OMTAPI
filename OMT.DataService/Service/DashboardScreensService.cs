@@ -89,16 +89,43 @@ namespace OMT.DataService.Service
 
                 string sql = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Userid IS NULL AND Status IS NULL";
 
-                using SqlCommand cmd = connection.CreateCommand();
+                var not_Assigned = 0;
 
-                cmd.CommandText = sql;
+                using (SqlCommand cmd = new SqlCommand(sql, connection))
+                {
+                    not_Assigned = (int)cmd.ExecuteScalar();
+                }
 
-                var not_Assigned = (int)cmd.ExecuteScalar();
+                //get completed count
+
+                DateTime update_date = DateTime.Now.Date;
+                DateTime completion_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
+
+                DateTime yesterday_dt = completion_time.Date.AddDays(-1);
+                DateTime cutoff_start_dt_ist = yesterday_dt + cutoff_time.StartTime;
+                DateTime cutoff_end_dt_ist = completion_time.Date + cutoff_time.EndTime;
+
+                DateTime cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_start_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                DateTime cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                string sql2 = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Status IS NOT NULL AND UserId IS NOT NULL AND CompletionDate BETWEEN @FromDate AND @ToDate";
+
+                var completed = 0;
+
+                using (SqlCommand command = new SqlCommand(sql2, connection))
+                {
+                    command.Parameters.AddWithValue("@FromDate", cutoff_start_dt_utc);
+                    command.Parameters.AddWithValue("@ToDate", cutoff_end_dt_utc);
+
+                    completed = (int)command.ExecuteScalar();
+                }
 
                 VolumeProjectionOutputDTO volumeProjectionOutputDTO = new VolumeProjectionOutputDTO()
                 {
                     Received = received,
-                    Completed = received - not_Assigned,
+                    Completed = completed,
                     Not_Assigned = not_Assigned,
                 };
 
@@ -257,8 +284,8 @@ namespace OMT.DataService.Service
             {
                 DateTime today = DateTime.Today;
 
-                DateTime startDate = today.AddMonths(-12).AddDays(1);  
-                DateTime endDate = today;  
+                DateTime startDate = today.AddMonths(-12).AddDays(1);
+                DateTime endDate = today;
 
                 Console.WriteLine($"Start Date: {startDate:yyyy-MM-dd}");
                 Console.WriteLine($"End Date: {endDate:yyyy-MM-dd}");
@@ -428,7 +455,7 @@ namespace OMT.DataService.Service
                     }
                 }
 
-               
+
             }
             catch (Exception ex)
             {
