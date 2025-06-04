@@ -5748,3 +5748,37 @@
 --(1,3,10,2024,200),
 --(1,3,11,2024,200),
 --(1,3,12,2024,200)
+
+
+--CREATE TABLE Prod_Util_Tracker_bckp (
+--Prod_Util_Tracker_bckp_Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--OrderId VARCHAR(100) NOT NULL,
+--Status INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--StartDate DateTime NOT NULL,
+--EndDate DateTime NOT NULL,
+--TimeTaken Time NOT NULL,
+--Productivity_Date DATE NOT NULL
+--);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);

@@ -308,9 +308,7 @@ namespace OMT.DataService.Service
                                                                   .ToList();
 
                         var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
-                        // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
-
-
+                      
                         SendEmailDTO sendEmailDTO1 = new SendEmailDTO
                         {
                             ToEmailIds = toEmailIds1,
@@ -416,6 +414,56 @@ namespace OMT.DataService.Service
                             _oMTDataContext.SaveChanges();
                         }
 
+                        // capture order count in monthly tables
+
+                        var existing_skillset_monthly = _oMTDataContext.MonthlyCount_SkillSet.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId && x.SkillSetId == skillSet.SkillSetId).FirstOrDefault();
+
+                        if (existing_skillset_monthly == null)
+                        {
+                            MonthlyCount_SkillSet monthlyCount_SkillSet = new MonthlyCount_SkillSet
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                SkillSetId = skillSet.SkillSetId,
+                                Year = update_date.Year,
+                                Month = update_date.Month,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.MonthlyCount_SkillSet.Add(monthlyCount_SkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_skillset_monthly != null)
+                        {
+                            existing_skillset_monthly.Count = existing_skillset_monthly.Count + NoOfOrders;
+
+                            _oMTDataContext.MonthlyCount_SkillSet.Update(existing_skillset_monthly);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        var existing_sor_monthly = _oMTDataContext.MonthlyCount_SOR.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_sor_monthly == null)
+                        {
+                            MonthlyCount_SOR monthlyCount_sor = new MonthlyCount_SOR
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                Year = update_date.Year,
+                                Month = update_date.Month,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.MonthlyCount_SOR.Add(monthlyCount_sor);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_sor_monthly != null)
+                        {
+                            existing_sor_monthly.Count = existing_sor_monthly.Count + NoOfOrders;
+
+                            _oMTDataContext.MonthlyCount_SOR.Update(existing_sor_monthly);
+                            _oMTDataContext.SaveChanges();
+                        }
                         // send mail to map product descriptions
 
                         if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
