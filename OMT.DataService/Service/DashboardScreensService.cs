@@ -83,55 +83,77 @@ namespace OMT.DataService.Service
 
                 DateTime today_date = DateTime.UtcNow.Date;
 
-                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.IsActive).FirstOrDefault();
 
-                var received = _oMTDataContext.DailyCount_SkillSet.Where(x => x.SystemofRecordId == volumeProjectionInputDTO.SystemOfRecordId && x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.Date == today_date).Select(x => x.Count).FirstOrDefault();
+                string skillsetnames = (from ss in _oMTDataContext.SkillSet
+                                        where ss.SkillSetId == volumeProjectionInputDTO.SkillsetId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                        select ss.SkillSetName).FirstOrDefault();
 
-                string sql = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Userid IS NULL AND Status IS NULL";
-
-                var not_Assigned = 0;
-
-                using (SqlCommand cmd = new SqlCommand(sql, connection))
+                if (skillsetnames == null)
                 {
-                    not_Assigned = (int)cmd.ExecuteScalar();
+                    VolumeProjectionOutputDTO volumeProjectionOutputDTO = new VolumeProjectionOutputDTO()
+                    {
+                        Received = 0,
+                        Completed = 0,
+                        Not_Assigned = 0,
+                    };
+
+                    resultDTO.Data = volumeProjectionOutputDTO;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Template does not exist for the skillset.";
                 }
-
-                //get completed count
-
-                DateTime update_date = DateTime.Now.Date;
-                DateTime completion_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-
-                Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
-
-                DateTime yesterday_dt = completion_time.Date.AddDays(-1);
-                DateTime cutoff_start_dt_ist = yesterday_dt + cutoff_time.StartTime;
-                DateTime cutoff_end_dt_ist = completion_time.Date + cutoff_time.EndTime;
-
-                DateTime cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_start_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-                DateTime cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-
-                string sql2 = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Status IS NOT NULL AND UserId IS NOT NULL AND CompletionDate BETWEEN @FromDate AND @ToDate";
-
-                var completed = 0;
-
-                using (SqlCommand command = new SqlCommand(sql2, connection))
+                else
                 {
-                    command.Parameters.AddWithValue("@FromDate", cutoff_start_dt_utc);
-                    command.Parameters.AddWithValue("@ToDate", cutoff_end_dt_utc);
+                    SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.IsActive).FirstOrDefault();
 
-                    completed = (int)command.ExecuteScalar();
+                    var received = _oMTDataContext.DailyCount_SkillSet.Where(x => x.SystemofRecordId == volumeProjectionInputDTO.SystemOfRecordId && x.SkillSetId == volumeProjectionInputDTO.SkillsetId && x.Date == today_date).Select(x => x.Count).FirstOrDefault();
+
+                    string sql = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Userid IS NULL AND Status IS NULL";
+
+                    var not_Assigned = 0;
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        not_Assigned = (int)cmd.ExecuteScalar();
+                    }
+
+                    //get completed count
+
+                    DateTime update_date = DateTime.Now.Date;
+                    DateTime completion_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
+
+                    DateTime tomorrow_dt = completion_time.Date.AddDays(1);
+                    DateTime cutoff_start_dt_ist = completion_time.Date + cutoff_time.StartTime;
+                    DateTime cutoff_end_dt_ist = tomorrow_dt + cutoff_time.EndTime;
+
+                    DateTime cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_start_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                    DateTime cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    string sql2 = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Status IS NOT NULL AND UserId IS NOT NULL AND CompletionDate BETWEEN @FromDate AND @ToDate";
+
+                    var completed = 0;
+
+                    using (SqlCommand command = new SqlCommand(sql2, connection))
+                    {
+                        command.Parameters.AddWithValue("@FromDate", cutoff_start_dt_utc);
+                        command.Parameters.AddWithValue("@ToDate", cutoff_end_dt_utc);
+
+                        completed = (int)command.ExecuteScalar();
+                    }
+
+                    VolumeProjectionOutputDTO volumeProjectionOutputDTO = new VolumeProjectionOutputDTO()
+                    {
+                        Received = received,
+                        Completed = completed,
+                        Not_Assigned = not_Assigned,
+                    };
+
+                    resultDTO.Data = volumeProjectionOutputDTO;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Volume Projection details fetched successfully.";
                 }
-
-                VolumeProjectionOutputDTO volumeProjectionOutputDTO = new VolumeProjectionOutputDTO()
-                {
-                    Received = received,
-                    Completed = completed,
-                    Not_Assigned = not_Assigned,
-                };
-
-                resultDTO.Data = volumeProjectionOutputDTO;
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "Volume Projection details fetched successfully.";
             }
             catch (Exception ex)
             {
@@ -409,49 +431,73 @@ namespace OMT.DataService.Service
 
                 else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId != null)
                 {
-                    var monthly_count = _oMTDataContext.MonthlyCount_SkillSet
-                                                                        .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId && x.SkillSetId == monthlyVolumeTrendDTO.SkillsetId)
-                                                                        .AsEnumerable()
-                                                                        .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
-                                                                        .ToList();
 
+                    string skillsetnames = (from ss in _oMTDataContext.SkillSet
+                                            where ss.SkillSetId == monthlyVolumeTrendDTO.SkillsetId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                            select ss.SkillSetName).FirstOrDefault();
 
-                    var monthlyCounts = monthly_count
-                        .GroupBy(x => new { x.Year, x.Month })
-                        .Select(g => new
+                    if (skillsetnames == null)
+                    {
+                        monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
                         {
-                            Year = g.Key.Year,
-                            Month = g.Key.Month,
-                            Count = g.Sum(x => x.Count)
-                        })
-                        .ToList();
+                            SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
+                            SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                            MonthlyCount = new List<int>() 
 
-                    monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
-                    {
-                        SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
-                        SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
-                        MonthlyCount = monthlyCounts
-                                                                     .Select(m => new MonthCountDTO
-                                                                     {
-                                                                         Year = m.Year,
-                                                                         Month = m.Month,
-                                                                         Count = m.Count
-                                                                     }).ToList()
+                        };
 
-                    };
-
-                    if (monthlyVolumeTrendResponseDTO != null)
-                    {
                         resultDTO.Data = monthlyVolumeTrendResponseDTO;
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Monthly volume trend fetched successfully";
-                    }
-
-                    else
-                    {
-                        resultDTO.Message = "Monthly volume trend count not found.";
                         resultDTO.StatusCode = "404";
                         resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Template does not exist for the skillset.";
+                    }
+                    else
+                    {
+                        var monthly_count = _oMTDataContext.MonthlyCount_SkillSet
+                                                                                 .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId && x.SkillSetId == monthlyVolumeTrendDTO.SkillsetId)
+                                                                                 .AsEnumerable()
+                                                                                 .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                                 .ToList();
+
+
+                        var monthlyCounts = monthly_count
+                            .GroupBy(x => new { x.Year, x.Month })
+                            .Select(g => new
+                            {
+                                Year = g.Key.Year,
+                                Month = g.Key.Month,
+                                Count = g.Sum(x => x.Count)
+                            })
+                            .ToList();
+
+                        monthlyVolumeTrendResponseDTO = new MonthlyVolumeTrendResponseDTO()
+                        {
+                            SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
+                            SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                            MonthlyCount = monthlyCounts
+                                                                         .Select(m => new MonthCountDTO
+                                                                         {
+                                                                             Year = m.Year,
+                                                                             Month = m.Month,
+                                                                             Count = m.Count
+                                                                         }).ToList()
+
+                        };
+
+                        if (((IEnumerable<object>) monthlyVolumeTrendResponseDTO.MonthlyCount).Any())
+                        {
+                            resultDTO.Data = monthlyVolumeTrendResponseDTO;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Monthly volume trend fetched successfully";
+                        }
+
+                        else
+                        {
+                            resultDTO.Data = monthlyVolumeTrendResponseDTO;
+                            resultDTO.Message = "Monthly volume trend count not found.";
+                            resultDTO.StatusCode = "404";
+                            resultDTO.IsSuccess = false;
+                        }
                     }
                 }
 
