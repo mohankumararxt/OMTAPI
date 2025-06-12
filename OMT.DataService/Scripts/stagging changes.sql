@@ -5489,3 +5489,311 @@
 
 --insert into livereporttiming values
 --(4,'19:30:00.0000000','19:30:00.0000000',1)
+
+
+---------------------------------new productivity/utilization changes------------------------
+
+--CREATE TABLE Prod_Util_Tracker (
+--Prod_Util_Tracker_Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--OrderId VARCHAR(100) NOT NULL,
+--Status INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--StartDate DateTime NOT NULL,
+--EndDate DateTime NOT NULL,
+--TimeTaken Time NOT NULL,
+--Productivity_Date DATE NOT NULL
+--);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Prod_Util_Tracker
+--ADD CONSTRAINT fk_Prod_Util_Tracker_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+--create table InvoiceTiming
+--(
+--InvoiceTimingId int IDENTITY(1,1) primary key,
+--SystemOfRecordId int not null,
+--StartTime time not null,
+--EndTime time not null,
+--IsActive bit not null DEFAULT 1
+--)
+
+--insert into InvoiceTiming (SystemOfRecordId,StartTime,EndTime,isactive)
+--values (1,'07:00:00.0000000','07:00:00.0000000',1),
+-- (2,'08:00:00.0000000','08:00:00.0000000',1),
+-- (3,'08:00:00.0000000','08:00:00.0000000',1),
+-- (4,'08:00:00.0000000','08:00:00.0000000',1)
+
+
+--CREATE TABLE User_Checkin (
+--Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--Checkin DateTime ,
+--Checkout DateTime ,
+--Prod_Util_Calculated BIT 
+--);
+
+
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT fk_User_Checkin_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE User_Checkin 
+--ADD CONSTRAINT DF_User_Checkin_Prod_Util_Calculated DEFAULT 0 FOR Prod_Util_Calculated;
+--(4,'19:30:00.0000000','19:30:00.0000000',1)
+
+
+
+---------------------------------------------dashboard screens ---------------------------------
+
+
+-- CREATE TABLE Daywise_Cutoff_Timing (
+--Daywise_Cutoff_TimingId INT PRIMARY KEY IDENTITY(1,1),
+--SystemOfRecordId INT NOT NULL,
+--StartTime time not null,
+--EndTime time not null,
+--IsActive bit not null DEFAULT 1
+--);
+
+
+--ALTER TABLE Daywise_Cutoff_Timing
+--ADD CONSTRAINT fk_Daywise_Cutoff_Timing
+--FOREIGN KEY (SystemOfRecordId)
+--REFERENCES SystemOfRecord(SystemOfRecordId);
+
+--insert into Daywise_Cutoff_Timing(SystemOfRecordId,StartTime,EndTime,isactive)
+--values (1,'13:00:00.000','13:00:00.000',1),
+-- (2,'18:00:00:000','18:00:00:000',1),
+-- (3,'13:30:00.000','13:30:00.000',1),
+-- (4,'18:00:00:000','18:00:00:000',1)
+
+
+-- CREATE TABLE DailyCount_SkillSet (
+--DailyCount_SkillSetId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table DailyCount_SkillSet
+--ADD CONSTRAINT fk_DailyCount_SkillSet_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table DailyCount_SkillSet
+--ADD CONSTRAINT fk_DailyCount_SkillSet_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--insert into DailyCount_SkillSet values
+--(1,1,'2025-04-01',10),
+--(2,174,'2025-04-01',10)
+
+-- CREATE TABLE DailyCount_SOR (
+--DailyCount_SORId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table DailyCount_SOR
+--ADD CONSTRAINT fk_DailyCount_SOR_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--insert into DailyCount_SOR values
+--(1,'2025-04-01',100),
+--(2,'2025-04-01',110)
+
+
+-- CREATE TABLE Daily_Status_Count (
+--Daily_Status_CountId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Status INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--alter table Daily_Status_Count
+--ADD CONSTRAINT fk_Daily_Status_Count_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+
+-- CREATE TABLE Skillset_Status (
+--Skillset_StatusId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--StatusId INT NOT NULL,
+--IsActive BIT NOT NULL
+--);
+
+--alter table Skillset_Status
+--ADD CONSTRAINT fk_Skillset_Status_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Skillset_Status
+--ADD CONSTRAINT fk_Skillset_Status_StatusId
+--FOREIGN KEY (StatusId)
+--REFERENCES ProcessStatus(Id);
+
+--insert into Skillset_Status values
+--(1,1,1),
+--(1,2,1),
+--(1,3,1),
+--(1,4,1),
+--(1,11,1),
+--(2,6,1),
+--(2,7,1),
+--(2,8,1),
+--(2,10,1),
+--(3,12,1),
+--(3,13,1),
+--(3,14,1),
+--(4,18,1),
+--(4,19,1),
+--(4,20,1)
+
+-- CREATE TABLE MonthlyCount_SkillSet (
+--MonthlyCount_SkillSetId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table MonthlyCount_SkillSet
+--ADD CONSTRAINT fk_MonthlyCount_SkillSet_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table MonthlyCount_SkillSet
+--ADD CONSTRAINT fk_MonthlyCount_SkillSet_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+-- CREATE TABLE MonthlyCount_SOR (
+--MonthlyCount_SORId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+
+--alter table MonthlyCount_SOR
+--ADD CONSTRAINT fk_MonthlyCount_SOR_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+--Insert into MonthlyCount_SOR values
+--(1,1,2024,5000),
+--(2,1,2024,6000),
+--(3,1,2024,1000),
+--(3,2,2024,2000),
+--(3,3,2024,1500),
+--(3,4,2024,1600),
+--(3,5,2024,1700),
+--(3,6,2024,1800),
+--(3,7,2024,500),
+--(3,8,2024,400),
+--(3,9,2024,1000),
+--(3,10,2024,1000)
+
+--insert into MonthlyCount_SkillSet values
+--(1,1,1,2024,100),
+--(1,1,2,2024,100),
+--(1,1,3,2024,100),
+--(1,1,4,2024,100),
+--(1,1,6,2024,100),
+--(1,1,7,2024,100),
+--(1,1,8,2024,100),
+--(1,1,9,2024,100),
+--(1,1,10,2024,100),
+--(1,1,11,2024,100),
+--(1,1,12,2024,100),
+--(1,3,1,2024,100)
+
+--insert into MonthlyCount_SkillSet values
+
+--(1,3,2,2024,200),
+--(1,3,3,2024,200),
+--(1,3,4,2024,200),
+--(1,3,6,2024,200),
+--(1,3,7,2024,200),
+--(1,3,8,2024,200),
+--(1,3,9,2024,200),
+--(1,3,10,2024,200),
+--(1,3,11,2024,200),
+--(1,3,12,2024,200)
+
+
+--CREATE TABLE Prod_Util_Tracker_bckp (
+--Prod_Util_Tracker_bckp_Id INT PRIMARY KEY IDENTITY(1,1),
+--UserId INT NOT NULL,
+--OrderId VARCHAR(100) NOT NULL,
+--Status INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--SystemofRecordId INT NOT NULL,
+--StartDate DateTime NOT NULL,
+--EndDate DateTime NOT NULL,
+--TimeTaken Time NOT NULL,
+--Productivity_Date DATE NOT NULL
+--);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES UserProfile(UserId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE Prod_Util_Tracker_bckp
+--ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);

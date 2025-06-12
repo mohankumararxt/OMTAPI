@@ -5,5 +5,6 @@ namespace OMT.DataService.Interface
     public interface ILoginService
     {
         ResultDTO Login(LoginRequestDTO loginRequestDTO);
+        ResultDTO Checkin(CheckinoutRequestDTO checkinRequestDTO);
     }
 }

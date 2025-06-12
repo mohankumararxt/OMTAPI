@@ -308,9 +308,7 @@ namespace OMT.DataService.Service
                                                                   .ToList();
 
                         var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
-                        // var uploaddetails = $"<b>{username}</b> has uploaded <b>{NoOfOrders}</b> orders in \"<b>{skillSet.SkillSetName}</b>\" at <b>{uploadedate}</b>";
-
-
+                      
                         SendEmailDTO sendEmailDTO1 = new SendEmailDTO
                         {
                             ToEmailIds = toEmailIds1,
@@ -340,7 +338,133 @@ namespace OMT.DataService.Service
                             throw;
                         }
 
+                        // capture count of uploaded orders 
 
+                        DateTime update_date = DateTime.Now.Date;
+                        DateTime uploading_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                        Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
+                        // TimeSpan cutoff_endtime = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(x => x.EndTime).FirstOrDefault();
+
+
+                        DateTime yesterday_dt = uploading_time.Date.AddDays(-1);
+                        DateTime cutoff_start_dt = yesterday_dt + cutoff_time.StartTime;
+                        DateTime cutoff_end_dt = uploading_time.Date + cutoff_time.EndTime;
+
+
+                        if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
+                        {
+                            update_date = uploading_time.Date.AddDays(-1);
+                        }
+
+                        else if (uploading_time > cutoff_end_dt)
+                        {
+                            update_date = uploading_time.Date;
+                        }
+
+                        var existing_ss_record = _oMTDataContext.DailyCount_SkillSet.Where(x => x.Date == update_date && x.SkillSetId == skillSet.SkillSetId && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_ss_record == null)
+                        {
+                            DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                SkillSetId = skillSet.SkillSetId,
+                                Date = update_date,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.DailyCount_SkillSet.Add(dailyCount_SkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_ss_record != null)
+                        {
+                            //DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                            //{
+                            //    Count =+ NoOfOrders
+                            //};
+
+                            existing_ss_record.Count = existing_ss_record.Count + NoOfOrders;
+
+                            _oMTDataContext.DailyCount_SkillSet.Update(existing_ss_record);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        var existing_sor_record = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == update_date && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_sor_record == null)
+                        {
+                            DailyCount_SOR dailyCount_Sor = new DailyCount_SOR
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                Date = update_date,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.DailyCount_SOR.Add(dailyCount_Sor);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_sor_record != null)
+                        {
+                            existing_sor_record.Count = existing_sor_record.Count + NoOfOrders;
+
+                            _oMTDataContext.DailyCount_SOR.Update(existing_sor_record);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        // capture order count in monthly tables
+
+                        var existing_skillset_monthly = _oMTDataContext.MonthlyCount_SkillSet.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId && x.SkillSetId == skillSet.SkillSetId).FirstOrDefault();
+
+                        if (existing_skillset_monthly == null)
+                        {
+                            MonthlyCount_SkillSet monthlyCount_SkillSet = new MonthlyCount_SkillSet
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                SkillSetId = skillSet.SkillSetId,
+                                Year = update_date.Year,
+                                Month = update_date.Month,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.MonthlyCount_SkillSet.Add(monthlyCount_SkillSet);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_skillset_monthly != null)
+                        {
+                            existing_skillset_monthly.Count = existing_skillset_monthly.Count + NoOfOrders;
+
+                            _oMTDataContext.MonthlyCount_SkillSet.Update(existing_skillset_monthly);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        var existing_sor_monthly = _oMTDataContext.MonthlyCount_SOR.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                        if (existing_sor_monthly == null)
+                        {
+                            MonthlyCount_SOR monthlyCount_sor = new MonthlyCount_SOR
+                            {
+                                SystemofRecordId = skillSet.SystemofRecordId,
+                                Year = update_date.Year,
+                                Month = update_date.Month,
+                                Count = NoOfOrders
+                            };
+
+                            _oMTDataContext.MonthlyCount_SOR.Add(monthlyCount_sor);
+                            _oMTDataContext.SaveChanges();
+                        }
+
+                        else if (existing_sor_monthly != null)
+                        {
+                            existing_sor_monthly.Count = existing_sor_monthly.Count + NoOfOrders;
+
+                            _oMTDataContext.MonthlyCount_SOR.Update(existing_sor_monthly);
+                            _oMTDataContext.SaveChanges();
+                        }
+                        // send mail to map product descriptions
 
                         if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
                         {
@@ -985,6 +1109,7 @@ namespace OMT.DataService.Service
                              }).FirstOrDefault();
 
                 string timetaken = "";
+                DateTime dateTime = DateTime.UtcNow;
 
                 if (exist != null)
                 {
@@ -1011,8 +1136,10 @@ namespace OMT.DataService.Service
 
                     if (querydt1.Count > 0)
                     {
-                        DateTime dateTime = DateTime.UtcNow;
+
                         var starttime = querydt1[0]["StartTime"]?.ToString();
+                        var orderid = querydt1[0]["OrderId"]?.ToString();
+                        var status = updateOrderStatusDTO.StatusId;
 
                         if (!string.IsNullOrEmpty(starttime))
                         {
@@ -1064,6 +1191,34 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "Order status has been updated successfully";
                         resultDTO.IsSuccess = true;
                         resultDTO.Data = pendingOrdersResponseDTO;
+
+                        // capture details of order in Prod_Util_Tracker table 
+
+                        InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
+                       
+                        DateTime lowerBound = dateTime.Date.AddDays(-1).Add(invoiceTiming.StartTime);
+                        DateTime upperBound = dateTime.Date.Add(invoiceTiming.EndTime);
+
+                        DateTime productivity_date = (dateTime >= lowerBound && dateTime <= upperBound)
+                            ? dateTime.Date.AddDays(-1)
+                            : dateTime.Date;
+
+                        Prod_Util_Tracker prod_Util_Tracker = new Prod_Util_Tracker()
+                        {
+                            UserId = updateOrderStatusDTO.UserId,
+                            OrderId = orderid,
+                            Status = status,
+                            SkillSetId = updateOrderStatusDTO.SkillSetId,
+                            SystemofRecordId = table.SystemofRecordId,
+                            StartDate = DateTime.Parse(starttime),
+                            EndDate = dateTime,
+                            TimeTaken = TimeSpan.Parse(timetaken),
+                            Productivity_Date = productivity_date
+
+                        };
+
+                        _oMTDataContext.Prod_Util_Tracker.Add(prod_Util_Tracker);
+                        _oMTDataContext.SaveChanges();
                     }
                     else
                     {
@@ -1142,6 +1297,8 @@ namespace OMT.DataService.Service
                         CallRestApiAsync(trdStatusDTO1);
                     }
                 }
+
+
 
             }
             catch (Exception ex)
