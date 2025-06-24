@@ -22,15 +22,36 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                DateTime today_date = DateTime.UtcNow.Date;
-                DateTime yeserday_date = today_date.AddDays(-1);
-
                 List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
 
                 List<SorCountDTO> ordercounts = new List<SorCountDTO>();
 
                 foreach (int i in SOR)
                 {
+                    // capture count of uploaded orders 
+
+                    DateTime today_date = DateTime.Now.Date;
+                    DateTime uploading_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == i && x.IsActive).FirstOrDefault();
+
+                    DateTime yesterday_dt = uploading_time.Date.AddDays(-1);
+                    DateTime cutoff_start_dt = yesterday_dt + cutoff_time.StartTime;
+                    DateTime cutoff_end_dt = uploading_time.Date + cutoff_time.EndTime;
+
+
+                    if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
+                    {
+                        today_date = uploading_time.Date.AddDays(-1);
+                    }
+
+                    else if (uploading_time > cutoff_end_dt)
+                    {
+                        today_date = uploading_time.Date;
+                    }
+
+                    DateTime yeserday_date = today_date.AddDays(-1);
+
                     var count = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == today_date && x.SystemofRecordId == i).Select(x => x.Count).FirstOrDefault();
                     var diff = (count - _oMTDataContext.DailyCount_SOR.Where(x => x.Date == yeserday_date && x.SystemofRecordId == i).Select(x => x.Count).FirstOrDefault()) / 100;
                     var sorname = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == i && x.IsActive).Select(x => x.SystemofRecordName).FirstOrDefault();
@@ -39,7 +60,7 @@ namespace OMT.DataService.Service
                     {
                         SorId = i,
                         SorName = sorname,
-                        Count = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == today_date && x.SystemofRecordId == i).Select(x => x.Count).FirstOrDefault(),
+                        Count = count,
                         Difference = diff,
                     };
 
@@ -81,8 +102,34 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                DateTime today_date = DateTime.UtcNow.Date;
+                DateTime today_date = DateTime.Now.Date;
+                DateTime uploading_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
 
+                Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == volumeProjectionInputDTO.SystemOfRecordId && x.IsActive).FirstOrDefault();
+
+                DateTime yesterday_dt = uploading_time.Date.AddDays(-1);
+                DateTime cutoff_start_dt = yesterday_dt + cutoff_time.StartTime;
+                DateTime cutoff_end_dt = uploading_time.Date + cutoff_time.EndTime;
+                DateTime tomorrow_dt = uploading_time.Date.AddDays(1) + cutoff_time.EndTime;
+
+                DateTime cutoff_start_dt_utc = DateTime.UtcNow;
+                DateTime cutoff_end_dt_utc = DateTime.UtcNow;
+
+                if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
+                {
+                    today_date = uploading_time.Date.AddDays(-1);
+                    cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_start_dt, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                    cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                }
+
+                else if (uploading_time > cutoff_end_dt)
+                {
+                    today_date = uploading_time.Date;
+                    cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                    cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(tomorrow_dt, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                }
 
                 string skillsetnames = (from ss in _oMTDataContext.SkillSet
                                         where ss.SkillSetId == volumeProjectionInputDTO.SkillsetId && ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
@@ -118,18 +165,6 @@ namespace OMT.DataService.Service
                     }
 
                     //get completed count
-
-                    DateTime update_date = DateTime.Now.Date;
-                    DateTime completion_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-
-                    Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
-
-                    DateTime tomorrow_dt = completion_time.Date.AddDays(1);
-                    DateTime cutoff_start_dt_ist = completion_time.Date + cutoff_time.StartTime;
-                    DateTime cutoff_end_dt_ist = tomorrow_dt + cutoff_time.EndTime;
-
-                    DateTime cutoff_start_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_start_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
-                    DateTime cutoff_end_dt_utc = TimeZoneInfo.ConvertTimeToUtc(cutoff_end_dt_ist, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
 
                     string sql2 = $"SELECT COUNT(*) FROM {skillSet.SkillSetName} WHERE Status IS NOT NULL AND UserId IS NOT NULL AND CompletionDate BETWEEN @FromDate AND @ToDate";
 
@@ -442,7 +477,7 @@ namespace OMT.DataService.Service
                         {
                             SystemOfRecordId = monthlyVolumeTrendDTO.SystemOfRecordId ?? 0,
                             SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId).Select(x => x.SystemofRecordName).FirstOrDefault(),
-                            MonthlyCount = new List<int>() 
+                            MonthlyCount = new List<int>()
 
                         };
 
@@ -484,7 +519,7 @@ namespace OMT.DataService.Service
 
                         };
 
-                        if (((IEnumerable<object>) monthlyVolumeTrendResponseDTO.MonthlyCount).Any())
+                        if (((IEnumerable<object>)monthlyVolumeTrendResponseDTO.MonthlyCount).Any())
                         {
                             resultDTO.Data = monthlyVolumeTrendResponseDTO;
                             resultDTO.IsSuccess = true;
