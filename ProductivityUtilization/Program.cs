@@ -102,56 +102,6 @@ namespace ProductivityUtilization
 
                     }
 
-                    string insertQuery = @"
-                                          INSERT INTO Daily_Status_Count (SystemOfRecordId, SkillSetId, Date, Status, Count)
-                                          SELECT 
-                                              SystemOfRecordId,
-                                              SkillSetId,
-                                              Productivity_Date, 
-                                              Status,
-                                              COUNT(*) AS Count
-                                          FROM 
-                                              Prod_Util_Tracker 
-                                          WHERE 
-                                              Productivity_Date  = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)
-                                          GROUP BY 
-                                              SystemOfRecordId,
-                                              SkillSetId,
-                                              Productivity_Date ,
-                                              Status;";
-
-                    using (SqlCommand spCommand3 = new SqlCommand(insertQuery, connection))
-                    {
-                        spCommand3.CommandType = CommandType.Text;
-                        spCommand3.ExecuteNonQuery();
-                        Console.WriteLine($"Daily count status table updated.");
-                    }
-
-                    //back up Prod_Util_Tracker table and then delete the same data form it.
-
-                    string prod_util_tracker_bckp = @"INSERT INTO Prod_Util_Tracker_bckp (UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date)
-	                                          SELECT 
-	                                            UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date
-	                                          FROM Prod_Util_Tracker WHERE Productivity_Date  = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)";
-
-                    using (SqlCommand spCommand4 = new SqlCommand(prod_util_tracker_bckp, connection))
-                    {
-                        spCommand4.CommandType = CommandType.Text;
-                        spCommand4.ExecuteNonQuery();
-                        Console.WriteLine($"Prod_util_tracker table has been backed up successfully.");
-                    }
-
-                    // delete the data
-
-                    string delete = @"DELETE FROM Prod_Util_Tracker WHERE CAST(Productivity_Date AS DATE) = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE);";
-
-                    using (SqlCommand spCommand5 = new SqlCommand(delete, connection))
-                    {
-                        spCommand5.CommandType = CommandType.Text;
-                        spCommand5.ExecuteNonQuery();
-                        Console.WriteLine($"Yesterday data has been removed from Prod_util_tracker table successfully.");
-                    }
-
                 }
             }
             catch (Exception ex)
