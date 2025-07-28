@@ -366,12 +366,12 @@ namespace OMT.DataService.Service
                                                                {
                                                                    Date = p.Createddate.ToString("MM/dd/yyyy"),
                                                                    Productivity = p.ProductivityPercentage
-                                                               }).ToList(),
+                                                               }).ToList()
 
-                                      OverallProductivity = skillGroup.Any(p => p.ProductivityPercentage > 0)
-                                                                      ? (int)Math.Round(skillGroup.Where(p => p.ProductivityPercentage > 0)
-                                                                                                  .Average(p => p.ProductivityPercentage), MidpointRounding.AwayFromZero)
-                                                                      : 0
+                                      //OverallProductivity = skillGroup.Any(p => p.ProductivityPercentage > 0)
+                                      //                                ? (int)Math.Round(skillGroup.Where(p => p.ProductivityPercentage > 0)
+                                      //                                                            .Average(p => p.ProductivityPercentage), MidpointRounding.AwayFromZero)
+                                      //                                : 0
                                   }).ToList();
 
 
@@ -380,12 +380,31 @@ namespace OMT.DataService.Service
                     GetAgentProd_AverageDTO getAgentProd_AverageDTO = new GetAgentProd_AverageDTO();
 
                     getAgentProd_AverageDTO.AgentProductivity = agent_prod;
-                    getAgentProd_AverageDTO.TotalOverallProductivity = agent_prod
-                                                                               .Where(x => x.OverallProductivity > 0)
-                                                                               .Any()
-                                                                               ? (int)Math.Round(agent_prod.Where(x => x.OverallProductivity > 0)
-                                                                                                          .Average(x => x.OverallProductivity), MidpointRounding.AwayFromZero)
-                                                                               : 0;
+
+                    getAgentProd_AverageDTO.DatewiseData = agent_prod
+                                                                    .SelectMany(skill => skill.DatewiseData)
+                                                                    .GroupBy(d => d.Date)
+                                                                    .Select(g => new GetTeamProd_DatewisedataDTO
+                                                                    {
+                                                                        Date = g.Key,
+                                                                        Productivity = g.Sum(x => x.Productivity)
+                                                                    })
+                                                                    .OrderBy(x => DateTime.ParseExact(x.Date, "MM/dd/yyyy", null))
+                                                                    .ToList();
+
+                    var totalProductivity = getAgentProd_AverageDTO.DatewiseData.Sum(x => x.Productivity);
+                    var numberOfDates = getAgentProd_AverageDTO.DatewiseData.Count;
+
+                    getAgentProd_AverageDTO.TotalOverallProductivity = numberOfDates > 0
+                        ? (int)Math.Round((double)totalProductivity / numberOfDates, MidpointRounding.AwayFromZero)
+                        : 0;
+
+                    //getAgentProd_AverageDTO.TotalOverallProductivity = agent_prod
+                    //                                                           .Where(x => x.OverallProductivity > 0)
+                    //                                                           .Any()
+                    //                                                           ? (int)Math.Round(agent_prod.Where(x => x.OverallProductivity > 0)
+                    //                                                                                      .Average(x => x.OverallProductivity), MidpointRounding.AwayFromZero)
+                    //                                                           : 0;
 
 
                     resultDTO.Data = getAgentProd_AverageDTO;
@@ -429,12 +448,12 @@ namespace OMT.DataService.Service
                                                               {
                                                                   Date = p.Createddate.ToString("MM/dd/yyyy"),
                                                                   Utilization = p.Utilization
-                                                              }).ToList(),
+                                                              }).ToList()
 
-                                      OverallUtilization = skillGroup.Any(p => p.Utilization > 0)
-                                                                     ? (int)Math.Round(skillGroup.Where(p => p.Utilization > 0)
-                                                                                                 .Average(p => p.Utilization), MidpointRounding.AwayFromZero)
-                                                                     : 0
+                                  //    OverallUtilization = skillGroup.Any(p => p.Utilization > 0)
+                                  //                                   ? (int)Math.Round(skillGroup.Where(p => p.Utilization > 0)
+                                  //                                                               .Average(p => p.Utilization), MidpointRounding.AwayFromZero)
+                                  //                                   : 0
                                   }).ToList();
 
                 if (agent_util.Count > 0)
@@ -443,13 +462,24 @@ namespace OMT.DataService.Service
                     GetAgentUtil_AverageDTO getAgentUtil_AverageDTO = new GetAgentUtil_AverageDTO();
 
                     getAgentUtil_AverageDTO.AgentUtilization = agent_util;
-                    getAgentUtil_AverageDTO.TotalOverallUtilization = agent_util
-                                                                               .Where(x => x.OverallUtilization > 0)
-                                                                               .Any()
-                                                                               ? (int)Math.Round(agent_util.Where(x => x.OverallUtilization > 0)
-                                                                                                          .Average(x => x.OverallUtilization), MidpointRounding.AwayFromZero)
-                                                                               : 0;
+                    
+                    getAgentUtil_AverageDTO.DatewiseData = agent_util
+                                                                   .SelectMany(skill => skill.DatewiseData)
+                                                                   .GroupBy(d => d.Date)
+                                                                   .Select(g => new GetTeamUtil_DatewisedataDTO
+                                                                   {
+                                                                       Date = g.Key,
+                                                                       Utilization = g.Sum(x => x.Utilization)
+                                                                   })
+                                                                   .OrderBy(x => DateTime.ParseExact(x.Date, "MM/dd/yyyy", null))
+                                                                   .ToList();
 
+                    var totalUtilization = getAgentUtil_AverageDTO.DatewiseData.Sum(x => x.Utilization);
+                    var numberOfDates = getAgentUtil_AverageDTO.DatewiseData.Count;
+
+                    getAgentUtil_AverageDTO.TotalOverallUtilization = numberOfDates > 0
+                        ? (int)Math.Round((double)totalUtilization / numberOfDates, MidpointRounding.AwayFromZero)
+                        : 0;
 
                     resultDTO.Data = getAgentUtil_AverageDTO;
                     resultDTO.StatusCode = "200";

@@ -24,6 +24,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Globalization;
 
 
 namespace OMT.DataService.Service
@@ -308,7 +309,7 @@ namespace OMT.DataService.Service
                                                                   .ToList();
 
                         var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
-                      
+
                         SendEmailDTO sendEmailDTO1 = new SendEmailDTO
                         {
                             ToEmailIds = toEmailIds1,
@@ -1093,7 +1094,8 @@ namespace OMT.DataService.Service
                 pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                 {
                     IsPending = ispending,
-                    PendingOrder = null
+                   // PendingOrder = null
+                   AssignedOrder = null
                 };
 
                 // check if the skillset has template 
@@ -1140,6 +1142,19 @@ namespace OMT.DataService.Service
                         var starttime = querydt1[0]["StartTime"]?.ToString();
                         var orderid = querydt1[0]["OrderId"]?.ToString();
                         var status = updateOrderStatusDTO.StatusId;
+                        //var allocationdate_string = querydt1[0]["AllocationDate"]?.ToString();
+                        //var allocationdate = (DateTime)querydt1[0]["AllocationDate"];
+
+                        DateTime? allocationdate = null;
+
+                        var rawDate = querydt1[0]["AllocationDate"]?.ToString();
+
+                        if (!string.IsNullOrWhiteSpace(rawDate))
+                        {
+                            allocationdate = Convert.ToDateTime(rawDate);
+                        }
+
+
 
                         if (!string.IsNullOrEmpty(starttime))
                         {
@@ -1195,7 +1210,7 @@ namespace OMT.DataService.Service
                         // capture details of order in Prod_Util_Tracker table 
 
                         InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
-                       
+
                         DateTime lowerBound = dateTime.Date.AddDays(-1).Add(invoiceTiming.StartTime);
                         DateTime upperBound = dateTime.Date.Add(invoiceTiming.EndTime);
 
@@ -1219,6 +1234,96 @@ namespace OMT.DataService.Service
 
                         _oMTDataContext.Prod_Util_Tracker.Add(prod_Util_Tracker);
                         _oMTDataContext.SaveChanges();
+
+                        // if order belongs to 1st key insert it in 2nd key 
+
+                        if (updateOrderStatusDTO.MoveToSecondKey == true)
+                        {
+                            var exclude_col = new List<string>()
+                            {
+                                "Id","Never_Keyed","UserId","Status","Remarks","CompletionDate","StartTime","EndTime","TeamLeadId","SystemofRecordId","SkillSetId","TLDescription","TimeTaken","UploadedDate"
+                            };
+                            var userdetails = _oMTDataContext.UserProfile.Where(x => x.UserId == updateOrderStatusDTO.UserId && x.IsActive).Select(x => new { x.FirstName, x.LastName }).FirstOrDefault();
+
+                            //DateTime allocationDate_dt = DateTime.ParseExact(
+                            //                                    allocationdate,
+                            //                                    "dd-MM-yyyy HH:mm:ss",
+                            //                                    CultureInfo.InvariantCulture);
+
+                            //string First_Keyed_Date = allocationDate_dt.ToString("MM/dd/yyyy").Replace("-", "/"); 
+                            string First_Keyed_Date = allocationdate.Value.ToString("MM/dd/yyyy").Replace("-", "/");
+                            var UploadedDate = dateTime;
+                            var First_Keyer = userdetails.FirstName + " " + userdetails.LastName;
+                            var First_Key_Status = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == 1 && x.Id == updateOrderStatusDTO.StatusId && x.IsActive).Select(x => x.Status).FirstOrDefault();
+                            var First_Keyer_Status = First_Key_Status;
+
+                            var row = querydt1.FirstOrDefault();
+
+                            if (row != null)
+                            {
+                                // Filter out excluded columns
+                                var includedColumns = row.Keys.Where(k => !exclude_col.Contains(k)).ToList();
+
+                                var tablenames = (from af in _oMTDataContext.AutomaticFlow
+                                                  join ssFrom in _oMTDataContext.SkillSet on af.FromSkillSetId equals ssFrom.SkillSetId
+                                                  join ssTo in _oMTDataContext.SkillSet on af.ToSkillSetId equals ssTo.SkillSetId
+                                                  where af.IsActive && af.FromSkillSetId == updateOrderStatusDTO.SkillSetId
+                                                  select new
+                                                  {
+                                                      FromSkillset = ssFrom.SkillSetName,
+                                                      ToSkillset = ssTo.SkillSetName,
+                                                  }).FirstOrDefault();
+
+                                string verificationTableName = tablenames.ToSkillset;
+
+                                string columnNames = string.Join(", ", includedColumns);
+                                string parameterNames = string.Join(", ", includedColumns.Select(c => $"@{c}"));
+
+                                string insertSql = $"INSERT INTO {verificationTableName} ({columnNames}) VALUES ({parameterNames})";
+
+                                using SqlCommand insertCmd = connection.CreateCommand();
+                                insertCmd.CommandText = insertSql;
+
+                                foreach (var col in includedColumns)
+                                {
+                                    insertCmd.Parameters.AddWithValue($"@{col}", row[col] ?? DBNull.Value);
+                                }
+
+                                insertCmd.ExecuteNonQuery();
+
+                                string updatesql = "";
+                                List<string> param_col = new List<string>();
+
+                                using SqlCommand updatesqlcmd = connection.CreateCommand();
+
+                                if (verificationTableName.Equals("LR_Verification", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer, First_Keyed_Date = @First_Keyed_Date, First_Key_Status = @First_Key_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
+
+                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
+                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyed_Date", First_Keyed_Date);
+                                    updatesqlcmd.Parameters.AddWithValue("@First_Key_Status", First_Key_Status);
+                                    updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
+                                    updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
+                                }
+
+                                else if (verificationTableName.Equals("Bana_Accelerate_Not_Keyed_1st_Key_Verification", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer,  First_Keyer_Status = @First_Keyer_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
+
+                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
+                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer_Status", First_Keyer_Status);
+                                    updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
+                                    updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
+                                }
+
+
+                                updatesqlcmd.CommandText = updatesql;
+                                updatesqlcmd.ExecuteNonQuery();
+
+                            }
+
+                        }
                     }
                     else
                     {
@@ -1297,8 +1402,6 @@ namespace OMT.DataService.Service
                         CallRestApiAsync(trdStatusDTO1);
                     }
                 }
-
-
 
             }
             catch (Exception ex)
@@ -2465,18 +2568,18 @@ namespace OMT.DataService.Service
 
                     var columns1 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.ColumnAliasName).ToList();
 
                     var columns2 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.DefaultColumnName).ToList();
 
                     // get date type columns 
                     var datecol = (from ss in _oMTDataContext.SkillSet
                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
                                    select dt.DefaultColumnName).ToList();
 
 
@@ -2550,11 +2653,17 @@ namespace OMT.DataService.Service
 
                     orderedRecords.Remove("StartTime");
 
+                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
+
+                    // Convert to JSON string
+                    string order_string = JsonConvert.SerializeObject(PendingOrder);
+
                     //check if order is from trd pending
                     var istrd_pending = false;
                     var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
                     var tableid = (int)orderedRecords["Id"];
-
+                    var skillsetid = (int)orderedRecords["SkillSetId"];
+                    var ispriority = (bool)orderedRecords["IsPriority"];
                     var tablename = orderedRecords["SkillSetName"].ToString();
 
                     if (istrd)
@@ -2588,13 +2697,32 @@ namespace OMT.DataService.Service
 
                     var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
+                    // find if it satisfies the automatic flow conditions
+                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                    var isautomaticflow = false;
+
+                    if (automaticflow_details != null)
+                    {
+                        if (automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = ispriority ? true : false;
+                        }
+                        else if (!automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = true;
+                        }
+
+                    }
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,
-                        PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                       AssignedOrder = order_string,
                         IsTiqe = istiqe_order,
-                        IsTrdPending = istrd_pending
+                        IsTrdPending = istrd_pending,
+                        IsAutomaticFlow = isautomaticflow
                     };
 
                     resultDTO.IsSuccess = true;
@@ -2611,9 +2739,11 @@ namespace OMT.DataService.Service
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,
-                        PendingOrder = null,
+                       // PendingOrder = null,
+                       AssignedOrder = null,
                         IsTiqe = false,
-                        IsTrdPending = false
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false
                     };
                     resultDTO.Data = pendingOrdersResponseDTO;
                 }
