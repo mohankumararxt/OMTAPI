@@ -276,17 +276,24 @@ namespace OMT.DataService.Service
                                                                       .Select(g => new
                                                                       {
                                                                           Date = g.Key,
-                                                                          Utilization = g.Sum(x => x.pu.Utilization_Percentage)
+                                                                          Utilization = g.Sum(x => x.pu.Utilization_Percentage + x.pu.CrossUtilization_Percentage)
                                                                       })
                                                                       .OrderBy(d => d.Date)
                                                                       .ToList(),
 
                                                                   // Calculate average ignoring 0 Utilization values
 
-                                                                  AverageUtilization = group.Any(g => g.pu.Utilization_Percentage > 0)
-                                                                                                                                  ? Math.Round(group.Where(g => g.pu.Utilization_Percentage > 0)
-                                                                                                                                                    .Average(g => g.pu.Utilization_Percentage), MidpointRounding.AwayFromZero)
-                                                                                                                                  : 0
+                                                                  //AverageUtilization = group.Any(g => g.pu.Utilization_Percentage > 0)
+                                                                  //                                                                ? Math.Round(group.Where(g => g.pu.Utilization_Percentage > 0)
+                                                                  //                                                                                  .Average(g => g.pu.Utilization_Percentage), MidpointRounding.AwayFromZero)
+                                                                  //                                                                : 0
+                                                                  AverageUtilization = group.Any(g => (g.pu.Utilization_Percentage + g.pu.CrossUtilization_Percentage) > 0)
+                                                                                             ? Math.Round(
+                                                                                                 group.Where(g => (g.pu.Utilization_Percentage + g.pu.CrossUtilization_Percentage) > 0)
+                                                                                                      .Average(g => g.pu.Utilization_Percentage + g.pu.CrossUtilization_Percentage),
+                                                                                                 MidpointRounding.AwayFromZero)
+                                                                                             : 0
+
                                                               }).ToList()
                                                                 .Select(x => new GetTeamUtil_ResponseDTO
                                                                 {
@@ -295,7 +302,7 @@ namespace OMT.DataService.Service
                                                                         .Select(d => new GetTeamUtil_DatewisedataDTO
                                                                         {
                                                                             Date = d.Date.ToString("MM-dd-yyyy"),
-                                                                            Utilization = d.Utilization
+                                                                            Utilization = d.Utilization 
                                                                         })
                                                                         .ToList(),
                                                                     OverallUtilization = (int)x.AverageUtilization
@@ -392,12 +399,24 @@ namespace OMT.DataService.Service
                                                                     .OrderBy(x => DateTime.ParseExact(x.Date, "MM/dd/yyyy", null))
                                                                     .ToList();
 
-                    var totalProductivity = getAgentProd_AverageDTO.DatewiseData.Sum(x => x.Productivity);
-                    var numberOfDates = getAgentProd_AverageDTO.DatewiseData.Count;
+                    // Only consider dates where utilization > 0
+                    var validProductivities = getAgentProd_AverageDTO.DatewiseData
+                        .Where(x => x.Productivity > 0)
+                        .ToList();
+
+                    var totalUtilization = validProductivities.Sum(x => x.Productivity);
+                    var numberOfDates = validProductivities.Count;
 
                     getAgentProd_AverageDTO.TotalOverallProductivity = numberOfDates > 0
-                        ? (int)Math.Round((double)totalProductivity / numberOfDates, MidpointRounding.AwayFromZero)
+                        ? (int)Math.Round((double)totalUtilization / numberOfDates, MidpointRounding.AwayFromZero)
                         : 0;
+
+                    //var totalProductivity = getAgentProd_AverageDTO.DatewiseData.Sum(x => x.Productivity);
+                    //var numberOfDates = getAgentProd_AverageDTO.DatewiseData.Count;
+
+                    //getAgentProd_AverageDTO.TotalOverallProductivity = numberOfDates > 0
+                    //    ? (int)Math.Round((double)totalProductivity / numberOfDates, MidpointRounding.AwayFromZero)
+                    //    : 0;
 
                     //getAgentProd_AverageDTO.TotalOverallProductivity = agent_prod
                     //                                                           .Where(x => x.OverallProductivity > 0)
@@ -437,7 +456,7 @@ namespace OMT.DataService.Service
                 var agent_util = (from pp in _oMTDataContext.Productivity_Percentage
                                   join up in _oMTDataContext.UserProfile on pp.AgentUserId equals up.UserId
                                   join ss in _oMTDataContext.SkillSet on pp.SkillSetId equals ss.SkillSetId
-                                  where up.IsActive && pp.AgentUserId == getAgentProdUtilDTO.UserId
+                                  where up.IsActive && pp.AgentUserId == getAgentProdUtilDTO.UserId 
                                    && pp.Createddate.Date >= getAgentProdUtilDTO.FromDate.Date && pp.Createddate.Date <= getAgentProdUtilDTO.ToDate.Date
                                   group pp by new { pp.AgentUserId, pp.SkillSetId, ss.SkillSetName } into skillGroup
                                   select new GetAgentUtil_ResponseDTO
@@ -474,12 +493,24 @@ namespace OMT.DataService.Service
                                                                    .OrderBy(x => DateTime.ParseExact(x.Date, "MM/dd/yyyy", null))
                                                                    .ToList();
 
-                    var totalUtilization = getAgentUtil_AverageDTO.DatewiseData.Sum(x => x.Utilization);
-                    var numberOfDates = getAgentUtil_AverageDTO.DatewiseData.Count;
+                    // Only consider dates where utilization > 0
+                    var validUtilizations = getAgentUtil_AverageDTO.DatewiseData
+                        .Where(x => x.Utilization > 0)
+                        .ToList();
+
+                    var totalUtilization = validUtilizations.Sum(x => x.Utilization);
+                    var numberOfDates = validUtilizations.Count;
 
                     getAgentUtil_AverageDTO.TotalOverallUtilization = numberOfDates > 0
                         ? (int)Math.Round((double)totalUtilization / numberOfDates, MidpointRounding.AwayFromZero)
                         : 0;
+
+                    //var totalUtilization = getAgentUtil_AverageDTO.DatewiseData.Sum(x => x.Utilization);
+                    //var numberOfDates = getAgentUtil_AverageDTO.DatewiseData.Count;
+
+                    //getAgentUtil_AverageDTO.TotalOverallUtilization = numberOfDates > 0
+                    //    ? (int)Math.Round((double)totalUtilization / numberOfDates, MidpointRounding.AwayFromZero)
+                    //    : 0;
 
                     resultDTO.Data = getAgentUtil_AverageDTO;
                     resultDTO.StatusCode = "200";
