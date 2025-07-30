@@ -12,6 +12,7 @@ namespace OMT.DTO
         public bool IsTiqe { get; set; }
 
         public bool IsTrdPending { get; set; }
+        public bool IsAutomaticFlow { get; set; }
     }
 
    

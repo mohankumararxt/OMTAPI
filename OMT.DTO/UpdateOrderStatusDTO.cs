@@ -10,6 +10,7 @@
         public int UserId { get; set; }
         public int? Number_Of_Documents { get; set; }
         public int? Number_Of_Manual_Splits { get; set; }
-        public int? ImageID { get; set; }
+        public int? ImageID { get; set; }   
+        public bool MoveToSecondKey { get; set; }
     }
 }

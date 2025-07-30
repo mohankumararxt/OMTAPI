@@ -5797,3 +5797,28 @@
 --ADD CONSTRAINT fk_Prod_Util_Tracker_bckp_Status
 --FOREIGN KEY (Status)
 --REFERENCES ProcessStatus(Id);
+
+---------------------------------------------------Automatic flow------------------------------
+
+--CREATE TABLE AutomaticFlow(
+--AutomaticFlow_Id INT PRIMARY KEY IDENTITY(1,1),
+--FromSkillSetId INT NOT NULL,
+--ToSkillSetId INT NOT NULL,
+--PriorityOrders_Only BIT NOT NULL,
+--IsActive BIT NOT NULL
+--);
+
+
+--ALTER TABLE AutomaticFlow
+--ADD CONSTRAINT fk_AutomaticFlow_FromSkillSetId
+--FOREIGN KEY (FromSkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--ALTER TABLE AutomaticFlow
+--ADD CONSTRAINT fk_AutomaticFlow_ToSkillSetId
+--FOREIGN KEY (ToSkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--insert into AutomaticFlow values
+--(1,3,1,1),
+--(696,697,0,1)

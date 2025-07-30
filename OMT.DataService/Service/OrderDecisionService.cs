@@ -77,19 +77,19 @@ namespace OMT.DataService.Service
                     // check for pending orders and send them 
                     var columns1 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.ColumnAliasName).ToList();
 
                     var columns2 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.DefaultColumnName).ToList();
 
 
                     // get date type columns 
                     var datecol = (from ss in _oMTDataContext.SkillSet
                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
                                    select dt.DefaultColumnName).ToList();
 
 
@@ -157,13 +157,19 @@ namespace OMT.DataService.Service
 
                     orderedRecords.Remove("StartTime");
 
-                    var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
+                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
+
+                    // Convert to JSON string
+                    string order_string = JsonConvert.SerializeObject(PendingOrder);
+
+                    //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
                     //check if order is from trd pending
                     var istrd_pending = false;
                     var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
                     var tableid = (int)orderedRecords["Id"];
-
+                    var skillsetid = (int)orderedRecords["SkillSetId"];
+                    var ispriority = (bool)orderedRecords["IsPriority"];
                     var tablename = orderedRecords["SkillSetName"].ToString();
 
                     if (istrd)
@@ -197,13 +203,32 @@ namespace OMT.DataService.Service
 
                     var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
+                    // find if it satisfies the automatic flow conditions
+                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                    var isautomaticflow = false;
+
+                    if (automaticflow_details != null)
+                    {
+                        if (automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = ispriority ? true : false;
+                        }
+                        else if (!automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = true;
+                        }
+
+                    }
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,  // trd skillsets presence
-                        PendingOrder = dataToReturn, // any order pending
+                        //PendingOrder = dataToReturn, 
+                        AssignedOrder = order_string,// any order pending
                         IsTiqe = istiqe_order, // if that order is tiqe
-                        IsTrdPending = istrd_pending // pending trd orders
+                        IsTrdPending = istrd_pending, // pending trd orders
+                        IsAutomaticFlow = isautomaticflow
                     };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
@@ -364,6 +389,8 @@ namespace OMT.DataService.Service
                         var firstitem = (JObject)order_jarray[0];
 
                         string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+                        bool ispriority = (bool)firstitem["IsPriority"];
+                        int? ssid = (int)firstitem["SkillSetId"] != null ? (int)firstitem["SkillSetId"] : (int?)null;
 
                         var is_tiqe = false;
 
@@ -371,11 +398,31 @@ namespace OMT.DataService.Service
                         {
                             is_tiqe = true;
                         }
+
+                        // find if it satisfies the automatic flow conditions
+                        var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == ssid && x.IsActive).FirstOrDefault();
+
+                        var isautomaticflow = false;
+
+                        if (automaticflow_details != null)
+                        {
+                            if (automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = ispriority ? true : false;
+                            }
+                            else if (!automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = true;
+                            }
+
+                        }
+
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
-                            IsTrdPending = false
+                            IsTrdPending = false,
+                            IsAutomaticFlow = isautomaticflow
                         };
 
                         // Order assigned successfully
@@ -397,17 +444,40 @@ namespace OMT.DataService.Service
                         var firstitem = (JObject)order_jarray[0];
 
                         string ssname = firstitem["SkillSetName"]?.ToString() ?? "";
+                        bool ispriority = (bool)firstitem["IsPriority"];
+                        int? ssid = (int)firstitem["SkillSetId"] != null ? (int)firstitem["SkillSetId"] : (int?)null;
+
                         var is_tiqe = false;
 
                         if (ssname == "TIQELoanMod")
                         {
                             is_tiqe = true;
                         }
+
+                        // find if it satisfies the automatic flow conditions
+                        var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == ssid && x.IsActive).FirstOrDefault();
+
+                        var isautomaticflow = false;
+
+                        if (automaticflow_details != null)
+                        {
+                            if (automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = ispriority ? true : false;
+                            }
+                            else if (!automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = true;
+                            }
+
+                        }
+
                         GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
                         {
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
-                            IsTrdPending = false
+                            IsTrdPending = false,
+                            IsAutomaticFlow = isautomaticflow
                         };
 
                         // Order assigned successfully
@@ -533,6 +603,7 @@ namespace OMT.DataService.Service
                 string sorname = "";
                 int? tableid = 0;
                 bool istrd_pending = false;
+                bool ispriority = false;
 
                 //update getordercal table-  check if toc == oc ,if yes make utilized = true,else false
                 var jsonArray = JArray.Parse(updatedOrder);
@@ -544,6 +615,7 @@ namespace OMT.DataService.Service
                     ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
                     sorname = firstItem[ "SystemOfRecordName"] != null ? firstItem["SystemOfRecordName"].ToString() : "";
                     tableid = firstItem["Id"] != null ? (int)firstItem["Id"] : (int?)null;
+                    ispriority = (bool)firstItem["IsPriority"]; 
                 }
 
                 if (ssid.HasValue)
@@ -583,11 +655,30 @@ namespace OMT.DataService.Service
 
                     }
 
+                    // find if it satisfies the automatic flow conditions
+                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == ssid && x.IsActive).FirstOrDefault();
+
+                    var isautomaticflow = false;
+
+                    if (automaticflow_details != null)
+                    {
+                        if (automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = ispriority ? true : false;
+                        }
+                        else if (!automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = true;
+                        }
+
+                    }
+
                     gordto = new GetOrderResponseDTO
                     {
                         AssignedOrder = updatedOrder,
                         IsTiqe = istiqe,
-                        IsTrdPending = istrd_pending
+                        IsTrdPending = istrd_pending,
+                        IsAutomaticFlow = isautomaticflow
                     };
 
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
@@ -655,19 +746,19 @@ namespace OMT.DataService.Service
                     // check for pending orders and send them 
                     var columns1 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.ColumnAliasName).ToList();
 
                     var columns2 = (from ss in _oMTDataContext.SkillSet
                                     join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn
+                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
                                     select dt.DefaultColumnName).ToList();
 
 
                     // get date type columns 
                     var datecol = (from ss in _oMTDataContext.SkillSet
                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date"
+                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
                                    select dt.DefaultColumnName).ToList();
 
 
@@ -735,13 +826,19 @@ namespace OMT.DataService.Service
 
                     orderedRecords.Remove("StartTime");
 
-                    var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
+                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
+
+                    // Convert to JSON string
+                    string order_string = JsonConvert.SerializeObject(PendingOrder);
+
+                    //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
                     //check if order is from trd pending
                     var istrd_pending = false;
                     var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
                     var tableid = (int)orderedRecords["Id"];
-
+                    var skillsetid = (int)orderedRecords["SkillSetId"];
+                    var ispriority = (bool)orderedRecords["IsPriority"];
                     var tablename = orderedRecords["SkillSetName"].ToString();
 
                     if (istrd)
@@ -775,13 +872,33 @@ namespace OMT.DataService.Service
 
                     var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
 
+                    // find if it satisfies the automatic flow conditions
+                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                    var isautomaticflow = false;
+
+                    if (automaticflow_details != null)
+                    {
+                        if (automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = ispriority ? true : false;
+                        }
+                        else if (!automaticflow_details.PriorityOrders_Only)
+                        {
+                            isautomaticflow = true;
+                        }
+
+                    }
+
 
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,
-                        PendingOrder = dataToReturn,
+                        //PendingOrder = dataToReturn,
+                        AssignedOrder = order_string,
                         IsTiqe = istiqe_order,
-                        IsTrdPending = istrd_pending
+                        IsTrdPending = istrd_pending,
+                        IsAutomaticFlow = isautomaticflow
                     };
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "You have an order in your queue,please finish this first";
@@ -814,7 +931,7 @@ namespace OMT.DataService.Service
                                                                       HardStateUtilized = goc.HardStateUtilized,
                                                                   }).ToList();
 
-                   // bool IsTrdPending = true;
+                    // bool IsTrdPending = true;
                     bool iscycle1 = true;
                     var cycle = new List<GetOrderCalculation>();
 
@@ -850,6 +967,14 @@ namespace OMT.DataService.Service
                             {
                                 updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
 
+                                GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                                {
+                                    AssignedOrder = updatedOrder,
+                                    IsTiqe = false,
+                                    IsTrdPending = true,
+                                    IsAutomaticFlow = false
+                                };
+
                                 if (string.IsNullOrWhiteSpace(updatedOrder))
                                 {
                                     resultDTO.Data = "";
@@ -859,7 +984,7 @@ namespace OMT.DataService.Service
                                 }
                                 else
                                 {
-                                    resultDTO.Data = updatedOrder;
+                                    resultDTO.Data = getOrderResponseDTO;
                                     resultDTO.IsSuccess = true;
                                     resultDTO.StatusCode = "200";
                                     resultDTO.Message = "Order assigned successfully";
@@ -876,7 +1001,15 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            resultDTO.Data = updatedOrder;
+                            GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                            {
+                                AssignedOrder = updatedOrder,
+                                IsTiqe = false,
+                                IsTrdPending = true,
+                                IsAutomaticFlow = false
+                            };
+
+                            resultDTO.Data = getOrderResponseDTO;
                             resultDTO.IsSuccess = true;
                             resultDTO.Message = "Order assigned successfully";
                         }
