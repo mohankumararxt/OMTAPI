@@ -1094,13 +1094,13 @@ namespace OMT.DataService.Service
                 pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                 {
                     IsPending = ispending,
-                   // PendingOrder = null
-                   AssignedOrder = null
+                    // PendingOrder = null
+                    AssignedOrder = null
                 };
 
                 // check if the skillset has template 
 
-                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
+                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
 
                 var exist = (from tc in _oMTDataContext.TemplateColumns
                              join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
@@ -2719,7 +2719,7 @@ namespace OMT.DataService.Service
                     {
                         IsPending = ispending,
                         //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
-                       AssignedOrder = order_string,
+                        AssignedOrder = order_string,
                         IsTiqe = istiqe_order,
                         IsTrdPending = istrd_pending,
                         IsAutomaticFlow = isautomaticflow
@@ -2739,8 +2739,8 @@ namespace OMT.DataService.Service
                     pendingOrdersResponseDTO = new PendingOrdersResponseDTO
                     {
                         IsPending = ispending,
-                       // PendingOrder = null,
-                       AssignedOrder = null,
+                        // PendingOrder = null,
+                        AssignedOrder = null,
                         IsTiqe = false,
                         IsTrdPending = false,
                         IsAutomaticFlow = false
@@ -4186,7 +4186,8 @@ namespace OMT.DataService.Service
                     {
                         if (order.TryGetValue("skillset", out var skillSetName))
                         {
-                            SkillSet skillSet = _oMTDataContext.SkillSet.FirstOrDefault(x => x.SkillSetName == skillSetName.ToString());
+                            SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.IsActive && x.SkillSetName == skillSetName.ToString()).FirstOrDefault();
+
                             TeamAssociation teamAssociation = _oMTDataContext.TeamAssociation.Where(x => x.UserId == assignOrderToUserDTO.UserId).FirstOrDefault();
 
                             if (skillSet != null)
