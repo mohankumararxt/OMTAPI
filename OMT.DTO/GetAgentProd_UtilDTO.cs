@@ -11,7 +11,7 @@
     {
         public string SkillSet { get; set; }
         public List<GetTeamProd_DatewisedataDTO> DatewiseData { get; set; }
-        public int OverallProductivity { get; set; }
+       // public int OverallProductivity { get; set; } // remove this
     }
 
 
@@ -24,6 +24,7 @@
 
         public int TotalOverallProductivity { get; set; }
         public List<GetAgentProd_ResponseDTO> AgentProductivity { get; set; }
+        public List<GetTeamProd_DatewisedataDTO> DatewiseData { get; set; } // added this
     }
 
     public class GetAgentUtil_AverageDTO
@@ -35,11 +36,12 @@
 
         public int TotalOverallUtilization { get; set; }
         public List<GetAgentUtil_ResponseDTO> AgentUtilization { get; set; }
+        public List<GetTeamUtil_DatewisedataDTO> DatewiseData { get; set; } // added this
     }
     public class GetAgentUtil_ResponseDTO
     {
         public string SkillSet { get; set; }
         public List<GetTeamUtil_DatewisedataDTO> DatewiseData { get; set; }
-        public int OverallUtilization { get; set; }
+        //public int OverallUtilization { get; set; }
     }
 }

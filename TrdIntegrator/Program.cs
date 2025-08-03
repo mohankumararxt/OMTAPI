@@ -389,6 +389,8 @@ namespace TrdIntegrator
                     }
 
                     DataTable filteredOrdersDT = new DataTable();
+                    int orderCount = 0;
+                    int systemofrecorid = 3;
 
                     if (updatedFilteredOrders.Any())
                     {
@@ -413,6 +415,7 @@ namespace TrdIntegrator
 
                         // Serialize to JSON
                         TRDjsonToInsert = JsonConvert.SerializeObject(result, Formatting.Indented);
+                        orderCount = recordsList.Count;
 
                     }
                     else
@@ -450,10 +453,44 @@ namespace TrdIntegrator
                         {
                             Console.WriteLine("TRD orders succesfully loaded in " + SkillSetName + " template.");
                         }
+
+                        // update the count of orders to daily & monthly count sor and skillset table
+
+                        SqlCommand DailyCountCmd = new SqlCommand("UpdateDailyOrderCount", connection);
+                        DailyCountCmd.CommandType = CommandType.StoredProcedure;
+                        DailyCountCmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
+                        DailyCountCmd.Parameters.AddWithValue("@SystemOfRecordId", systemofrecorid);
+                        DailyCountCmd.Parameters.AddWithValue("@OrderCount", orderCount);
+
+                        SqlParameter DcReturnValue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        DailyCountCmd.Parameters.Add(DcReturnValue);
+
+                        DailyCountCmd.ExecuteNonQuery();
+
+                        int DCreturnCode = (int)DailyCountCmd.Parameters["@RETURN_VALUE"].Value;
+
+                        if (DCreturnCode != 1)
+                        {
+                            throw new InvalidOperationException("Something went wrong while inserting the order counts.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Order counts succesfully loaded.");
+                        }
+
+
+
+
                     }
 
                 }
             }
+
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in InsertIntoSqlServer method: {ex.Message}");
@@ -629,6 +666,10 @@ namespace TrdIntegrator
                     // Serialize the records to a JSON string - to insert into templates
                     string TRDjsonToInsert = TRDrecordsObject.ToString();
 
+                    int systemofrecorid = 3;
+                    int orderCount = TRDrecordsObject["Records"]?.Count() ?? 0;
+
+
                     // insert into templates
 
                     SqlCommand InsertCmd = new SqlCommand("InsertData", connection);
@@ -656,6 +697,36 @@ namespace TrdIntegrator
                     {
                         Console.WriteLine("TRD Pending orders succesfully loaded in " + SkillSetName + " template.");
                     }
+
+                    // update the count of orders to daily & monthly count sor and skillset table
+
+                    SqlCommand DailyCountCmd = new SqlCommand("UpdateDailyOrderCount", connection);
+                    DailyCountCmd.CommandType = CommandType.StoredProcedure;
+                    DailyCountCmd.Parameters.AddWithValue("@SkillSetId", skillsetid);
+                    DailyCountCmd.Parameters.AddWithValue("@SystemOfRecordId", systemofrecorid);
+                    DailyCountCmd.Parameters.AddWithValue("@OrderCount", orderCount);
+
+                    SqlParameter DcReturnValue = new SqlParameter
+                    {
+                        ParameterName = "@RETURN_VALUE",
+                        Direction = ParameterDirection.ReturnValue
+                    };
+
+                    DailyCountCmd.Parameters.Add(DcReturnValue);
+
+                    DailyCountCmd.ExecuteNonQuery();
+
+                    int DCreturnCode = (int)DailyCountCmd.Parameters["@RETURN_VALUE"].Value;
+
+                    if (DCreturnCode != 1)
+                    {
+                        throw new InvalidOperationException("Something went wrong while inserting the order counts.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Order counts succesfully loaded.");
+                    }
+
 
                 }
             }

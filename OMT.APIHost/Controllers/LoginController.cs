@@ -43,5 +43,13 @@ namespace OMT.APIHost.Controllers
             }
             return result;
         }
+
+        [HttpPost]
+        [Route("Checkin")]
+        public ResultDTO Checkin([FromBody] CheckinoutRequestDTO checkinoutRequestDTO)
+        {
+            return _loginService.Checkin(checkinoutRequestDTO);
+            
+        }
     }
 }

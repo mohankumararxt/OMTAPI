@@ -33,6 +33,7 @@ namespace OMT.DataService.Service
                 string existingSkillSetName = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName && x.SystemofRecordId == skillSetCreateDTO.SystemofRecordId && x.IsActive).Select(_ => _.SkillSetName).FirstOrDefault();
                 if (existingSkillSetName != null)
                 {
+                    resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "The SkillSet already exists. Please try to add different SkillSet.";
                 }
@@ -69,57 +70,54 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                }
-                // send details via mail
-                var url = _emailDetailsSettings.Value.SendEmailURL;
 
-                DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+                    // send details via mail
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
 
-                string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName).Select(x => x.SkillSetName).FirstOrDefault();
-                string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
+                    DateTime uploadeddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                    string skillsetname = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == skillSetCreateDTO.SkillSetName).Select(x => x.SkillSetName).FirstOrDefault();
+                    string username = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName + " " + x.LastName).FirstOrDefault();
 
 
-                IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+                    IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
 
-                List<string> toEmailIds1 = toEmailId.AsEnumerable()
-                                                          .Where(c => !string.IsNullOrEmpty(c.Value))
-                                                          .Select(c => c.Value)
-                                                          .ToList();
+                    List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                              .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                              .Select(c => c.Value)
+                                                              .ToList();
 
-                var skillsetdetails = $"New Skillset named '{skillsetname}' created by {username} at {uploadeddate}.Please Configure the required Invoice details in OMT as soon as possible before processing begins.";
+                    var skillsetdetails = $"New Skillset named '{skillsetname}' created by {username} at {uploadeddate}.Please Configure the required Invoice details in OMT as soon as possible before processing begins.";
 
-                SendEmailDTO sendEmailDTO1 = new SendEmailDTO
-                {
-                    ToEmailIds = toEmailIds1,
-                    Subject = $"Update Invoice details in OMT for newly added skillset - {skillsetname}",
-                    Body = skillsetdetails,
-                };
-                try
-                {
-                    using (HttpClient client = new HttpClient())
+                    SendEmailDTO sendEmailDTO1 = new SendEmailDTO
                     {
-                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
-                        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                        var webApiUrl = new Uri(url);
-                        var response = client.PostAsync(webApiUrl, content).Result;
-
-                        if (response.IsSuccessStatusCode)
+                        ToEmailIds = toEmailIds1,
+                        Subject = $"Update Invoice details in OMT for newly added skillset - {skillsetname}",
+                        Body = skillsetdetails,
+                    };
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
                         {
-                            var responseData = response.Content.ReadAsStringAsync().Result;
+                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+                            var webApiUrl = new Uri(url);
+                            var response = client.PostAsync(webApiUrl, content).Result;
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var responseData = response.Content.ReadAsStringAsync().Result;
+
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
+                    catch (Exception ex)
+                    {
 
-                    throw;
+                        throw;
+                    }
                 }
-
-                resultDTO.Message = "SkillSet created successfully";
-                resultDTO.StatusCode = "200";
-                resultDTO.IsSuccess = true;
 
             }
             catch (Exception ex)
@@ -844,7 +842,7 @@ namespace OMT.DataService.Service
                                         join tl in _oMTDataContext.Timeline on ss.SkillSetId equals tl.SkillSetId
                                         join sr in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sr.SystemofRecordId
                                         where ss.IsActive && tl.IsActive && sr.IsActive
-                                        orderby sr.SystemofRecordName,ss.SkillSetName
+                                        orderby sr.SystemofRecordName, ss.SkillSetName
                                         select new
                                         {
                                             ss.SkillSetId,
@@ -908,10 +906,10 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var ProjectNameList = (from mpn in _oMTDataContext.MasterProjectName 
+                var ProjectNameList = (from mpn in _oMTDataContext.MasterProjectName
                                        join ss in _oMTDataContext.SkillSet on mpn.SkillSetId equals ss.SkillSetId
                                        where ss.IsActive && mpn.IsActive
-                                       orderby ss.SystemofRecordId,ss.SkillSetName,mpn.ProjectName
+                                       orderby ss.SystemofRecordId, ss.SkillSetName, mpn.ProjectName
                                        select new
                                        {
                                            mpn.MasterProjectNameId,
@@ -921,12 +919,12 @@ namespace OMT.DataService.Service
                                            mpn.ProjectName
                                        }).ToList();
 
-                if(skillsetid != null)
+                if (skillsetid != null)
                 {
                     ProjectNameList = ProjectNameList.Where(t => t.SkillSetId == skillsetid.Value).ToList();
                 }
 
-                var groupedProjectnames = ProjectNameList.GroupBy(t => new {t.SkillSetId,t.SkillSetName})
+                var groupedProjectnames = ProjectNameList.GroupBy(t => new { t.SkillSetId, t.SkillSetName })
                                                          .Select(g => new GetProjectNameListDTO
                                                          {
                                                              MasterProjectNameId = g.Select(t => t.MasterProjectNameId).FirstOrDefault(),
