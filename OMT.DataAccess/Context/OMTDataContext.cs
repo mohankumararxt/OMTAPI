@@ -79,6 +79,8 @@ namespace OMT.DataAccess.Context
         public DbSet<MonthlyCount_SkillSet> MonthlyCount_SkillSet { get; set; }
         public DbSet<MonthlyCount_SOR> MonthlyCount_SOR { get; set; }
         public DbSet<AutomaticFlow> AutomaticFlow { get; set; }
+        public DbSet<OmtMenus> OmtMenus { get; set; }
+        public DbSet<OmtMenus_Distribution> OmtMenus_Distribution { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

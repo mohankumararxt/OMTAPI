@@ -22,24 +22,70 @@ namespace OMT.DataService.Service
             {
                 string encryptedPassword = Encryption.EncryptPlainTextToCipherText(loginRequestDTO.Password);
 
-                LoginResponseDTO loginResponseDTO = (from up in _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword && x.IsActive)
-                                                     join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
-                                                     select new LoginResponseDTO()
-                                                     {
-                                                         Email = up.Email,
-                                                         FirstName = up.FirstName,
-                                                         Mobile = up.Mobile,
-                                                         OrganizationId = up.OrganizationId,
-                                                         UserId = up.UserId,
-                                                         RoleId = up.RoleId,
-                                                         Role = r.RoleName,
-                                                         Checked_In = _oMTDataContext.User_Checkin
-                                                        .Any(uc => uc.UserId == up.UserId && uc.Checkin != null && uc.Checkout == null)
-                                                     }).FirstOrDefault();
+                //var omtmenus = 
+
+                //LoginResponseDTO loginResponseDTO = (from up in _oMTDataContext.UserProfile.Where(x => x.Email == loginRequestDTO.Email && x.Password == encryptedPassword && x.IsActive)
+                //                                     join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                //                                     select new LoginResponseDTO()
+                //                                     {
+                //                                         Email = up.Email,
+                //                                         FirstName = up.FirstName,
+                //                                         Mobile = up.Mobile,
+                //                                         OrganizationId = up.OrganizationId,
+                //                                         UserId = up.UserId,
+                //                                         RoleId = up.RoleId,
+                //                                         Role = r.RoleName,
+                //                                         Checked_In = _oMTDataContext.User_Checkin
+                //                                        .Any(uc => uc.UserId == up.UserId && uc.Checkin != null && uc.Checkout == null)
+                //                                      }).FirstOrDefault();
+
+
+                var user = (from up in _oMTDataContext.UserProfile
+                            join r in _oMTDataContext.Roles on up.RoleId equals r.RoleId
+                            where up.Email == loginRequestDTO.Email
+                                  && up.Password == encryptedPassword
+                                  && up.IsActive && r.IsActive
+                            select new
+                            {
+                                up.Email,
+                                up.FirstName,
+                                up.Mobile,
+                                up.OrganizationId,
+                                up.UserId,
+                                up.RoleId,
+                                Role = r.RoleName
+                            }).FirstOrDefault();
+
+                LoginResponseDTO loginResponseDTO = null;
+
+                if (user != null)
+                {
+                    var menuNames = (from od in _oMTDataContext.OmtMenus_Distribution
+                                     join m in _oMTDataContext.OmtMenus on od.OmtMenus_Id equals m.OmtMenus_Id
+                                     where od.RoleId == user.RoleId && od.IsActive && m.IsActive
+                                     select m.OmtMenus_Name).Distinct().ToList();
+
+                    loginResponseDTO = new LoginResponseDTO
+                    {
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        Mobile = user.Mobile,
+                        OrganizationId = user.OrganizationId,
+                        UserId = user.UserId,
+                        RoleId = user.RoleId,
+                        Role = user.Role,
+                        Checked_In = _oMTDataContext.User_Checkin
+                            .Any(uc => uc.UserId == user.UserId && uc.Checkin != null && uc.Checkout == null),
+                        OmtMenus = menuNames
+                    };
+                }
+
 
                 if (loginResponseDTO != null)
                 {
                     resultDTO.Data = loginResponseDTO;
+                    resultDTO.Message = "Logged in successfully";
+                    resultDTO.IsSuccess = true;
                 }
                 else
                 {
