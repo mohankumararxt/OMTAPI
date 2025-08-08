@@ -83,6 +83,8 @@ builder.Services.Configure<JwtAuthSettings>(builder.Configuration.GetSection("Au
 builder.Services.Configure<TrdStatusSettings>(builder.Configuration.GetSection("TRDconfig")); //for trd statusid
 builder.Services.Configure<EmailDetailsSettings>(builder.Configuration.GetSection("EmailConfig:Common")); //for sending email
 builder.Services.Configure<BasicAuthCredential>(builder.Configuration.GetSection("BasicAuthCredential"));
+builder.Services.Configure<ResetPasswordSettings>(builder.Configuration.GetSection("ResetPassword"));
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

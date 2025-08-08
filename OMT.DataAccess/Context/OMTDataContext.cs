@@ -81,6 +81,7 @@ namespace OMT.DataAccess.Context
         public DbSet<AutomaticFlow> AutomaticFlow { get; set; }
         public DbSet<OmtMenus> OmtMenus { get; set; }
         public DbSet<OmtMenus_Distribution> OmtMenus_Distribution { get; set; }
+        public DbSet<PasswordResetTokens> PasswordResetTokens { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

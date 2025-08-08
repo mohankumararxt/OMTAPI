@@ -1,18 +1,27 @@
-﻿using OMT.DataAccess.Context;
+﻿using Microsoft.Extensions.Options;
+using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
+using OMT.DataService.Settings;
 using OMT.DataService.Utility;
 using OMT.DTO;
+using System.Text;
 
 namespace OMT.DataService.Service
 {
     public class LoginService : ILoginService
     {
         private readonly OMTDataContext _oMTDataContext;
-        public LoginService(OMTDataContext oMTDataContext)
+        private readonly IOptions<ResetPasswordSettings> _resetpasswordsettings;
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        public LoginService(OMTDataContext oMTDataContext, IOptions<EmailDetailsSettings> emailDetailsSettings, IOptions<ResetPasswordSettings> resetPasswordSettings)
         {
             _oMTDataContext = oMTDataContext;
+            _emailDetailsSettings = emailDetailsSettings;
+            _resetpasswordsettings = resetPasswordSettings;
         }
+
+
 
         public ResultDTO Login(LoginRequestDTO loginRequestDTO)
         {
@@ -156,6 +165,170 @@ namespace OMT.DataService.Service
                 resultDTO.Data = responseDTO;
                 resultDTO.Message = "Checkin / checkout successful";
                 resultDTO.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ForgotPassword(ForgotPasswordRequestDTO forgotPasswordRequestDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var user = _oMTDataContext.UserProfile.Where(x => x.Email == forgotPasswordRequestDTO.EmailId && x.IsActive).FirstOrDefault();
+
+                if (user != null)
+                {
+                    string token = Guid.NewGuid().ToString();
+
+                    var resetpassword = new PasswordResetTokens
+                    {
+                        UserId = user.UserId,
+                        GuId = token,
+                        LinkSentDate = DateTime.UtcNow,
+                        IsUsed = false,
+                        ResetDate = null
+                    };
+
+                    _oMTDataContext.PasswordResetTokens.Add(resetpassword);
+                    _oMTDataContext.SaveChanges();
+
+
+                    string resetUrl1 = _resetpasswordsettings.Value.ResetPasswordURL;
+
+                    string resetUrl2 = resetUrl1 + "{" + token + "}";
+
+                    List<string> toEmailIds1 = new List<string>
+                    {
+                        forgotPasswordRequestDTO.EmailId
+                    };
+
+                    SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                    {
+                        ToEmailIds = toEmailIds1,
+                        Subject = "Password Reset Link",
+                        Body = "Please click the reset link given below to reset your password:\n" + resetUrl2
+
+                    };
+
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                            var webApiUrl = new Uri(url);
+                            var response = client.PostAsync(webApiUrl, content).Result;
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var responseData = response.Content.ReadAsStringAsync().Result;
+
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                        throw;
+                    }
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "We've sent a password reset link to your email address. Please check your inbox to proceed.";
+
+
+                }
+                else
+                {
+                    resultDTO.Message = "Invalid Email Id. Please check your credentials.";
+                    resultDTO.IsSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ValidateGuId(ValidateGuIdDTO validateGuIdDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var guid_validity = _oMTDataContext.PasswordResetTokens.Where(x => x.GuId == validateGuIdDTO.GuId && !x.IsUsed).FirstOrDefault();
+
+                if (guid_validity != null)
+                {
+                    var userdetails = _oMTDataContext.UserProfile.Where(x => x.UserId == guid_validity.UserId && x.IsActive).FirstOrDefault();
+
+                    resultDTO.Data = userdetails.Email;
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Please fill the required details to reset the password";
+                }
+                else
+                {
+                    resultDTO.Message = "This reset password link has expired.";
+                    resultDTO.IsSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO ResetPassword(ResetPasswordDTO resetPasswordDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string encryptedPassword = Encryption.EncryptPlainTextToCipherText(resetPasswordDTO.NewPassword);
+
+                var userdetails = _oMTDataContext.UserProfile.Where(x => x.Email == resetPasswordDTO.Email && x.IsActive).FirstOrDefault();
+
+                if(userdetails != null)
+                {
+                    userdetails.Password = encryptedPassword;
+
+                    _oMTDataContext.UserProfile.Update(userdetails);
+                    _oMTDataContext.SaveChanges();
+
+                    var reset = _oMTDataContext.PasswordResetTokens.Where(x => x.GuId == resetPasswordDTO.GuId && !x.IsUsed).FirstOrDefault();
+
+                    if(reset != null)
+                    {
+                        reset.ResetDate = DateTime.UtcNow;
+                        reset.IsUsed = true;
+
+                        _oMTDataContext.PasswordResetTokens.Update(reset);
+                        _oMTDataContext.SaveChanges();
+                    }
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Password has been reset successfully.";
+                }
+
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Error fetching account detials.";
+                }
             }
             catch (Exception ex)
             {

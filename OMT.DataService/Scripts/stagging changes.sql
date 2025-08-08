@@ -6027,3 +6027,18 @@
 --(3,44,1),
 --(3,48,1),
 --(3,52,1)
+
+
+
+----------------------------forgot password----------------------
+
+--CREATE TABLE PasswordResetTokens (
+--    Id INT IDENTITY(1,1) PRIMARY KEY,
+--    UserId INT NOT NULL,
+--	  GuId NVARCHAR(500) NOT NULL,
+--    LinkSentDate DATETIME NOT NULL,
+--    ResetDate DATETIME,
+--    IsUsed BIT DEFAULT 0,
+--    CONSTRAINT FK_User FOREIGN KEY (UserId) REFERENCES UserProfile(UserId)
+--);
+
