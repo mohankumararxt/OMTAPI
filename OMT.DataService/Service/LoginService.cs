@@ -202,7 +202,7 @@ namespace OMT.DataService.Service
 
                     string resetUrl1 = _resetpasswordsettings.Value.ResetPasswordURL;
 
-                    string resetUrl2 = resetUrl1 + "{" + token + "}";
+                    string resetUrl2 = resetUrl1 +  token ;
 
                     List<string> toEmailIds1 = new List<string>
                     {
