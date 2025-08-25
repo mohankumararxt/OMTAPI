@@ -38,13 +38,15 @@ namespace OMT.DataService.Service
         private readonly IOptions<TrdStatusSettings> _authSettings;
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
         private readonly IConfiguration _configuration;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings)
+        private readonly IOptions<MoveToSecondKeySettings> _moveToSecondKeySettings;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings,IOptions<MoveToSecondKeySettings> moveToSecondKeySettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
             _emailDetailsSettings = emailDetailsSettings;
             _configuration = configuration;
             _hastatusSettings = hastatusSettings;
+            _moveToSecondKeySettings = moveToSecondKeySettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -1272,6 +1274,8 @@ namespace OMT.DataService.Service
                                                   {
                                                       FromSkillset = ssFrom.SkillSetName,
                                                       ToSkillset = ssTo.SkillSetName,
+                                                      FromSkillsetid = ssFrom.SkillSetId,
+                                                      ToSkillsetid = ssTo.SkillSetId
                                                   }).FirstOrDefault();
 
                                 string verificationTableName = tablenames.ToSkillset;
@@ -1296,7 +1300,7 @@ namespace OMT.DataService.Service
 
                                 using SqlCommand updatesqlcmd = connection.CreateCommand();
 
-                                if (verificationTableName.Equals("LR_Verification", StringComparison.OrdinalIgnoreCase))
+                                if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table1, StringComparison.OrdinalIgnoreCase))
                                 {
                                     updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer, First_Keyed_Date = @First_Keyed_Date, First_Key_Status = @First_Key_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
 
@@ -1307,7 +1311,7 @@ namespace OMT.DataService.Service
                                     updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
                                 }
 
-                                else if (verificationTableName.Equals("Bana_Accelerate_Not_Keyed_1st_Key_Verification", StringComparison.OrdinalIgnoreCase))
+                                else if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table2, StringComparison.OrdinalIgnoreCase))
                                 {
                                     updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer,  First_Keyer_Status = @First_Keyer_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
 
@@ -1320,6 +1324,29 @@ namespace OMT.DataService.Service
 
                                 updatesqlcmd.CommandText = updatesql;
                                 updatesqlcmd.ExecuteNonQuery();
+
+                                // update the count of orders to daily & monthly count sor and skillset table
+
+                                int orderCount = 1;
+                                int systemofrecordid = 1;
+
+                                SqlCommand DailyCountCmd = new SqlCommand("UpdateDailyOrderCount", connection);
+                                DailyCountCmd.CommandType = CommandType.StoredProcedure;
+                                DailyCountCmd.Parameters.AddWithValue("@SkillSetId", tablenames.ToSkillsetid);
+                                DailyCountCmd.Parameters.AddWithValue("@SystemOfRecordId", systemofrecordid);
+                                DailyCountCmd.Parameters.AddWithValue("@OrderCount", orderCount);
+
+                                SqlParameter DcReturnValue = new SqlParameter
+                                {
+                                    ParameterName = "@RETURN_VALUE",
+                                    Direction = ParameterDirection.ReturnValue
+                                };
+
+                                DailyCountCmd.Parameters.Add(DcReturnValue);
+
+                                DailyCountCmd.ExecuteNonQuery();
+
+                                int DCreturnCode = (int)DailyCountCmd.Parameters["@RETURN_VALUE"].Value;
 
                             }
 
