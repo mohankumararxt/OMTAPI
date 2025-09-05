@@ -6042,3 +6042,14 @@
 --    CONSTRAINT FK_User FOREIGN KEY (UserId) REFERENCES UserProfile(UserId)
 --);
 
+---------------------------monthly utilization----------------------
+
+--CREATE TABLE Monthly_Utilization (
+--    Id INT IDENTITY(1,1) PRIMARY KEY,
+--    UserId INT NOT NULL,
+--	  GuId NVARCHAR(500) NOT NULL,
+--    LinkSentDate DATETIME NOT NULL,
+--    ResetDate DATETIME,
+--    IsUsed BIT DEFAULT 0,
+--    CONSTRAINT FK_User FOREIGN KEY (UserId) REFERENCES UserProfile(UserId)
+--);
