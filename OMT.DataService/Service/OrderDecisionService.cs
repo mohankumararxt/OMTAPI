@@ -1316,34 +1316,33 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    // Check if orders Exist in invoice 
                     string tableName = skillset.Tablename;
 
-                    string inv_query = $"SELECT OrderId FROM InvoiceDump WHERE Skillset = '{tableName}' and OrderId = @OrderId";
+                    //string inv_query = $"SELECT OrderId FROM InvoiceDump WHERE Skillset = '{tableName}' and OrderId = @OrderId";
 
-                    using (SqlCommand command = new SqlCommand(inv_query, connection))
-                    {
+                    //using (SqlCommand command = new SqlCommand(inv_query, connection))
+                    //{
 
-                        command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                    //    command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
 
-                        using SqlDataAdapter Inv_dataAdapter = new SqlDataAdapter(command);
+                    //    using SqlDataAdapter Inv_dataAdapter = new SqlDataAdapter(command);
 
-                        DataSet inDS = new DataSet();
+                    //    DataSet inDS = new DataSet();
 
-                        Inv_dataAdapter.Fill(inDS);
+                    //    Inv_dataAdapter.Fill(inDS);
 
-                        DataTable inv_datatable = inDS.Tables[0];
+                    //    DataTable inv_datatable = inDS.Tables[0];
 
-                        var inv_dt = inv_datatable.AsEnumerable()
-                                      .Select(row => inv_datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                          column => column.ColumnName,
-                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+                    //    var inv_dt = inv_datatable.AsEnumerable()
+                    //                  .Select(row => inv_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                    //                      column => column.ColumnName,
+                    //                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
 
-                        // if yes dont allow to update
-                        if (inv_dt.Count > 0)
-                        {
-                            editable = false;
-                        }
+                    //    // if yes dont allow to update
+                    //    if (inv_dt.Count > 0)
+                    //    {
+                    //        editable = false;
+                    //    }
 
                         // allow to edit only if completiondate <= endtime and >= startime and DateTime.UtcNow < endtime
                         if (editable)
@@ -1433,7 +1432,7 @@ namespace OMT.DataService.Service
                             resultDTO.Message = "The order has already moved to invoice, you can't update the status anymore.";
                         }
                     }
-                }
+                //}
                 else
                 {
                     resultDTO.StatusCode = "404";

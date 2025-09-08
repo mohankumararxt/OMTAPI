@@ -58,5 +58,13 @@ namespace OMT.APIHost.Controllers
         {
             return _dashboardScreensService.GetMonthlyVolumeTrend(monthlyVolumeTrendDTO);
         }
+
+        [HttpPost]
+        [Route("GetMonthlyUtilization")]
+
+        public ResultDTO GetMonthlyUtilization(MonthlyUtilizationSorDTO monthlyUtilizationSorDTO)
+        {
+            return _dashboardScreensService.GetMonthlyUtilization(monthlyUtilizationSorDTO);
+        }
     }
 }

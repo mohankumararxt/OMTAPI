@@ -6044,12 +6044,54 @@
 
 ---------------------------monthly utilization----------------------
 
---CREATE TABLE Monthly_Utilization (
---    Id INT IDENTITY(1,1) PRIMARY KEY,
---    UserId INT NOT NULL,
---	  GuId NVARCHAR(500) NOT NULL,
---    LinkSentDate DATETIME NOT NULL,
---    ResetDate DATETIME,
---    IsUsed BIT DEFAULT 0,
---    CONSTRAINT FK_User FOREIGN KEY (UserId) REFERENCES UserProfile(UserId)
+--CREATE TABLE Monthly_Utilization_SOR (
+--Monthly_Utilization_SORId INT IDENTITY(1,1) PRIMARY KEY,
+--SystemofRecordId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Utilization INT NOT NULL,
+--CONSTRAINT FK_Monthly_Utilization_SOR_SystemofRecordId FOREIGN KEY (SystemofRecordId) REFERENCES SystemofRecord(SystemofRecordId)
 --);
+
+
+--insert into Monthly_Utilization_SOR values
+--(3,10,2024,50),
+--(3,11,2024,50),
+--(3,12,2025,60),
+--(3,1,2025,10),
+--(3,2,2025,20),
+--(3,3,2025,15),
+--(3,4,2025,16),
+--(3,5,2025,17),
+--(3,6,2025,18),
+--(3,7,2025,50),
+--(3,8,2025,40),
+--(3,9,2025,50)
+
+--insert into Monthly_Utilization_SOR values
+--(2,10,2024,30),
+--(2,11,2024,30),
+--(2,12,2025,30),
+--(2,1,2025,30),
+--(2,2,2025,20),
+--(2,3,2025,55),
+--(2,4,2025,66),
+--(2,5,2025,37),
+--(2,6,2025,28),
+--(2,7,2025,70),
+--(2,8,2025,40),
+--(2,9,2025,70)
+
+--insert into Monthly_Utilization_SOR values
+--(1,10,2024,20),
+--(1,11,2024,20),
+--(1,12,2025,20),
+--(1,1,2025,40),
+--(1,2,2025,10),
+--(1,3,2025,25),
+--(1,4,2025,36),
+--(1,5,2025,77),
+--(1,6,2025,48),
+--(1,7,2025,90),
+--(1,8,2025,60),
+--(1,9,2025,20)

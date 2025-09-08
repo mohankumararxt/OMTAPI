@@ -693,5 +693,149 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetMonthlyUtilization(MonthlyUtilizationSorDTO monthlyUtilizationSorDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                DateTime today = DateTime.Today;
+
+                DateTime startDate = today.AddMonths(-12).AddDays(1);
+                DateTime endDate = today;
+
+                List<(int Year, int Month)> yearMonthList = new List<(int, int)>();
+
+                DateTime iterDate = new DateTime(startDate.Year, startDate.Month, 1);
+                DateTime endMonth = new DateTime(endDate.Year, endDate.Month, 1);
+
+                while (iterDate <= endMonth)
+                {
+                    yearMonthList.Add((iterDate.Year, iterDate.Month));
+                    iterDate = iterDate.AddMonths(1);
+                }
+
+                MonthlyUtilizationSorResponseDTO monthlyUtilizationSorResponseDTO = new MonthlyUtilizationSorResponseDTO();
+                List<MonthlyUtilizationSorResponseDTO> monthly_util = new List<MonthlyUtilizationSorResponseDTO>();
+
+                List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
+
+                if (monthlyUtilizationSorDTO.SystemOfRecordId == null)
+                {
+                    foreach (int sorid in SOR)
+                    {
+                        var monthly_count = _oMTDataContext.Monthly_Utilization_SOR
+                                                                       .Where(x => x.SystemofRecordId == sorid)
+                                                                       .AsEnumerable()
+                                                                       .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                       .ToList();
+
+
+                        var monthlyUtilization = monthly_count
+                            .GroupBy(x => new { x.Year, x.Month })
+                            .Select(g => new
+                            {
+                                Year = g.Key.Year,
+                                Month = g.Key.Month,
+                                Count = g.Sum(x => x.Utilization)
+                            })
+                            .ToList();
+
+                        monthlyUtilizationSorResponseDTO = new MonthlyUtilizationSorResponseDTO()
+                        {
+                            SystemOfRecordId = sorid,
+                            SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == sorid).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                            Monthly_Utilization = monthlyUtilization
+                                                                         .Select(m => new MonthCountDTO
+                                                                         {
+                                                                             Year = m.Year,
+                                                                             Month = m.Month,
+                                                                             Count = m.Count
+                                                                         }).ToList()
+
+                        };
+
+                        monthly_util.Add(monthlyUtilizationSorResponseDTO);
+                    }
+
+                    if (monthly_util.Count > 0)
+                    {
+                        resultDTO.Data = monthly_util;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Monthly volume trend fetched successfully";
+                    }
+
+                    else
+                    {
+                        resultDTO.Message = "Monthly volume trend count not found.";
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                    }
+                }
+
+                else if (monthlyUtilizationSorDTO.SystemOfRecordId.Count > 0)
+                {
+                    foreach (int sorid in monthlyUtilizationSorDTO.SystemOfRecordId)
+                    {
+                        var monthly_count = _oMTDataContext.Monthly_Utilization_SOR
+                                                                       .Where(x => x.SystemofRecordId == sorid)
+                                                                       .AsEnumerable()
+                                                                       .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                       .ToList();
+
+
+                        var monthly_utilization = monthly_count
+                            .GroupBy(x => new { x.Year, x.Month })
+                            .Select(g => new
+                            {
+                                Year = g.Key.Year,
+                                Month = g.Key.Month,
+                                Count = g.Sum(x => x.Utilization)
+                            })
+                            .ToList();
+
+                        monthlyUtilizationSorResponseDTO = new MonthlyUtilizationSorResponseDTO()
+                        {
+                            SystemOfRecordId = sorid,
+                            SystemOfRecordName = _oMTDataContext.SystemofRecord.Where(x => x.SystemofRecordId == sorid).Select(x => x.SystemofRecordName).FirstOrDefault(),
+                            Monthly_Utilization = monthly_utilization
+                                                                         .Select(m => new MonthCountDTO
+                                                                         {
+                                                                             Year = m.Year,
+                                                                             Month = m.Month,
+                                                                             Count = m.Count
+                                                                         }).ToList()
+
+                        };
+
+                        monthly_util.Add(monthlyUtilizationSorResponseDTO);
+                    }
+
+                    if (monthly_util.Count > 0)
+                    {
+                        resultDTO.Data = monthly_util;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Monthly volume trend fetched successfully";
+                    }
+
+                    else
+                    {
+                        resultDTO.Message = "Monthly volume trend count not found.";
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
