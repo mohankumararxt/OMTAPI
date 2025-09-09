@@ -102,6 +102,34 @@ namespace ProductivityUtilization
 
                     }
 
+                    //calculate monthly sor utilization
+
+                    using (SqlCommand spCommand3 = new SqlCommand("Update_Monthly_Utilization_SOR", connection))
+                    {
+                        spCommand3.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter returnValue2 = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        spCommand3.Parameters.Add(returnValue2);
+                        spCommand3.ExecuteNonQuery();
+
+                        int returnCode2 = (int)spCommand3.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode2 != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Monthly_Utilization_SOR table updated successfully.");
+                        }
+
+                    }
+
                 }
             }
             catch (Exception ex)
