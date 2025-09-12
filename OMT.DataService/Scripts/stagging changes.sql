@@ -5375,6 +5375,7 @@
 
 --change all getorder sp's
 
+
 -----------------------------------------drag n drop---------------------------------
 --alter table userskillset
 --add PriorityOrder int 
@@ -6095,3 +6096,56 @@
 --(1,7,2025,90),
 --(1,8,2025,60),
 --(1,9,2025,20)
+
+
+
+--------------------------------trd webscarppingtime capture ------------------------------
+
+--insert into defaulttemplatecolumns values
+--(3,'Order_Intime','DateTime',1,0,0,0,0)
+
+
+-------for all skillsets add Order_Intime column------------
+
+
+--alter table AB8030122IM_ASSIGNMENT  add Order_Intime DATETIME 
+--alter table AB8030122IM_CEMA  add Order_Intime DATETIME 
+--alter table AB8030122IM_Collateral_File  add Order_Intime DATETIME 
+--alter table AB8030122IM_COOP  add Order_Intime DATETIME 
+
+
+--alter sp createtrddetails
+
+
+-----------------------------------------------RIC and RICAOM CHANGES-----------------------------
+
+--insert into templatecolumns values(
+--673,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table RIC
+--add Ha_Status int 
+
+--ALTER TABLE RIC 
+--ADD CONSTRAINT DF_RIC_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update ric set ha_status = 0
+
+--insert into templatecolumns values(
+--674,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table RICAOM
+--add Ha_Status int 
+
+--ALTER TABLE RICAOM
+--ADD CONSTRAINT DF_RICAOM_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update RICAOM set ha_status = 0
+
+
+--alter insert data sp
+--alter GetOrderByPo_Threshold sp
+--alter [dbo].[GetOrderByHardstate_Threshold] sp
+--alter [dbo].[GetOrderByWeightage_Threshold] sp
+
