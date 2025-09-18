@@ -6149,3 +6149,15 @@
 --alter [dbo].[GetOrderByHardstate_Threshold] sp
 --alter [dbo].[GetOrderByWeightage_Threshold] sp
 
+
+-----------------------------------------backup skillset tables data----------------------
+
+--alter table skillset 
+--add RetentionMonths int
+
+------------------------new productivity changes-----------------------
+
+--alter table User_Checkin 
+--add CheckIn_date date
+
+
