@@ -81,3 +81,10 @@
 /PendingSciOrders/obj/PendingSciOrders.csproj.nuget.g.props
 /PendingSciOrders/obj/project.assets.json
 /PendingSciOrders/obj/project.nuget.cache
+/CheckOut/obj
+/Automatic_Checkout_1.30pm/bin/Debug/net472
+/Automatic_Checkout_1.30pm/obj
+/DailyStatusCountCalc/obj
+/PendingSciOrders/obj/Release/net472
+/.gitignore
+/.gitignore

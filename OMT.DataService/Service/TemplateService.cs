@@ -39,7 +39,7 @@ namespace OMT.DataService.Service
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
         private readonly IConfiguration _configuration;
         private readonly IOptions<MoveToSecondKeySettings> _moveToSecondKeySettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings,IOptions<MoveToSecondKeySettings> moveToSecondKeySettings)
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings, IOptions<MoveToSecondKeySettings> moveToSecondKeySettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
@@ -1077,359 +1077,370 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                // check if user has trd skillsets
-                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == updateOrderStatusDTO.UserId && uc.Checkin != null && uc.Checkout == null);
 
-                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
-                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                             where us.UserId == updateOrderStatusDTO.UserId && us.IsActive && ss.SystemofRecordId == 3
-                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                             select ss.SkillSetName).ToList();
-
-                bool ispending = false;
-
-                if (trdskillsets.Count > 0)
+                if (!user_Checkedin)
                 {
-                    ispending = true;
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Please check in to process orders.";
+                    resultDTO.StatusCode = "404";
                 }
-
-                pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                else
                 {
-                    IsPending = ispending,
-                    // PendingOrder = null
-                    AssignedOrder = null
-                };
 
-                // check if the skillset has template 
+                    // check if user has trd skillsets
+                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
 
-                var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
+                    List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                                 join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                 where us.UserId == updateOrderStatusDTO.UserId && us.IsActive && ss.SystemofRecordId == 3
+                                                 && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                 select ss.SkillSetName).ToList();
 
-                var exist = (from tc in _oMTDataContext.TemplateColumns
-                             join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
-                             where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && tc.SkillSetId == updateOrderStatusDTO.SkillSetId && ss.IsActive
-                             select new
-                             {
-                                 SkillSetName = ss.SkillSetName
-                             }).FirstOrDefault();
+                    bool ispending = false;
 
-                string timetaken = "";
-                DateTime dateTime = DateTime.UtcNow;
-
-                if (exist != null)
-                {
-                    string sql = $"SELECT * FROM {exist.SkillSetName} WHERE Id = @Id";
-
-                    using SqlCommand cmd = connection.CreateCommand();
-
-                    cmd.CommandText = sql;
-                    cmd.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                    cmd.ExecuteNonQuery();
-
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(cmd);
-
-                    DataSet dataset = new DataSet();
-
-                    dataAdapter.Fill(dataset);
-
-                    DataTable datatable = dataset.Tables[0];
-
-                    var querydt1 = datatable.AsEnumerable()
-                                    .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                        column => column.ColumnName,
-                                        column => row[column] == DBNull.Value ? string.Empty : row[column])).ToList();
-
-                    if (querydt1.Count > 0)
+                    if (trdskillsets.Count > 0)
                     {
+                        ispending = true;
+                    }
 
-                        var starttime = querydt1[0]["StartTime"]?.ToString();
-                        var orderid = querydt1[0]["OrderId"]?.ToString();
-                        var status = updateOrderStatusDTO.StatusId;
-                        //var allocationdate_string = querydt1[0]["AllocationDate"]?.ToString();
-                        //var allocationdate = (DateTime)querydt1[0]["AllocationDate"];
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = ispending,
+                        // PendingOrder = null
+                        AssignedOrder = null
+                    };
 
-                        DateTime? allocationdate = null;
+                    // check if the skillset has template 
 
-                        var rawDate = querydt1[0]["AllocationDate"]?.ToString();
+                    var table = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == updateOrderStatusDTO.SkillSetId && x.IsActive).Select(_ => new { _.SkillSetName, _.SystemofRecordId }).FirstOrDefault();
 
-                        if (!string.IsNullOrWhiteSpace(rawDate))
+                    var exist = (from tc in _oMTDataContext.TemplateColumns
+                                 join ss in _oMTDataContext.SkillSet on tc.SkillSetId equals ss.SkillSetId
+                                 where _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) && tc.SkillSetId == updateOrderStatusDTO.SkillSetId && ss.IsActive
+                                 select new
+                                 {
+                                     SkillSetName = ss.SkillSetName
+                                 }).FirstOrDefault();
+
+                    string timetaken = "";
+                    DateTime dateTime = DateTime.UtcNow;
+
+                    if (exist != null)
+                    {
+                        string sql = $"SELECT * FROM {exist.SkillSetName} WHERE Id = @Id";
+
+                        using SqlCommand cmd = connection.CreateCommand();
+
+                        cmd.CommandText = sql;
+                        cmd.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                        cmd.ExecuteNonQuery();
+
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(cmd);
+
+                        DataSet dataset = new DataSet();
+
+                        dataAdapter.Fill(dataset);
+
+                        DataTable datatable = dataset.Tables[0];
+
+                        var querydt1 = datatable.AsEnumerable()
+                                        .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                            column => column.ColumnName,
+                                            column => row[column] == DBNull.Value ? string.Empty : row[column])).ToList();
+
+                        if (querydt1.Count > 0)
                         {
-                            allocationdate = Convert.ToDateTime(rawDate);
-                        }
 
+                            var starttime = querydt1[0]["StartTime"]?.ToString();
+                            var orderid = querydt1[0]["OrderId"]?.ToString();
+                            var status = updateOrderStatusDTO.StatusId;
+                            //var allocationdate_string = querydt1[0]["AllocationDate"]?.ToString();
+                            //var allocationdate = (DateTime)querydt1[0]["AllocationDate"];
 
+                            DateTime? allocationdate = null;
 
-                        if (!string.IsNullOrEmpty(starttime))
-                        {
-                            DateTime startDateTime;
-                            if (DateTime.TryParse(starttime, out startDateTime))
+                            var rawDate = querydt1[0]["AllocationDate"]?.ToString();
+
+                            if (!string.IsNullOrWhiteSpace(rawDate))
                             {
-                                // Calculate the difference
-                                TimeSpan difference = dateTime - startDateTime;
-                                timetaken = difference.ToString(@"hh\:mm\:ss");
-
+                                allocationdate = Convert.ToDateTime(rawDate);
                             }
-                        }
-
-                        string sql1 = "";
 
 
-                        using (SqlCommand command = connection.CreateCommand())
-                        {
-                            if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
+
+                            if (!string.IsNullOrEmpty(starttime))
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
-                                command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
+                                DateTime startDateTime;
+                                if (DateTime.TryParse(starttime, out startDateTime))
+                                {
+                                    // Calculate the difference
+                                    TimeSpan difference = dateTime - startDateTime;
+                                    timetaken = difference.ToString(@"hh\:mm\:ss");
+
+                                }
                             }
-                            else if (table.SystemofRecordId == 4 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
+
+                            string sql1 = "";
+
+
+                            using (SqlCommand command = connection.CreateCommand())
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
-                                command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
-                                command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
+                                if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
+                                {
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
+                                    command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
+                                }
+                                else if (table.SystemofRecordId == 4 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
+                                {
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
+                                    command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
+                                    command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
+                                }
+                                else
+                                {
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken WHERE Id = @ID";
+                                }
+
+                                command.CommandText = sql1;
+
+                                // Add common parameters
+                                command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
+                                command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
+                                command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                                command.Parameters.AddWithValue("@EndTime", dateTime);
+                                command.Parameters.AddWithValue("@CompletionDate", dateTime);
+                                command.Parameters.AddWithValue("@TimeTaken", timetaken);
+
+                                // Execute the query
+                                command.ExecuteNonQuery();
                             }
-                            else
+
+                            resultDTO.Message = "Order status has been updated successfully";
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Data = pendingOrdersResponseDTO;
+
+                            // capture details of order in Prod_Util_Tracker table 
+
+                            InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
+
+                            DateTime lowerBound = dateTime.Date.AddDays(-1).Add(invoiceTiming.StartTime);
+                            DateTime upperBound = dateTime.Date.Add(invoiceTiming.EndTime);
+
+                            DateTime productivity_date = (dateTime >= lowerBound && dateTime <= upperBound)
+                                ? dateTime.Date.AddDays(-1)
+                                : dateTime.Date;
+
+                            Prod_Util_Tracker prod_Util_Tracker = new Prod_Util_Tracker()
                             {
-                                sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken WHERE Id = @ID";
-                            }
+                                UserId = updateOrderStatusDTO.UserId,
+                                OrderId = orderid,
+                                Status = status,
+                                SkillSetId = updateOrderStatusDTO.SkillSetId,
+                                SystemofRecordId = table.SystemofRecordId,
+                                StartDate = DateTime.Parse(starttime),
+                                EndDate = dateTime,
+                                TimeTaken = TimeSpan.Parse(timetaken),
+                                Productivity_Date = productivity_date
 
-                            command.CommandText = sql1;
+                            };
 
-                            // Add common parameters
-                            command.Parameters.AddWithValue("@Status", updateOrderStatusDTO.StatusId);
-                            command.Parameters.AddWithValue("@Remarks", updateOrderStatusDTO.Remarks);
-                            command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                            command.Parameters.AddWithValue("@EndTime", dateTime);
-                            command.Parameters.AddWithValue("@CompletionDate", dateTime);
-                            command.Parameters.AddWithValue("@TimeTaken", timetaken);
+                            _oMTDataContext.Prod_Util_Tracker.Add(prod_Util_Tracker);
+                            _oMTDataContext.SaveChanges();
 
-                            // Execute the query
-                            command.ExecuteNonQuery();
-                        }
+                            // if order belongs to 1st key insert it in 2nd key 
 
-                        resultDTO.Message = "Order status has been updated successfully";
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Data = pendingOrdersResponseDTO;
-
-                        // capture details of order in Prod_Util_Tracker table 
-
-                        InvoiceTiming invoiceTiming = _oMTDataContext.InvoiceTiming.Where(x => x.SystemofRecordId == table.SystemofRecordId && x.IsActive).FirstOrDefault();
-
-                        DateTime lowerBound = dateTime.Date.AddDays(-1).Add(invoiceTiming.StartTime);
-                        DateTime upperBound = dateTime.Date.Add(invoiceTiming.EndTime);
-
-                        DateTime productivity_date = (dateTime >= lowerBound && dateTime <= upperBound)
-                            ? dateTime.Date.AddDays(-1)
-                            : dateTime.Date;
-
-                        Prod_Util_Tracker prod_Util_Tracker = new Prod_Util_Tracker()
-                        {
-                            UserId = updateOrderStatusDTO.UserId,
-                            OrderId = orderid,
-                            Status = status,
-                            SkillSetId = updateOrderStatusDTO.SkillSetId,
-                            SystemofRecordId = table.SystemofRecordId,
-                            StartDate = DateTime.Parse(starttime),
-                            EndDate = dateTime,
-                            TimeTaken = TimeSpan.Parse(timetaken),
-                            Productivity_Date = productivity_date
-
-                        };
-
-                        _oMTDataContext.Prod_Util_Tracker.Add(prod_Util_Tracker);
-                        _oMTDataContext.SaveChanges();
-
-                        // if order belongs to 1st key insert it in 2nd key 
-
-                        if (updateOrderStatusDTO.MoveToSecondKey == true)
-                        {
-                            var exclude_col = new List<string>()
+                            if (updateOrderStatusDTO.MoveToSecondKey == true)
+                            {
+                                var exclude_col = new List<string>()
                             {
                                 "Id","Never_Keyed","UserId","Status","Remarks","CompletionDate","StartTime","EndTime","TeamLeadId","SystemofRecordId","SkillSetId","TLDescription","TimeTaken","UploadedDate"
                             };
-                            var userdetails = _oMTDataContext.UserProfile.Where(x => x.UserId == updateOrderStatusDTO.UserId && x.IsActive).Select(x => new { x.FirstName, x.LastName }).FirstOrDefault();
+                                var userdetails = _oMTDataContext.UserProfile.Where(x => x.UserId == updateOrderStatusDTO.UserId && x.IsActive).Select(x => new { x.FirstName, x.LastName }).FirstOrDefault();
 
-                            //DateTime allocationDate_dt = DateTime.ParseExact(
-                            //                                    allocationdate,
-                            //                                    "dd-MM-yyyy HH:mm:ss",
-                            //                                    CultureInfo.InvariantCulture);
+                                //DateTime allocationDate_dt = DateTime.ParseExact(
+                                //                                    allocationdate,
+                                //                                    "dd-MM-yyyy HH:mm:ss",
+                                //                                    CultureInfo.InvariantCulture);
 
-                            //string First_Keyed_Date = allocationDate_dt.ToString("MM/dd/yyyy").Replace("-", "/"); 
-                            string First_Keyed_Date = allocationdate.Value.ToString("MM/dd/yyyy").Replace("-", "/");
-                            var UploadedDate = dateTime;
-                            var First_Keyer = userdetails.FirstName + " " + userdetails.LastName;
-                            var First_Key_Status = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == 1 && x.Id == updateOrderStatusDTO.StatusId && x.IsActive).Select(x => x.Status).FirstOrDefault();
-                            var First_Keyer_Status = First_Key_Status;
+                                //string First_Keyed_Date = allocationDate_dt.ToString("MM/dd/yyyy").Replace("-", "/"); 
+                                string First_Keyed_Date = allocationdate.Value.ToString("MM/dd/yyyy").Replace("-", "/");
+                                var UploadedDate = dateTime;
+                                var First_Keyer = userdetails.FirstName + " " + userdetails.LastName;
+                                var First_Key_Status = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == 1 && x.Id == updateOrderStatusDTO.StatusId && x.IsActive).Select(x => x.Status).FirstOrDefault();
+                                var First_Keyer_Status = First_Key_Status;
 
-                            var row = querydt1.FirstOrDefault();
+                                var row = querydt1.FirstOrDefault();
 
-                            if (row != null)
-                            {
-                                // Filter out excluded columns
-                                var includedColumns = row.Keys.Where(k => !exclude_col.Contains(k)).ToList();
-
-                                var tablenames = (from af in _oMTDataContext.AutomaticFlow
-                                                  join ssFrom in _oMTDataContext.SkillSet on af.FromSkillSetId equals ssFrom.SkillSetId
-                                                  join ssTo in _oMTDataContext.SkillSet on af.ToSkillSetId equals ssTo.SkillSetId
-                                                  where af.IsActive && af.FromSkillSetId == updateOrderStatusDTO.SkillSetId
-                                                  select new
-                                                  {
-                                                      FromSkillset = ssFrom.SkillSetName,
-                                                      ToSkillset = ssTo.SkillSetName,
-                                                      FromSkillsetid = ssFrom.SkillSetId,
-                                                      ToSkillsetid = ssTo.SkillSetId
-                                                  }).FirstOrDefault();
-
-                                string verificationTableName = tablenames.ToSkillset;
-
-                                string columnNames = string.Join(", ", includedColumns);
-                                string parameterNames = string.Join(", ", includedColumns.Select(c => $"@{c}"));
-
-                                string insertSql = $"INSERT INTO {verificationTableName} ({columnNames}) VALUES ({parameterNames})";
-
-                                using SqlCommand insertCmd = connection.CreateCommand();
-                                insertCmd.CommandText = insertSql;
-
-                                foreach (var col in includedColumns)
+                                if (row != null)
                                 {
-                                    insertCmd.Parameters.AddWithValue($"@{col}", row[col] ?? DBNull.Value);
+                                    // Filter out excluded columns
+                                    var includedColumns = row.Keys.Where(k => !exclude_col.Contains(k)).ToList();
+
+                                    var tablenames = (from af in _oMTDataContext.AutomaticFlow
+                                                      join ssFrom in _oMTDataContext.SkillSet on af.FromSkillSetId equals ssFrom.SkillSetId
+                                                      join ssTo in _oMTDataContext.SkillSet on af.ToSkillSetId equals ssTo.SkillSetId
+                                                      where af.IsActive && af.FromSkillSetId == updateOrderStatusDTO.SkillSetId
+                                                      select new
+                                                      {
+                                                          FromSkillset = ssFrom.SkillSetName,
+                                                          ToSkillset = ssTo.SkillSetName,
+                                                          FromSkillsetid = ssFrom.SkillSetId,
+                                                          ToSkillsetid = ssTo.SkillSetId
+                                                      }).FirstOrDefault();
+
+                                    string verificationTableName = tablenames.ToSkillset;
+
+                                    string columnNames = string.Join(", ", includedColumns);
+                                    string parameterNames = string.Join(", ", includedColumns.Select(c => $"@{c}"));
+
+                                    string insertSql = $"INSERT INTO {verificationTableName} ({columnNames}) VALUES ({parameterNames})";
+
+                                    using SqlCommand insertCmd = connection.CreateCommand();
+                                    insertCmd.CommandText = insertSql;
+
+                                    foreach (var col in includedColumns)
+                                    {
+                                        insertCmd.Parameters.AddWithValue($"@{col}", row[col] ?? DBNull.Value);
+                                    }
+
+                                    insertCmd.ExecuteNonQuery();
+
+                                    string updatesql = "";
+                                    List<string> param_col = new List<string>();
+
+                                    using SqlCommand updatesqlcmd = connection.CreateCommand();
+
+                                    if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table1, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer, First_Keyed_Date = @First_Keyed_Date, First_Key_Status = @First_Key_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
+
+                                        updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
+                                        updatesqlcmd.Parameters.AddWithValue("@First_Keyed_Date", First_Keyed_Date);
+                                        updatesqlcmd.Parameters.AddWithValue("@First_Key_Status", First_Key_Status);
+                                        updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
+                                        updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
+                                    }
+
+                                    else if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table2, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer,  First_Keyer_Status = @First_Keyer_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
+
+                                        updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
+                                        updatesqlcmd.Parameters.AddWithValue("@First_Keyer_Status", First_Keyer_Status);
+                                        updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
+                                        updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
+                                    }
+
+
+                                    updatesqlcmd.CommandText = updatesql;
+                                    updatesqlcmd.ExecuteNonQuery();
+
+                                    // update the count of orders to daily & monthly count sor and skillset table
+
+                                    int orderCount = 1;
+                                    int systemofrecordid = 1;
+
+                                    SqlCommand DailyCountCmd = new SqlCommand("UpdateDailyOrderCount", connection);
+                                    DailyCountCmd.CommandType = CommandType.StoredProcedure;
+                                    DailyCountCmd.Parameters.AddWithValue("@SkillSetId", tablenames.ToSkillsetid);
+                                    DailyCountCmd.Parameters.AddWithValue("@SystemOfRecordId", systemofrecordid);
+                                    DailyCountCmd.Parameters.AddWithValue("@OrderCount", orderCount);
+
+                                    SqlParameter DcReturnValue = new SqlParameter
+                                    {
+                                        ParameterName = "@RETURN_VALUE",
+                                        Direction = ParameterDirection.ReturnValue
+                                    };
+
+                                    DailyCountCmd.Parameters.Add(DcReturnValue);
+
+                                    DailyCountCmd.ExecuteNonQuery();
+
+                                    int DCreturnCode = (int)DailyCountCmd.Parameters["@RETURN_VALUE"].Value;
+
                                 }
-
-                                insertCmd.ExecuteNonQuery();
-
-                                string updatesql = "";
-                                List<string> param_col = new List<string>();
-
-                                using SqlCommand updatesqlcmd = connection.CreateCommand();
-
-                                if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table1, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer, First_Keyed_Date = @First_Keyed_Date, First_Key_Status = @First_Key_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
-
-                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
-                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyed_Date", First_Keyed_Date);
-                                    updatesqlcmd.Parameters.AddWithValue("@First_Key_Status", First_Key_Status);
-                                    updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
-                                    updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
-                                }
-
-                                else if (verificationTableName.Equals(_moveToSecondKeySettings.Value.Table2, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    updatesql = $"UPDATE {verificationTableName} SET First_Keyer = @First_Keyer,  First_Keyer_Status = @First_Keyer_Status, UploadedDate = @UploadedDate WHERE UserId IS NULL AND STATUS IS NULL AND Id = (SELECT TOP 1 Id FROM {verificationTableName} WHERE OrderId = @OrderId ORDER BY Id DESC)";
-
-                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer", First_Keyer);
-                                    updatesqlcmd.Parameters.AddWithValue("@First_Keyer_Status", First_Keyer_Status);
-                                    updatesqlcmd.Parameters.AddWithValue("@UploadedDate", UploadedDate);
-                                    updatesqlcmd.Parameters.AddWithValue("@OrderId", orderid);
-                                }
-
-
-                                updatesqlcmd.CommandText = updatesql;
-                                updatesqlcmd.ExecuteNonQuery();
-
-                                // update the count of orders to daily & monthly count sor and skillset table
-
-                                int orderCount = 1;
-                                int systemofrecordid = 1;
-
-                                SqlCommand DailyCountCmd = new SqlCommand("UpdateDailyOrderCount", connection);
-                                DailyCountCmd.CommandType = CommandType.StoredProcedure;
-                                DailyCountCmd.Parameters.AddWithValue("@SkillSetId", tablenames.ToSkillsetid);
-                                DailyCountCmd.Parameters.AddWithValue("@SystemOfRecordId", systemofrecordid);
-                                DailyCountCmd.Parameters.AddWithValue("@OrderCount", orderCount);
-
-                                SqlParameter DcReturnValue = new SqlParameter
-                                {
-                                    ParameterName = "@RETURN_VALUE",
-                                    Direction = ParameterDirection.ReturnValue
-                                };
-
-                                DailyCountCmd.Parameters.Add(DcReturnValue);
-
-                                DailyCountCmd.ExecuteNonQuery();
-
-                                int DCreturnCode = (int)DailyCountCmd.Parameters["@RETURN_VALUE"].Value;
 
                             }
-
+                        }
+                        else
+                        {
+                            resultDTO.StatusCode = "404";
+                            resultDTO.IsSuccess = false;
+                            resultDTO.Message = "Sorry, this order doesnt exist, you can't update the status anymore.";
+                            resultDTO.Data = pendingOrdersResponseDTO;
                         }
                     }
                     else
                     {
                         resultDTO.StatusCode = "404";
                         resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Sorry, this order doesnt exist, you can't update the status anymore.";
+                        resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
                         resultDTO.Data = pendingOrdersResponseDTO;
                     }
-                }
-                else
-                {
-                    resultDTO.StatusCode = "404";
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = $"Sorry, the template '{table.SkillSetName}' doesnt exist, you can't update the status for this order anymore.";
-                    resultDTO.Data = pendingOrdersResponseDTO;
-                }
 
-                if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
-                {
-                    string manualstatus = string.Empty;
-                    int statusid = 0;
-
-                    if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
+                    if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
                     {
-                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                        string manualstatus = string.Empty;
+                        int statusid = 0;
+
+                        if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
+                        {
+                            manualstatus = $@"SELECT ir.*, dt.DocTypeID 
                                              FROM {exist.SkillSetName} ir
                                              INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
                                              WHERE ir.Id = @Id AND ir.Status = @statusid";
 
-                        statusid = 2;
-                    }
-                    else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
-                    {
-                        manualstatus = $@"SELECT ir.*, dt.DocTypeID
+                            statusid = 2;
+                        }
+                        else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
+                        {
+                            manualstatus = $@"SELECT ir.*, dt.DocTypeID
                                              FROM {exist.SkillSetName} ir
                                              INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
                                              WHERE ir.Id = @Id AND ir.Status = @statusid";
 
-                        statusid = 1;
-                    }
-                    else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
-                    {
-                        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                            statusid = 1;
+                        }
+                        else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
+                        {
+                            manualstatus = $@"SELECT ir.*, dt.DocTypeID 
                                              FROM {exist.SkillSetName} ir
                                              INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
                                              WHERE ir.Id = @Id AND ir.HaStatus = 'Manual'";
 
-                        statusid = 2;
-                    }
+                            statusid = 2;
+                        }
 
 
-                    using SqlCommand command = connection.CreateCommand();
-                    command.CommandText = manualstatus;
-                    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                    command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
-                    command.ExecuteNonQuery();
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = manualstatus;
+                        command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                        command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
+                        command.ExecuteNonQuery();
 
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                    DataSet dataset = new DataSet();
-                    dataAdapter.Fill(dataset);
-                    DataTable ms = dataset.Tables[0];
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        DataSet dataset = new DataSet();
+                        dataAdapter.Fill(dataset);
+                        DataTable ms = dataset.Tables[0];
 
-                    if (ms.Rows.Count > 0)
-                    {
-                        DataRow row = ms.Rows[0];
-                        TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
+                        if (ms.Rows.Count > 0)
                         {
-                            processid = row.Field<int>("SystemOfRecordId"),
-                            projectid = row.Field<string>("ProjectID"),
-                            referenceid = row.Field<string>("OrderID"),
-                            doctypeid = row.Field<int>("DocTypeID"),
-                            value = statusid
-                        };
+                            DataRow row = ms.Rows[0];
+                            TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
+                            {
+                                processid = row.Field<int>("SystemOfRecordId"),
+                                projectid = row.Field<string>("ProjectID"),
+                                referenceid = row.Field<string>("OrderID"),
+                                doctypeid = row.Field<int>("DocTypeID"),
+                                value = statusid
+                            };
 
-                        // Call the REST API
-                        CallRestApiAsync(trdStatusDTO1);
+                            // Call the REST API
+                            CallRestApiAsync(trdStatusDTO1);
+                        }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -2562,59 +2573,73 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
-                List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
-                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid && us.IsActive
-                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                           select ss.SkillSetName).ToList();
+                //check if user has checkedin , only then send data 
 
-                //check if user has any TRD skillsets to show the getpendingorders button
+                var checked_in = _oMTDataContext.User_Checkin
+                            .Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
 
-                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
-                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
-                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                             select ss.SkillSetName).ToList();
-
-                bool ispending = false;
-
-                if (trdskillsets.Count > 0)
+                if (!checked_in)
                 {
-                    ispending = true;
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Please check in to process orders.";
+                    resultDTO.StatusCode = "404";
                 }
-
-                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
-                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
-
-                // process pending orders if any for the user and send the details
-                List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
-
-                foreach (string tablename in tablenames)
+                else
                 {
 
-                    var columns1 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.ColumnAliasName).ToList();
+                    //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
+                    List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.UserId == userid && us.IsActive
+                                               && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).ToList();
 
-                    var columns2 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.DefaultColumnName).ToList();
+                    //check if user has any TRD skillsets to show the getpendingorders button
 
-                    // get date type columns 
-                    var datecol = (from ss in _oMTDataContext.SkillSet
-                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
-                                   select dt.DefaultColumnName).ToList();
+                    List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                                 join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                 where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                                 && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                 select ss.SkillSetName).ToList();
+
+                    bool ispending = false;
+
+                    if (trdskillsets.Count > 0)
+                    {
+                        ispending = true;
+                    }
+
+                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                    Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
+                    // process pending orders if any for the user and send the details
+                    List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+
+                    foreach (string tablename in tablenames)
+                    {
+
+                        var columns1 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.ColumnAliasName).ToList();
+
+                        var columns2 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.DefaultColumnName).ToList();
+
+                        // get date type columns 
+                        var datecol = (from ss in _oMTDataContext.SkillSet
+                                       join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                       where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
+                                       select dt.DefaultColumnName).ToList();
 
 
 
-                    var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
-                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+                        var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
+                        string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
-                    string query = $@"
+                        string query = $@"
                                     SELECT 
                                         {selectedColumns},
                                         t2.SkillSetName AS SkillSetName, 
@@ -2633,146 +2658,147 @@ namespace OMT.DataService.Service
                                     ORDER BY 
 	                                     t1.ispriority DESC,t1.StartTime ASC;";
 
-                    using SqlCommand command = connection.CreateCommand();
-                    command.CommandText = query;
-                    command.Parameters.AddWithValue("@UserId", userid);
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = query;
+                        command.Parameters.AddWithValue("@UserId", userid);
 
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
-                    DataSet dataset = new DataSet();
+                        DataSet dataset = new DataSet();
 
-                    dataAdapter.Fill(dataset);
+                        dataAdapter.Fill(dataset);
 
-                    DataTable datatable = dataset.Tables[0];
+                        DataTable datatable = dataset.Tables[0];
 
-                    //var querydt1 = datatable.AsEnumerable()
-                    //                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                    //                    column => column.ColumnName,
-                    //                    column => row[column])).ToList();
+                        //var querydt1 = datatable.AsEnumerable()
+                        //                .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                        //                    column => column.ColumnName,
+                        //                    column => row[column])).ToList();
 
-                    var querydt1 = datatable.AsEnumerable()
-                                   .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                   column => column.ColumnName,
-                                   column =>
-                                   {
-                                       if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
-                                       {
-                                           if (row[column] == DBNull.Value)
-                                           {
-                                               return "";
-                                           }
-                                           DateTime dateValue = (DateTime)row[column];
-                                           return dateValue.ToString("yyyy-MM-dd");  // Format as date string
-                                       }
-                                       return row[column] == DBNull.Value ? "" : row[column];
-                                   })).ToList();
-
-                    noStatusRecords.AddRange(querydt1);
-
-                }
-
-                if (noStatusRecords.Count > 0)
-                {
-                    orderedRecords = noStatusRecords
-                                      .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
-                                      .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
-                                      .First();
-
-                    orderedRecords.Remove("StartTime");
-
-                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
-
-                    // Convert to JSON string
-                    string order_string = JsonConvert.SerializeObject(PendingOrder);
-
-                    //check if order is from trd pending
-                    var istrd_pending = false;
-                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
-                    var tableid = (int)orderedRecords["Id"];
-                    var skillsetid = (int)orderedRecords["SkillSetId"];
-                    var ispriority = (bool)orderedRecords["IsPriority"];
-                    var tablename = orderedRecords["SkillSetName"].ToString();
-
-                    if (istrd)
-                    {
-                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
-
-                        using SqlCommand trd_command = connection.CreateCommand();
-                        trd_command.CommandText = pendingorder_query;
-
-                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
-
-                        DataSet trd_dataset = new DataSet();
-
-                        trd_dataAdapter.Fill(trd_dataset);
-
-                        DataTable trd_datatable = trd_dataset.Tables[0];
-
-                        var trd_pnd = trd_datatable.AsEnumerable()
-                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                        var querydt1 = datatable.AsEnumerable()
+                                       .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
                                        column => column.ColumnName,
-                                       column => row[column]));
+                                       column =>
+                                       {
+                                           if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                                           {
+                                               if (row[column] == DBNull.Value)
+                                               {
+                                                   return "";
+                                               }
+                                               DateTime dateValue = (DateTime)row[column];
+                                               return dateValue.ToString("yyyy-MM-dd");  // Format as date string
+                                           }
+                                           return row[column] == DBNull.Value ? "" : row[column];
+                                       })).ToList();
 
-                        if (trd_pnd.Any())
-                        {
-                            istrd_pending = trd_pnd.Any(record =>
-                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
-                        }
-                    }
-
-                    // check if order is from TIQE 
-
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
-
-                    // find if it satisfies the automatic flow conditions
-                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
-
-                    var isautomaticflow = false;
-
-                    if (automaticflow_details != null)
-                    {
-                        if (automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = ispriority ? true : false;
-                        }
-                        else if (!automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = true;
-                        }
+                        noStatusRecords.AddRange(querydt1);
 
                     }
 
-                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    if (noStatusRecords.Count > 0)
                     {
-                        IsPending = ispending,
-                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
-                        AssignedOrder = order_string,
-                        IsTiqe = istiqe_order,
-                        IsTrdPending = istrd_pending,
-                        IsAutomaticFlow = isautomaticflow
-                    };
+                        orderedRecords = noStatusRecords
+                                          .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                                          .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                                          .First();
 
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Please update the status of this order";
-                    resultDTO.StatusCode = "200";
-                    resultDTO.Data = pendingOrdersResponseDTO;
-                }
-                else
-                {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.StatusCode = "404";
-                    resultDTO.Message = "No more orders to update status";
+                        orderedRecords.Remove("StartTime");
 
-                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                        List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
+
+                        // Convert to JSON string
+                        string order_string = JsonConvert.SerializeObject(PendingOrder);
+
+                        //check if order is from trd pending
+                        var istrd_pending = false;
+                        var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                        var tableid = (int)orderedRecords["Id"];
+                        var skillsetid = (int)orderedRecords["SkillSetId"];
+                        var ispriority = (bool)orderedRecords["IsPriority"];
+                        var tablename = orderedRecords["SkillSetName"].ToString();
+
+                        if (istrd)
+                        {
+                            var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
+
+                            using SqlCommand trd_command = connection.CreateCommand();
+                            trd_command.CommandText = pendingorder_query;
+
+                            using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                            DataSet trd_dataset = new DataSet();
+
+                            trd_dataAdapter.Fill(trd_dataset);
+
+                            DataTable trd_datatable = trd_dataset.Tables[0];
+
+                            var trd_pnd = trd_datatable.AsEnumerable()
+                                          .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                           column => column.ColumnName,
+                                           column => row[column]));
+
+                            if (trd_pnd.Any())
+                            {
+                                istrd_pending = trd_pnd.Any(record =>
+                                                    record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                            }
+                        }
+
+                        // check if order is from TIQE 
+
+                        var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
+
+                        // find if it satisfies the automatic flow conditions
+                        var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                        var isautomaticflow = false;
+
+                        if (automaticflow_details != null)
+                        {
+                            if (automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = ispriority ? true : false;
+                            }
+                            else if (!automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = true;
+                            }
+
+                        }
+
+                        pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                        {
+                            IsPending = ispending,
+                            //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                            AssignedOrder = order_string,
+                            IsTiqe = istiqe_order,
+                            IsTrdPending = istrd_pending,
+                            IsAutomaticFlow = isautomaticflow
+                        };
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Please update the status of this order";
+                        resultDTO.StatusCode = "200";
+                        resultDTO.Data = pendingOrdersResponseDTO;
+                    }
+                    else
                     {
-                        IsPending = ispending,
-                        // PendingOrder = null,
-                        AssignedOrder = null,
-                        IsTiqe = false,
-                        IsTrdPending = false,
-                        IsAutomaticFlow = false
-                    };
-                    resultDTO.Data = pendingOrdersResponseDTO;
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "No more orders to update status";
+
+                        pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                        {
+                            IsPending = ispending,
+                            // PendingOrder = null,
+                            AssignedOrder = null,
+                            IsTiqe = false,
+                            IsTrdPending = false,
+                            IsAutomaticFlow = false
+                        };
+                        resultDTO.Data = pendingOrdersResponseDTO;
+                    }
                 }
 
             }

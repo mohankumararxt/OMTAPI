@@ -85,6 +85,7 @@ namespace OMT.DataService.Service
                         Role = user.Role,
                         Checked_In = _oMTDataContext.User_Checkin
                             .Any(uc => uc.UserId == user.UserId && uc.Checkin != null && uc.Checkout == null),
+                        CheckIn_date = _oMTDataContext.User_Checkin.Where(uc => uc.UserId == user.UserId && uc.Checkin != null && uc.Checkout == null).Select(uc => uc.CheckIn_date).FirstOrDefault(),
                         OmtMenus = menuNames
                     };
                 }
@@ -122,32 +123,34 @@ namespace OMT.DataService.Service
                                                            .OrderByDescending(x => x.Id)
                                                            .FirstOrDefault();
 
-                if (user_Checkin != null)
+                if (user_Checkin != null) //existing user
                 {
 
-                    if (user_Checkin.Checkin != null && user_Checkin.Checkout == null)
+                    if (user_Checkin.Checkin != null && user_Checkin.CheckIn_date != null && user_Checkin.Checkout == null) // checkout
                     {
                         user_Checkin.Checkout = checkinRequestDTO.DateTime;
                         _oMTDataContext.User_Checkin.Update(user_Checkin);
                     }
-                    else if (user_Checkin.Checkin != null && user_Checkin.Checkout != null)
+                    else if (user_Checkin.Checkin != null && user_Checkin.CheckIn_date != null && user_Checkin.Checkout != null) //checkin
                     {
                         User_Checkin user_time = new User_Checkin()
                         {
                             UserId = checkinRequestDTO.UserId,
                             Checkin = checkinRequestDTO.DateTime,
+                            CheckIn_date = checkinRequestDTO.CheckIn_date,
                         };
 
                         _oMTDataContext.User_Checkin.Add(user_time);
                     }
 
                 }
-                else
+                else // new user
                 {
                     User_Checkin user_time = new User_Checkin()
                     {
                         UserId = checkinRequestDTO.UserId,
                         Checkin = checkinRequestDTO.DateTime,
+                        CheckIn_date = checkinRequestDTO.CheckIn_date
 
                     };
 

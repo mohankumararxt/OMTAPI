@@ -13,6 +13,7 @@
         public string? Role { get; set; }
         public LoginResponseDTO() { }
         public bool Checked_In { get; set; }
+        public DateTime? CheckIn_date { get; set; }
         public List<string> OmtMenus { get; set; }
     }
 
