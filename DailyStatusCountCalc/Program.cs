@@ -78,9 +78,9 @@ namespace DailyStatusCountCalc
 
                     //back up Prod_Util_Tracker table and then delete the same data form it.
 
-                    string prod_util_tracker_bckp = @"INSERT INTO Prod_Util_Tracker_bckp (UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date)
+                    string prod_util_tracker_bckp = @"INSERT INTO Prod_Util_Tracker_bckp (UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date,CheckIn_date)
 	                                          SELECT 
-	                                            UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date
+	                                            UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date,CheckIn_date
 	                                          FROM Prod_Util_Tracker WHERE Productivity_Date  = CAST(DATEADD(DAY, -2, GETUTCDATE()) AS DATE)";
 
                     using (SqlCommand spCommand4 = new SqlCommand(prod_util_tracker_bckp, connection))

@@ -1078,18 +1078,34 @@ namespace OMT.DataService.Service
                 connection.Open();
 
                 var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == updateOrderStatusDTO.UserId && uc.Checkin != null && uc.Checkout == null);
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
 
                 if (!user_Checkedin)
                 {
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = user_Checkedin
+                    };
+
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Please check in to process orders.";
                     resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
+
                 }
                 else
-                {
+                {   // get the checkin_date for the current checked in session
+
+                    var checkin_date = _oMTDataContext.User_Checkin.Where(x => x.UserId == updateOrderStatusDTO.UserId && x.Checkin != null && x.CheckIn_date != null && x.Checkout == null && x.Prod_Util_Calculated == false).Select(x => x.CheckIn_date.Value.Date).FirstOrDefault();
 
                     // check if user has trd skillsets
-                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+                    // PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
 
                     List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
                                                  join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
@@ -1108,7 +1124,8 @@ namespace OMT.DataService.Service
                     {
                         IsPending = ispending,
                         // PendingOrder = null
-                        AssignedOrder = null
+                        AssignedOrder = null,
+                        Checked_In = user_Checkedin
                     };
 
                     // check if the skillset has template 
@@ -1188,18 +1205,18 @@ namespace OMT.DataService.Service
                             {
                                 if (table.SystemofRecordId == 3 && updateOrderStatusDTO.ImageID != null)
                                 {
-                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId WHERE Id = @ID";
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime,TimeTaken = @TimeTaken, ImageId = @ImageId, CheckIn_date = @CheckIn_date WHERE Id = @ID";
                                     command.Parameters.AddWithValue("@ImageId", updateOrderStatusDTO.ImageID);
                                 }
                                 else if (table.SystemofRecordId == 4 && updateOrderStatusDTO.Number_Of_Manual_Splits != null && updateOrderStatusDTO.Number_Of_Documents != null)
                                 {
-                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits WHERE Id = @ID";
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, Number_Of_Documents = @Number_Of_Documents, Number_Of_Manual_Splits = @Number_Of_Manual_Splits, CheckIn_date = @CheckIn_date WHERE Id = @ID";
                                     command.Parameters.AddWithValue("@Number_Of_Documents", updateOrderStatusDTO.Number_Of_Documents);
                                     command.Parameters.AddWithValue("@Number_Of_Manual_Splits", updateOrderStatusDTO.Number_Of_Manual_Splits);
                                 }
                                 else
                                 {
-                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken WHERE Id = @ID";
+                                    sql1 = $"UPDATE {exist.SkillSetName} SET Status = @Status, Remarks = @Remarks, CompletionDate = @CompletionDate, EndTime = @EndTime, TimeTaken = @TimeTaken, CheckIn_date = @CheckIn_date WHERE Id = @ID";
                                 }
 
                                 command.CommandText = sql1;
@@ -1211,6 +1228,7 @@ namespace OMT.DataService.Service
                                 command.Parameters.AddWithValue("@EndTime", dateTime);
                                 command.Parameters.AddWithValue("@CompletionDate", dateTime);
                                 command.Parameters.AddWithValue("@TimeTaken", timetaken);
+                                command.Parameters.AddWithValue("@CheckIn_date", checkin_date);
 
                                 // Execute the query
                                 command.ExecuteNonQuery();
@@ -1241,7 +1259,8 @@ namespace OMT.DataService.Service
                                 StartDate = DateTime.Parse(starttime),
                                 EndDate = dateTime,
                                 TimeTaken = TimeSpan.Parse(timetaken),
-                                Productivity_Date = productivity_date
+                                Productivity_Date = productivity_date,
+                                CheckIn_date = checkin_date,
 
                             };
 
@@ -1254,7 +1273,7 @@ namespace OMT.DataService.Service
                             {
                                 var exclude_col = new List<string>()
                             {
-                                "Id","Never_Keyed","UserId","Status","Remarks","CompletionDate","StartTime","EndTime","TeamLeadId","SystemofRecordId","SkillSetId","TLDescription","TimeTaken","UploadedDate"
+                                "Id","Never_Keyed","UserId","Status","Remarks","CompletionDate","StartTime","EndTime","TeamLeadId","SystemofRecordId","SkillSetId","TLDescription","TimeTaken","UploadedDate","CheckIn_date"
                             };
                                 var userdetails = _oMTDataContext.UserProfile.Where(x => x.UserId == updateOrderStatusDTO.UserId && x.IsActive).Select(x => new { x.FirstName, x.LastName }).FirstOrDefault();
 
@@ -2578,11 +2597,26 @@ namespace OMT.DataService.Service
                 var checked_in = _oMTDataContext.User_Checkin
                             .Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
 
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
                 if (!checked_in)
                 {
+
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = checked_in
+                    };
+
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Please check in to process orders.";
                     resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {
@@ -2609,7 +2643,7 @@ namespace OMT.DataService.Service
                         ispending = true;
                     }
 
-                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
                     Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
                     // process pending orders if any for the user and send the details
@@ -2774,7 +2808,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = order_string,
                             IsTiqe = istiqe_order,
                             IsTrdPending = istrd_pending,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = checked_in
                         };
 
                         resultDTO.IsSuccess = true;
@@ -2795,7 +2830,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = null,
                             IsTiqe = false,
                             IsTrdPending = false,
-                            IsAutomaticFlow = false
+                            IsAutomaticFlow = false,
+                            Checked_In = checked_in
                         };
                         resultDTO.Data = pendingOrdersResponseDTO;
                     }

@@ -128,6 +128,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IDashboardScreensService, DashboardScreensService>();
+builder.Services.AddScoped<IDateAndNphService, DateAndNphService>();
  
 
 builder.Services.AddDbContext<OMTDataContext>(options =>

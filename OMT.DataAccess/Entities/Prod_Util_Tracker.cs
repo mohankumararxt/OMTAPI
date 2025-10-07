@@ -15,6 +15,7 @@ namespace OMT.DataAccess.Entities
         public DateTime EndDate { get; set; }
         public TimeSpan TimeTaken { get; set; }
         public DateTime Productivity_Date { get; set; }
+        public DateTime CheckIn_date { get; set; }
 
 
     }

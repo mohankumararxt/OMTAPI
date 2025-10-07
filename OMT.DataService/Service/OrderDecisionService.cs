@@ -47,12 +47,25 @@ namespace OMT.DataService.Service
                 //give orders only if user has checkedin
 
                 var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
 
                 if (!user_Checkedin)
                 {
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = user_Checkedin
+                    };
+
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Please check in to process orders.";
                     resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {
@@ -78,7 +91,7 @@ namespace OMT.DataService.Service
                         ispending = true;
                     }
 
-                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
                     Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
                     // process pending orders if any for the user and send the details
@@ -240,7 +253,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = order_string,// any order pending
                             IsTiqe = istiqe_order, // if that order is tiqe
                             IsTrdPending = istrd_pending, // pending trd orders
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow, //sci orders automatic flow
+                            Checked_In = user_Checkedin
                         };
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
@@ -435,7 +449,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
                             IsTrdPending = false,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                         };
 
                         // Order assigned successfully
@@ -490,7 +505,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
                             IsTrdPending = false,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                         };
 
                         // Order assigned successfully
@@ -604,7 +620,16 @@ namespace OMT.DataService.Service
 
             if (string.IsNullOrWhiteSpace(updatedOrder))
             {
-                resultDTO.Data = "";
+                gordto = new GetOrderResponseDTO
+                {
+                    AssignedOrder = "",
+                    IsTiqe = false,
+                    IsTrdPending = false,
+                    IsAutomaticFlow = false,
+                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                };
+
+                resultDTO.Data = gordto;
                 resultDTO.StatusCode = "404";
                 resultDTO.IsSuccess = false;
                 resultDTO.Message = "No more orders for now, please come back again";
@@ -691,7 +716,8 @@ namespace OMT.DataService.Service
                         AssignedOrder = updatedOrder,
                         IsTiqe = istiqe,
                         IsTrdPending = istrd_pending,
-                        IsAutomaticFlow = isautomaticflow
+                        IsAutomaticFlow = isautomaticflow,
+                        Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                     };
 
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
@@ -730,11 +756,25 @@ namespace OMT.DataService.Service
 
                 var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
 
+                PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
                 if (!user_Checkedin)
                 {
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = user_Checkedin
+                    };
+
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Please check in to process orders.";
                     resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
                 }
                 else
                 {
@@ -761,7 +801,7 @@ namespace OMT.DataService.Service
                     }
 
                     List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
-                    PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
+
                     Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
                     foreach (string tablename in tablenames)
@@ -921,7 +961,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = order_string,
                             IsTiqe = istiqe_order,
                             IsTrdPending = istrd_pending,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = user_Checkedin
                         };
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "You have an order in your queue,please finish this first";
@@ -953,6 +994,8 @@ namespace OMT.DataService.Service
                                                                           Utilized = goc.Utilized,
                                                                           HardStateUtilized = goc.HardStateUtilized,
                                                                       }).ToList();
+
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO();
 
                         // bool IsTrdPending = true;
                         bool iscycle1 = true;
@@ -990,17 +1033,27 @@ namespace OMT.DataService.Service
                                 {
                                     updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
 
-                                    GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                                    getOrderResponseDTO = new GetOrderResponseDTO
                                     {
                                         AssignedOrder = updatedOrder,
                                         IsTiqe = false,
                                         IsTrdPending = true,
-                                        IsAutomaticFlow = false
+                                        IsAutomaticFlow = false,
+                                        Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                                     };
 
                                     if (string.IsNullOrWhiteSpace(updatedOrder))
                                     {
-                                        resultDTO.Data = "";
+                                        getOrderResponseDTO = new GetOrderResponseDTO
+                                        {
+                                            AssignedOrder = "",
+                                            IsTiqe = false,
+                                            IsTrdPending = true,
+                                            IsAutomaticFlow = false,
+                                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                                        };
+
+                                        resultDTO.Data = getOrderResponseDTO;
                                         resultDTO.StatusCode = "404";
                                         resultDTO.IsSuccess = false;
                                         resultDTO.Message = "No more orders for now, please come back again";
@@ -1017,19 +1070,29 @@ namespace OMT.DataService.Service
                             }
                             else if (string.IsNullOrWhiteSpace(updatedOrder) && !iscycle1)
                             {
-                                resultDTO.Data = "";
+                                getOrderResponseDTO = new GetOrderResponseDTO
+                                {
+                                    AssignedOrder = "",
+                                    IsTiqe = false,
+                                    IsTrdPending = true,
+                                    IsAutomaticFlow = false,
+                                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                                };
+
+                                resultDTO.Data = getOrderResponseDTO;
                                 resultDTO.StatusCode = "404";
                                 resultDTO.IsSuccess = false;
                                 resultDTO.Message = "No more orders for now, please come back again";
                             }
                             else
                             {
-                                GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                                getOrderResponseDTO = new GetOrderResponseDTO
                                 {
                                     AssignedOrder = updatedOrder,
                                     IsTiqe = false,
                                     IsTrdPending = true,
-                                    IsAutomaticFlow = false
+                                    IsAutomaticFlow = false,
+                                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                                 };
 
                                 resultDTO.Data = getOrderResponseDTO;
