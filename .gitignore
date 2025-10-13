@@ -88,3 +88,5 @@
 /PendingSciOrders/obj/Release/net472
 /.gitignore
 /.gitignore
+/CheckOut/bin/Debug/net472
+/DailyStatusCountCalc/bin/Debug/net472
