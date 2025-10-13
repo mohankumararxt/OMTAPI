@@ -6616,3 +6616,90 @@
 --(775,4,1,'01.30 PM')
 
 
+--Insert into OmtMenus
+--values
+--('checkindetails',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(1,54,1),
+--(2,54,1),
+--(4,54,1)
+
+
+--create table NonProductiveReasons(
+--Id int IDENTITY(1,1) primary key,
+--Reasons nvarchar(100),
+--IsActive bit not null DEFAULT 1
+--);
+
+--insert into NonProductiveReasons values
+--    ('Audit',1),
+--    ('Training',1),
+--    ('Team Meeting',1),
+--    ('Rework',1),
+--    ('Idle',1),
+--    ('System Downtime',1),
+--    ('HR Connect',1),
+--    ('Others',1)
+
+
+--Create table Regularization_Status
+--(
+--Id int IDENTITY(1,1) primary key,
+--Status_Name NVARCHAR(50)  NOT NULL,
+--IsActive bit not null DEFAULT 1
+--)
+
+--insert into Regularization_Status values
+--('Pending',1),
+--('Approved',1),
+--('Pending',1)
+
+--create table NonProductiveRegularization
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Primary_SorId INT NOT NULL,
+--Reasons INT NOT NULL,
+--Remarks NVARCHAR(100) NULL,
+--NonProductiveHours_Date date NOT NULL,
+--StartTime datetime not null,
+--EndTime datetime not null,
+--Applied_Hours DECIMAL(10,1) NOT NULL,
+--Regularization_Status INT NOT NULL,
+--Applied_Time datetime not null,
+--ApprovedBy INT NULL,
+--)
+
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Primary_SorId
+--FOREIGN KEY (Primary_SorId)
+--REFERENCES systemofrecord(systemofrecordId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Reasons
+--FOREIGN KEY (Reasons)
+--REFERENCES NonProductiveReasons(Id);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Regularization_Status
+--FOREIGN KEY (Regularization_Status)
+--REFERENCES Regularization_Status(Id);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_ApprovedBy
+--FOREIGN KEY (ApprovedBy)
+--REFERENCES userprofile(UserId);

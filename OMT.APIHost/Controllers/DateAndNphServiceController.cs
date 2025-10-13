@@ -24,14 +24,64 @@ namespace OMT.APIHost.Controllers
         public ResultDTO GetCheckinDetails([FromBody] GetCheckinDetailsDTO getCheckinDetailsDTO)
         {
             var userid = UserId;
-            return _dateAndNphService.GetCheckinDetails(getCheckinDetailsDTO,userid);
+            return _dateAndNphService.GetCheckinDetails(getCheckinDetailsDTO, userid);
         }
 
         [HttpPut]
         [Route("UpdateCheckinDetails")]
-        public ResultDTO UpdateCheckinDetails(UpdateCheckinDetailsDTO updateCheckinDetailsDTO)
+        public ResultDTO UpdateCheckinDetails([FromBody] UpdateCheckinDetailsDTO updateCheckinDetailsDTO)
         {
             return _dateAndNphService.UpdateCheckinDetails(updateCheckinDetailsDTO);
+        }
+
+        [HttpGet]
+        [Route("GetNonProductiveReasons")]
+        public ResultDTO GetNonProductiveReasons()
+        {
+            return _dateAndNphService.GetNonProductiveReasons();
+        }
+
+        [HttpPost]
+        [Route("ApplyNonProductiveHours")]
+        public ResultDTO ApplyNonProductiveHours([FromBody] ApplyNonProductiveHoursDTO applyNonProductiveHoursDTO)
+        {
+            var userid = UserId;
+            return _dateAndNphService.ApplyNonProductiveHours(applyNonProductiveHoursDTO, userid);
+        }
+
+        [HttpPost]
+        [Route("GetNonProductiveRegularizations_Agent")]
+
+        public ResultDTO GetNonProductiveRegularizations_Agent([FromBody] PaginationInputDTO paginationInputDTO)
+        {
+            var userid = UserId;
+            return _dateAndNphService.GetNonProductiveRegularizations_Agent(paginationInputDTO, userid);
+        }
+
+        [HttpGet]
+        [Route("GetRegularizationStatus")]
+
+        public ResultDTO GetRegularizationStatus()
+        {
+            return _dateAndNphService.GetRegularizationStatus();
+        }
+
+        [HttpPost]
+        [Route("GetNonProductiveRegularizations")]
+
+        public ResultDTO GetNonProductiveRegularizations([FromBody] GetCheckinDetailsDTO getCheckinDetailsDTO)
+        {
+            var userid = UserId;
+            return _dateAndNphService.GetNonProductiveRegularizations(getCheckinDetailsDTO, userid);
+        }
+
+        [HttpPost]
+        [Route("UpdateRegularizations")]
+
+        public ResultDTO UpdateRegularizations([FromBody] UpdateRegularizationsDTO updateRegularizationsDTO)
+        {
+            var userid = UserId;
+            return _dateAndNphService.UpdateRegularizations(updateRegularizationsDTO,userid);
         }
     }
 }
