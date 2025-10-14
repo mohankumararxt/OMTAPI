@@ -75,7 +75,7 @@ namespace OMT.APIHost.Controllers
             return _dateAndNphService.GetNonProductiveRegularizations(getCheckinDetailsDTO, userid);
         }
 
-        [HttpPost]
+        [HttpPut]
         [Route("UpdateRegularizations")]
 
         public ResultDTO UpdateRegularizations([FromBody] UpdateRegularizationsDTO updateRegularizationsDTO)

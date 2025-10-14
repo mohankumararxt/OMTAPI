@@ -22,6 +22,9 @@ namespace OMT.DataAccess.Entities
         public decimal Applied_Hours { get; set; }
         public int Regularization_Status { get; set; }
         public DateTime Applied_Time { get; set; }
-        public int? ApprovedBy { get; set; }
+        public int? UpdatedBy { get; set; }
+        public DateTime? UpdatedTime { get; set; }
+        public string? TlDescription { get; set; }
+
     }
 }

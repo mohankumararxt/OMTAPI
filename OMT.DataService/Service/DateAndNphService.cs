@@ -67,8 +67,8 @@ namespace OMT.DataService.Service
                                                 && up.IsActive
                                                 && t.IsActive
                                                 && uc.Prod_Util_Calculated == false
-                                                && uc.CheckIn_date >= todaydate.AddDays(-1)
-                                          orderby up.FirstName, uc.CheckIn_date
+                                                && uc.CheckIn_date >= todaydate.AddDays(-1) && uc.Checkout != null
+                                          orderby up.FirstName, uc.Checkin
                                           select new
                                           {
                                               uc.Id,
@@ -141,8 +141,8 @@ namespace OMT.DataService.Service
                                           where up.IsActive
                                                 && t.IsActive
                                                 && uc.Prod_Util_Calculated == false
-                                                && uc.CheckIn_date >= todaydate.AddDays(-1)
-                                          orderby up.FirstName, uc.CheckIn_date
+                                                && uc.CheckIn_date >= todaydate.AddDays(-1) && uc.Checkout != null
+                                          orderby up.FirstName, uc.Checkin
                                           select new
                                           {
                                               uc.Id,
@@ -357,7 +357,7 @@ namespace OMT.DataService.Service
 
                         }
 
-                        resultDTO.Data = updateCheckinDetailsDTO.CheckIn_date;
+                        
                         resultDTO.StatusCode = "200";
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Checkin date has been successfully changed.";
@@ -434,7 +434,9 @@ namespace OMT.DataService.Service
                         Applied_Hours = applyNonProductiveHoursDTO.Applied_Hours,
                         Regularization_Status = 1,
                         Applied_Time = DateTime.UtcNow,
-                        ApprovedBy = null,
+                        UpdatedBy = null,
+                        UpdatedTime = null,
+                        TlDescription = null,
                     };
 
                     _oMTDataContext.NonProductiveRegularization.Add(nonProductiveRegularization);
@@ -471,7 +473,7 @@ namespace OMT.DataService.Service
                                        join r in _oMTDataContext.NonProductiveReasons on npr.Reasons equals r.Id
                                        join rs in _oMTDataContext.Regularization_Status on npr.Regularization_Status equals rs.Id
                                        where npr.UserId == userid && up.IsActive && npr.Applied_Time.Date >= fromDate && npr.Applied_Time.Date <= today
-                                       orderby npr.NonProductiveHours_Date
+                                       orderby npr.Applied_Time
                                        select new
                                        {
                                            NonProductiveRegularizationId = npr.Id,
@@ -479,11 +481,13 @@ namespace OMT.DataService.Service
                                            Primary_SOR = sor.SystemofRecordName,
                                            Reasons = r.Reasons,
                                            Remarks = npr.Remarks,
-                                           Date = npr.NonProductiveHours_Date.Date,
+                                           Date = npr.NonProductiveHours_Date.Date.ToString("dd-MM-yyyy"),
                                            StartTime = TimeZoneInfo.ConvertTimeFromUtc(npr.StartTime, istZone).ToString("HH:mm"),
                                            EndTime = TimeZoneInfo.ConvertTimeFromUtc(npr.EndTime, istZone).ToString("HH:mm"),
                                            Hours = npr.Applied_Hours,
                                            Status = rs.Status_Name,
+                                           Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
+                                           Tl_Description = npr.TlDescription
                                        }).ToList();
 
                 if (regularizations.Count > 0)
@@ -537,11 +541,21 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var rstatus = _oMTDataContext.Regularization_Status.Where(x => x.IsActive).ToList();
+                var rstatus = _oMTDataContext.Regularization_Status.Where(x => x.IsActive && x.IsTlStatus).Select(x => x.Tl_Status_Name).ToList();
 
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "List of Non Productive Reasons";
-                resultDTO.Data = rstatus;
+                if (rstatus.Count > 0 )
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "List of Non Productive Reasons";
+                    resultDTO.Data = rstatus;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Non Productive Reasons not found";
+                    resultDTO.StatusCode = "404";
+                }
+               
             }
             catch (Exception ex)
             {
@@ -606,7 +620,7 @@ namespace OMT.DataService.Service
                                                  && npr.Applied_Time.Date <= today
                                                  // apply team filter only if we actually have a team
                                                  && (!hasTeam || t.TeamId == teamid.Value)
-                                           orderby npr.NonProductiveHours_Date
+                                           orderby npr.Applied_Time
                                            select new
                                            {
                                                NonProductiveRegularizationId = npr.Id,
@@ -615,11 +629,14 @@ namespace OMT.DataService.Service
                                                Primary_SOR = sor.SystemofRecordName,
                                                Reasons = r.Reasons,
                                                Remarks = npr.Remarks,
-                                               Date = npr.NonProductiveHours_Date.Date,
+                                               Date = npr.NonProductiveHours_Date.Date.ToString("dd-MM-yyyy"),
                                                StartTime = TimeZoneInfo.ConvertTimeFromUtc(npr.StartTime, istZone).ToString("HH:mm"),
                                                EndTime = TimeZoneInfo.ConvertTimeFromUtc(npr.EndTime, istZone).ToString("HH:mm"),
                                                Hours = npr.Applied_Hours,
-                                               Status = rs.Status_Name
+                                               Status = rs.Status_Name,
+                                               Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
+                                               Tl_Description = npr.TlDescription
+
                                            }).ToList();
 
                     if (regularizations.Count > 0)
@@ -642,14 +659,14 @@ namespace OMT.DataService.Service
 
                             resultDTO.Data = paginationOutput;
                             resultDTO.IsSuccess = true;
-                            resultDTO.Message = "List of checkin details";
+                            resultDTO.Message = "List of regularization details";
                         }
                         else
                         {
 
                             resultDTO.Data = regularizations;
                             resultDTO.IsSuccess = true;
-                            resultDTO.Message = "List of checkin details";
+                            resultDTO.Message = "List of regularization details";
                         }
 
                     }
@@ -688,7 +705,9 @@ namespace OMT.DataService.Service
                 if (reg != null)
                 {
                     reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
-                    reg.ApprovedBy = userid;
+                    reg.UpdatedBy = userid;
+                    reg.UpdatedTime = DateTime.UtcNow;
+                    reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null: updateRegularizationsDTO.TlDescription ;
 
                     _oMTDataContext.NonProductiveRegularization.Update(reg);
                     _oMTDataContext.SaveChanges();

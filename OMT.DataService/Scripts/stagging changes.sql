@@ -6648,13 +6648,15 @@
 --(
 --Id int IDENTITY(1,1) primary key,
 --Status_Name NVARCHAR(50)  NOT NULL,
---IsActive bit not null DEFAULT 1
+--Tl_Status_Name  NVARCHAR(50)  NOT NULL,
+--IsTlStatus bit not null,
+--IsActive bit not null DEFAULT 1,
 --)
 
 --insert into Regularization_Status values
---('Pending',1),
---('Approved',1),
---('Pending',1)
+--('Pending','Pending',0,1),
+--('Approved','Approve',1,1),
+--('Rejected','Reject',1,1)
 
 --create table NonProductiveRegularization
 --(
@@ -6670,8 +6672,11 @@
 --Applied_Hours DECIMAL(10,1) NOT NULL,
 --Regularization_Status INT NOT NULL,
 --Applied_Time datetime not null,
---ApprovedBy INT NULL,
+--UpdatedBy INT NULL,
+--UpdatedTime  datetime null,
+--TlDescription NVARCHAR(100) NULL
 --)
+
 
 
 --alter table NonProductiveRegularization
@@ -6700,6 +6705,6 @@
 --REFERENCES Regularization_Status(Id);
 
 --alter table NonProductiveRegularization
---ADD CONSTRAINT fk_NonProductiveRegularization_ApprovedBy
---FOREIGN KEY (ApprovedBy)
+--ADD CONSTRAINT fk_NonProductiveRegularization_UpdatedBy
+--FOREIGN KEY (UpdatedBy)
 --REFERENCES userprofile(UserId);

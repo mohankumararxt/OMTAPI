@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public int Regularization_Status { get; set; }
+        public string? TlDescription { get; set; }
 
     }
 }
