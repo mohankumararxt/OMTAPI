@@ -39,7 +39,8 @@ namespace OMT.DataService.Service
         private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
         private readonly IConfiguration _configuration;
         private readonly IOptions<MoveToSecondKeySettings> _moveToSecondKeySettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings,IOptions<MoveToSecondKeySettings> moveToSecondKeySettings)
+        private readonly IOptions<Create_batchesSettings> _create_batchesSettings;
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings,IOptions<MoveToSecondKeySettings> moveToSecondKeySettings, IOptions<Create_batchesSettings> create_batchesSettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
@@ -47,6 +48,7 @@ namespace OMT.DataService.Service
             _configuration = configuration;
             _hastatusSettings = hastatusSettings;
             _moveToSecondKeySettings = moveToSecondKeySettings;
+            _create_batchesSettings = create_batchesSettings;
         }
         public ResultDTO CreateTemplate(CreateTemplateDTO createTemplateDTO)
         {
@@ -467,6 +469,15 @@ namespace OMT.DataService.Service
                             _oMTDataContext.MonthlyCount_SOR.Update(existing_sor_monthly);
                             _oMTDataContext.SaveChanges();
                         }
+
+                        //call create_batches api
+
+                        if (skillSet.SystemofRecordId == 1 && skillSet.SkillSetId == _create_batchesSettings.Value.RicSkillsetId)
+                        {
+                            
+                            CreateBatchesApiAsync(skillSet.SkillSetName);
+                        }
+
                         // send mail to map product descriptions
 
                         if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
@@ -626,6 +637,38 @@ namespace OMT.DataService.Service
                 resultDTO.Message = ex.Message;
             }
             return resultDTO;
+        }
+
+        private void CreateBatchesApiAsync(string skillsetname)
+        {
+            var url = _create_batchesSettings.Value.TriggerURL;
+
+            url = url.Replace("skillsetname", skillsetname.ToLower().Trim());
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    //client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+                    //var json = Newtonsoft.Json.JsonConvert.SerializeObject();
+                    //var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(url);
+                    var response = client.PostAsync(webApiUrl, null).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public void CallAsyncHaStatusAPI(HaStatusDTO haStatusDTO)
