@@ -357,7 +357,7 @@ namespace OMT.DataService.Service
 
                         }
 
-                        
+
                         resultDTO.StatusCode = "200";
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Checkin date has been successfully changed.";
@@ -421,6 +421,13 @@ namespace OMT.DataService.Service
                                                   primary_sorid = sa.PrimarySystemOfRecordId,
                                               }).FirstOrDefault();
 
+                    if (shifroasterdetails == null )
+                    {
+                        resultDTO.Data = null;
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Shift roaster is not uploaded for the applied date,so you can't apply for regularization.";
+                    }
+
                     NonProductiveRegularization nonProductiveRegularization = new NonProductiveRegularization()
                     {
                         UserId = userid,
@@ -477,6 +484,8 @@ namespace OMT.DataService.Service
                                        select new
                                        {
                                            NonProductiveRegularizationId = npr.Id,
+                                           Userid = userid,
+                                           Tl_UserId = npr.TlUserId,
                                            TL_Name = up2.FirstName + " " + up2.LastName,
                                            Primary_SOR = sor.SystemofRecordName,
                                            Reasons = r.Reasons,
@@ -543,7 +552,7 @@ namespace OMT.DataService.Service
             {
                 var rstatus = _oMTDataContext.Regularization_Status.Where(x => x.IsActive && x.IsTlStatus).Select(x => x.Tl_Status_Name).ToList();
 
-                if (rstatus.Count > 0 )
+                if (rstatus.Count > 0)
                 {
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "List of Non Productive Reasons";
@@ -555,7 +564,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "Non Productive Reasons not found";
                     resultDTO.StatusCode = "404";
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -624,7 +633,9 @@ namespace OMT.DataService.Service
                                            select new
                                            {
                                                NonProductiveRegularizationId = npr.Id,
+                                               UserId = npr.UserId,
                                                AgentName = up.FirstName + " " + up.LastName,
+                                               TL_UserId = npr.TlUserId,
                                                TL_Name = up2.FirstName + " " + up2.LastName,
                                                Primary_SOR = sor.SystemofRecordName,
                                                Reasons = r.Reasons,
@@ -707,12 +718,12 @@ namespace OMT.DataService.Service
                     reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
                     reg.UpdatedBy = userid;
                     reg.UpdatedTime = DateTime.UtcNow;
-                    reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null: updateRegularizationsDTO.TlDescription ;
+                    reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null : updateRegularizationsDTO.TlDescription;
 
                     _oMTDataContext.NonProductiveRegularization.Update(reg);
                     _oMTDataContext.SaveChanges();
 
-                    
+
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Regularization has been approved";
 
@@ -725,6 +736,202 @@ namespace OMT.DataService.Service
                 }
 
 
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetNphProductivity_Agent(GetAgentNphProductivityDTO getAgentNphProductivityDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+
+                //var agent_nphprod = (from nph in _oMTDataContext.NPH_Productivity
+                //                     join up1 in _oMTDataContext.UserProfile on nph.UserId equals up1.UserId
+                //                     join up2 in _oMTDataContext.UserProfile on nph.TlUserId equals up2.UserId
+                //                     where up1.IsActive && up2.IsActive 
+                //                     && nph.Productivity_Date >= getAgentProdUtilDTO.FromDate 
+                //                     && nph.Productivity_Date <= getAgentProdUtilDTO.ToDate
+                //                     && up1.UserId == getAgentProdUtilDTO.UserId
+                //                     orderby nph.Productivity_Date
+                //                     group new { nph, up2 } by up1.UserId into g
+                //select new GetAgentNphProductivityResponseDTO
+                //{
+                //    Datewisedata = g.Select(x => new GetNphProductivityResponseDTO
+                //    {
+                //        Productivity_Date = x.nph.Productivity_Date.ToString("dd-MM-yyyy"),
+                //        Applied_Hours = x.nph.Applied_Hours,
+                //        Productivity = x.nph.Productivity,
+                //        Non_Productive_Productivity = x.nph.Non_Productive_Productivity,
+                //        TlName = x.up2.FullName  
+                //    }).ToList()
+                //}).ToList();
+                var pagination = getAgentNphProductivityDTO.Pagination;
+                var istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
+                var agent_nphprod = (from nph in _oMTDataContext.NPH_Productivity
+                                     join up1 in _oMTDataContext.UserProfile on nph.UserId equals up1.UserId
+                                     join up2 in _oMTDataContext.UserProfile on nph.TlUserId equals up2.UserId
+                                     where up1.IsActive && up2.IsActive
+                                     && nph.Productivity_Date >= getAgentNphProductivityDTO.FromDate
+                                     && nph.Productivity_Date <= getAgentNphProductivityDTO.ToDate
+                                     && up1.UserId == getAgentNphProductivityDTO.UserId
+                                     orderby nph.Productivity_Date
+                                     select new
+                                     {
+                                         Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
+                                         Applied_Hours = nph.Applied_Hours,
+                                         Tl_Name = up2.FirstName + " " + up2.LastName,
+                                         Productivity = nph.Productivity_Percentage,
+                                         Non_Productive_Productivity = nph.Total_Productivity_Percentage
+                                     }).ToList();
+
+
+                if (agent_nphprod.Count > 0)
+                {
+                    if (pagination.IsPagination)
+                    {
+                        var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                        var paginatedData = agent_nphprod.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                        var totalRecords = agent_nphprod.Count;
+                        var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                        var paginationOutput = new PaginationOutputDTO
+                        {
+                            Records = paginatedData.Cast<object>().ToList(),
+                            PageNo = pagination.PageNo,
+                            NoOfPages = totalPages,
+                            TotalCount = totalRecords,
+
+                        };
+
+                        resultDTO.Data = paginationOutput;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "List of Non productive productivities details";
+                    }
+                    else
+                    {
+                        resultDTO.Data = agent_nphprod;
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "List of Non productive productivities details";
+                    }
+
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Non productive productivities not found";
+                    resultDTO.StatusCode = "404";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetNphProductivity_Team(GetTeamNphProductivityDTO getTeamNphProductivityDTO, int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var pagination = getTeamNphProductivityDTO.Pagination;
+                var istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
+                int? teamid = getTeamNphProductivityDTO.TeamId;
+                int? roleid = 0;
+
+                if (teamid == null)
+                {
+                    roleid = _oMTDataContext.UserProfile
+                        .Where(x => x.UserId == userid && x.IsActive)
+                        .Select(x => x.RoleId)
+                        .FirstOrDefault();
+
+                    if (roleid == 1)
+                    {
+                        teamid = _oMTDataContext.Teams
+                            .Where(x => x.TL_Userid == userid && x.IsActive)
+                            .Select(x => x.TeamId)
+                            .FirstOrDefault();
+                    }
+                    else
+                    {
+                        teamid = 0;
+                    }
+                }
+
+                bool hasTeam = teamid.HasValue && teamid.Value != 0;
+
+                if (hasTeam || (!hasTeam && roleid != 1))
+                {
+                    var team_nphprod = (from nph in _oMTDataContext.NPH_Productivity
+                                        join up1 in _oMTDataContext.UserProfile on nph.UserId equals up1.UserId
+                                        join up2 in _oMTDataContext.UserProfile on nph.TlUserId equals up2.UserId
+                                        join t in _oMTDataContext.Teams on nph.TlUserId equals t.TL_Userid
+                                        where up1.IsActive && up2.IsActive
+                                        && nph.Productivity_Date >= getTeamNphProductivityDTO.FromDate
+                                        && nph.Productivity_Date <= getTeamNphProductivityDTO.ToDate
+                                        && (!hasTeam || t.TeamId == teamid.Value)
+                                        orderby up1.FirstName, nph.Productivity_Date
+                                        select new
+                                        {
+                                            UserName = up1.FirstName + " " + up1.LastName,
+                                            Tl_Name = up2.FirstName + " " + up2.LastName,
+                                            Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
+                                            Applied_Hours = nph.Applied_Hours,
+                                            Productivity = nph.Productivity_Percentage,
+                                            Non_Productive_Productivity = nph.Total_Productivity_Percentage
+                                        }).Distinct().ToList();
+
+                    if (team_nphprod.Count > 0)
+                    {
+                        if (pagination.IsPagination)
+                        {
+                            var skip = (pagination.PageNo - 1) * pagination.NoOfRecords;
+                            var paginatedData = team_nphprod.Skip(skip).Take(pagination.NoOfRecords).ToList();
+                            var totalRecords = team_nphprod.Count;
+                            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.NoOfRecords);
+
+                            var paginationOutput = new PaginationOutputDTO
+                            {
+                                Records = paginatedData.Cast<object>().ToList(),
+                                PageNo = pagination.PageNo,
+                                NoOfPages = totalPages,
+                                TotalCount = totalRecords,
+
+                            };
+
+                            resultDTO.Data = paginationOutput;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "List of Non productive productivities details";
+                        }
+                        else
+                        {
+
+                            resultDTO.Data = team_nphprod;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "List of Non productive productivities details";
+                        }
+
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Non productive productivities not found";
+                        resultDTO.StatusCode = "404";
+                    }
+                }
             }
             catch (Exception ex)
             {

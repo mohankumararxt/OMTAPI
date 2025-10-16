@@ -6708,3 +6708,46 @@
 --ADD CONSTRAINT fk_NonProductiveRegularization_UpdatedBy
 --FOREIGN KEY (UpdatedBy)
 --REFERENCES userprofile(UserId);
+
+
+--Insert into OmtMenus
+--values
+--('userregularization',1),
+--('updateregularizations',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(3,55,1),
+--(1,56,1),
+--(2,56,1),
+--(4,56,1)
+
+
+--create table NPH_Productivity
+--(
+--NPH_ProductivityId int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Productivity_Date datetime not null,
+--Applied_Hours  DECIMAL(10,1) NOT NULL,
+--Productivity_Percentage  INT NOT NULL,
+--Total_Productivity_Percentage  INT NOT NULL
+--)
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+
+
+--insert into NPH_Productivity values
+--(400,10,'2025-10-11',1.0,40,60),
+--(400,10,'2025-10-14',2.0,80,20),
+--(472,59,'2025-10-14',1.0,40,60),
+--(472,59,'2025-10-15',2.0,80,20)

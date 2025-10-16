@@ -81,7 +81,24 @@ namespace OMT.APIHost.Controllers
         public ResultDTO UpdateRegularizations([FromBody] UpdateRegularizationsDTO updateRegularizationsDTO)
         {
             var userid = UserId;
-            return _dateAndNphService.UpdateRegularizations(updateRegularizationsDTO,userid);
+            return _dateAndNphService.UpdateRegularizations(updateRegularizationsDTO, userid);
+        }
+
+        [HttpPost]
+        [Route("GetNphProductivity_Agent")]
+
+        public ResultDTO GetNphProductivity_Agent([FromBody] GetAgentNphProductivityDTO getAgentNphProductivityDTO)
+        {
+            return _dateAndNphService.GetNphProductivity_Agent(getAgentNphProductivityDTO);
+        }
+
+        [HttpPost]
+        [Route("GetNphProductivity_Team")]
+
+        public ResultDTO GetNphProductivity_Team(GetTeamNphProductivityDTO getTeamNphProductivityDTO)
+        {
+            var userid = UserId;
+            return _dateAndNphService.GetNphProductivity_Team(getTeamNphProductivityDTO, userid);
         }
     }
 }

@@ -86,6 +86,7 @@ namespace OMT.DataAccess.Context
         public DbSet<NonProductiveReasons> NonProductiveReasons { get; set; }
         public DbSet<NonProductiveRegularization> NonProductiveRegularization { get; set; }
         public DbSet<Regularization_Status> Regularization_Status { get; set; }
+        public DbSet<NPH_Productivity> NPH_Productivity { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
