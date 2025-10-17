@@ -6731,7 +6731,7 @@
 --Productivity_Date datetime not null,
 --Applied_Hours  DECIMAL(10,1) NOT NULL,
 --Productivity_Percentage  INT NOT NULL,
---Total_Productivity_Percentage  INT NOT NULL
+--NPH_Productivity_Percentage  INT NOT NULL
 --)
 
 --alter table NPH_Productivity
@@ -6751,3 +6751,5 @@
 --(400,10,'2025-10-14',2.0,80,20),
 --(472,59,'2025-10-14',1.0,40,60),
 --(472,59,'2025-10-15',2.0,80,20)
+
+

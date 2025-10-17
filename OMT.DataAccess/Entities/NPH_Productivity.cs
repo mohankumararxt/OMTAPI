@@ -11,6 +11,7 @@ namespace OMT.DataAccess.Entities
         public DateTime Productivity_Date { get; set; }
         public decimal Applied_Hours { get; set; }
         public int Productivity_Percentage { get; set; }
-        public int Total_Productivity_Percentage { get; set; }
+        public int NPH_Productivity_Percentage { get; set; }
     }
 }
+    

@@ -421,37 +421,39 @@ namespace OMT.DataService.Service
                                                   primary_sorid = sa.PrimarySystemOfRecordId,
                                               }).FirstOrDefault();
 
-                    if (shifroasterdetails == null )
+                    if (shifroasterdetails == null)
                     {
                         resultDTO.Data = null;
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "Shift roaster is not uploaded for the applied date,so you can't apply for regularization.";
                     }
-
-                    NonProductiveRegularization nonProductiveRegularization = new NonProductiveRegularization()
+                    else
                     {
-                        UserId = userid,
-                        TlUserId = shifroasterdetails.tluserid,
-                        Primary_SorId = shifroasterdetails.primary_sorid,
-                        Reasons = applyNonProductiveHoursDTO.Reasons,
-                        Remarks = applyNonProductiveHoursDTO.Remarks,
-                        NonProductiveHours_Date = applyNonProductiveHoursDTO.NonProductiveHours_Date,
-                        StartTime = applyNonProductiveHoursDTO.StartTime,
-                        EndTime = applyNonProductiveHoursDTO.EndTime,
-                        Applied_Hours = applyNonProductiveHoursDTO.Applied_Hours,
-                        Regularization_Status = 1,
-                        Applied_Time = DateTime.UtcNow,
-                        UpdatedBy = null,
-                        UpdatedTime = null,
-                        TlDescription = null,
-                    };
+                        NonProductiveRegularization nonProductiveRegularization = new NonProductiveRegularization()
+                        {
+                            UserId = userid,
+                            TlUserId = shifroasterdetails.tluserid,
+                            Primary_SorId = shifroasterdetails.primary_sorid,
+                            Reasons = applyNonProductiveHoursDTO.Reasons,
+                            Remarks = applyNonProductiveHoursDTO.Remarks,
+                            NonProductiveHours_Date = applyNonProductiveHoursDTO.NonProductiveHours_Date,
+                            StartTime = applyNonProductiveHoursDTO.StartTime,
+                            EndTime = applyNonProductiveHoursDTO.EndTime,
+                            Applied_Hours = applyNonProductiveHoursDTO.Applied_Hours,
+                            Regularization_Status = 1,
+                            Applied_Time = DateTime.UtcNow,
+                            UpdatedBy = null,
+                            UpdatedTime = null,
+                            TlDescription = null,
+                        };
 
-                    _oMTDataContext.NonProductiveRegularization.Add(nonProductiveRegularization);
-                    _oMTDataContext.SaveChanges();
+                        _oMTDataContext.NonProductiveRegularization.Add(nonProductiveRegularization);
+                        _oMTDataContext.SaveChanges();
 
 
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Regularization applied successfully";
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Regularization applied successfully";
+                    }
                 }
             }
             catch (Exception ex)
@@ -550,7 +552,7 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                var rstatus = _oMTDataContext.Regularization_Status.Where(x => x.IsActive && x.IsTlStatus).Select(x => x.Tl_Status_Name).ToList();
+                var rstatus = _oMTDataContext.Regularization_Status.Where(x => x.IsActive && x.IsTlStatus).ToList();
 
                 if (rstatus.Count > 0)
                 {
@@ -789,7 +791,7 @@ namespace OMT.DataService.Service
                                          Applied_Hours = nph.Applied_Hours,
                                          Tl_Name = up2.FirstName + " " + up2.LastName,
                                          Productivity = nph.Productivity_Percentage,
-                                         Non_Productive_Productivity = nph.Total_Productivity_Percentage
+                                         Non_Productive_Productivity = nph.NPH_Productivity_Percentage
                                      }).ToList();
 
 
@@ -891,7 +893,7 @@ namespace OMT.DataService.Service
                                             Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
                                             Applied_Hours = nph.Applied_Hours,
                                             Productivity = nph.Productivity_Percentage,
-                                            Non_Productive_Productivity = nph.Total_Productivity_Percentage
+                                            Non_Productive_Productivity = nph.NPH_Productivity_Percentage
                                         }).Distinct().ToList();
 
                     if (team_nphprod.Count > 0)
