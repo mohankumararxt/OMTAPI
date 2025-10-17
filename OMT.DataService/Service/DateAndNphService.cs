@@ -713,28 +713,40 @@ namespace OMT.DataService.Service
 
             try
             {
-                var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
+                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
+                DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
 
-                if (reg != null)
+                if (DateTime.UtcNow >= endtime)
                 {
-                    reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
-                    reg.UpdatedBy = userid;
-                    reg.UpdatedTime = DateTime.UtcNow;
-                    reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null : updateRegularizationsDTO.TlDescription;
-
-                    _oMTDataContext.NonProductiveRegularization.Update(reg);
-                    _oMTDataContext.SaveChanges();
-
-
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "Regularization has been approved";
-
+                    resultDTO.Data = null;
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "You can't apply for regularization of non productive hours after 6 PM.";
                 }
                 else
                 {
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Regularization details not found";
-                    resultDTO.StatusCode = "404";
+                    var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
+
+                    if (reg != null)
+                    {
+                        reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
+                        reg.UpdatedBy = userid;
+                        reg.UpdatedTime = DateTime.UtcNow;
+                        reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null : updateRegularizationsDTO.TlDescription;
+
+                        _oMTDataContext.NonProductiveRegularization.Update(reg);
+                        _oMTDataContext.SaveChanges();
+
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Regularization has been approved";
+
+                    }
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "Regularization details not found";
+                        resultDTO.StatusCode = "404";
+                    }
                 }
 
 
