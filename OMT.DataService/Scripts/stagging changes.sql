@@ -6654,7 +6654,7 @@
 --)
 
 --insert into Regularization_Status values
---('Pending','Pending',0,1),
+--('Pending','Pending',1,1),
 --('Approved','Approve',1,1),
 --('Rejected','Reject',1,1)
 
@@ -6751,3 +6751,14 @@
 --(472,59,'2025-10-15',2.0,80,20)
 
 
+--Insert into OmtMenus
+--values
+--('userregularization',1),
+--('updateregularizations',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(3,55,1),
+--(1,56,1),
+--(2,56,1),
+--(4,56,1)

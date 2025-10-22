@@ -647,6 +647,7 @@ namespace OMT.DataService.Service
                                                EndTime = TimeZoneInfo.ConvertTimeFromUtc(npr.EndTime, istZone).ToString("HH:mm"),
                                                Hours = npr.Applied_Hours,
                                                Status = rs.Status_Name,
+                                               StatusId = rs.Id,
                                                Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
                                                Tl_Description = npr.TlDescription
 
