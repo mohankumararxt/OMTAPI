@@ -6753,12 +6753,28 @@
 
 --Insert into OmtMenus
 --values
---('userregularization',1),
---('updateregularizations',1)
+--('getnphproductivityagent',1),
+--('getnphproductivityteam',1)
 
 --insert into OmtMenus_Distribution
 --values
---(3,55,1),
---(1,56,1),
---(2,56,1),
---(4,56,1)
+--(1,58,1),
+--(2,58,1),
+--(4,58,1),
+--(5,58,1),
+--(3,57,1),
+--(1,57,1),
+--(2,57,1),
+--(4,57,1),
+--(5,57,1)
+
+
+----ADD nph skillsets under all sor in ui----------
+
+--update SkillSet set  invoicemandatory = 0 where skillsetid in (
+--795,
+--796,
+--797,
+--798)
+--alter master productivity sp--------
+

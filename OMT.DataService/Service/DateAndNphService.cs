@@ -649,7 +649,9 @@ namespace OMT.DataService.Service
                                                Status = rs.Status_Name,
                                                StatusId = rs.Id,
                                                Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
-                                               Tl_Description = npr.TlDescription
+                                               Tl_Description = npr.TlDescription,
+                                               IsEditable = (npr.NonProductiveHours_Date.Date >= DateTime.Now.Date.AddDays(-1)) ? true : false
+,
 
                                            }).ToList();
 
@@ -721,7 +723,7 @@ namespace OMT.DataService.Service
                 {
                     resultDTO.Data = null;
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "You can't apply for regularization of non productive hours after 6 PM.";
+                    resultDTO.Message = "You can't update regularization of non productive hours after 6 PM.";
                 }
                 else
                 {
