@@ -6771,10 +6771,11 @@
 
 ----ADD nph skillsets under all sor in ui----------
 
---update SkillSet set  invoicemandatory = 0 where skillsetid in (
---795,
---796,
---797,
---798)
---alter master productivity sp--------
-
+----update SkillSet set  invoicemandatory = 0 where skillsetid in (
+----795,
+----796,
+----797,
+----798)
+----alter master productivity sp--------
+----create calculate_nph_productivity sp-----------
+----alter all 4 invoice sp------------
