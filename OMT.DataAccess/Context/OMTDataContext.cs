@@ -79,6 +79,14 @@ namespace OMT.DataAccess.Context
         public DbSet<MonthlyCount_SkillSet> MonthlyCount_SkillSet { get; set; }
         public DbSet<MonthlyCount_SOR> MonthlyCount_SOR { get; set; }
         public DbSet<AutomaticFlow> AutomaticFlow { get; set; }
+        public DbSet<OmtMenus> OmtMenus { get; set; }
+        public DbSet<OmtMenus_Distribution> OmtMenus_Distribution { get; set; }
+        public DbSet<PasswordResetTokens> PasswordResetTokens { get; set; }
+        public DbSet<Monthly_Utilization_SOR> Monthly_Utilization_SOR { get; set; }
+        public DbSet<NonProductiveReasons> NonProductiveReasons { get; set; }
+        public DbSet<NonProductiveRegularization> NonProductiveRegularization { get; set; }
+        public DbSet<Regularization_Status> Regularization_Status { get; set; }
+        public DbSet<NPH_Productivity> NPH_Productivity { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

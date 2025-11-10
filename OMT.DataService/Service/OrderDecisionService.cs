@@ -44,59 +44,84 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
-                List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
-                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid && us.IsActive
-                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                           select ss.SkillSetName).ToList();
+                //give orders only if user has checkedin
 
-                //check if user has any TRD skillsets to show the getpendingorders button
-
-                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
-                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
-                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                             select ss.SkillSetName).ToList();
-
-                bool ispending = false;
-
-                if (trdskillsets.Count > 0)
-                {
-                    ispending = true;
-                }
-
+                var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
                 PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
-                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
-                // process pending orders if any for the user and send the details
-                List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
-
-                foreach (string tablename in tablenames)
+                if (!user_Checkedin)
                 {
-                    // check for pending orders and send them 
-                    var columns1 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.ColumnAliasName).ToList();
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = user_Checkedin
+                    };
 
-                    var columns2 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.DefaultColumnName).ToList();
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Please check in to process orders.";
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
+                }
+                else
+                {
+                    //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
+                    List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.UserId == userid && us.IsActive
+                                               && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).ToList();
+
+                    //check if user has any TRD skillsets to show the getpendingorders button
+
+                    List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                                 join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                 where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                                 && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                 select ss.SkillSetName).ToList();
+
+                    bool ispending = false;
+
+                    if (trdskillsets.Count > 0)
+                    {
+                        ispending = true;
+                    }
 
 
-                    // get date type columns 
-                    var datecol = (from ss in _oMTDataContext.SkillSet
-                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
-                                   select dt.DefaultColumnName).ToList();
+                    Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
+                    // process pending orders if any for the user and send the details
+                    List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+
+                    foreach (string tablename in tablenames)
+                    {
+                        // check for pending orders and send them 
+                        var columns1 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.ColumnAliasName).ToList();
+
+                        var columns2 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.DefaultColumnName).ToList();
 
 
-                    var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
-                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+                        // get date type columns 
+                        var datecol = (from ss in _oMTDataContext.SkillSet
+                                       join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                       where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
+                                       select dt.DefaultColumnName).ToList();
 
-                    string query = $@"
+
+                        var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
+                        string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+
+                        string query = $@"
                                     SELECT 
                                         {selectedColumns},
                                         t2.SkillSetName AS SkillSetName, 
@@ -116,203 +141,205 @@ namespace OMT.DataService.Service
 	                                    t1.IsPriority DESC,t1.StartTime ASC;";
 
 
-                    using SqlCommand command = connection.CreateCommand();
-                    command.CommandText = query;
-                    command.Parameters.AddWithValue("@UserId", userid);
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = query;
+                        command.Parameters.AddWithValue("@UserId", userid);
 
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
-                    DataSet dataset = new DataSet();
+                        DataSet dataset = new DataSet();
 
-                    dataAdapter.Fill(dataset);
+                        dataAdapter.Fill(dataset);
 
-                    DataTable datatable = dataset.Tables[0];
+                        DataTable datatable = dataset.Tables[0];
 
-                    var querydt1 = datatable.AsEnumerable()
-                                  .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                  column => column.ColumnName,
-                                  column =>
-                                  {
-                                      if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                        var querydt1 = datatable.AsEnumerable()
+                                      .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                      column => column.ColumnName,
+                                      column =>
                                       {
-                                          if (row[column] == DBNull.Value)
+                                          if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
                                           {
-                                              return "";
+                                              if (row[column] == DBNull.Value)
+                                              {
+                                                  return "";
+                                              }
+                                              DateTime dateValue = (DateTime)row[column];
+                                              return dateValue.ToString("yyyy-MM-dd");  // Format as date string
                                           }
-                                          DateTime dateValue = (DateTime)row[column];
-                                          return dateValue.ToString("yyyy-MM-dd");  // Format as date string
-                                      }
-                                      return row[column] == DBNull.Value ? "" : row[column];
-                                  })).ToList();
+                                          return row[column] == DBNull.Value ? "" : row[column];
+                                      })).ToList();
 
-                    noStatusRecords.AddRange(querydt1);
-
-                }
-                if (noStatusRecords.Count > 0)
-                {
-                    orderedRecords = noStatusRecords
-                         .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
-                         .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
-                         .First();
-
-                    orderedRecords.Remove("StartTime");
-
-                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
-
-                    // Convert to JSON string
-                    string order_string = JsonConvert.SerializeObject(PendingOrder);
-
-                    //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
-
-                    //check if order is from trd pending
-                    var istrd_pending = false;
-                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
-                    var tableid = (int)orderedRecords["Id"];
-                    var skillsetid = (int)orderedRecords["SkillSetId"];
-                    var ispriority = (bool)orderedRecords["IsPriority"];
-                    var tablename = orderedRecords["SkillSetName"].ToString();
-
-                    if (istrd)
-                    {
-                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
-
-                        using SqlCommand trd_command = connection.CreateCommand();
-                        trd_command.CommandText = pendingorder_query;
-
-                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
-
-                        DataSet trd_dataset = new DataSet();
-
-                        trd_dataAdapter.Fill(trd_dataset);
-
-                        DataTable trd_datatable = trd_dataset.Tables[0];
-
-                        var trd_pnd = trd_datatable.AsEnumerable()
-                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                       column => column.ColumnName,
-                                       column => row[column]));
-
-                        if (trd_pnd.Any())
-                        {
-                            istrd_pending = trd_pnd.Any(record =>
-                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
-                        }
-                    }
-
-                    // check if order is from TIQE 
-
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
-
-                    // find if it satisfies the automatic flow conditions
-                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
-
-                    var isautomaticflow = false;
-
-                    if (automaticflow_details != null)
-                    {
-                        if (automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = ispriority ? true : false;
-                        }
-                        else if (!automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = true;
-                        }
+                        noStatusRecords.AddRange(querydt1);
 
                     }
-
-                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    if (noStatusRecords.Count > 0)
                     {
-                        IsPending = ispending,  // trd skillsets presence
-                        //PendingOrder = dataToReturn, 
-                        AssignedOrder = order_string,// any order pending
-                        IsTiqe = istiqe_order, // if that order is tiqe
-                        IsTrdPending = istrd_pending, // pending trd orders
-                        IsAutomaticFlow = isautomaticflow
-                    };
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
-                    resultDTO.StatusCode = "200";
-                    resultDTO.Data = pendingOrdersResponseDTO;
-                }
-                else
-                {
-                    List<GetOrderCalculation> userskillsetlist = (from uss in _oMTDataContext.UserSkillSet
-                                                                  join goc in _oMTDataContext.GetOrderCalculation on uss.UserSkillSetId equals goc.UserSkillSetId
-                                                                  join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                  join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
-                                                                  where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid
-                                                                  orderby goc.PriorityOrder
-                                                                  select new GetOrderCalculation
-                                                                  {
-                                                                      UserId = goc.UserId,
-                                                                      UserSkillSetId = goc.UserSkillSetId,
-                                                                      SkillSetId = goc.SkillSetId,
-                                                                      TotalOrderstoComplete = goc.TotalOrderstoComplete,
-                                                                      OrdersCompleted = goc.OrdersCompleted,
-                                                                      Weightage = goc.Weightage,
-                                                                      PriorityOrder = goc.PriorityOrder,
-                                                                      IsActive = goc.IsActive,
-                                                                      UpdatedDate = goc.UpdatedDate,
-                                                                      IsCycle1 = goc.IsCycle1,
-                                                                      IsHardStateUser = goc.IsHardStateUser,
-                                                                      Utilized = goc.Utilized,
-                                                                      HardStateUtilized = goc.HardStateUtilized,
-                                                                  }).ToList();
+                        orderedRecords = noStatusRecords
+                             .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                             .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                             .First();
 
-                    bool iscycle1 = true;
+                        orderedRecords.Remove("StartTime");
 
-                    string uporder = string.Empty;
-                    string po_uporder = string.Empty;
+                        List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
 
-                    List<GetOrderCalculation> uss_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+                        // Convert to JSON string
+                        string order_string = JsonConvert.SerializeObject(PendingOrder);
 
-                    if (uss_cycle1.Count == 0)
-                    {
-                        iscycle1 = false;
+                        //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
 
-                        po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+                        //check if order is from trd pending
+                        var istrd_pending = false;
+                        var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                        var tableid = (int)orderedRecords["Id"];
+                        var skillsetid = (int)orderedRecords["SkillSetId"];
+                        var ispriority = (bool)orderedRecords["IsPriority"];
+                        var tablename = orderedRecords["SkillSetName"].ToString();
 
-                        //if no priority orders then go by weightage 
-                        if (string.IsNullOrEmpty(po_uporder))
+                        if (istrd)
                         {
-                            // Get unutilized skill sets for cycle 2, ordered by priority
-                            var uss_cycle2 = userskillsetlist.Where(x => x.Utilized == false && !x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+                            var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
 
-                            // Process cycle 2 skill sets by weightage
-                            uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
+                            using SqlCommand trd_command = connection.CreateCommand();
+                            trd_command.CommandText = pendingorder_query;
+
+                            using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                            DataSet trd_dataset = new DataSet();
+
+                            trd_dataAdapter.Fill(trd_dataset);
+
+                            DataTable trd_datatable = trd_dataset.Tables[0];
+
+                            var trd_pnd = trd_datatable.AsEnumerable()
+                                          .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                           column => column.ColumnName,
+                                           column => row[column]));
+
+                            if (trd_pnd.Any())
+                            {
+                                istrd_pending = trd_pnd.Any(record =>
+                                                    record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                            }
                         }
 
+                        // check if order is from TIQE 
+
+                        var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
+
+                        // find if it satisfies the automatic flow conditions
+                        var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                        var isautomaticflow = false;
+
+                        if (automaticflow_details != null)
+                        {
+                            if (automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = ispriority ? true : false;
+                            }
+                            else if (!automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = true;
+                            }
+
+                        }
+
+                        pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                        {
+                            IsPending = ispending,  // trd skillsets presence
+                                                    //PendingOrder = dataToReturn, 
+                            AssignedOrder = order_string,// any order pending
+                            IsTiqe = istiqe_order, // if that order is tiqe
+                            IsTrdPending = istrd_pending, // pending trd orders
+                            IsAutomaticFlow = isautomaticflow, //sci orders automatic flow
+                            Checked_In = user_Checkedin
+                        };
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "You have been assigned with an order by your TL,please finish this first";
+                        resultDTO.StatusCode = "200";
+                        resultDTO.Data = pendingOrdersResponseDTO;
                     }
                     else
                     {
-                        // get only priority orders from all the cycle1 skillsets 
+                        List<GetOrderCalculation> userskillsetlist = (from uss in _oMTDataContext.UserSkillSet
+                                                                      join goc in _oMTDataContext.GetOrderCalculation on uss.UserSkillSetId equals goc.UserSkillSetId
+                                                                      join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                      join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                      where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid
+                                                                      orderby goc.PriorityOrder
+                                                                      select new GetOrderCalculation
+                                                                      {
+                                                                          UserId = goc.UserId,
+                                                                          UserSkillSetId = goc.UserSkillSetId,
+                                                                          SkillSetId = goc.SkillSetId,
+                                                                          TotalOrderstoComplete = goc.TotalOrderstoComplete,
+                                                                          OrdersCompleted = goc.OrdersCompleted,
+                                                                          Weightage = goc.Weightage,
+                                                                          PriorityOrder = goc.PriorityOrder,
+                                                                          IsActive = goc.IsActive,
+                                                                          UpdatedDate = goc.UpdatedDate,
+                                                                          IsCycle1 = goc.IsCycle1,
+                                                                          IsHardStateUser = goc.IsHardStateUser,
+                                                                          Utilized = goc.Utilized,
+                                                                          HardStateUtilized = goc.HardStateUtilized,
+                                                                      }).ToList();
 
-                        po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+                        bool iscycle1 = true;
 
-                        //if no priority orders then go by weightage 
-                        if (string.IsNullOrEmpty(po_uporder))
+                        string uporder = string.Empty;
+                        string po_uporder = string.Empty;
+
+                        List<GetOrderCalculation> uss_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+
+                        if (uss_cycle1.Count == 0)
                         {
-                            uporder = GetOrderByCycle(uss_cycle1, iscycle1, userid, resultDTO, connection);
+                            iscycle1 = false;
 
-                            // If no orders were assigned in cycle 1, proceed to cycle 2
-                            if (string.IsNullOrWhiteSpace(uporder))
+                            po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+
+                            //if no priority orders then go by weightage 
+                            if (string.IsNullOrEmpty(po_uporder))
                             {
-                                iscycle1 = false;
+                                // Get unutilized skill sets for cycle 2, ordered by priority
+                                var uss_cycle2 = userskillsetlist.Where(x => x.Utilized == false && !x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
 
-                                // get only priority orders from all the cycle1 skillsets 
-                                po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+                                // Process cycle 2 skill sets by weightage
+                                uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
+                            }
 
-                                if (string.IsNullOrEmpty(po_uporder))
+                        }
+                        else
+                        {
+                            // get only priority orders from all the cycle1 skillsets 
+
+                            po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+
+                            //if no priority orders then go by weightage 
+                            if (string.IsNullOrEmpty(po_uporder))
+                            {
+                                uporder = GetOrderByCycle(uss_cycle1, iscycle1, userid, resultDTO, connection);
+
+                                // If no orders were assigned in cycle 1, proceed to cycle 2
+                                if (string.IsNullOrWhiteSpace(uporder))
                                 {
-                                    // Get unutilized skill sets for cycle 2, ordered by priority
-                                    var uss_cycle2 = userskillsetlist.Where(x => x.Utilized == false && !x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+                                    iscycle1 = false;
 
-                                    // Process cycle 2 skill sets
-                                    uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
+                                    // get only priority orders from all the cycle1 skillsets 
+                                    po_uporder = GetOrderByPo(userid, resultDTO, connection, iscycle1);
+
+                                    if (string.IsNullOrEmpty(po_uporder))
+                                    {
+                                        // Get unutilized skill sets for cycle 2, ordered by priority
+                                        var uss_cycle2 = userskillsetlist.Where(x => x.Utilized == false && !x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+
+                                        // Process cycle 2 skill sets
+                                        uporder = GetOrderByCycle(uss_cycle2, iscycle1, userid, resultDTO, connection);
+
+                                    }
 
                                 }
-
                             }
                         }
                     }
@@ -422,7 +449,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
                             IsTrdPending = false,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                         };
 
                         // Order assigned successfully
@@ -477,7 +505,8 @@ namespace OMT.DataService.Service
                             AssignedOrder = uporder,
                             IsTiqe = is_tiqe,
                             IsTrdPending = false,
-                            IsAutomaticFlow = isautomaticflow
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                         };
 
                         // Order assigned successfully
@@ -591,7 +620,16 @@ namespace OMT.DataService.Service
 
             if (string.IsNullOrWhiteSpace(updatedOrder))
             {
-                resultDTO.Data = "";
+                gordto = new GetOrderResponseDTO
+                {
+                    AssignedOrder = "",
+                    IsTiqe = false,
+                    IsTrdPending = false,
+                    IsAutomaticFlow = false,
+                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                };
+
+                resultDTO.Data = gordto;
                 resultDTO.StatusCode = "404";
                 resultDTO.IsSuccess = false;
                 resultDTO.Message = "No more orders for now, please come back again";
@@ -613,9 +651,9 @@ namespace OMT.DataService.Service
                 {
                     ssid = firstItem["SkillSetId"] != null ? (int)firstItem["SkillSetId"] : (int?)null;
                     ssname = firstItem["SkillSetName"] != null ? firstItem["SkillSetName"].ToString() : "";
-                    sorname = firstItem[ "SystemOfRecordName"] != null ? firstItem["SystemOfRecordName"].ToString() : "";
+                    sorname = firstItem["SystemOfRecordName"] != null ? firstItem["SystemOfRecordName"].ToString() : "";
                     tableid = firstItem["Id"] != null ? (int)firstItem["Id"] : (int?)null;
-                    ispriority = (bool)firstItem["IsPriority"]; 
+                    ispriority = (bool)firstItem["IsPriority"];
                 }
 
                 if (ssid.HasValue)
@@ -678,7 +716,8 @@ namespace OMT.DataService.Service
                         AssignedOrder = updatedOrder,
                         IsTiqe = istiqe,
                         IsTrdPending = istrd_pending,
-                        IsAutomaticFlow = isautomaticflow
+                        IsAutomaticFlow = isautomaticflow,
+                        Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                     };
 
                     var UssDetails = _oMTDataContext.GetOrderCalculation.Where(x => x.UserId == userid && x.IsActive && x.SkillSetId == ssid && x.IsCycle1 == iscycle1 && x.UserSkillSetId == userskillsetid).FirstOrDefault();
@@ -715,57 +754,81 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
-                //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
-                List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
-                                           join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid && us.IsActive
-                                           && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                           select ss.SkillSetName).ToList();
+                var user_Checkedin = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null);
 
-                //check if user has any TRD skillsets to show the getpendingorders button
-
-                List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
-                                             join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                             where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
-                                             && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                             select ss.SkillSetName).ToList();
-
-                bool ispending = false;
-
-                if (trdskillsets.Count > 0)
-                {
-                    ispending = true;
-                }
-
-                List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
                 PendingOrdersResponseDTO pendingOrdersResponseDTO = new PendingOrdersResponseDTO();
-                Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
 
-                foreach (string tablename in tablenames)
+                if (!user_Checkedin)
                 {
-                    // check for pending orders and send them 
-                    var columns1 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.ColumnAliasName).ToList();
+                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    {
+                        IsPending = false,
+                        //PendingOrder = new List<Dictionary<string, object>> { orderedRecords },
+                        AssignedOrder = null,
+                        IsTiqe = false,
+                        IsTrdPending = false,
+                        IsAutomaticFlow = false,
+                        Checked_In = user_Checkedin
+                    };
 
-                    var columns2 = (from ss in _oMTDataContext.SkillSet
-                                    join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                    where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
-                                    select dt.DefaultColumnName).ToList();
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Please check in to process orders.";
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Data = pendingOrdersResponseDTO;
+                }
+                else
+                {
+                    //check if user has uncompleted orders in all of his skillsets. if any is there- dont assign orders,say- first complete pending orders
+                    List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
+                                               join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                               where us.UserId == userid && us.IsActive
+                                               && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                               select ss.SkillSetName).ToList();
+
+                    //check if user has any TRD skillsets to show the getpendingorders button
+
+                    List<string> trdskillsets = (from us in _oMTDataContext.UserSkillSet
+                                                 join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
+                                                 where us.UserId == userid && us.IsActive && ss.SystemofRecordId == 3
+                                                 && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                 select ss.SkillSetName).ToList();
+
+                    bool ispending = false;
+
+                    if (trdskillsets.Count > 0)
+                    {
+                        ispending = true;
+                    }
+
+                    List<Dictionary<string, object>> noStatusRecords = new List<Dictionary<string, object>>();
+
+                    Dictionary<string, object> orderedRecords = new Dictionary<string, object>();
+
+                    foreach (string tablename in tablenames)
+                    {
+                        // check for pending orders and send them 
+                        var columns1 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.TemplateColumns on ss.SkillSetId equals dt.SkillSetId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.ColumnAliasName).ToList();
+
+                        var columns2 = (from ss in _oMTDataContext.SkillSet
+                                        join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                        where ss.SkillSetName == tablename && dt.IsGetOrderColumn && ss.IsActive
+                                        select dt.DefaultColumnName).ToList();
 
 
-                    // get date type columns 
-                    var datecol = (from ss in _oMTDataContext.SkillSet
-                                   join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
-                                   where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
-                                   select dt.DefaultColumnName).ToList();
+                        // get date type columns 
+                        var datecol = (from ss in _oMTDataContext.SkillSet
+                                       join dt in _oMTDataContext.DefaultTemplateColumns on ss.SystemofRecordId equals dt.SystemOfRecordId
+                                       where ss.SkillSetName == tablename && dt.IsGetOrderColumn && dt.DataType == "Date" && ss.IsActive
+                                       select dt.DefaultColumnName).ToList();
 
 
-                    var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
-                    string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
+                        var columns = (columns1 ?? Enumerable.Empty<string>()).Concat(columns2 ?? Enumerable.Empty<string>());
+                        string selectedColumns = string.Join(", ", columns.Select(c => $"t1.{c}"));
 
-                    string query = $@"
+                        string query = $@"
                                     SELECT 
                                         {selectedColumns},
                                         t2.SkillSetName AS SkillSetName, 
@@ -785,237 +848,261 @@ namespace OMT.DataService.Service
 	                                    t1.IsPriority DESC,t1.StartTime ASC;";
 
 
-                    using SqlCommand command = connection.CreateCommand();
-                    command.CommandText = query;
-                    command.Parameters.AddWithValue("@UserId", userid);
+                        using SqlCommand command = connection.CreateCommand();
+                        command.CommandText = query;
+                        command.Parameters.AddWithValue("@UserId", userid);
 
-                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
 
-                    DataSet dataset = new DataSet();
+                        DataSet dataset = new DataSet();
 
-                    dataAdapter.Fill(dataset);
+                        dataAdapter.Fill(dataset);
 
-                    DataTable datatable = dataset.Tables[0];
+                        DataTable datatable = dataset.Tables[0];
 
-                    var querydt1 = datatable.AsEnumerable()
-                                 .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                 column => column.ColumnName,
-                                 column =>
-                                 {
-                                     if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
+                        var querydt1 = datatable.AsEnumerable()
+                                     .Select(row => datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                     column => column.ColumnName,
+                                     column =>
                                      {
-                                         if (row[column] == DBNull.Value)
+                                         if (datecol.Contains(column.ColumnName) && column.DataType == typeof(DateTime))
                                          {
-                                             return "";
+                                             if (row[column] == DBNull.Value)
+                                             {
+                                                 return "";
+                                             }
+                                             DateTime dateValue = (DateTime)row[column];
+                                             return dateValue.ToString("yyyy-MM-dd");  // Format as date string
                                          }
-                                         DateTime dateValue = (DateTime)row[column];
-                                         return dateValue.ToString("yyyy-MM-dd");  // Format as date string
-                                     }
-                                     return row[column] == DBNull.Value ? "" : row[column];
-                                 })).ToList();
+                                         return row[column] == DBNull.Value ? "" : row[column];
+                                     })).ToList();
 
-                    noStatusRecords.AddRange(querydt1);
-
-                }
-                if (noStatusRecords.Count > 0)
-                {
-                    orderedRecords = noStatusRecords
-                                    .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
-                                    .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
-                                    .First();
-
-                    orderedRecords.Remove("StartTime");
-
-                    List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
-
-                    // Convert to JSON string
-                    string order_string = JsonConvert.SerializeObject(PendingOrder);
-
-                    //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
-
-                    //check if order is from trd pending
-                    var istrd_pending = false;
-                    var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
-                    var tableid = (int)orderedRecords["Id"];
-                    var skillsetid = (int)orderedRecords["SkillSetId"];
-                    var ispriority = (bool)orderedRecords["IsPriority"];
-                    var tablename = orderedRecords["SkillSetName"].ToString();
-
-                    if (istrd)
-                    {
-                        var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
-
-                        using SqlCommand trd_command = connection.CreateCommand();
-                        trd_command.CommandText = pendingorder_query;
-
-                        using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
-
-                        DataSet trd_dataset = new DataSet();
-
-                        trd_dataAdapter.Fill(trd_dataset);
-
-                        DataTable trd_datatable = trd_dataset.Tables[0];
-
-                        var trd_pnd = trd_datatable.AsEnumerable()
-                                      .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                       column => column.ColumnName,
-                                       column => row[column]));
-
-                        if (trd_pnd.Any())
-                        {
-                            istrd_pending = trd_pnd.Any(record =>
-                                                record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
-                        }
-                    }
-
-                    // check if order is from TIQE 
-
-                    var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
-
-                    // find if it satisfies the automatic flow conditions
-                    var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
-
-                    var isautomaticflow = false;
-
-                    if (automaticflow_details != null)
-                    {
-                        if (automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = ispriority ? true : false;
-                        }
-                        else if (!automaticflow_details.PriorityOrders_Only)
-                        {
-                            isautomaticflow = true;
-                        }
+                        noStatusRecords.AddRange(querydt1);
 
                     }
-
-
-                    pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                    if (noStatusRecords.Count > 0)
                     {
-                        IsPending = ispending,
-                        //PendingOrder = dataToReturn,
-                        AssignedOrder = order_string,
-                        IsTiqe = istiqe_order,
-                        IsTrdPending = istrd_pending,
-                        IsAutomaticFlow = isautomaticflow
-                    };
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "You have an order in your queue,please finish this first";
-                    resultDTO.StatusCode = "200";
-                    resultDTO.Data = pendingOrdersResponseDTO;
+                        orderedRecords = noStatusRecords
+                                        .OrderByDescending(record => bool.Parse(record["IsPriority"].ToString()))
+                                        .ThenBy(record => DateTime.Parse(record["StartTime"].ToString()))
+                                        .First();
 
-                }
-                else
-                {
-                    List<GetOrderCalculation> userskillsetlist = (from uss in _oMTDataContext.UserSkillSet
-                                                                  join goc in _oMTDataContext.GetOrderCalculation on uss.UserSkillSetId equals goc.UserSkillSetId
-                                                                  join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
-                                                                  join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
-                                                                  where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid && ss.SystemofRecordId == 3
-                                                                  orderby goc.PriorityOrder // uss.IsHardStateUser descending, uss.Percentage descending
-                                                                  select new GetOrderCalculation
-                                                                  {
-                                                                      UserId = goc.UserId,
-                                                                      UserSkillSetId = goc.UserSkillSetId,
-                                                                      SkillSetId = goc.SkillSetId,
-                                                                      TotalOrderstoComplete = goc.TotalOrderstoComplete,
-                                                                      OrdersCompleted = goc.OrdersCompleted,
-                                                                      Weightage = goc.Weightage,
-                                                                      PriorityOrder = goc.PriorityOrder,
-                                                                      IsActive = goc.IsActive,
-                                                                      UpdatedDate = goc.UpdatedDate,
-                                                                      IsCycle1 = goc.IsCycle1,
-                                                                      IsHardStateUser = goc.IsHardStateUser,
-                                                                      Utilized = goc.Utilized,
-                                                                      HardStateUtilized = goc.HardStateUtilized,
-                                                                  }).ToList();
+                        orderedRecords.Remove("StartTime");
 
-                    // bool IsTrdPending = true;
-                    bool iscycle1 = true;
-                    var cycle = new List<GetOrderCalculation>();
+                        List<Dictionary<string, object>> PendingOrder = new List<Dictionary<string, object>> { orderedRecords };
 
-                    List<GetOrderCalculation> trd_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+                        // Convert to JSON string
+                        string order_string = JsonConvert.SerializeObject(PendingOrder);
 
-                    if (trd_cycle1.Count == 0)
-                    {
-                        iscycle1 = false;
+                        //var dataToReturn = new List<Dictionary<string, object>> { orderedRecords };
+
+                        //check if order is from trd pending
+                        var istrd_pending = false;
+                        var istrd = (int)orderedRecords["SystemOfRecordId"] == 3;
+                        var tableid = (int)orderedRecords["Id"];
+                        var skillsetid = (int)orderedRecords["SkillSetId"];
+                        var ispriority = (bool)orderedRecords["IsPriority"];
+                        var tablename = orderedRecords["SkillSetName"].ToString();
+
+                        if (istrd)
+                        {
+                            var pendingorder_query = $"SELECT IsPending FROM {tablename} where Id = {tableid}";
+
+                            using SqlCommand trd_command = connection.CreateCommand();
+                            trd_command.CommandText = pendingorder_query;
+
+                            using SqlDataAdapter trd_dataAdapter = new SqlDataAdapter(trd_command);
+
+                            DataSet trd_dataset = new DataSet();
+
+                            trd_dataAdapter.Fill(trd_dataset);
+
+                            DataTable trd_datatable = trd_dataset.Tables[0];
+
+                            var trd_pnd = trd_datatable.AsEnumerable()
+                                          .Select(row => trd_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                                           column => column.ColumnName,
+                                           column => row[column]));
+
+                            if (trd_pnd.Any())
+                            {
+                                istrd_pending = trd_pnd.Any(record =>
+                                                    record.ContainsKey("IsPending") && bool.TryParse(record["IsPending"]?.ToString(), out var trd_isPending) && trd_isPending);
+                            }
+                        }
+
+                        // check if order is from TIQE 
+
+                        var istiqe_order = orderedRecords.ContainsKey("SkillSetName") && orderedRecords["SkillSetName"].ToString() == "TIQELoanMod" && (int)orderedRecords["SystemOfRecordId"] == 4;
+
+                        // find if it satisfies the automatic flow conditions
+                        var automaticflow_details = _oMTDataContext.AutomaticFlow.Where(x => x.FromSkillSetId == skillsetid && x.IsActive).FirstOrDefault();
+
+                        var isautomaticflow = false;
+
+                        if (automaticflow_details != null)
+                        {
+                            if (automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = ispriority ? true : false;
+                            }
+                            else if (!automaticflow_details.PriorityOrders_Only)
+                            {
+                                isautomaticflow = true;
+                            }
+
+                        }
+
+
+                        pendingOrdersResponseDTO = new PendingOrdersResponseDTO
+                        {
+                            IsPending = ispending,
+                            //PendingOrder = dataToReturn,
+                            AssignedOrder = order_string,
+                            IsTiqe = istiqe_order,
+                            IsTrdPending = istrd_pending,
+                            IsAutomaticFlow = isautomaticflow,
+                            Checked_In = user_Checkedin
+                        };
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "You have an order in your queue,please finish this first";
+                        resultDTO.StatusCode = "200";
+                        resultDTO.Data = pendingOrdersResponseDTO;
 
                     }
-
-                    // check if cycle 1 has no more orders , then send to cycle 2 ? or 
-
-                    string po_uporder = string.Empty;
-                    string updatedOrder;
-
-                    // get only priority orders from all the cycle1 skillsets 
-
-                    po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
-
-                    //if no priority orders then go by weightage in cycle1
-                    if (string.IsNullOrEmpty(po_uporder))
+                    else
                     {
-                        updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
+                        List<GetOrderCalculation> userskillsetlist = (from uss in _oMTDataContext.UserSkillSet
+                                                                      join goc in _oMTDataContext.GetOrderCalculation on uss.UserSkillSetId equals goc.UserSkillSetId
+                                                                      join ss in _oMTDataContext.SkillSet on uss.SkillSetId equals ss.SkillSetId
+                                                                      join up in _oMTDataContext.UserProfile on uss.UserId equals up.UserId
+                                                                      where uss.IsActive && goc.IsActive && ss.IsActive && up.IsActive && goc.UserId == userid && ss.SystemofRecordId == 3
+                                                                      orderby goc.PriorityOrder // uss.IsHardStateUser descending, uss.Percentage descending
+                                                                      select new GetOrderCalculation
+                                                                      {
+                                                                          UserId = goc.UserId,
+                                                                          UserSkillSetId = goc.UserSkillSetId,
+                                                                          SkillSetId = goc.SkillSetId,
+                                                                          TotalOrderstoComplete = goc.TotalOrderstoComplete,
+                                                                          OrdersCompleted = goc.OrdersCompleted,
+                                                                          Weightage = goc.Weightage,
+                                                                          PriorityOrder = goc.PriorityOrder,
+                                                                          IsActive = goc.IsActive,
+                                                                          UpdatedDate = goc.UpdatedDate,
+                                                                          IsCycle1 = goc.IsCycle1,
+                                                                          IsHardStateUser = goc.IsHardStateUser,
+                                                                          Utilized = goc.Utilized,
+                                                                          HardStateUtilized = goc.HardStateUtilized,
+                                                                      }).ToList();
 
-                        if (string.IsNullOrWhiteSpace(updatedOrder) && iscycle1)
+                        GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO();
+
+                        // bool IsTrdPending = true;
+                        bool iscycle1 = true;
+                        var cycle = new List<GetOrderCalculation>();
+
+                        List<GetOrderCalculation> trd_cycle1 = userskillsetlist.Where(x => x.Utilized == false && x.IsCycle1).OrderBy(x => x.PriorityOrder).ThenByDescending(x => x.IsHardStateUser).ThenByDescending(x => x.Weightage).ToList();
+
+                        if (trd_cycle1.Count == 0)
                         {
                             iscycle1 = false;
 
-                            po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
+                        }
 
-                            if (string.IsNullOrEmpty(po_uporder))
+                        // check if cycle 1 has no more orders , then send to cycle 2 ? or 
+
+                        string po_uporder = string.Empty;
+                        string updatedOrder;
+
+                        // get only priority orders from all the cycle1 skillsets 
+
+                        po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
+
+                        //if no priority orders then go by weightage in cycle1
+                        if (string.IsNullOrEmpty(po_uporder))
+                        {
+                            updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
+
+                            if (string.IsNullOrWhiteSpace(updatedOrder) && iscycle1)
                             {
-                                updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
+                                iscycle1 = false;
 
-                                GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
+                                po_uporder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, true);
+
+                                if (string.IsNullOrEmpty(po_uporder))
+                                {
+                                    updatedOrder = GetTrdPendingOrder_Threshold(userid, resultDTO, connection, iscycle1, false);
+
+                                    getOrderResponseDTO = new GetOrderResponseDTO
+                                    {
+                                        AssignedOrder = updatedOrder,
+                                        IsTiqe = false,
+                                        IsTrdPending = true,
+                                        IsAutomaticFlow = false,
+                                        Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                                    };
+
+                                    if (string.IsNullOrWhiteSpace(updatedOrder))
+                                    {
+                                        getOrderResponseDTO = new GetOrderResponseDTO
+                                        {
+                                            AssignedOrder = "",
+                                            IsTiqe = false,
+                                            IsTrdPending = true,
+                                            IsAutomaticFlow = false,
+                                            Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                                        };
+
+                                        resultDTO.Data = getOrderResponseDTO;
+                                        resultDTO.StatusCode = "404";
+                                        resultDTO.IsSuccess = false;
+                                        resultDTO.Message = "No more orders for now, please come back again";
+                                    }
+                                    else
+                                    {
+                                        resultDTO.Data = getOrderResponseDTO;
+                                        resultDTO.IsSuccess = true;
+                                        resultDTO.StatusCode = "200";
+                                        resultDTO.Message = "Order assigned successfully";
+                                    }
+                                }
+
+                            }
+                            else if (string.IsNullOrWhiteSpace(updatedOrder) && !iscycle1)
+                            {
+                                getOrderResponseDTO = new GetOrderResponseDTO
+                                {
+                                    AssignedOrder = "",
+                                    IsTiqe = false,
+                                    IsTrdPending = true,
+                                    IsAutomaticFlow = false,
+                                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
+                                };
+
+                                resultDTO.Data = getOrderResponseDTO;
+                                resultDTO.StatusCode = "404";
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "No more orders for now, please come back again";
+                            }
+                            else
+                            {
+                                getOrderResponseDTO = new GetOrderResponseDTO
                                 {
                                     AssignedOrder = updatedOrder,
                                     IsTiqe = false,
                                     IsTrdPending = true,
-                                    IsAutomaticFlow = false
+                                    IsAutomaticFlow = false,
+                                    Checked_In = _oMTDataContext.User_Checkin.Any(uc => uc.UserId == userid && uc.Checkin != null && uc.Checkout == null),
                                 };
 
-                                if (string.IsNullOrWhiteSpace(updatedOrder))
-                                {
-                                    resultDTO.Data = "";
-                                    resultDTO.StatusCode = "404";
-                                    resultDTO.IsSuccess = false;
-                                    resultDTO.Message = "No more orders for now, please come back again";
-                                }
-                                else
-                                {
-                                    resultDTO.Data = getOrderResponseDTO;
-                                    resultDTO.IsSuccess = true;
-                                    resultDTO.StatusCode = "200";
-                                    resultDTO.Message = "Order assigned successfully";
-                                }
+                                resultDTO.Data = getOrderResponseDTO;
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "Order assigned successfully";
                             }
+                        }
 
-                        }
-                        else if (string.IsNullOrWhiteSpace(updatedOrder) && !iscycle1)
-                        {
-                            resultDTO.Data = "";
-                            resultDTO.StatusCode = "404";
-                            resultDTO.IsSuccess = false;
-                            resultDTO.Message = "No more orders for now, please come back again";
-                        }
-                        else
-                        {
-                            GetOrderResponseDTO getOrderResponseDTO = new GetOrderResponseDTO
-                            {
-                                AssignedOrder = updatedOrder,
-                                IsTiqe = false,
-                                IsTrdPending = true,
-                                IsAutomaticFlow = false
-                            };
 
-                            resultDTO.Data = getOrderResponseDTO;
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Order assigned successfully";
-                        }
                     }
-
-
                 }
             }
             catch (Exception ex)
@@ -1316,124 +1403,123 @@ namespace OMT.DataService.Service
                         }
                     }
 
-                    // Check if orders Exist in invoice 
                     string tableName = skillset.Tablename;
 
-                    string inv_query = $"SELECT OrderId FROM InvoiceDump WHERE Skillset = '{tableName}' and OrderId = @OrderId";
+                    //string inv_query = $"SELECT OrderId FROM InvoiceDump WHERE Skillset = '{tableName}' and OrderId = @OrderId";
 
-                    using (SqlCommand command = new SqlCommand(inv_query, connection))
+                    //using (SqlCommand command = new SqlCommand(inv_query, connection))
+                    //{
+
+                    //    command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+
+                    //    using SqlDataAdapter Inv_dataAdapter = new SqlDataAdapter(command);
+
+                    //    DataSet inDS = new DataSet();
+
+                    //    Inv_dataAdapter.Fill(inDS);
+
+                    //    DataTable inv_datatable = inDS.Tables[0];
+
+                    //    var inv_dt = inv_datatable.AsEnumerable()
+                    //                  .Select(row => inv_datatable.Columns.Cast<DataColumn>().ToDictionary(
+                    //                      column => column.ColumnName,
+                    //                      column => row[column] == DBNull.Value ? "" : row[column])).ToList();
+
+                    //    // if yes dont allow to update
+                    //    if (inv_dt.Count > 0)
+                    //    {
+                    //        editable = false;
+                    //    }
+
+                    // allow to edit only if completiondate <= endtime and >= startime and DateTime.UtcNow < endtime
+                    if (editable)
                     {
 
-                        command.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                        DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
 
-                        using SqlDataAdapter Inv_dataAdapter = new SqlDataAdapter(command);
-
-                        DataSet inDS = new DataSet();
-
-                        Inv_dataAdapter.Fill(inDS);
-
-                        DataTable inv_datatable = inDS.Tables[0];
-
-                        var inv_dt = inv_datatable.AsEnumerable()
-                                      .Select(row => inv_datatable.Columns.Cast<DataColumn>().ToDictionary(
-                                          column => column.ColumnName,
-                                          column => row[column] == DBNull.Value ? "" : row[column])).ToList();
-
-                        // if yes dont allow to update
-                        if (inv_dt.Count > 0)
-                        {
-                            editable = false;
-                        }
-
-                        // allow to edit only if completiondate <= endtime and >= startime and DateTime.UtcNow < endtime
-                        if (editable)
-                        {
-
-                            DynamicColumns = GetDynamicColumns(connection, skillset.Tablename, ExcludedColumns, resultDTO);
-
-                            string ordersql = $@"SELECT OrderId, SystemofRecordId, SkillSetId, UserId, Status,
+                        string ordersql = $@"SELECT OrderId, SystemofRecordId, SkillSetId, UserId, Status,
                                                  (  SELECT {DynamicColumns} FROM {tableName}
                                                  WHERE OrderId = @OrderId and Id = @Id
                                                  FOR JSON PATH, WITHOUT_ARRAY_WRAPPER ) AS OrderDetailsJson
                                                  FROM {tableName}  WHERE OrderId = @OrderId and Id = @Id";
 
-                            //Fetching Old Datas from the table
-                            using (SqlCommand commands = new SqlCommand(ordersql, connection))
+                        //Fetching Old Datas from the table
+                        using (SqlCommand commands = new SqlCommand(ordersql, connection))
+                        {
+
+                            commands.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                            commands.Parameters.AddWithValue("@Id", updateOrderStatusByTLDTO.UpdatedId);
+
+
+                            using SqlDataAdapter dataAdapter = new(commands);
+
+                            DataTable orderdetails = new DataTable();
+                            dataAdapter.Fill(orderdetails);
+
+                            if (orderdetails.Rows.Count > 0)
                             {
+                                DataRow row = orderdetails.Rows[0];
+                                var oldUserId = row["UserId"];
+                                var oldOrderid = row["OrderId"];
+                                var oldSkillsetid = row["SkillSetId"];
+                                //var oldProjectid = orderdetails.Columns.Contains("ProjectId")? row["ProjectId"]: null;
+                                var oldSystemofRecordid = row["SystemofRecordId"];
+                                var oldStatus = row["Status"];
+                                string oldOrderDetails = row["OrderDetailsJson"] as string;
 
-                                commands.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
-                                commands.Parameters.AddWithValue("@Id", updateOrderStatusByTLDTO.UpdatedId);
-
-
-                                using SqlDataAdapter dataAdapter = new(commands);
-
-                                DataTable orderdetails = new DataTable();
-                                dataAdapter.Fill(orderdetails);
-
-                                if (orderdetails.Rows.Count > 0)
-                                {
-                                    DataRow row = orderdetails.Rows[0];
-                                    var oldUserId = row["UserId"];
-                                    var oldOrderid = row["OrderId"];
-                                    var oldSkillsetid = row["SkillSetId"];
-                                    //var oldProjectid = orderdetails.Columns.Contains("ProjectId")? row["ProjectId"]: null;
-                                    var oldSystemofRecordid = row["SystemofRecordId"];
-                                    var oldStatus = row["Status"];
-                                    string oldOrderDetails = row["OrderDetailsJson"] as string;
-
-                                    // Insert old details into Order_History table   
-                                    string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId,  SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
+                                // Insert old details into Order_History table   
+                                string insertsql = @"INSERT INTO Order_History (Skillsetid, Orderid, UserId,  SystemofRecordid,Status,Orderdetails,UpdatedBy,UpdatedTime)  
                                                      VALUES (@Skillsetid, @Orderid, @UserId, @SystemofRecordid, @Status,@Orderdetails,@UpdatedBy,@UpdatedTime)";
 
-                                    using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
-                                    {
-                                        insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
-                                        insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
-                                        insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
-                                       // insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid ?? DBNull.Value);
-                                        insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
-                                        insertCommand.Parameters.AddWithValue("@Status", oldStatus);
-                                        insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
-                                        insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
-                                        insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now); 
-
-                                        insertCommand.ExecuteNonQuery();
-                                    }
-                                }
-                                else
+                                using (SqlCommand insertCommand = new SqlCommand(insertsql, connection))
                                 {
-                                    resultDTO.StatusCode = "404";
-                                    resultDTO.IsSuccess = false;
-                                    resultDTO.Message = "Order not found";
-                                    return resultDTO;
+                                    insertCommand.Parameters.AddWithValue("@Skillsetid", oldSkillsetid);
+                                    insertCommand.Parameters.AddWithValue("@Orderid", oldOrderid);
+                                    insertCommand.Parameters.AddWithValue("@UserId", oldUserId);
+                                    // insertCommand.Parameters.AddWithValue("@Projectid", oldProjectid ?? DBNull.Value);
+                                    insertCommand.Parameters.AddWithValue("@SystemofRecordid", oldSystemofRecordid);
+                                    insertCommand.Parameters.AddWithValue("@Status", oldStatus);
+                                    insertCommand.Parameters.AddWithValue("@Orderdetails", oldOrderDetails);
+                                    insertCommand.Parameters.AddWithValue("@UpdatedBy", userid);
+                                    insertCommand.Parameters.AddWithValue("@UpdatedTime", DateTime.Now);
+
+                                    insertCommand.ExecuteNonQuery();
                                 }
-
                             }
-                            //Updating Skillset table    
-                            string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId and Id = @UpdatedId";
-
-
-                            using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
+                            else
                             {
-                                updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
-                                updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
-                                updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
-                                updateCommand.Parameters.AddWithValue("@UpdatedId", updateOrderStatusByTLDTO.UpdatedId);
-
-                                updateCommand.ExecuteNonQuery();
+                                resultDTO.StatusCode = "404";
+                                resultDTO.IsSuccess = false;
+                                resultDTO.Message = "Order not found";
+                                return resultDTO;
                             }
-                            resultDTO.StatusCode = "200";
-                            resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Order Details Updated Successfully";
+
                         }
-                        else
+                        //Updating Skillset table    
+                        string updatesql = $@"UPDATE {tableName} SET Status = @Status,TLDescription = @TLDescription WHERE  OrderId = @OrderId and Id = @UpdatedId";
+
+
+                        using (SqlCommand updateCommand = new SqlCommand(updatesql, connection))
                         {
-                            resultDTO.StatusCode = "404";
-                            resultDTO.IsSuccess = false;
-                            resultDTO.Message = "The order has already moved to invoice, you can't update the status anymore.";
+                            updateCommand.Parameters.AddWithValue("@OrderId", updateOrderStatusByTLDTO.OrderId);
+                            updateCommand.Parameters.AddWithValue("@Status", updateOrderStatusByTLDTO.Status);
+                            updateCommand.Parameters.AddWithValue("@TLDescription", updateOrderStatusByTLDTO.TL_Description);
+                            updateCommand.Parameters.AddWithValue("@UpdatedId", updateOrderStatusByTLDTO.UpdatedId);
+
+                            updateCommand.ExecuteNonQuery();
                         }
+                        resultDTO.StatusCode = "200";
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "Order Details Updated Successfully";
+                    }
+                    else
+                    {
+                        resultDTO.StatusCode = "404";
+                        resultDTO.IsSuccess = false;
+                        resultDTO.Message = "The order has already moved to invoice, you can't update the status anymore.";
                     }
                 }
+                //}
                 else
                 {
                     resultDTO.StatusCode = "404";

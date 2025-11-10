@@ -56,17 +56,17 @@ namespace DailyStatusCountCalc
                                           SELECT 
                                               SystemOfRecordId,
                                               SkillSetId,
-                                              Productivity_Date, 
+                                              CheckIn_date, 
                                               Status,
                                               COUNT(*) AS Count
                                           FROM 
                                               Prod_Util_Tracker 
                                           WHERE 
-                                              Productivity_Date  = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)
+                                              CheckIn_date  = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)
                                           GROUP BY 
                                               SystemOfRecordId,
                                               SkillSetId,
-                                              Productivity_Date ,
+                                              CheckIn_date,
                                               Status;";
 
                     using (SqlCommand spCommand3 = new SqlCommand(insertQuery, connection))
@@ -78,10 +78,10 @@ namespace DailyStatusCountCalc
 
                     //back up Prod_Util_Tracker table and then delete the same data form it.
 
-                    string prod_util_tracker_bckp = @"INSERT INTO Prod_Util_Tracker_bckp (UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date)
+                    string prod_util_tracker_bckp = @"INSERT INTO Prod_Util_Tracker_bckp (UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date,CheckIn_date)
 	                                          SELECT 
-	                                            UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date
-	                                          FROM Prod_Util_Tracker WHERE Productivity_Date  = CAST(DATEADD(DAY, -2, GETUTCDATE()) AS DATE)";
+	                                            UserId,OrderId,Status,SkillSetId,SystemofRecordId,StartDate,EndDate,TimeTaken,Productivity_Date,CheckIn_date
+	                                          FROM Prod_Util_Tracker WHERE CheckIn_date  = CAST(DATEADD(DAY, -2, GETUTCDATE()) AS DATE)";
 
                     using (SqlCommand spCommand4 = new SqlCommand(prod_util_tracker_bckp, connection))
                     {
@@ -92,7 +92,7 @@ namespace DailyStatusCountCalc
 
                     // delete the data
 
-                    string delete = @"DELETE FROM Prod_Util_Tracker WHERE CAST(Productivity_Date AS DATE) = CAST(DATEADD(DAY, -2, GETUTCDATE()) AS DATE);";
+                    string delete = @"DELETE FROM Prod_Util_Tracker WHERE CAST(CheckIn_date AS DATE) = CAST(DATEADD(DAY, -2, GETUTCDATE()) AS DATE);";
 
                     using (SqlCommand spCommand5 = new SqlCommand(delete, connection))
                     {

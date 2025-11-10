@@ -10,5 +10,6 @@ namespace OMT.DataAccess.Entities
         public DateTime? Checkin { get; set; }
         public DateTime? Checkout { get; set; }
         public bool Prod_Util_Calculated { get; set; }
+        public DateTime? CheckIn_date { get; set; }
     }
 }

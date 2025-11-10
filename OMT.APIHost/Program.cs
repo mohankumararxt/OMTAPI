@@ -85,6 +85,8 @@ builder.Services.Configure<EmailDetailsSettings>(builder.Configuration.GetSectio
 builder.Services.Configure<BasicAuthCredential>(builder.Configuration.GetSection("BasicAuthCredential"));
 builder.Services.Configure<MoveToSecondKeySettings>(builder.Configuration.GetSection("MoveToSecondKey"));
 builder.Services.Configure<Create_batchesSettings>(builder.Configuration.GetSection("Create_batches"));
+builder.Services.Configure<ResetPasswordSettings>(builder.Configuration.GetSection("ResetPassword"));
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -127,6 +129,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IDashboardScreensService, DashboardScreensService>();
+builder.Services.AddScoped<IDateAndNphService, DateAndNphService>();
  
 
 builder.Services.AddDbContext<OMTDataContext>(options =>

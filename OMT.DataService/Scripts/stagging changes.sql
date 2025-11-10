@@ -5390,6 +5390,7 @@
 
 --alter insert data sp
 
+
 -----------------------------------------drag n drop---------------------------------
 --alter table userskillset
 --add PriorityOrder int 
@@ -5822,3 +5823,974 @@
 --insert into AutomaticFlow values
 --(1,3,1,1),
 --(696,697,0,1)
+
+
+-----------------------------------role based authentication-------------------------------
+
+--CREATE TABLE OmtMenus(
+--OmtMenus_Id INT PRIMARY KEY IDENTITY(1,1),
+--OmtMenus_Name NVARCHAR(500) NOT NULL,
+--IsActive BIT NOT NULL
+--);
+
+--Insert into OmtMenus
+--values
+--('createtemplate',1),
+--('template',1),
+--('adduser',1),
+--('addteam',1),
+--('teamassociation',1),
+--('upload',1),
+--('skillset',1),
+--('userskillset',1),
+--('createtest',1),
+--('interviewleaderboard',1),
+--('agentleaderboard',1),
+--('messages',1),
+--('getorder',1),
+--('complexorders',1),
+--('agentcompletedorders',1),
+--('teamcompletedorders',1),
+--('skillsetwisereports',1),
+--('livedata',1),
+--('invoice',1),
+--('productdiscription',1),
+--('reswareproductdiscription',1),
+--('reswareproductdescriptionmap',1),
+--('business',1),
+--('businessgroup',1),
+--('costcenter',1),
+--('customer',1),
+--('invoicejointresware',1),
+--('invoicejointtiqe',1),
+--('invoicejointsci',1),
+--('processtype',1),
+--('sourcetype',1),
+--('totalorderfee',1),
+--('pofilesetting',1),
+--('getexceptionreport',1),
+--('getorderinfo',1),
+--('timeline',1),
+--('reportscolumn',1),
+--('agentorderstatus',1),
+--('broadcast',1),
+--('notifications',1),
+--('shiftdetails',1),
+--('shiftassociate',1),
+--('teamproductivity',1),
+--('agentproductivity',1),
+--('sorwiseproductivity',1),
+--('skillsetwiseproductivity',1),
+--('teamutilization',1),
+--('agentutilization',1),
+--('sorwiseuitilization',1),
+--('skillsetwiseutilization',1),
+--('assessment',1),
+--('indexpage',1)
+--('invoiceDetails',1)
+
+
+
+--CREATE TABLE OmtMenus_Distribution(
+--OmtMenus_Distribution_Id INT PRIMARY KEY IDENTITY(1,1),
+--RoleId INT NOT NULL,
+--OmtMenus_Id INT NOT NULL,
+--IsActive BIT NOT NULL
+--);
+
+--ALTER TABLE OmtMenus_Distribution
+--ADD CONSTRAINT fk_OmtMenus_Distribution_RoleId
+--FOREIGN KEY (RoleId)
+--REFERENCES Roles(RoleId);
+
+--ALTER TABLE OmtMenus_Distribution
+--ADD CONSTRAINT fk_OmtMenus_Distribution_OmtMenus_Id
+--FOREIGN KEY (OmtMenus_Id)
+--REFERENCES OmtMenus(OmtMenus_Id);
+
+--insert into OmtMenus_Distribution
+--values
+--(4,1,1),
+--(4,2,1),
+--(4,3,1),
+--(4,4,1),
+--(4,5,1),
+--(4,6,1),
+--(4,7,1),
+--(4,8,1),
+--(4,9,1),
+--(4,10,1),
+--(4,11,1),
+--(4,12,1),
+--(4,13,1),
+--(4,14,1),
+--(4,15,1),
+--(4,16,1),
+--(4,17,1),
+--(4,18,1),
+--(4,19,1),
+--(4,20,1),
+--(4,21,1),
+--(4,22,1),
+--(4,23,1),
+--(4,24,1),
+--(4,25,1),
+--(4,26,1),
+--(4,27,1),
+--(4,28,1),
+--(4,29,1),
+--(4,30,1),
+--(4,31,1),
+--(4,32,1),
+--(4,33,1),
+--(4,34,1),
+--(4,35,1),
+--(4,36,1),
+--(4,37,1),
+--(4,38,1),
+--(4,39,1),
+--(4,40,1),
+--(4,41,1),
+--(4,42,1),
+--(4,43,1),
+--(4,44,1),
+--(4,45,1),
+--(4,46,1),
+--(4,47,1),
+--(4,48,1),
+--(4,49,1),
+--(4,50,1),
+--(4,52,1),
+--(4,53,1),
+--(1,1,1),
+--(1,2,1),
+--(1,4,1),
+--(1,5,1),
+--(1,6,1),
+--(1,7,1),
+--(1,8,1),
+--(1,9,1),
+--(1,10,1),
+--(1,11,1),
+--(1,12,1),
+--(1,13,1),
+--(1,14,1),
+--(1,15,1),
+--(1,16,1),
+--(1,17,1),
+--(1,18,1),
+--(1,33,1),
+--(1,34,1),
+--(1,35,1),
+--(1,36,1),
+--(1,37,1),
+--(1,38,1),
+--(1,39,1),
+--(1,40,1),
+--(1,41,1),
+--(1,42,1),
+--(1,43,1),
+--(1,44,1),
+--(1,45,1),
+--(1,46,1),
+--(1,47,1),
+--(1,48,1),
+--(1,49,1),
+--(1,50,1),
+--(1,52,1),
+--(5,3,1),
+--(5,9,1),
+--(5,10,1),
+--(5,11,1),
+--(5,12,1),
+--(5,15,1),
+--(5,16,1),
+--(5,17,1),
+--(5,19,1),
+--(5,20,1),
+--(5,21,1),
+--(5,22,1),
+--(5,23,1),
+--(5,24,1),
+--(5,25,1),
+--(5,26,1),
+--(5,27,1),
+--(5,28,1),
+--(5,29,1),
+--(5,30,1),
+--(5,31,1),
+--(5,32,1),
+--(5,33,1),
+--(5,39,1),
+--(5,40,1),
+--(5,43,1),
+--(5,44,1),
+--(5,45,1),
+--(5,46,1),
+--(5,47,1),
+--(5,48,1),
+--(5,49,1),
+--(5,50,1),
+--(5,52,1),
+--(5,53,1),
+--(3,12,1),
+--(3,13,1),
+--(3,15,1),
+--(3,33,1),
+--(3,38,1),
+--(3,51,1),
+--(3,40,1),
+--(3,44,1),
+--(3,48,1),
+--(3,52,1)
+
+
+
+----------------------------forgot password----------------------
+
+--CREATE TABLE PasswordResetTokens (
+--    Id INT IDENTITY(1,1) PRIMARY KEY,
+--    UserId INT NOT NULL,
+--	  GuId NVARCHAR(500) NOT NULL,
+--    LinkSentDate DATETIME NOT NULL,
+--    ResetDate DATETIME,
+--    IsUsed BIT DEFAULT 0,
+--    CONSTRAINT FK_User FOREIGN KEY (UserId) REFERENCES UserProfile(UserId)
+--);
+
+---------------------------monthly utilization----------------------
+
+--CREATE TABLE Monthly_Utilization_SOR (
+--Monthly_Utilization_SORId INT IDENTITY(1,1) PRIMARY KEY,
+--SystemofRecordId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Utilization INT NOT NULL,
+--CONSTRAINT FK_Monthly_Utilization_SOR_SystemofRecordId FOREIGN KEY (SystemofRecordId) REFERENCES SystemofRecord(SystemofRecordId)
+--);
+
+
+--insert into Monthly_Utilization_SOR values
+--(3,10,2024,50),
+--(3,11,2024,50),
+--(3,12,2025,60),
+--(3,1,2025,10),
+--(3,2,2025,20),
+--(3,3,2025,15),
+--(3,4,2025,16),
+--(3,5,2025,17),
+--(3,6,2025,18),
+--(3,7,2025,50),
+--(3,8,2025,40),
+--(3,9,2025,50)
+
+--insert into Monthly_Utilization_SOR values
+--(2,10,2024,30),
+--(2,11,2024,30),
+--(2,12,2025,30),
+--(2,1,2025,30),
+--(2,2,2025,20),
+--(2,3,2025,55),
+--(2,4,2025,66),
+--(2,5,2025,37),
+--(2,6,2025,28),
+--(2,7,2025,70),
+--(2,8,2025,40),
+--(2,9,2025,70)
+
+--insert into Monthly_Utilization_SOR values
+--(1,10,2024,20),
+--(1,11,2024,20),
+--(1,12,2025,20),
+--(1,1,2025,40),
+--(1,2,2025,10),
+--(1,3,2025,25),
+--(1,4,2025,36),
+--(1,5,2025,77),
+--(1,6,2025,48),
+--(1,7,2025,90),
+--(1,8,2025,60),
+--(1,9,2025,20)
+
+
+
+--------------------------------trd webscarppingtime capture ------------------------------
+
+--insert into defaulttemplatecolumns values
+--(3,'Order_Intime','DateTime',1,0,0,0,0)
+
+
+-------for all skillsets add Order_Intime column------------
+
+
+--alter table AB8030122IM_ASSIGNMENT  add Order_Intime DATETIME 
+--alter table AB8030122IM_CEMA  add Order_Intime DATETIME 
+--alter table AB8030122IM_Collateral_File  add Order_Intime DATETIME 
+--alter table AB8030122IM_COOP  add Order_Intime DATETIME 
+
+
+--alter sp createtrddetails
+
+
+-----------------------------------------------RIC and RICAOM CHANGES-----------------------------
+
+--insert into templatecolumns values(
+--673,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table RIC
+--add Ha_Status int 
+
+--ALTER TABLE RIC 
+--ADD CONSTRAINT DF_RIC_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update ric set ha_status = 0
+
+--insert into templatecolumns values(
+--674,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table RICAOM
+--add Ha_Status int 
+
+--ALTER TABLE RICAOM
+--ADD CONSTRAINT DF_RICAOM_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update RICAOM set ha_status = 0
+
+
+--alter insert data sp
+--alter GetOrderByPo_Threshold sp
+--alter [dbo].[GetOrderByHardstate_Threshold] sp
+--alter [dbo].[GetOrderByWeightage_Threshold] sp
+
+
+-----------------------------------------backup skillset tables data----------------------
+
+--alter table skillset 
+--add RetentionMonths int
+
+------------------------new productivity changes-----------------------
+
+--alter table User_Checkin 
+--add CheckIn_date date
+
+--insert into DefaultTemplateColumns values
+--(1,'CheckIn_date','Date',1,0,0,0,0),
+--(2,'CheckIn_date','Date',1,0,0,0,0),
+--(3,'CheckIn_date','Date',1,0,0,0,0),
+--(4,'CheckIn_date','Date',1,0,0,0,0)
+
+---alter all skillset tables to add CheckIn_date column--------------
+--update all skillset tables to populate checkin_date column to avoid null error-------------
+
+--alter table Prod_Util_Tracker 
+--add CheckIn_date date
+
+--alter table Prod_Util_Tracker_bckp 
+--add CheckIn_date date
+
+--alter DailyStatusCountCalc webjob to update checkin_Date column----
+
+---------------------------------automatic checkout for users based on skillset cutoff-----------------
+--CREATE TABLE [dbo].[Checkout_Cutoff](
+--	[Checkout_CutoffId]  [int] IDENTITY(1,1) NOT NULL,
+--	[SkillSetId] [int]  NOT NULL,
+--	[SystemofRecordId] [int] NOT NULL,
+--	[IsActive] [bit] NULL,
+--	[Cutoff_Time] NVARCHAR(20) NULL
+--PRIMARY KEY CLUSTERED 
+--(
+--	[Checkout_CutoffId] ASC
+--)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+--) ON [PRIMARY]
+
+
+--ALTER TABLE [dbo].[Checkout_Cutoff] ADD  DEFAULT ((1)) FOR [IsActive]
+--ALTER TABLE [dbo].[Checkout_Cutoff]  WITH CHECK ADD FOREIGN KEY([SkillSetId])
+--REFERENCES [dbo].[SkillSet] ([SkillSetId])
+--ALTER TABLE [dbo].[Checkout_Cutoff]  WITH CHECK ADD FOREIGN KEY([SystemofRecordId])
+--REFERENCES [dbo].[SystemOfRecord] ([SystemofRecordId])
+
+--insert into Checkout_Cutoff values
+--(1,1,1,'01.30 PM'),
+--(2,1,1,'01.30 PM'),
+--(3,1,1,'01.30 PM'),
+--(4,1,1,'01.30 PM'),
+--(77,1,1,'01.30 PM'),
+--(78,1,1,'01.30 PM'),
+--(673,1,1,'04.30 PM'),
+--(674,1,1,'04.30 PM'),
+--(692,1,1,'01.30 PM'),
+--(693,1,1,'01.30 PM'),
+--(694,1,1,'01.30 PM'),
+--(695,1,1,'01.30 PM'),
+--(696,1,1,'01.30 PM'),
+--(697,1,1,'01.30 PM'),
+--(757,1,1,'01.30 PM'),
+--(758,1,1,'01.30 PM'),
+--(761,1,1,'01.30 PM'),
+--(776,1,1,'01.30 PM'),
+--(777,1,1,'01.30 PM'),
+--(778,1,1,'01.30 PM'),
+--(779,1,1,'01.30 PM'),
+--(781,1,1,'01.30 PM'),
+--(782,1,1,'01.30 PM'),
+--(783,1,1,'01.30 PM'),
+--(784,1,1,'01.30 PM'),
+--(5,2,1,'01.30 PM'),
+--(8,2,1,'01.30 PM'),
+--(13,2,1,'01.30 PM'),
+--(80,2,1,'01.30 PM'),
+--(81,2,1,'01.30 PM'),
+--(82,2,1,'01.30 PM'),
+--(83,2,1,'01.30 PM'),
+--(84,2,1,'01.30 PM'),
+--(85,2,1,'01.30 PM'),
+--(86,2,1,'01.30 PM'),
+--(87,2,1,'01.30 PM'),
+--(88,2,1,'01.30 PM'),
+--(89,2,1,'01.30 PM'),
+--(90,2,1,'01.30 PM'),
+--(175,2,1,'01.30 PM'),
+--(202,3,1,'01.30 PM'),
+--(203,3,1,'01.30 PM'),
+--(204,3,1,'01.30 PM'),
+--(205,3,1,'01.30 PM'),
+--(206,3,1,'01.30 PM'),
+--(207,3,1,'01.30 PM'),
+--(208,3,1,'01.30 PM'),
+--(209,3,1,'01.30 PM'),
+--(210,3,1,'01.30 PM'),
+--(211,3,1,'01.30 PM'),
+--(212,3,1,'01.30 PM'),
+--(213,3,1,'01.30 PM'),
+--(214,3,1,'01.30 PM'),
+--(215,3,1,'01.30 PM'),
+--(216,3,1,'01.30 PM'),
+--(217,3,1,'01.30 PM'),
+--(218,3,1,'01.30 PM'),
+--(219,3,1,'01.30 PM'),
+--(220,3,1,'01.30 PM'),
+--(221,3,1,'01.30 PM'),
+--(222,3,1,'01.30 PM'),
+--(223,3,1,'01.30 PM'),
+--(224,3,1,'01.30 PM'),
+--(225,3,1,'01.30 PM'),
+--(226,3,1,'01.30 PM'),
+--(227,3,1,'01.30 PM'),
+--(228,3,1,'01.30 PM'),
+--(229,3,1,'01.30 PM'),
+--(230,3,1,'01.30 PM'),
+--(231,3,1,'01.30 PM'),
+--(232,3,1,'01.30 PM'),
+--(233,3,1,'01.30 PM'),
+--(234,3,1,'01.30 PM'),
+--(235,3,1,'01.30 PM'),
+--(236,3,1,'01.30 PM'),
+--(237,3,1,'01.30 PM'),
+--(238,3,1,'01.30 PM'),
+--(239,3,1,'01.30 PM'),
+--(240,3,1,'01.30 PM'),
+--(241,3,1,'01.30 PM'),
+--(242,3,1,'01.30 PM'),
+--(243,3,1,'01.30 PM'),
+--(244,3,1,'01.30 PM'),
+--(245,3,1,'01.30 PM'),
+--(246,3,1,'01.30 PM'),
+--(247,3,1,'01.30 PM'),
+--(248,3,1,'01.30 PM'),
+--(249,3,1,'01.30 PM'),
+--(250,3,1,'01.30 PM'),
+--(251,3,1,'01.30 PM'),
+--(252,3,1,'01.30 PM'),
+--(253,3,1,'01.30 PM'),
+--(254,3,1,'01.30 PM'),
+--(255,3,1,'01.30 PM'),
+--(256,3,1,'01.30 PM'),
+--(257,3,1,'01.30 PM'),
+--(258,3,1,'01.30 PM'),
+--(259,3,1,'01.30 PM'),
+--(270,3,1,'01.30 PM'),
+--(271,3,1,'01.30 PM'),
+--(272,3,1,'01.30 PM'),
+--(273,3,1,'01.30 PM'),
+--(274,3,1,'01.30 PM'),
+--(275,3,1,'01.30 PM'),
+--(276,3,1,'01.30 PM'),
+--(277,3,1,'01.30 PM'),
+--(278,3,1,'01.30 PM'),
+--(279,3,1,'01.30 PM'),
+--(280,3,1,'01.30 PM'),
+--(281,3,1,'01.30 PM'),
+--(283,3,1,'01.30 PM'),
+--(284,3,1,'01.30 PM'),
+--(285,3,1,'01.30 PM'),
+--(286,3,1,'01.30 PM'),
+--(287,3,1,'01.30 PM'),
+--(288,3,1,'01.30 PM'),
+--(289,3,1,'01.30 PM'),
+--(290,3,1,'01.30 PM'),
+--(291,3,1,'01.30 PM'),
+--(292,3,1,'01.30 PM'),
+--(293,3,1,'01.30 PM'),
+--(294,3,1,'01.30 PM'),
+--(295,3,1,'01.30 PM'),
+--(296,3,1,'01.30 PM'),
+--(297,3,1,'01.30 PM'),
+--(298,3,1,'01.30 PM'),
+--(299,3,1,'01.30 PM'),
+--(300,3,1,'01.30 PM'),
+--(301,3,1,'01.30 PM'),
+--(302,3,1,'01.30 PM'),
+--(303,3,1,'01.30 PM'),
+--(304,3,1,'01.30 PM'),
+--(305,3,1,'01.30 PM'),
+--(306,3,1,'01.30 PM'),
+--(307,3,1,'01.30 PM'),
+--(308,3,1,'01.30 PM'),
+--(309,3,1,'01.30 PM'),
+--(310,3,1,'01.30 PM'),
+--(311,3,1,'01.30 PM'),
+--(312,3,1,'01.30 PM'),
+--(313,3,1,'01.30 PM'),
+--(314,3,1,'01.30 PM'),
+--(315,3,1,'01.30 PM'),
+--(316,3,1,'01.30 PM'),
+--(317,3,1,'01.30 PM'),
+--(318,3,1,'01.30 PM'),
+--(319,3,1,'01.30 PM'),
+--(320,3,1,'01.30 PM'),
+--(321,3,1,'01.30 PM'),
+--(322,3,1,'01.30 PM'),
+--(323,3,1,'01.30 PM'),
+--(324,3,1,'01.30 PM'),
+--(325,3,1,'01.30 PM'),
+--(326,3,1,'01.30 PM'),
+--(327,3,1,'01.30 PM'),
+--(328,3,1,'01.30 PM'),
+--(329,3,1,'01.30 PM'),
+--(330,3,1,'01.30 PM'),
+--(331,3,1,'01.30 PM'),
+--(332,3,1,'01.30 PM'),
+--(333,3,1,'01.30 PM'),
+--(334,3,1,'01.30 PM'),
+--(335,3,1,'01.30 PM'),
+--(336,3,1,'01.30 PM'),
+--(337,3,1,'01.30 PM'),
+--(338,3,1,'01.30 PM'),
+--(339,3,1,'01.30 PM'),
+--(340,3,1,'01.30 PM'),
+--(341,3,1,'01.30 PM'),
+--(342,3,1,'01.30 PM'),
+--(343,3,1,'01.30 PM'),
+--(344,3,1,'01.30 PM'),
+--(345,3,1,'01.30 PM'),
+--(346,3,1,'01.30 PM'),
+--(347,3,1,'01.30 PM'),
+--(348,3,1,'01.30 PM'),
+--(349,3,1,'01.30 PM'),
+--(350,3,1,'01.30 PM'),
+--(351,3,1,'01.30 PM'),
+--(352,3,1,'01.30 PM'),
+--(353,3,1,'01.30 PM'),
+--(354,3,1,'01.30 PM'),
+--(355,3,1,'01.30 PM'),
+--(356,3,1,'01.30 PM'),
+--(357,3,1,'01.30 PM'),
+--(358,3,1,'01.30 PM'),
+--(359,3,1,'01.30 PM'),
+--(360,3,1,'01.30 PM'),
+--(361,3,1,'01.30 PM'),
+--(362,3,1,'01.30 PM'),
+--(363,3,1,'01.30 PM'),
+--(364,3,1,'01.30 PM'),
+--(365,3,1,'01.30 PM'),
+--(366,3,1,'01.30 PM'),
+--(367,3,1,'01.30 PM'),
+--(368,3,1,'01.30 PM'),
+--(369,3,1,'01.30 PM'),
+--(370,3,1,'01.30 PM'),
+--(371,3,1,'01.30 PM'),
+--(372,3,1,'01.30 PM'),
+--(373,3,1,'01.30 PM'),
+--(374,3,1,'01.30 PM'),
+--(375,3,1,'01.30 PM'),
+--(376,3,1,'01.30 PM'),
+--(377,3,1,'01.30 PM'),
+--(378,3,1,'01.30 PM'),
+--(379,3,1,'01.30 PM'),
+--(380,3,1,'01.30 PM'),
+--(381,3,1,'01.30 PM'),
+--(382,3,1,'01.30 PM'),
+--(383,3,1,'01.30 PM'),
+--(384,3,1,'01.30 PM'),
+--(385,3,1,'01.30 PM'),
+--(386,3,1,'01.30 PM'),
+--(387,3,1,'01.30 PM'),
+--(388,3,1,'01.30 PM'),
+--(389,3,1,'01.30 PM'),
+--(390,3,1,'01.30 PM'),
+--(391,3,1,'01.30 PM'),
+--(392,3,1,'01.30 PM'),
+--(393,3,1,'01.30 PM'),
+--(394,3,1,'01.30 PM'),
+--(395,3,1,'01.30 PM'),
+--(396,3,1,'01.30 PM'),
+--(397,3,1,'01.30 PM'),
+--(398,3,1,'01.30 PM'),
+--(399,3,1,'01.30 PM'),
+--(400,3,1,'01.30 PM'),
+--(401,3,1,'01.30 PM'),
+--(402,3,1,'01.30 PM'),
+--(403,3,1,'01.30 PM'),
+--(404,3,1,'01.30 PM'),
+--(405,3,1,'01.30 PM'),
+--(406,3,1,'01.30 PM'),
+--(407,3,1,'01.30 PM'),
+--(408,3,1,'01.30 PM'),
+--(409,3,1,'01.30 PM'),
+--(410,3,1,'01.30 PM'),
+--(411,3,1,'01.30 PM'),
+--(412,3,1,'01.30 PM'),
+--(413,3,1,'01.30 PM'),
+--(414,3,1,'01.30 PM'),
+--(415,3,1,'01.30 PM'),
+--(416,3,1,'01.30 PM'),
+--(417,3,1,'01.30 PM'),
+--(418,3,1,'01.30 PM'),
+--(419,3,1,'01.30 PM'),
+--(420,3,1,'01.30 PM'),
+--(421,3,1,'01.30 PM'),
+--(422,3,1,'01.30 PM'),
+--(423,3,1,'01.30 PM'),
+--(424,3,1,'01.30 PM'),
+--(425,3,1,'01.30 PM'),
+--(426,3,1,'01.30 PM'),
+--(427,3,1,'01.30 PM'),
+--(428,3,1,'01.30 PM'),
+--(429,3,1,'01.30 PM'),
+--(430,3,1,'01.30 PM'),
+--(431,3,1,'01.30 PM'),
+--(432,3,1,'01.30 PM'),
+--(433,3,1,'01.30 PM'),
+--(434,3,1,'01.30 PM'),
+--(435,3,1,'01.30 PM'),
+--(436,3,1,'01.30 PM'),
+--(437,3,1,'01.30 PM'),
+--(438,3,1,'01.30 PM'),
+--(439,3,1,'01.30 PM'),
+--(440,3,1,'01.30 PM'),
+--(441,3,1,'01.30 PM'),
+--(442,3,1,'01.30 PM'),
+--(443,3,1,'01.30 PM'),
+--(444,3,1,'01.30 PM'),
+--(445,3,1,'01.30 PM'),
+--(446,3,1,'01.30 PM'),
+--(447,3,1,'01.30 PM'),
+--(448,3,1,'01.30 PM'),
+--(449,3,1,'01.30 PM'),
+--(450,3,1,'01.30 PM'),
+--(451,3,1,'01.30 PM'),
+--(452,3,1,'01.30 PM'),
+--(453,3,1,'01.30 PM'),
+--(454,3,1,'01.30 PM'),
+--(455,3,1,'01.30 PM'),
+--(456,3,1,'01.30 PM'),
+--(457,3,1,'01.30 PM'),
+--(458,3,1,'01.30 PM'),
+--(459,3,1,'01.30 PM'),
+--(460,3,1,'01.30 PM'),
+--(461,3,1,'01.30 PM'),
+--(462,3,1,'01.30 PM'),
+--(463,3,1,'01.30 PM'),
+--(464,3,1,'01.30 PM'),
+--(465,3,1,'01.30 PM'),
+--(466,3,1,'01.30 PM'),
+--(467,3,1,'01.30 PM'),
+--(468,3,1,'01.30 PM'),
+--(469,3,1,'01.30 PM'),
+--(470,3,1,'01.30 PM'),
+--(471,3,1,'01.30 PM'),
+--(472,3,1,'01.30 PM'),
+--(473,3,1,'01.30 PM'),
+--(474,3,1,'01.30 PM'),
+--(475,3,1,'01.30 PM'),
+--(476,3,1,'01.30 PM'),
+--(477,3,1,'01.30 PM'),
+--(478,3,1,'01.30 PM'),
+--(479,3,1,'01.30 PM'),
+--(480,3,1,'01.30 PM'),
+--(481,3,1,'01.30 PM'),
+--(482,3,1,'01.30 PM'),
+--(483,3,1,'01.30 PM'),
+--(484,3,1,'01.30 PM'),
+--(485,3,1,'01.30 PM'),
+--(486,3,1,'01.30 PM'),
+--(487,3,1,'01.30 PM'),
+--(488,3,1,'01.30 PM'),
+--(489,3,1,'01.30 PM'),
+--(490,3,1,'01.30 PM'),
+--(491,3,1,'01.30 PM'),
+--(492,3,1,'01.30 PM'),
+--(493,3,1,'01.30 PM'),
+--(494,3,1,'01.30 PM'),
+--(495,3,1,'01.30 PM'),
+--(496,3,1,'01.30 PM'),
+--(497,3,1,'01.30 PM'),
+--(498,3,1,'01.30 PM'),
+--(499,3,1,'01.30 PM'),
+--(500,3,1,'01.30 PM'),
+--(501,3,1,'01.30 PM'),
+--(502,3,1,'01.30 PM'),
+--(503,3,1,'01.30 PM'),
+--(504,3,1,'01.30 PM'),
+--(505,3,1,'01.30 PM'),
+--(506,3,1,'01.30 PM'),
+--(507,3,1,'01.30 PM'),
+--(508,3,1,'01.30 PM'),
+--(509,3,1,'01.30 PM'),
+--(510,3,1,'01.30 PM'),
+--(511,3,1,'01.30 PM'),
+--(512,3,1,'01.30 PM'),
+--(513,3,1,'01.30 PM'),
+--(514,3,1,'01.30 PM'),
+--(515,3,1,'01.30 PM'),
+--(516,3,1,'01.30 PM'),
+--(517,3,1,'01.30 PM'),
+--(518,3,1,'01.30 PM'),
+--(519,3,1,'01.30 PM'),
+--(520,3,1,'01.30 PM'),
+--(521,3,1,'01.30 PM'),
+--(522,3,1,'01.30 PM'),
+--(523,3,1,'01.30 PM'),
+--(524,3,1,'01.30 PM'),
+--(525,3,1,'01.30 PM'),
+--(526,3,1,'01.30 PM'),
+--(527,3,1,'01.30 PM'),
+--(528,3,1,'01.30 PM'),
+--(529,3,1,'01.30 PM'),
+--(530,3,1,'01.30 PM'),
+--(531,3,1,'01.30 PM'),
+--(532,3,1,'01.30 PM'),
+--(533,3,1,'01.30 PM'),
+--(534,3,1,'01.30 PM'),
+--(535,3,1,'01.30 PM'),
+--(536,3,1,'01.30 PM'),
+--(539,3,1,'01.30 PM'),
+--(540,3,1,'01.30 PM'),
+--(541,3,1,'01.30 PM'),
+--(542,3,1,'01.30 PM'),
+--(543,3,1,'01.30 PM'),
+--(544,3,1,'01.30 PM'),
+--(545,3,1,'01.30 PM'),
+--(546,3,1,'01.30 PM'),
+--(547,3,1,'01.30 PM'),
+--(548,3,1,'01.30 PM'),
+--(549,3,1,'01.30 PM'),
+--(550,3,1,'01.30 PM'),
+--(551,3,1,'01.30 PM'),
+--(552,3,1,'01.30 PM'),
+--(553,3,1,'01.30 PM'),
+--(554,3,1,'01.30 PM'),
+--(555,3,1,'01.30 PM'),
+--(556,3,1,'01.30 PM'),
+--(557,3,1,'01.30 PM'),
+--(558,3,1,'01.30 PM'),
+--(566,3,1,'01.30 PM'),
+--(567,3,1,'01.30 PM'),
+--(568,3,1,'01.30 PM'),
+--(569,3,1,'01.30 PM'),
+--(577,3,1,'01.30 PM'),
+--(578,3,1,'01.30 PM'),
+--(579,3,1,'01.30 PM'),
+--(581,3,1,'01.30 PM'),
+--(606,3,1,'01.30 PM'),
+--(607,3,1,'01.30 PM'),
+--(652,3,1,'01.30 PM'),
+--(653,3,1,'01.30 PM'),
+--(654,3,1,'01.30 PM'),
+--(780,3,1,'01.30 PM'),
+--(788,3,1,'01.30 PM'),
+--(789,3,1,'01.30 PM'),
+--(790,3,1,'01.30 PM'),
+--(174,4,1,'01.30 PM'),
+--(762,4,1,'01.30 PM'),
+--(763,4,1,'01.30 PM'),
+--(764,4,1,'01.30 PM'),
+--(765,4,1,'01.30 PM'),
+--(766,4,1,'01.30 PM'),
+--(767,4,1,'01.30 PM'),
+--(768,4,1,'01.30 PM'),
+--(769,4,1,'01.30 PM'),
+--(770,4,1,'01.30 PM'),
+--(771,4,1,'01.30 PM'),
+--(772,4,1,'01.30 PM'),
+--(773,4,1,'01.30 PM'),
+--(774,4,1,'01.30 PM'),
+--(775,4,1,'01.30 PM')
+
+
+--Insert into OmtMenus
+--values
+--('checkindetails',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(1,54,1),
+--(2,54,1),
+--(4,54,1)
+
+
+--create table NonProductiveReasons(
+--Id int IDENTITY(1,1) primary key,
+--Reasons nvarchar(100),
+--IsActive bit not null DEFAULT 1
+--);
+
+--insert into NonProductiveReasons values
+--    ('Audit',1),
+--    ('Training',1),
+--    ('Team Meeting',1),
+--    ('Rework',1),
+--    ('Idle',1),
+--    ('System Downtime',1),
+--    ('HR Connect',1),
+--    ('Others',1)
+
+
+--Create table Regularization_Status
+--(
+--Id int IDENTITY(1,1) primary key,
+--Status_Name NVARCHAR(50)  NOT NULL,
+--Tl_Status_Name  NVARCHAR(50)  NOT NULL,
+--IsTlStatus bit not null,
+--IsActive bit not null DEFAULT 1,
+--)
+
+--insert into Regularization_Status values
+--('Pending','Pending',1,1),
+--('Approved','Approve',1,1),
+--('Rejected','Reject',1,1)
+
+--create table NonProductiveRegularization
+--(
+--Id int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Primary_SorId INT NOT NULL,
+--Reasons INT NOT NULL,
+--Remarks NVARCHAR(100) NULL,
+--NonProductiveHours_Date date NOT NULL,
+--StartTime datetime not null,
+--EndTime datetime not null,
+--Applied_Hours DECIMAL(10,1) NOT NULL,
+--Regularization_Status INT NOT NULL,
+--Applied_Time datetime not null,
+--UpdatedBy INT NULL,
+--UpdatedTime  datetime null,
+--TlDescription NVARCHAR(100) NULL
+--)
+
+
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Primary_SorId
+--FOREIGN KEY (Primary_SorId)
+--REFERENCES systemofrecord(systemofrecordId);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Reasons
+--FOREIGN KEY (Reasons)
+--REFERENCES NonProductiveReasons(Id);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_Regularization_Status
+--FOREIGN KEY (Regularization_Status)
+--REFERENCES Regularization_Status(Id);
+
+--alter table NonProductiveRegularization
+--ADD CONSTRAINT fk_NonProductiveRegularization_UpdatedBy
+--FOREIGN KEY (UpdatedBy)
+--REFERENCES userprofile(UserId);
+
+
+--Insert into OmtMenus
+--values
+--('userregularization',1),
+--('updateregularizations',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(3,55,1),
+--(1,56,1),
+--(2,56,1),
+--(4,56,1)
+
+
+--create table NPH_Productivity
+--(
+--NPH_ProductivityId int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Productivity_Date datetime not null,
+--Applied_Hours  DECIMAL(10,1) NOT NULL,
+--Productivity_Percentage  INT NOT NULL,
+--NPH_Productivity_Percentage  INT NOT NULL
+--)
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--insert into NPH_Productivity values
+--(400,10,'2025-10-11',1.0,40,60),
+--(400,10,'2025-10-14',2.0,80,20),
+--(472,59,'2025-10-14',1.0,40,60),
+--(472,59,'2025-10-15',2.0,80,20)
+
+
+--Insert into OmtMenus
+--values
+--('getnphproductivityagent',1),
+--('getnphproductivityteam',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(1,58,1),
+--(2,58,1),
+--(4,58,1),
+--(5,58,1),
+--(3,57,1),
+--(1,57,1),
+--(2,57,1),
+--(4,57,1),
+--(5,57,1)
+
+
+----ADD nph skillsets under all sor in ui----------
+
+----update SkillSet set  invoicemandatory = 0 where skillsetid in (
+----795,
+----796,
+----797,
+----798)
+----alter master productivity sp--------
+----create calculate_nph_productivity sp-----------
+----alter all 4 invoice sp------------

@@ -49,7 +49,30 @@ namespace OMT.APIHost.Controllers
         public ResultDTO Checkin([FromBody] CheckinoutRequestDTO checkinoutRequestDTO)
         {
             return _loginService.Checkin(checkinoutRequestDTO);
-            
+
+        }
+
+        [HttpPost]
+        [Route("ForgotPassword")]
+        public ResultDTO ForgotPasswordRequest([FromBody] ForgotPasswordRequestDTO forgotPasswordRequestDTO)
+        {
+            return _loginService.ForgotPassword(forgotPasswordRequestDTO);
+        }
+
+        [HttpPost]
+        [Route("ValidateGuId")]
+
+        public ResultDTO ValidateGuId([FromBody] ValidateGuIdDTO validateGuIdDTO)
+        {
+            return _loginService.ValidateGuId(validateGuIdDTO);
+        }
+
+        [HttpPost]
+        [Route("ResetPassword")]
+
+        public ResultDTO ResetPassword(ResetPasswordDTO resetPasswordDTO)
+        {
+            return _loginService.ResetPassword(resetPasswordDTO);
         }
     }
 }
