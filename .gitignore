@@ -107,3 +107,12 @@
 /.gitignore
 /CheckOut/bin/Debug/net472
 /DailyStatusCountCalc/bin/Debug/net472
+/Automatic_Checkout_1.30pm/bin/Release/net472
+/Automatic_Checkout_1.30pm/Properties/PublishProfiles
+/Automatic_Checkout_1.30pm/Automatic_Checkout_1.30pm.csproj.user
+/DailyStatusCountCalc/bin/Release/net472
+/DailyStatusCountCalc/Properties/PublishProfiles
+/DailyStatusCountCalc/DailyStatusCountCalc.csproj.user
+/ProductivityUtilization/bin/Release/net472
+/ProductivityUtilization/Properties/PublishProfiles
+/ProductivityUtilization/ProductivityUtilization.csproj.user
