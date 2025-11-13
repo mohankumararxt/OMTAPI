@@ -99,3 +99,10 @@
 /.gitignore
 /CheckOut/bin/Debug/net472
 /DailyStatusCountCalc/bin/Debug/net472
+/Automatic_Checkout_1.30pm/bin/Release/net472
+/Automatic_Checkout_1.30pm/Properties/PublishProfiles
+*.user
+/DailyStatusCountCalc/bin/Release/net472
+/DailyStatusCountCalc/Properties/PublishProfiles
+/ProductivityUtilization/bin/Release/net472
+/ProductivityUtilization/Properties/PublishProfiles/FolderProfile.pubxml
