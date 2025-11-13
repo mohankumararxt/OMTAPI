@@ -30,5 +30,23 @@ namespace OMT.APIHost.Controllers
         {
             return _sciExceptionService.GetSciExceptionReport(getSciExceptionReportDTO);
         }
+
+        [HttpGet]
+        [Route("GetTatStatus")]
+
+        public ResultDTO GetTatStatus()
+        {
+            return _sciExceptionService.GetTatStatus();
+        }
+
+        [HttpGet]
+        [Route("GetSciPendingStatusSkillsetsList")]
+
+        public ResultDTO GetSciPendingStatusSkillsetsList()
+        {
+            return _sciExceptionService.GetSciPendingStatusSkillsetsList();
+        }
+
+
     }
 }

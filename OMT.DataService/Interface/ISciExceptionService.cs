@@ -6,6 +6,7 @@ namespace OMT.DataService.Interface
     {
         ResultDTO UploadSciExceptionReport(UploadSciExceptionReportDTO uploadSciExceptionReportDTO);
         ResultDTO GetSciExceptionReport(GetSciExceptionReportDTO getSciExceptionReportDTO);
-
+        ResultDTO GetTatStatus();
+        ResultDTO GetSciPendingStatusSkillsetsList();
     }
 }

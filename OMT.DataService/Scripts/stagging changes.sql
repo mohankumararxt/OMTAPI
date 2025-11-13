@@ -6779,3 +6779,18 @@
 ----alter master productivity sp--------
 ----create calculate_nph_productivity sp-----------
 ----alter all 4 invoice sp------------
+
+
+
+----------------------SCI PENDING WEBJOBS --------------
+--create table TatStatus(
+--Id int IDENTITY(1,1) primary key,
+--TatStatus_Name nvarchar(50),
+--TatStatus_Value bit not null,
+--IsActive bit not null
+--)
+
+--insert into TatStatus values
+--('Disable',0,1),
+--('Enable',1,1)
+
