@@ -47,6 +47,11 @@ namespace OMT.APIHost.Controllers
             return _sciExceptionService.GetSciPendingStatusSkillsetsList();
         }
 
-
+        [HttpPut]
+        [Route("UpdateTat")]
+        public ResultDTO UpdateTat(UpdateTatDTO updateTatDTO)
+        {
+            return _sciExceptionService.UpdateTat(updateTatDTO);
+        }
     }
 }

@@ -6785,12 +6785,22 @@
 ----------------------SCI PENDING WEBJOBS --------------
 --create table TatStatus(
 --Id int IDENTITY(1,1) primary key,
---TatStatus_Name nvarchar(50),
+--TatStatus_DropdownName nvarchar(50),
 --TatStatus_Value bit not null,
+--TatStatus_Name nvarchar(50),
 --IsActive bit not null
 --)
 
 --insert into TatStatus values
---('Disable',0,1),
---('Enable',1,1)
+--('Disable',0,'Disabled',1),
+--('Enable',1,'Enabled',1)
 
+--Insert into OmtMenus
+--values('SciSystemPendingTat',1)
+
+--insert into OmtMenus_Distribution
+--values
+--(1,59,1),
+--(4,59,1),
+--(2,59,1)
+ 
