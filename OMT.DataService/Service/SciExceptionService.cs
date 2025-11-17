@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,7 +57,7 @@ namespace OMT.DataService.Service
                     {
                         resultDTO.IsSuccess = false;
                         resultDTO.Message = "No details found.";
-                       
+
                     }
                 }
             }
@@ -107,6 +109,158 @@ namespace OMT.DataService.Service
 
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "SCI-Trailing Docs-Exception report uploaded successfully";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+
+        public ResultDTO GetTatStatus()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var tatstatus = _oMTDataContext.TatStatus.Where(x => x.IsActive).ToList();
+
+                if (tatstatus.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Tat Status fetched successfully";
+                    resultDTO.Data = tatstatus;
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "No details found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetSciPendingStatusSkillsetsList()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var SciPendingStatusSkillsets = (from sps in _oMTDataContext.SciPendingStatusSkillsets
+                                                 join ss in _oMTDataContext.SkillSet on sps.SkillSetId equals ss.SkillSetId
+                                                 join ts in _oMTDataContext.TatStatus on sps.IsActive equals ts.TatStatus_Value
+                                                 select new
+                                                 {
+                                                     Id = sps.Id,
+                                                     Skillsetid = sps.SkillSetId,
+                                                     Skillsetname = ss.SkillSetName,
+                                                     IsActive = sps.IsActive,
+                                                     Status = ts.TatStatus_Name,
+                                                     StatusId = ts.Id,
+                                                     Scheduled_Time = sps.Scheduled_Time,
+                                                     Scheduled_Days = sps.Scheduled_Days,
+                                                 }
+                                                 ).ToList();
+
+                if (SciPendingStatusSkillsets.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Sci Pending Status Skillsets fetched successfully";
+                    resultDTO.Data = SciPendingStatusSkillsets;
+                }
+
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "No details found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO UpdateTat(UpdateTatDTO updateTatDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var tatstatus = _oMTDataContext.TatStatus.Where(x => x.Id == updateTatDTO.TatStatusId).FirstOrDefault();
+                var scipendingskillset = _oMTDataContext.SciPendingStatusSkillsets.Where(x => x.Id == updateTatDTO.SciPendingStatusSkillsetsId).FirstOrDefault();
+
+
+                if (tatstatus.TatStatus_Value == false)
+                {
+                    scipendingskillset.IsActive = false;
+
+                    _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
+                    _oMTDataContext.SaveChanges();
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "TAT has been disabled successfully";
+
+                }
+                else if (tatstatus.TatStatus_Value == true)
+                {
+                    scipendingskillset.IsActive = true;
+
+                    _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
+                    _oMTDataContext.SaveChanges();
+
+                    // check those skillset tables for un assigned orders
+
+                    var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == scipendingskillset.SkillSetId && x.IsActive).FirstOrDefault();
+
+                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                    using SqlConnection connection = new(connectionstring);
+
+                    connection.Open();
+
+                    var checkquery = $@"SELECT COUNT(*) FROM {skillset.SkillSetName} WHERE UserId IS NULL AND Status IS NULL";
+
+                    using SqlCommand countCmd = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.Text,
+                        CommandText = checkquery
+                    };
+
+                    int ordercount = Convert.ToInt32(countCmd.ExecuteScalar());
+
+                    if (ordercount > 0)
+                    {
+                        var updatequery = $@"UPDATE {skillset.SkillSetName} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
+
+                        var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
+                        DateTime dateTime = DateTime.UtcNow;
+
+                        SqlCommand updateToPN = new SqlCommand(updatequery, connection);
+                        updateToPN.CommandType = CommandType.Text;
+
+                        updateToPN.Parameters.AddWithValue("@statusid", statusid);
+                        updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                        updateToPN.ExecuteNonQuery();
+                    }
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "TAT has been enabled successfully";
+                }
             }
             catch (Exception ex)
             {
