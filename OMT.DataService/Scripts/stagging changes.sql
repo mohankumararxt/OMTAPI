@@ -6815,7 +6815,82 @@
 
 --insert into OmtMenus_Distribution
 --values
---(1,59,1),
 --(4,59,1),
 --(2,59,1)
  
+ -------------------------------monthly status count --------------------
+
+--  CREATE TABLE Monthly_Status_Count_SkillSet (
+--Monthly_Status_Count_SkillSetId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Status INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+--alter table Monthly_Status_Count_SkillSet
+--ADD CONSTRAINT fk_Monthly_Status_Count__SkillSet_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Monthly_Status_Count_SkillSet
+--ADD CONSTRAINT fk_Monthly_Status_Count__SkillSet_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--alter table Monthly_Status_Count_SkillSet
+--ADD CONSTRAINT fk_Monthly_Status_Count__SkillSet_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+--  CREATE TABLE Monthly_Status_Count_SOR (
+--Monthly_Status_Count_SORId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--Month INT NOT NULL,
+--Year INT NOT NULL,
+--Status INT NOT NULL,
+--Count INT NOT NULL
+--);
+
+--alter table Monthly_Status_Count_SOR
+--ADD CONSTRAINT fk_Monthly_Status_Count__SOR_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+--alter table Monthly_Status_Count_SOR
+--ADD CONSTRAINT fk_Monthly_Status_Count__SOR_Status
+--FOREIGN KEY (Status)
+--REFERENCES ProcessStatus(Id);
+
+
+--------------------------------capture tat data-------------------------
+
+--create table Tat_History (
+--Tat_HistoryId INT PRIMARY KEY IDENTITY(1,1),
+--SciPendingStatusSkillsetsId INT NULL,
+--TatDate Date NULL,
+--DisabledBy INT  NULL,
+--DisabledTime datetime null,
+--EnabledBy INT NULL,
+--EnabledTime datetime null
+--)
+
+--alter table Tat_History
+--ADD CONSTRAINT fk_Tat_History_DisabledBy
+--FOREIGN KEY (DisabledBy)
+--REFERENCES userprofile(UserId);
+
+--alter table Tat_History
+--ADD CONSTRAINT fk_Tat_History_EnabledBy
+--FOREIGN KEY (EnabledBy)
+--REFERENCES userprofile(UserId);
+
+--alter table Tat_History
+--ADD CONSTRAINT fk_Tat_History_SciPendingStatusSkillsetsId
+--FOREIGN KEY (SciPendingStatusSkillsetsId)
+--REFERENCES SciPendingStatusSkillsets(Id);
+
+
+

@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
-    public class SciExceptionController : ControllerBase
+    public class SciExceptionController : BaseController
     {
         private readonly ISciExceptionService _sciExceptionService;
         public SciExceptionController(ISciExceptionService sciExceptionService)
@@ -51,7 +51,8 @@ namespace OMT.APIHost.Controllers
         [Route("UpdateTat")]
         public ResultDTO UpdateTat(UpdateTatDTO updateTatDTO)
         {
-            return _sciExceptionService.UpdateTat(updateTatDTO);
+            int userid = this.UserId;
+            return _sciExceptionService.UpdateTat(updateTatDTO,userid);
         }
     }
 }
