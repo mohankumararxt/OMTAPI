@@ -194,7 +194,7 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        public ResultDTO UpdateTat(UpdateTatDTO updateTatDTO)
+        public ResultDTO UpdateTat(UpdateTatDTO updateTatDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
@@ -206,60 +206,129 @@ namespace OMT.DataService.Service
 
                 if (tatstatus.TatStatus_Value == false)
                 {
-                    scipendingskillset.IsActive = false;
+                    // check if it is already disabled 
 
-                    _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
-                    _oMTDataContext.SaveChanges();
+                    var tathistory = _oMTDataContext.Tat_History.Where(x => x.SciPendingStatusSkillsetsId == updateTatDTO.SciPendingStatusSkillsetsId && x.DisabledTime != null && x.EnabledTime == null).FirstOrDefault();
 
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "TAT has been disabled successfully";
+                    if (tathistory != null)
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "It is already diasbled, you can't disable it again.";
+                    }
+
+                    else
+                    {
+
+                        scipendingskillset.IsActive = false;
+
+                        _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
+                        _oMTDataContext.SaveChanges();
+
+                        //capture the user who modified tat and extended time
+
+                        Tat_History tat_History = new Tat_History()
+                        {
+                            SciPendingStatusSkillsetsId = updateTatDTO.SciPendingStatusSkillsetsId,
+                            TatDate = DateTime.UtcNow.Date,
+                            DisabledBy = userid,
+                            DisabledTime = DateTime.UtcNow,
+                        };
+
+                        _oMTDataContext.Tat_History.Add(tat_History);
+                        _oMTDataContext.SaveChanges();
+
+                        resultDTO.IsSuccess = true;
+                        resultDTO.Message = "TAT has been disabled successfully";
+                    }
 
                 }
                 else if (tatstatus.TatStatus_Value == true)
                 {
-                    scipendingskillset.IsActive = true;
 
-                    _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
-                    _oMTDataContext.SaveChanges();
+                    // check if it is already enabled 
 
-                    // check those skillset tables for un assigned orders
+                    var tathistory = _oMTDataContext.Tat_History.Where(x => x.SciPendingStatusSkillsetsId == updateTatDTO.SciPendingStatusSkillsetsId).OrderByDescending(x => x.Tat_HistoryId).FirstOrDefault();
 
-                    var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == scipendingskillset.SkillSetId && x.IsActive).FirstOrDefault();
 
-                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
-                    using SqlConnection connection = new(connectionstring);
-
-                    connection.Open();
-
-                    var checkquery = $@"SELECT COUNT(*) FROM {skillset.SkillSetName} WHERE UserId IS NULL AND Status IS NULL";
-
-                    using SqlCommand countCmd = new()
+                    if (tathistory != null)
                     {
-                        Connection = connection,
-                        CommandType = CommandType.Text,
-                        CommandText = checkquery
-                    };
+                        if (tathistory.EnabledTime != null)
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.StatusCode = "404";
+                            resultDTO.Message = "It is already enabled, you can't enable it again.";
+                        }
 
-                    int ordercount = Convert.ToInt32(countCmd.ExecuteScalar());
 
-                    if (ordercount > 0)
-                    {
-                        var updatequery = $@"UPDATE {skillset.SkillSetName} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
+                        else
+                        {
 
-                        var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
-                        DateTime dateTime = DateTime.UtcNow;
+                            scipendingskillset.IsActive = true;
 
-                        SqlCommand updateToPN = new SqlCommand(updatequery, connection);
-                        updateToPN.CommandType = CommandType.Text;
+                            _oMTDataContext.SciPendingStatusSkillsets.Update(scipendingskillset);
+                            _oMTDataContext.SaveChanges();
 
-                        updateToPN.Parameters.AddWithValue("@statusid", statusid);
-                        updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
+                            // check those skillset tables for un assigned orders
 
-                        updateToPN.ExecuteNonQuery();
+                            var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == scipendingskillset.SkillSetId && x.IsActive).FirstOrDefault();
+
+                            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                            using SqlConnection connection = new(connectionstring);
+
+                            connection.Open();
+
+                            var checkquery = $@"SELECT COUNT(*) FROM {skillset.SkillSetName} WHERE UserId IS NULL AND Status IS NULL";
+
+                            using SqlCommand countCmd = new()
+                            {
+                                Connection = connection,
+                                CommandType = CommandType.Text,
+                                CommandText = checkquery
+                            };
+
+                            int ordercount = Convert.ToInt32(countCmd.ExecuteScalar());
+
+                            if (ordercount > 0)
+                            {
+                                var updatequery = $@"UPDATE {skillset.SkillSetName} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
+
+                                var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
+                                DateTime dateTime = DateTime.UtcNow;
+
+                                SqlCommand updateToPN = new SqlCommand(updatequery, connection);
+                                updateToPN.CommandType = CommandType.Text;
+
+                                updateToPN.Parameters.AddWithValue("@statusid", statusid);
+                                updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                                updateToPN.ExecuteNonQuery();
+                            }
+
+
+                            //capture the user who modified tat and extended time
+
+                            var tat_history = _oMTDataContext.Tat_History.Where(x => x.SciPendingStatusSkillsetsId == updateTatDTO.SciPendingStatusSkillsetsId && x.EnabledTime == null && x.DisabledTime != null).FirstOrDefault();
+
+                            if (tat_history != null)
+                            {
+                                tat_history.EnabledBy = userid;
+                                tat_history.EnabledTime = DateTime.UtcNow;
+
+                                _oMTDataContext.Tat_History.Update(tat_history);
+                                _oMTDataContext.SaveChanges();
+
+                                resultDTO.IsSuccess = true;
+                                resultDTO.Message = "TAT has been enabled successfully";
+                            }
+                        }
                     }
-
-                    resultDTO.IsSuccess = true;
-                    resultDTO.Message = "TAT has been enabled successfully";
+                    else
+                    {
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Please disable it once and then try to enable again.";
+                    }
                 }
             }
             catch (Exception ex)

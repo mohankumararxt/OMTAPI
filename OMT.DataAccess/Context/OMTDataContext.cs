@@ -90,6 +90,7 @@ namespace OMT.DataAccess.Context
         public DbSet<TatStatus> TatStatus { get; set; }
 
         public DbSet<SciPendingStatusSkillsets> SciPendingStatusSkillsets { get; set; }
+        public DbSet<Tat_History> Tat_History { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

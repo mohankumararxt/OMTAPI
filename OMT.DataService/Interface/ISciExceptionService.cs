@@ -8,6 +8,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetSciExceptionReport(GetSciExceptionReportDTO getSciExceptionReportDTO);
         ResultDTO GetTatStatus();
         ResultDTO GetSciPendingStatusSkillsetsList();
-        ResultDTO UpdateTat(UpdateTatDTO updateTatDTO);
+        ResultDTO UpdateTat(UpdateTatDTO updateTatDTO, int userid);
     }
 }
