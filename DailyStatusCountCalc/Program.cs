@@ -101,6 +101,48 @@ namespace DailyStatusCountCalc
                         Console.WriteLine($"Two days before data has been removed from Prod_util_tracker table successfully.");
                     }
 
+                    // insert into monthly status count skillset table
+
+                    string mscs = @"MERGE Monthly_Status_Count_SkillSet AS target
+                                    USING (
+                                        SELECT 
+                                            SystemOfRecordId,
+                                            SkillSetId,
+                                            MONTH([Date]) AS [Month],
+                                            YEAR([Date])  AS [Year],
+                                            Status,
+                                            SUM([Count]) AS Count
+                                        FROM Daily_Status_Count
+                                        WHERE 
+                                            MONTH([Date]) = MONTH(GETDATE()) 
+                                            AND YEAR([Date]) = YEAR(GETDATE())
+                                        GROUP BY 
+                                            SystemOfRecordId,
+                                            SkillSetId,
+                                            MONTH([Date]),
+                                            YEAR([Date]),
+                                            Status
+                                    ) AS source
+                                    ON (
+                                        target.SystemOfRecordId = source.SystemOfRecordId
+                                        AND target.SkillSetId    = source.SkillSetId
+                                        AND target.Month         = source.Month
+                                        AND target.Year          = source.Year
+                                        AND target.Status        = source.Status
+                                    )
+                                    WHEN MATCHED THEN 
+                                        UPDATE SET target.Count = source.Count
+                                    WHEN NOT MATCHED THEN
+                                        INSERT (SystemOfRecordId, SkillSetId, Month, Year, Status, Count)
+                                        VALUES (source.SystemOfRecordId, source.SkillSetId, source.Month, source.Year, source.Status, source.Count);";
+
+                    using (SqlCommand spCommand6 = new SqlCommand(mscs, connection))
+                    {
+                        spCommand6.CommandType = CommandType.Text;
+                        spCommand6.ExecuteNonQuery();
+                        Console.WriteLine($"Monthly status count skillset table has been updated.");
+                    }
+
                 }
             }
             catch (Exception ex)
