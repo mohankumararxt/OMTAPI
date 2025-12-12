@@ -6879,3 +6879,24 @@
 
 
 
+------------------------capture system pending daily counts----------------
+
+-- CREATE TABLE Daily_system_pending_Count (
+--Daily_system_pending_CountId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL,
+--Pre_day_count INT NULL,
+--);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+

@@ -76,8 +76,32 @@ namespace PendingSciOrders_5pm
 
                     foreach (DataRow Sciskillset in SkillsetDT.Rows)
                     {
+                        int SystemofRecordId = 1;
+                        int SkillSetId = Convert.ToInt32(Sciskillset["SkillSetId"]);
                         int statusid = Convert.ToInt32(Sciskillset["Id"]);
                         string skillsetname = Convert.ToString(Sciskillset["SkillsetName"]);
+
+                        //get the sp count and update in Daily_system_pending_Count
+                        string spcount = $@"SELECT COUNT(Id) FROM {skillsetname} WHERE STATUS IS NULL AND USERID IS NULL";
+
+                        SqlCommand getcount = new SqlCommand(spcount, connection);
+                        getcount.CommandType = CommandType.Text;
+
+                        int dspcount = (int)getcount.ExecuteScalar();
+
+                        string updatedspc = $@"INSERT INTO Daily_system_pending_Count (SystemofRecordId,SkillSetId,Date,Count) VALUES (@SystemofRecordId,@SkillSetId,@Date,@Count)";
+
+                        SqlCommand updateToSPN = new SqlCommand(updatedspc, connection);
+                        updateToSPN.CommandType = CommandType.Text;
+
+                        updateToSPN.Parameters.AddWithValue("@SystemofRecordId", SystemofRecordId);
+                        updateToSPN.Parameters.AddWithValue("@SkillSetId", SkillSetId);
+                        updateToSPN.Parameters.AddWithValue("@Date", DateTime.Now.Date);
+                        updateToSPN.Parameters.AddWithValue("@Count", dspcount);
+
+                        updateToSPN.ExecuteNonQuery();
+
+                        //move to system pending
 
                         string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
 

@@ -88,9 +88,9 @@ namespace OMT.DataAccess.Context
         public DbSet<Regularization_Status> Regularization_Status { get; set; }
         public DbSet<NPH_Productivity> NPH_Productivity { get; set; }
         public DbSet<TatStatus> TatStatus { get; set; }
-
         public DbSet<SciPendingStatusSkillsets> SciPendingStatusSkillsets { get; set; }
         public DbSet<Tat_History> Tat_History { get; set; }
+        public DbSet<Monthly_Status_Count_SkillSet> Monthly_Status_Count_SkillSet { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();

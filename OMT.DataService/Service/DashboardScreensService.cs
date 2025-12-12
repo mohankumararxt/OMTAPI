@@ -362,6 +362,8 @@ namespace OMT.DataService.Service
                 MonthlyVolumeTrendSkillsetResponseDTO monthlyVolumeTrendSkillsetResponseDTO = new MonthlyVolumeTrendSkillsetResponseDTO();
                 List<MonthlyVolumeTrendResponseDTO> monthvt = new List<MonthlyVolumeTrendResponseDTO>();
                 List<MonthlyVolumeTrendSkillsetResponseDTO> month_Skillset = new List<MonthlyVolumeTrendSkillsetResponseDTO>();
+                MonthlyVolumeTrendSkillsetStatusResponseDTO monthlyVolumeTrendSkillsetStatusResponseDTO = new MonthlyVolumeTrendSkillsetStatusResponseDTO();
+                List<MonthlyVolumeTrendSkillsetStatusResponseDTO> month_skillset_status = new List<MonthlyVolumeTrendSkillsetStatusResponseDTO>();
 
                 List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
 
@@ -418,7 +420,7 @@ namespace OMT.DataService.Service
                     }
                 }
 
-                else if (monthlyVolumeTrendDTO.SystemOfRecordId.Count > 0  && monthlyVolumeTrendDTO.SkillsetId == null )
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId.Count > 0 && monthlyVolumeTrendDTO.SkillsetId == null)
                 {
                     //var monthly_count = _oMTDataContext.MonthlyCount_SOR
                     //                                                    .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId)
@@ -516,19 +518,20 @@ namespace OMT.DataService.Service
                     }
                 }
 
-                else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId != null)
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId != null && monthlyVolumeTrendDTO.StatusId == null)
                 {
                     var skillsetnames = (from ss in _oMTDataContext.SkillSet
-                                         where  ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId) 
+                                         where ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                          && monthlyVolumeTrendDTO.SkillsetId.Contains(ss.SkillSetId)
-                                         select new 
-                                         { ss.SkillSetId,
-                                           ss.SkillSetName
+                                         select new
+                                         {
+                                             ss.SkillSetId,
+                                             ss.SkillSetName
                                          }
                                         ).ToList();
 
-                   List<int> skillsetids = skillsetnames.Select(x => x.SkillSetId).ToList();
-                   var notavailable_skillsets = (from ss in _oMTDataContext.SkillSet
+                    List<int> skillsetids = skillsetnames.Select(x => x.SkillSetId).ToList();
+                    var notavailable_skillsets = (from ss in _oMTDataContext.SkillSet
                                                   where ss.IsActive && !_oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                                   && monthlyVolumeTrendDTO.SkillsetId.Contains(ss.SkillSetId)
                                                   select ss.SkillSetName).ToList();
@@ -586,7 +589,7 @@ namespace OMT.DataService.Service
 
                                 month_Skillset.Add(monthlyVolumeTrendSkillsetResponseDTO);
                             }
-                           
+
                         }
 
                         if (month_Skillset.Count > 0 && notavailable_skillsets.Count == 0)
@@ -600,7 +603,7 @@ namespace OMT.DataService.Service
                         {
                             resultDTO.Data = month_Skillset;
                             resultDTO.IsSuccess = true;
-                            resultDTO.Message = "Monthly volume trend fetched successfully and templates does not exists for the skillsets : " + string.Join(",",notavailable_skillsets) + ".";
+                            resultDTO.Message = "Monthly volume trend fetched successfully and templates does not exists for the skillsets : " + string.Join(",", notavailable_skillsets) + ".";
                         }
                         //else if (month_Skillset.Count == 0 && notavailable_skillsets.Count == 0)
                         //{
@@ -683,6 +686,130 @@ namespace OMT.DataService.Service
 
                 }
 
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId != null && monthlyVolumeTrendDTO.SkillsetId != null && monthlyVolumeTrendDTO.StatusId != null)
+                {
+                    var skillsetnames = (from ss in _oMTDataContext.SkillSet
+                                         where ss.IsActive && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                         && monthlyVolumeTrendDTO.SkillsetId.Contains(ss.SkillSetId)
+                                         select new
+                                         {
+                                             ss.SkillSetId,
+                                             ss.SkillSetName
+                                         }
+                                        ).ToList();
+
+                    List<int> skillsetids = skillsetnames.Select(x => x.SkillSetId).ToList();
+                    var notavailable_skillsets = (from ss in _oMTDataContext.SkillSet
+                                                  where ss.IsActive && !_oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
+                                                  && monthlyVolumeTrendDTO.SkillsetId.Contains(ss.SkillSetId)
+                                                  select ss.SkillSetName).ToList();
+
+                    if (skillsetnames.Count == 0)
+                    {
+                        monthlyVolumeTrendSkillsetResponseDTO = new MonthlyVolumeTrendSkillsetResponseDTO()
+                        {
+                            SkillsetId = 0,
+                            SkillsetName = null,
+                            MonthlyCount = new List<int>(),
+
+                        };
+
+                        resultDTO.Data = monthlyVolumeTrendSkillsetResponseDTO;
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                        resultDTO.Message = "Templates does not exist for the skillsets.";
+                    }
+                    else
+                    {
+                        foreach (int sorid in monthlyVolumeTrendDTO.SystemOfRecordId)
+                        {
+                            foreach (int ssid in skillsetids)
+                            {
+                                var monthly_count = _oMTDataContext.MonthlyCount_SkillSet
+                                                                                     .Where(x => x.SystemofRecordId == sorid && x.SkillSetId == ssid)
+                                                                                     .AsEnumerable()
+                                                                                     .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                                                                     .ToList();
+
+
+                                var monthlyCounts = monthly_count
+                                    .GroupBy(x => new { x.Year, x.Month })
+                                    .Select(g => new
+                                    {
+                                        Year = g.Key.Year,
+                                        Month = g.Key.Month,
+                                        Count = g.Sum(x => x.Count)
+                                    })
+                                    .ToList();
+
+                                var statusSource = _oMTDataContext.Monthly_Status_Count_SkillSet
+                                    .Where(ms => ms.SystemofRecordId == sorid && ms.SkillSetId == ssid)
+                                    .Join(_oMTDataContext.ProcessStatus,
+                                            ms => ms.Status,
+                                            ps => ps.Id,
+                                            (ms, ps) => new
+                                            {
+                                                StatusId = ms.Status,
+                                                StatusName = ps.Status,
+                                                Year = ms.Year,
+                                                Month = ms.Month,
+                                                Count = ms.Count
+                                            })
+                                    .AsEnumerable()
+                                     .Where(x => yearMonthList.Any(y => y.Year == x.Year && y.Month == x.Month))
+                                    .ToList();
+
+                                var statusWiseCounts = statusSource
+                                                                    .GroupBy(x => new { x.StatusId, x.StatusName })
+                                                                    .Select(g => new
+                                                                    {
+                                                                        StatusId = g.Key.StatusId,
+                                                                        StatusName = g.Key.StatusName,
+                                                                        MonthlyCount = g.Select(item => new
+                                                                        {
+                                                                            Year = item.Year,
+                                                                            Month = item.Month,
+                                                                            Count = item.Count
+                                                                        }).ToList()
+                                                                    })
+                                                                    .ToList();
+
+
+                                monthlyVolumeTrendSkillsetStatusResponseDTO = new MonthlyVolumeTrendSkillsetStatusResponseDTO
+                                {
+                                    SkillsetId = ssid,
+                                    SkillsetName = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == ssid && x.IsActive).Select(_ => _.SkillSetName).FirstOrDefault(),
+                                    MonthlyCount = monthlyCounts
+                                                                         .Select(m => new MonthCountDTO
+                                                                         {
+                                                                             Year = m.Year,
+                                                                             Month = m.Month,
+                                                                             Count = m.Count
+                                                                         }).ToList(),
+
+                                    StatusWiseCounts = statusWiseCounts
+                                };
+
+                                month_skillset_status.Add(monthlyVolumeTrendSkillsetStatusResponseDTO);
+                            }
+
+                        }
+
+                        if (month_skillset_status.Count > 0 && notavailable_skillsets.Count == 0)
+                        {
+                            resultDTO.Data = month_skillset_status;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Monthly volume trend VS status trend fetched successfully";
+                        }
+
+                        else if (month_skillset_status.Count > 0 && notavailable_skillsets.Count > 0)
+                        {
+                            resultDTO.Data = month_skillset_status;
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Monthly volume trend VS status trend fetched successfully and templates does not exists for the skillsets : " + string.Join(",", notavailable_skillsets) + ".";
+                        }
+                    }
+                }
 
             }
             catch (Exception ex)

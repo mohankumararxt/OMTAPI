@@ -289,6 +289,22 @@ namespace OMT.DataService.Service
 
                             int ordercount = Convert.ToInt32(countCmd.ExecuteScalar());
 
+                            // insert into Daily_system_pending_Count table
+
+                            string updatedspc = $@"INSERT INTO Daily_system_pending_Count (SystemofRecordId,SkillSetId,Date,Count) VALUES (@SystemofRecordId,@SkillSetId,@Date,@Count)";
+
+                            SqlCommand updateToSPN = new SqlCommand(updatedspc, connection);
+                            updateToSPN.CommandType = CommandType.Text;
+
+                            updateToSPN.Parameters.AddWithValue("@SystemofRecordId", skillset.SystemofRecordId);
+                            updateToSPN.Parameters.AddWithValue("@SkillSetId", skillset.SkillSetId);
+                            updateToSPN.Parameters.AddWithValue("@Date", DateTime.Now.Date);
+                            updateToSPN.Parameters.AddWithValue("@Count", ordercount);
+
+                            updateToSPN.ExecuteNonQuery();
+
+                            // move to system pending
+
                             if (ordercount > 0)
                             {
                                 var updatequery = $@"UPDATE {skillset.SkillSetName} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
