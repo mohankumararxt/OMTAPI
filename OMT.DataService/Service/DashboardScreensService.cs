@@ -743,7 +743,8 @@ namespace OMT.DataService.Service
                                     .ToList();
 
                                 var statusSource = _oMTDataContext.Monthly_Status_Count_SkillSet
-                                    .Where(ms => ms.SystemofRecordId == sorid && ms.SkillSetId == ssid)
+                                    .Where(ms => ms.SystemofRecordId == sorid && ms.SkillSetId == ssid &&
+                                     monthlyVolumeTrendDTO.StatusId.Contains(ms.Status))
                                     .Join(_oMTDataContext.ProcessStatus,
                                             ms => ms.Status,
                                             ps => ps.Id,
