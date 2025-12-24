@@ -367,7 +367,7 @@ namespace OMT.DataService.Service
 
                 List<int> SOR = _oMTDataContext.SystemofRecord.Where(x => x.IsActive).Select(x => x.SystemofRecordId).ToList();
 
-                if (monthlyVolumeTrendDTO.SystemOfRecordId == null && monthlyVolumeTrendDTO.SkillsetId == null)
+                if (monthlyVolumeTrendDTO.SystemOfRecordId == null && monthlyVolumeTrendDTO.SkillsetId == null && monthlyVolumeTrendDTO.StatusId == null)
                 {
                     foreach (int sorid in SOR)
                     {
@@ -420,7 +420,7 @@ namespace OMT.DataService.Service
                     }
                 }
 
-                else if (monthlyVolumeTrendDTO.SystemOfRecordId.Count > 0 && monthlyVolumeTrendDTO.SkillsetId == null)
+                else if (monthlyVolumeTrendDTO.SystemOfRecordId.Count > 0 && monthlyVolumeTrendDTO.SkillsetId == null && monthlyVolumeTrendDTO.StatusId == null)
                 {
                     //var monthly_count = _oMTDataContext.MonthlyCount_SOR
                     //                                                    .Where(x => x.SystemofRecordId == monthlyVolumeTrendDTO.SystemOfRecordId)
