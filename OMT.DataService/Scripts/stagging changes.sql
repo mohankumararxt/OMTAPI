@@ -6900,3 +6900,32 @@
 --FOREIGN KEY (SystemofRecordId)
 --REFERENCES SystemofRecord(SystemofRecordId);
 
+
+
+
+---------------------------------lr doc prep and lr no verify n submit  changes ----------------------
+
+--insert into templatecolumns values(
+--78,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_Doc_Prep_Verification
+--add Ha_Status int 
+
+--ALTER TABLE LR_Doc_Prep_Verification
+--ADD CONSTRAINT DF_LR_Doc_Prep_Verification_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_Doc_Prep_Verification set ha_status = 0
+
+--insert into templatecolumns values(
+--757,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_No_Verification_Verify_And_Submit
+--add Ha_Status int 
+
+--ALTER TABLE LR_No_Verification_Verify_And_Submit
+--ADD CONSTRAINT DF_LR_No_Verification_Verify_And_Submit_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_No_Verification_Verify_And_Submit set ha_status = 0
+

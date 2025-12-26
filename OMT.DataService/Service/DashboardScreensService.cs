@@ -965,5 +965,95 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetCompletedVsReceived(WeeklyCompletionDTO weeklyCompletionDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                var statusid = _oMTDataContext.Skillset_Status.Where(x => x.SystemofRecordId == weeklyCompletionDTO.SystemOfRecordId && x.IsActive).Select(x => x.StatusId).ToList();
+
+                var counts = _oMTDataContext.Daily_Status_Count.Where(x => x.SystemofRecordId == weeklyCompletionDTO.SystemOfRecordId && x.SkillSetId == weeklyCompletionDTO.SkillsetId && x.Date >= weeklyCompletionDTO.FromDate && x.Date <= weeklyCompletionDTO.ToDate).ToList();
+
+                var dates = Enumerable.Range(0, (weeklyCompletionDTO.ToDate.Date - weeklyCompletionDTO.FromDate.Date).Days + 1).Select(i => weeklyCompletionDTO.FromDate.Date.AddDays(i)).ToList();
+
+
+                var uploaded = _oMTDataContext.DailyCount_SkillSet.Where(x => x.SkillSetId == weeklyCompletionDTO.SkillsetId && x.Date >= weeklyCompletionDTO.FromDate && x.Date <= weeklyCompletionDTO.ToDate).ToList();
+
+                var systempending = _oMTDataContext.Daily_system_pending_Count.Where(x => x.SystemofRecordId == weeklyCompletionDTO.SystemOfRecordId && x.SkillSetId == weeklyCompletionDTO.SkillsetId && x.Date >= weeklyCompletionDTO.FromDate && x.Date <= weeklyCompletionDTO.ToDate).ToList();
+                
+                GetCompletedVsReceivedDTO getCompletedVsReceivedDTO = new GetCompletedVsReceivedDTO();
+
+                var weeklyCount = new List<DayWiseCompletedDTO>();
+
+                var DailyReceivedcount = new List<DayWiseReceivedDTO>();
+
+                foreach (var date in dates)
+                {
+                    var statusCount = new Dictionary<string, int>();
+
+                    var ReceivedCount = new Dictionary<string, int>();
+
+                    var grandtotal = uploaded.Where(x => x.Date == date).Sum(x => x.Count);
+
+                    foreach (var sid in statusid)
+                    {
+                        var statusname = _oMTDataContext.ProcessStatus.Where(x => x.Id == sid).Select(x => x.Status).FirstOrDefault();
+
+                        var cnt = counts.Where(x => x.Status == sid && x.Date == date).Sum(x => x.Count);
+
+                        statusCount[statusname] = cnt;
+
+                    }
+
+                    statusCount["System-Pending"] = systempending.Where(x => x.Date == date).Select(x => x.Count).FirstOrDefault();
+
+                    weeklyCount.Add(new DayWiseCompletedDTO
+                    {
+                        Date = date.ToString("yyyy-MM-dd"),
+                        StatusCount = statusCount
+                    });
+
+
+                    ReceivedCount["Grand-Total"] = grandtotal;
+                    ReceivedCount["Pre-Day-Sys-Pend"] = systempending.Where(x => x.Date == date).Sum(x => x.Pre_day_count);
+
+                    DailyReceivedcount.Add(new DayWiseReceivedDTO
+                    {
+                        Date = date.ToString("yyyy-MM-dd"),
+                        ReceivedCount = ReceivedCount
+                    });
+
+                }
+
+                getCompletedVsReceivedDTO = new GetCompletedVsReceivedDTO
+                {
+                    Completed = weeklyCount,
+                    Received = DailyReceivedcount
+                };
+
+                if (weeklyCount.Count > 0 || DailyReceivedcount.Count > 0)
+                {
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Data = getCompletedVsReceivedDTO;
+                    resultDTO.Message = "Completion count vs received count fetched successfully";
+                }
+                else
+                {
+                    resultDTO.Message = "Completion count vs received count not found.";
+                    resultDTO.StatusCode = "404";
+                    resultDTO.IsSuccess = false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
     }
 }
