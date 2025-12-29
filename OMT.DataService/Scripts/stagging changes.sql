@@ -6929,3 +6929,28 @@
 
 --update LR_No_Verification_Verify_And_Submit set ha_status = 0
 
+--CREATE TABLE SkillSet_HAStatus
+--(
+--	Id INT PRIMARY KEY IDENTITY(1,1),
+--	SkillSetId INT NOT NULL,
+--    Ha_Status NVARCHAR(50) NOT NULL,
+--    IsActive BIT NOT NULL,
+   
+--);
+
+--alter table SkillSet_HAStatus
+--ADD CONSTRAINT fk_SkillSet_HAStatus_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--INSERT INTO SkillSet_HAStatus 
+--VALUES 
+--(673,'2,3',1),
+--(78,'2,3',1),
+--(757,'2,3',1)
+
+
+
+
+
+

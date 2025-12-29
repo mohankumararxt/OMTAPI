@@ -70,6 +70,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
+                    resultDTO.Message = "SkillSet created successfully";
+                    resultDTO.IsSuccess = true;
 
                     // send details via mail
                     var url = _emailDetailsSettings.Value.SendEmailURL;
