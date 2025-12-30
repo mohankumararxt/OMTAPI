@@ -114,6 +114,36 @@ namespace PendingSciOrders_5pm
                         updateToPN.ExecuteNonQuery();
 
                         Console.WriteLine("Unassigned orders succesfully updated with pending status in " + skillsetname + " template.");
+
+                        //move to systempending bckp table
+
+                        SqlCommand insertToBckp = new SqlCommand("BackupSkillset_SysPen", connection);
+                        insertToBckp.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter returnvalue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        insertToBckp.Parameters.Add(returnvalue);
+
+                        insertToBckp.Parameters.AddWithValue("@SkillsetTable", skillsetname);
+                        insertToBckp.Parameters.AddWithValue("@StatusId", statusid);
+                        insertToBckp.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                        insertToBckp.ExecuteNonQuery();
+
+                        int returnCode = (int)insertToBckp.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"System pending orders inserted into " + skillsetname + "_Sys_Pen table successfully.");
+                        }
                     }
 
                 }
