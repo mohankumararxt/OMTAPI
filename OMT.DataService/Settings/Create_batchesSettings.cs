@@ -10,5 +10,7 @@ namespace OMT.DataService.Settings
     {
         public int RicSkillsetId { get; set; }
         public string TriggerURL { get; set; }
+        public List<int> DocPrepSkillsetIds { get; set; }
+        public string DocPrepTriggerURL { get; set; }
     }
 }

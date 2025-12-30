@@ -6949,8 +6949,9 @@
 --(78,'2,3',1),
 --(757,'2,3',1)
 
-
-
+--alter sp getorderbypo_threshold
+--alter sp getorderbyhardstate_threshold
+--alter sp getorderbyweightage_threshold
 
 
 
