@@ -6954,4 +6954,28 @@
 --alter sp getorderbyweightage_threshold
 
 
+----------------------------------------PREV DAY SYSYTE PEND---------------------
+
+--create sci skillsets syystem pending tables
+
+--alter table LR_1ST_KEY_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Doc_Prep_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_No_Verification_Verify_And_Submit_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RIC_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RICAOM_Sys_Pen
+--add SystemPending_date DATE
+
 --create sp BackupSkillset_SysPen
+--create Calculate_PreDay_SystemPending_Counts sp 
+-- create function GetBusinessDateFromUtc

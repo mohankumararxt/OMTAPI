@@ -96,7 +96,7 @@ namespace PendingSciOrders
 
                         updateToSPN.Parameters.AddWithValue("@SystemofRecordId", SystemofRecordId);
                         updateToSPN.Parameters.AddWithValue("@SkillSetId", SkillSetId);
-                        updateToSPN.Parameters.AddWithValue("@Date", DateTime.Now.Date);
+                        updateToSPN.Parameters.AddWithValue("@Date", DateTime.UtcNow.Date.AddDays(-1));
                         updateToSPN.Parameters.AddWithValue("@Count", dspcount);
 
                         updateToSPN.ExecuteNonQuery();

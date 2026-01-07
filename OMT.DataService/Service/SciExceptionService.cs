@@ -298,19 +298,19 @@ namespace OMT.DataService.Service
 
                             updateToSPN.Parameters.AddWithValue("@SystemofRecordId", skillset.SystemofRecordId);
                             updateToSPN.Parameters.AddWithValue("@SkillSetId", skillset.SkillSetId);
-                            updateToSPN.Parameters.AddWithValue("@Date", DateTime.Now.Date);
+                            updateToSPN.Parameters.AddWithValue("@Date", DateTime.UtcNow.Date.AddDays(-1));
                             updateToSPN.Parameters.AddWithValue("@Count", ordercount);
 
                             updateToSPN.ExecuteNonQuery();
 
                             // move to system pending
 
+                            var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
+                            DateTime dateTime = DateTime.UtcNow;
+
                             if (ordercount > 0)
                             {
                                 var updatequery = $@"UPDATE {skillset.SkillSetName} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
-
-                                var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
-                                DateTime dateTime = DateTime.UtcNow;
 
                                 SqlCommand updateToPN = new SqlCommand(updatequery, connection);
                                 updateToPN.CommandType = CommandType.Text;
@@ -319,7 +319,34 @@ namespace OMT.DataService.Service
                                 updateToPN.Parameters.AddWithValue("@CompletionDate", dateTime);
 
                                 updateToPN.ExecuteNonQuery();
+                            
+
+                            //move to systempending bckp table
+
+                            SqlCommand insertToBckp = new SqlCommand("BackupSkillset_SysPen", connection);
+                            insertToBckp.CommandType = CommandType.StoredProcedure;
+
+                            SqlParameter returnvalue = new SqlParameter
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+
+                            insertToBckp.Parameters.Add(returnvalue);
+
+                            insertToBckp.Parameters.AddWithValue("@SkillsetTable", skillset.SkillSetName);
+                            insertToBckp.Parameters.AddWithValue("@StatusId", statusid);
+                            insertToBckp.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                            insertToBckp.ExecuteNonQuery();
+
+                            int returnCode = (int)insertToBckp.Parameters["@RETURN_VALUE"].Value;
+
+                            if (returnCode != 1)
+                            {
+                                throw new InvalidOperationException("Stored Procedure call failed.");
                             }
+                        }
 
 
                             //capture the user who modified tat and extended time
