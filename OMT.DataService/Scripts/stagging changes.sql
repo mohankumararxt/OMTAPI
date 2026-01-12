@@ -6979,3 +6979,6 @@
 --create sp BackupSkillset_SysPen
 --create Calculate_PreDay_SystemPending_Counts sp 
 -- create function GetBusinessDateFromUtc
+
+
+--update SciPendingStatusSkillsets set Scheduled_Time = '04.30 PM' where Scheduled_Time = '12.30 PM'
