@@ -56,15 +56,19 @@ namespace PendingSciOrders
                 {
                     connection.Open();
 
+                    string scheduledTime = ConfigurationManager.AppSettings["Scheduled_Time"];
+
                     string SciSkillsets = @"SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName,PS.Id
                                             FROM skillset SS
                                             INNER JOIN SciPendingStatusSkillsets SPS ON SPS.SkillSetId = SS.SkillSetId
                                             INNER JOIN ProcessStatus PS ON PS.SystemofRecordId = SS.SystemofRecordId
                                             INNER JOIN TemplateColumns TC ON TC.SkillSetId = SS.SkillSetId
-                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '04.30 PM' AND SPS.Scheduled_Days = 'Mon-Fri'
+                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = @ScheduledTime AND SPS.Scheduled_Days = 'Mon-Fri'
                                             ORDER BY SkillSetId";
 
                     SqlCommand GetSkillsets = new SqlCommand(SciSkillsets, connection);
+                    GetSkillsets.Parameters.AddWithValue("@ScheduledTime", scheduledTime);
+
                     SqlDataAdapter SkillsetdataAdapter = new SqlDataAdapter(GetSkillsets);
                     DataSet skillsetDS = new DataSet();
 
