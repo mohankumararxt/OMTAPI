@@ -66,5 +66,13 @@ namespace OMT.APIHost.Controllers
         {
             return _dashboardScreensService.GetMonthlyUtilization(monthlyUtilizationSorDTO);
         }
+
+        [HttpPost]
+        [Route("GetCompletedVsReceived")]
+
+        public ResultDTO GetCompletedVsReceived(WeeklyCompletionDTO weeklyCompletionDTO)
+        {
+            return _dashboardScreensService.GetCompletedVsReceived(weeklyCompletionDTO);
+        }
     }
 }

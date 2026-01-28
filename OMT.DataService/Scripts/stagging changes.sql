@@ -6894,3 +6894,106 @@
 
 
 
+------------------------capture system pending daily counts----------------
+
+-- CREATE TABLE Daily_system_pending_Count (
+--Daily_system_pending_CountId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL,
+--Pre_day_count INT NULL,
+--);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+
+
+---------------------------------lr doc prep and lr no verify n submit  changes ----------------------
+
+--insert into templatecolumns values(
+--78,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_Doc_Prep_Verification
+--add Ha_Status int 
+
+--ALTER TABLE LR_Doc_Prep_Verification
+--ADD CONSTRAINT DF_LR_Doc_Prep_Verification_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_Doc_Prep_Verification set ha_status = 0
+
+--insert into templatecolumns values(
+--757,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_No_Verification_Verify_And_Submit
+--add Ha_Status int 
+
+--ALTER TABLE LR_No_Verification_Verify_And_Submit
+--ADD CONSTRAINT DF_LR_No_Verification_Verify_And_Submit_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_No_Verification_Verify_And_Submit set ha_status = 0
+
+--CREATE TABLE SkillSet_HAStatus
+--(
+--	Id INT PRIMARY KEY IDENTITY(1,1),
+--	SkillSetId INT NOT NULL,
+--    Ha_Status NVARCHAR(50) NOT NULL,
+--    IsActive BIT NOT NULL,
+   
+--);
+
+--alter table SkillSet_HAStatus
+--ADD CONSTRAINT fk_SkillSet_HAStatus_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--INSERT INTO SkillSet_HAStatus 
+--VALUES 
+--(673,'2,3',1),
+--(78,'2,3',1),
+--(757,'2,3',1)
+
+--alter sp getorderbypo_threshold
+--alter sp getorderbyhardstate_threshold
+--alter sp getorderbyweightage_threshold
+
+
+----------------------------------------PREV DAY SYSYTE PEND---------------------
+
+--create sci skillsets syystem pending tables
+
+--alter table LR_1ST_KEY_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Doc_Prep_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_No_Verification_Verify_And_Submit_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RIC_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RICAOM_Sys_Pen
+--add SystemPending_date DATE
+
+--create sp BackupSkillset_SysPen
+--create Calculate_PreDay_SystemPending_Counts sp 
+-- create function GetBusinessDateFromUtc
+
+
+--update SciPendingStatusSkillsets set Scheduled_Time = '04.30 PM' where Scheduled_Time = '12.30 PM'
