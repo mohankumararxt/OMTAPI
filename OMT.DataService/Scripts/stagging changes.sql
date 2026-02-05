@@ -6982,3 +6982,136 @@
 
 
 --update SciPendingStatusSkillsets set Scheduled_Time = '04.30 PM' where Scheduled_Time = '12.30 PM'
+
+
+
+
+-------------------------------------BOT QUERIES------------------------------
+
+--CREATE VIEW dbo.UserSkillsets_Bot	
+--AS	
+--SELECT	
+--    sor.SystemOfRecordId,	
+--    sor.SystemOfRecordName,	
+	
+--    up.UserId,	
+--    up.FirstName,	
+-- 	up.LastName,	
+-- 	up.FirstName + ' ' + up.LastName AS UserName,	
+	
+--  	usk.SkillsetId,	
+--  	ss.SkillSetName,	
+	
+--  	usk.Percentage,	
+--  	usk.IsCycle1,	
+--  	usk.PriorityOrder,	
+--  	usk.IsHardStateUser,	
+--  	usk.HardStateName,	
+	
+--  	usk.ProjectId,	
+--    proj.ProjectNames	
+	
+--FROM userprofile up	
+--INNER JOIN userskillset usk	
+--    ON up.UserId = usk.UserId	
+--INNER JOIN SkillSet ss	
+--    ON usk.SkillsetId = ss.SkillsetId	
+--INNER JOIN SystemOfRecord sor	
+--    ON ss.SystemofRecordId = sor.SystemofRecordId	
+	
+--OUTER APPLY (	
+--    SELECT	
+--        STRING_AGG(mp.ProjectName, ', ') AS ProjectNames	
+--    FROM STRING_SPLIT(usk.ProjectId, ',') sp	
+--    LEFT JOIN MasterProjectName mp	
+--        ON mp.ProjectId = LTRIM(RTRIM(sp.value))	
+--    AND mp.SkillsetId = usk.SkillsetId	
+--       AND mp.IsActive   = 1	
+--) proj	
+	
+--WHERE	
+--    up.IsActive = 1	
+--    AND ss.IsActive = 1	
+--    AND sor.IsActive = 1	
+--    AND usk.IsActive = 1	
+	
+	
+--CREATE VIEW dbo.Checkin_Details_Bot		
+--AS		
+		
+--SELECT		
+--	uc.UserId,	
+--	up.FirstName,	
+--	up.LastName,	
+--	up.FirstName + ' ' + up.LastName AS UserName,	
+		
+--	uc.Checkin,	
+--	uc.Checkout,	
+--	uc.CheckIn_date,	
+--	uc.Prod_Util_Calculated,	
+		
+--	tm.TeamName,	
+--	tm.TeamId	
+		
+--FROM User_Checkin uc		
+		
+--INNER JOIN UserProfile  up		
+--	ON uc.UserId = up.UserId  	
+--LEFT JOIN TeamAssociation ta		
+--	ON uc.UserId = ta.UserId  	
+--LEFT JOIN Teams tm		
+--	ON ta.TeamId = tm.TeamId AND tm.IsActive = 1	
+ 		
+--WHERE		
+		
+--	up.IsActive = 1	
+--	AND uc.Prod_Util_Calculated = 0	
+--	AND uc.Checkin IS NOT NULL	
+--	AND uc.Checkout IS NOT NULL	
+--	AND uc.CheckIn_date IN (	
+--    CAST(GETUTCDATE() AS DATE),		
+--    CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)		
+--)		
+		
+		
+--Create table BotViews
+--(
+--Id int IDENTITY(1,1) primary key,
+--View_Name NVARCHAR(100) not null,
+--Description NVARCHAR(300) not null
+--)
+
+
+--insert into BotViews values
+--('UserSkillsets_Bot','Provides a unified view of user skillsets, systems of record, projects, cycles, hard state classifications, and weightage details to determine skillset priority, order assignment logic, and user eligibility across Cycle 1 and Cycle 2.'),
+--('Checkin_Details_Bot','Identifies users with valid and invalid check-in dates against corresponding check-out date and time, and provides team-level visibility into users with incorrect check-in records.')
+
+--Create table BotViews_ColumnDetails
+--(
+--Id int IDENTITY(1,1) primary key,
+--View_Id INT not null,
+--Column_Name NVARCHAR(50) not null,
+--Data_Type NVARCHAR(20) not null,
+--Is_Nullable BIT not null,
+--Column_Description NVARCHAR(300) not null
+--)
+
+--ALTER TABLE BotViews_ColumnDetails
+--ADD CONSTRAINT fk_BotViews_ColumnDetails_View_Id
+--FOREIGN KEY (View_Id)
+--REFERENCES BotViews(Id);
+
+--update BotViews_ColumnDetails set Column_Description = 'Represents FirstName Of User' where id = 4
+--update BotViews_ColumnDetails set Column_Description = 'Represents LastName Of User' where id = 5
+--update BotViews_ColumnDetails set Column_Description = 'Represents Weightage allocated' where id = 9
+--update BotViews_ColumnDetails set Column_Description = 'Represents If the skillset is under cycle 1' where id = 10
+--update BotViews_ColumnDetails set Column_Description = 'Represents rank of skillsets which will determine the order flow' where id = 11
+--update BotViews_ColumnDetails set Column_Description = 'Represents if the user is assigned with hard states' where id = 12
+--update BotViews_ColumnDetails set Column_Description = 'Represents the name of the hardstates' where id = 13
+--update BotViews_ColumnDetails set Column_Description = 'Represents FirstName Of User' where id = 17
+--update BotViews_ColumnDetails set Column_Description = 'Represents LastName Of User' where id = 18
+--update BotViews_ColumnDetails set Column_Description = 'Represents FirstName Of User' where id = 4
+--update BotViews_ColumnDetails set Column_Description = 'Represents datetime in which user has checked in' where id = 20
+--update BotViews_ColumnDetails set Column_Description = 'Represents datetime in which user has checked out' where id = 21
+--update BotViews_ColumnDetails set Column_Description = 'Represents checkin date which user selected during check-in' where id = 22
+--update BotViews_ColumnDetails set Column_Description = 'Represents if the orders done in this time frame is acounted for productivity and utilization calculation' where id = 23
