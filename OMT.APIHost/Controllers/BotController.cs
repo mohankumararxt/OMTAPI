@@ -18,6 +18,14 @@ namespace OMT.APIHost.Controllers
             _botService = botService;
         }
 
+        //[HttpPost("test")]
+        //public async Task<IActionResult> Test(string name)
+        //{
+        //    Console.WriteLine("Controller hit");
+        //    var result = await _botService.CallCandidateApiAsync(name);
+        //    return Ok(result);
+        //}
+
         [HttpPut]
         [Route("Update_Checkindate_Bot")]
 
