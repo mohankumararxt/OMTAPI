@@ -63,8 +63,60 @@ namespace OMT.DataService.Service
 
             try
             {
-                resultDTO.Message = "System Pending Orders have been successfully retrieved back to the queue";
-                resultDTO.IsSuccess = true;
+                if (!string.Equals(retrieveSystemPendingOrdersRequsetDTO.SystemOfRecordName,"SCI",StringComparison.OrdinalIgnoreCase))
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Other sysytemofrecords are not applicable.";
+                    resultDTO.StatusCode = "404";
+                }
+                else
+                {
+
+                    var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == retrieveSystemPendingOrdersRequsetDTO.SkillSetName && x.IsActive).FirstOrDefault();
+                    var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
+
+                    DateTime scheduledtime = retrieveSystemPendingOrdersRequsetDTO.Scheduled_Datetime.AddHours(-5).AddMinutes(-30);
+
+                    string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                    using SqlConnection connection = new(connectionstring);
+                    connection.Open();
+
+                    // check if orders went to system pending in skillset table with completiondate 
+
+                    var checkquery = $@"SELECT COUNT(*) FROM {retrieveSystemPendingOrdersRequsetDTO.SkillSetName} WHERE CompletionDate >= @CompletionDate AND CompletionDate < DATEADD(MINUTE, 1, @CompletionDate) AND UserId IS NULL AND STATUS = @statusid AND CompletionDate IS NOT NULL";
+
+                    using SqlCommand chq = connection.CreateCommand();
+                    chq.CommandText = checkquery;
+                    chq.Parameters.AddWithValue("@CompletionDate", scheduledtime);
+                    chq.Parameters.AddWithValue("@statusid", statusid);
+
+                    int ordercount = Convert.ToInt32(chq.ExecuteScalar());
+
+                    if (ordercount > 0)
+                    {
+                        var updatequery = $@"UPDATE {retrieveSystemPendingOrdersRequsetDTO.SkillSetName} SET Status = NULL, CompletionDate = NULL WHERE UserId IS NULL AND STATUS = @statusid AND CompletionDate >= @CompletionDate AND CompletionDate < DATEADD(MINUTE, 1, @CompletionDate)";
+
+                        SqlCommand updateToPN = new SqlCommand(updatequery, connection);
+                        updateToPN.CommandType = CommandType.Text;
+
+                        updateToPN.Parameters.AddWithValue("@statusid", statusid);
+                        updateToPN.Parameters.AddWithValue("@CompletionDate", scheduledtime);
+
+                        updateToPN.ExecuteNonQuery();
+
+                        resultDTO.Message = "System Pending Orders have been successfully retrieved back to the queue";
+                        resultDTO.IsSuccess = true;
+                    }
+                    else
+                    {
+                        resultDTO.Message = "No orders have gone to System Pending in the given scheduled time, please check the details";
+                        resultDTO.IsSuccess = false;
+                        resultDTO.StatusCode = "404";
+                    }
+
+                    
+                }
+
             }
             catch (Exception ex)
             {
@@ -114,7 +166,7 @@ namespace OMT.DataService.Service
 
                 // allow only TRD orders
 
-                if (updateCheckindateBotRequestDTO.SystemOfRecordName != "TRD")
+                if (!string.Equals(updateCheckindateBotRequestDTO.SystemOfRecordName, "TRD", StringComparison.OrdinalIgnoreCase))
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Other sysytemofrecords are not applicable.";
@@ -262,7 +314,7 @@ namespace OMT.DataService.Service
                                     insertbysp.ExecuteNonQuery();
 
                                     int returnCode = (int)insertbysp.Parameters["@RETURN_VALUE"].Value;
-                                    
+
                                     if (returnCode != 1)
                                     {
                                         throw new InvalidOperationException("Error encountered while inserting in invoicedump table,please try again");
