@@ -56,15 +56,19 @@ namespace PendingSciOrders_4._30pm
                 {
                     connection.Open();
 
+                    string scheduledTime = ConfigurationManager.AppSettings["Scheduled_Time"];
+
                     string SciSkillsets = @"SELECT DISTINCT SS.SkillSetId, SS.SystemofRecordId ,SS.SkillsetName,PS.Id
                                             FROM skillset SS
                                             INNER JOIN SciPendingStatusSkillsets SPS ON SPS.SkillSetId = SS.SkillSetId
                                             INNER JOIN ProcessStatus PS ON PS.SystemofRecordId = SS.SystemofRecordId
                                             INNER JOIN TemplateColumns TC ON TC.SkillSetId = SS.SkillSetId
-                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = '04.30 PM' AND SPS.Scheduled_Days = 'Mon-Sun'
+                                            WHERE SS.isactive = 1 AND PS.Status = 'System-Pending'  AND SPS.IsActive =1 AND SPS.Scheduled_Time = @ScheduledTime AND SPS.Scheduled_Days = 'Mon-Sun'
                                             ORDER BY SkillSetId";
 
                     SqlCommand GetSkillsets = new SqlCommand(SciSkillsets, connection);
+                    GetSkillsets.Parameters.AddWithValue("@ScheduledTime", scheduledTime);
+
                     SqlDataAdapter SkillsetdataAdapter = new SqlDataAdapter(GetSkillsets);
                     DataSet skillsetDS = new DataSet();
 
@@ -76,8 +80,32 @@ namespace PendingSciOrders_4._30pm
 
                     foreach (DataRow Sciskillset in SkillsetDT.Rows)
                     {
+                        int SystemofRecordId = 1;
+                        int SkillSetId = Convert.ToInt32(Sciskillset["SkillSetId"]);
                         int statusid = Convert.ToInt32(Sciskillset["Id"]);
                         string skillsetname = Convert.ToString(Sciskillset["SkillsetName"]);
+
+                        //get the sp count and update in Daily_system_pending_Count
+                        string spcount = $@"SELECT COUNT(Id) FROM {skillsetname} WHERE STATUS IS NULL AND USERID IS NULL";
+
+                        SqlCommand getcount = new SqlCommand(spcount, connection);
+                        getcount.CommandType = CommandType.Text;
+
+                        int dspcount = (int)getcount.ExecuteScalar();
+
+                        string updatedspc = $@"INSERT INTO Daily_system_pending_Count (SystemofRecordId,SkillSetId,Date,Count) VALUES (@SystemofRecordId,@SkillSetId,@Date,@Count)";
+
+                        SqlCommand updateToSPN = new SqlCommand(updatedspc, connection);
+                        updateToSPN.CommandType = CommandType.Text;
+
+                        updateToSPN.Parameters.AddWithValue("@SystemofRecordId", SystemofRecordId);
+                        updateToSPN.Parameters.AddWithValue("@SkillSetId", SkillSetId);
+                        updateToSPN.Parameters.AddWithValue("@Date", DateTime.UtcNow.Date.AddDays(-1));
+                        updateToSPN.Parameters.AddWithValue("@Count", dspcount);
+
+                        updateToSPN.ExecuteNonQuery();
+
+                        //move to system pending
 
                         string updateToPending = $@"UPDATE {skillsetname} SET Status = @statusid, CompletionDate = @CompletionDate WHERE UserId IS NULL AND Status IS NULL";
 
@@ -90,6 +118,36 @@ namespace PendingSciOrders_4._30pm
                         updateToPN.ExecuteNonQuery();
 
                         Console.WriteLine("Unassigned orders succesfully updated with pending status in " + skillsetname + " template.");
+
+                        //move to systempending bckp table
+
+                        SqlCommand insertToBckp = new SqlCommand("BackupSkillset_SysPen", connection);
+                        insertToBckp.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter returnvalue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        insertToBckp.Parameters.Add(returnvalue);
+
+                        insertToBckp.Parameters.AddWithValue("@SkillsetTable", skillsetname);
+                        insertToBckp.Parameters.AddWithValue("@StatusId", statusid);
+                        insertToBckp.Parameters.AddWithValue("@CompletionDate", dateTime);
+
+                        insertToBckp.ExecuteNonQuery();
+
+                        int returnCode = (int)insertToBckp.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"System pending orders inserted into " + skillsetname + "_Sys_Pen table successfully.");
+                        }
                     }
 
                 }

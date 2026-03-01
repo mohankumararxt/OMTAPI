@@ -132,11 +132,11 @@ namespace OMT.DataService.Service
                                         t1.StartTime
                                     FROM 
                                         [{tablename}] AS t1
-                                    LEFT JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
-                                    LEFT JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
+                                    INNER JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
+                                    INNER JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
                                     WHERE 
                                         UserId = @UserId 
-                                        AND (Status IS NULL OR Status = '')
+                                        AND Status IS NULL 
                                     ORDER BY 
 	                                    t1.IsPriority DESC,t1.StartTime ASC;";
 
@@ -839,11 +839,11 @@ namespace OMT.DataService.Service
                                         t1.StartTime
                                     FROM 
                                         [{tablename}] AS t1
-                                    LEFT JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
-                                    LEFT JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
+                                    INNER JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
+                                    INNER JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
                                     WHERE 
                                         UserId = @UserId 
-                                        AND (Status IS NULL OR Status = '')
+                                        AND Status IS NULL 
                                     ORDER BY 
 	                                    t1.IsPriority DESC,t1.StartTime ASC;";
 
