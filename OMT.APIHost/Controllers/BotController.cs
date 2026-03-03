@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OMT.DataService.Interface;
+using OMT.DataService.Service;
 using OMT.DTO;
 
 
@@ -42,5 +43,18 @@ namespace OMT.APIHost.Controllers
             return _botService.Retrieve_SystemPending_Orders(retrieveSystemPendingOrdersRequsetDTO);
         }
 
+        [HttpGet]
+        [Route("sorlist")]
+        public ResultDTO GetSORList()
+        {
+            return _botService.GetSORList();
+        }
+
+        [HttpGet]
+        [Route("list/{sorid:int}")]
+        public ResultDTO GetSkillSetListBySORId(int sorid)
+        {
+            return _botService.GetSkillSetListBySORId(sorid);
+        }
     }
 }
