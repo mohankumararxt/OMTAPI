@@ -26,6 +26,57 @@ namespace OMT.DataService.Service
             _oMTDataContext = oMTDataContext;
         }
 
+        public ResultDTO GetSkillSetListBySOR(string sorname)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var skillSetGroups = (from ss in _oMTDataContext.SkillSet
+                                      join sor in _oMTDataContext.SystemofRecord on ss.SystemofRecordId equals sor.SystemofRecordId
+                                      join hs in _oMTDataContext.SkillSetHardStates on ss.SkillSetId equals hs.SkillSetId into hsGroup
+                                      from hs in hsGroup.DefaultIfEmpty()
+                                      where sor.IsActive && ss.IsActive && sor.SystemofRecordName == sorname // Filter by the specific SOR ID only Actives
+                                      group new { ss, sor, hs } by new
+                                      {
+                                          ss.SkillSetId,
+                                          ss.SkillSetName,
+                                          ss.Threshold,
+                                          sor.SystemofRecordName,
+                                          ss.SystemofRecordId,
+                                          ss.IsHardState,
+                                          ss.GetOrderByProject
+                                      } into grp
+                                      select new SkillSetResponseDTO
+                                      {
+                                          SkillSetId = grp.Key.SkillSetId,
+                                          SkillSetName = grp.Key.SkillSetName,
+                                          Threshold = grp.Key.Threshold,
+                                          SystemofRecordName = grp.Key.SystemofRecordName,
+                                          SystemofRecordId = grp.Key.SystemofRecordId,
+                                          IsHardState = grp.Any(x => x.hs != null && x.hs.IsActive), //null  Isactive 
+                                          StateName = grp
+                                                            .Where(x => x.hs != null && x.hs.IsActive)
+                                                            .Select(x => x.hs.StateName)
+                                                            .ToArray(),  //Isactive only
+                                          GetOrderByProject = grp.Key.GetOrderByProject
+                                      })
+                                      .OrderBy(x => x.SystemofRecordId)
+                                      .ThenBy(x => x.SkillSetName)
+                                      .ToList();
+
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of SkillSets";
+                resultDTO.Data = skillSetGroups;
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
         public ResultDTO GetSkillSetListBySORId(int sorid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };

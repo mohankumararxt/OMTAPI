@@ -56,5 +56,12 @@ namespace OMT.APIHost.Controllers
         {
             return _botService.GetSkillSetListBySORId(sorid);
         }
+
+        [HttpGet]
+        [Route("list/{sorname}")]
+        public ResultDTO GetSkillSetListBySOR(string sorname)
+        {
+            return _botService.GetSkillSetListBySOR(sorname);
+        }
     }
 }

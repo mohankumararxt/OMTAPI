@@ -11,6 +11,6 @@ namespace OMT.DataService.Interface
         ResultDTO Retrieve_SystemPending_Orders(RetrieveSystemPendingOrdersRequsetDTO retrieveSystemPendingOrdersRequsetDTO);
         ResultDTO GetSORList();
         ResultDTO GetSkillSetListBySORId(int sorid);
-
+        ResultDTO GetSkillSetListBySOR(string sorname);
     }
 }
