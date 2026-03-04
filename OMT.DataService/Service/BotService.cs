@@ -196,7 +196,7 @@ namespace OMT.DataService.Service
                 if (!string.Equals(retrieveSystemPendingOrdersRequsetDTO.SystemOfRecordName,"SCI",StringComparison.OrdinalIgnoreCase))
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Other sysytemofrecords are not applicable.";
+                    resultDTO.Message = "Other system of records are not applicable.";
                     resultDTO.StatusCode = "404";
                 }
                 else
@@ -299,7 +299,7 @@ namespace OMT.DataService.Service
                 if (!string.Equals(updateCheckindateBotRequestDTO.SystemOfRecordName, "TRD", StringComparison.OrdinalIgnoreCase))
                 {
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "Other sysytemofrecords are not applicable.";
+                    resultDTO.Message = "Other system of records are not applicable.";
                     resultDTO.StatusCode = "404";
                 }
 
