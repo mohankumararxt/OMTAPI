@@ -1601,6 +1601,8 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
@@ -1705,8 +1707,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1855,8 +1865,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
                         dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -2014,8 +2032,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -2131,6 +2157,8 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (teamCompletedOrdersDTO.SystemOfRecordId == null && teamCompletedOrdersDTO.SkillSetId == null)
@@ -2235,8 +2263,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2383,8 +2419,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
                         dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                  ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2538,8 +2582,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -4651,6 +4703,9 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 List<string> reportcol = new List<string>();
@@ -4774,8 +4829,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
 
@@ -4963,8 +5026,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
 
@@ -5154,8 +5225,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
 
@@ -5322,8 +5401,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
 

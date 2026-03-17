@@ -7135,3 +7135,170 @@
  
   --update BotViews set Description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
  --update BotVisds set Description = 'This view combines user profile details, team information, and check-in/check-out timestamps into a single dataset. It is used to compare each user’s check-in date and time against their check-out date and time to determine whether the attendance record is valid or invalid. The view supports queries to identify users with incorrect check-in data and to list such users individually or grouped by team for monitoring and reporting.' where id = 2
+
+
+-- CREATE VIEW dbo.System_Pending_Tat			
+--AS			
+			
+--SELECT			
+--    th.Tat_HistoryId,			
+			
+--    sp.Id AS SciPendingStatusSkillsetsId,			
+--    sp.SkillSetId,			
+--    ss.SkillSetName,			
+			
+--    sp.Scheduled_Days,			
+--    sp.Scheduled_Time,			
+			
+--    sp.IsActive AS CurrentStatus,			
+--    ts.TatStatus_Name,			
+			
+--    th.TatDate,			
+			
+--    up.FirstName + ' ' + up.LastName AS DisabledBy,			
+--    up1.FirstName + ' ' + up1.LastName AS EnabledBy,			
+			
+--    th.DisabledTime,			
+--    th.EnabledTime,			
+			
+--    CASE			
+--        WHEN th.DisabledTime IS NOT NULL AND th.EnabledTime IS NULL THEN 'Disabled'			
+--        WHEN th.EnabledTime IS NOT NULL THEN 'Enabled'			
+--        ELSE 'No History'			
+--    END AS HistoryAction			
+			
+--FROM SciPendingStatusSkillsets sp			
+			
+--LEFT JOIN Tat_History th			
+--    ON sp.Id = th.SciPendingStatusSkillsetsId			
+			
+--LEFT JOIN SkillSet ss			
+--    ON sp.SkillSetId = ss.SkillSetId			
+			
+--LEFT JOIN TatStatus ts			
+--    ON sp.IsActive = ts.TatStatus_Value			
+			
+--LEFT JOIN UserProfile up			
+--    ON th.DisabledBy = up.UserId			
+			
+--LEFT JOIN UserProfile up1			
+--    ON th.EnabledBy = up1.UserId;			
+
+
+
+
+--CREATE VIEW vw_ProdUtilTracker_All
+--AS
+
+--SELECT * 
+--FROM Prod_Util_Tracker
+
+--UNION ALL
+
+--SELECT *
+--FROM Prod_Util_Tracker_bckp;
+
+
+--CREATE VIEW dbo.Completion_Count_AgentAndTeam							
+--AS							
+							
+							
+--SELECT							
+--    p.Prod_Util_Tracker_Id,							
+--    p.UserId,							
+--	u.FirstName,						
+--	u.LastName,						
+--	u.FirstName + ' ' + u.LastName AS UserName,						
+							
+							
+--    ta.TeamId,							
+--    t.TeamName,							
+							
+--    --p.OrderId,							
+--    p.Status,							
+--ps.Status as StatusName,							
+							
+--    p.SkillSetId,							
+--    ss.SkillSetName,							
+							
+--    p.SystemOfRecordId,							
+--    sor.SystemOfRecordName,							
+							
+--    p.StartDate,							
+--    p.EndDate,							
+--    p.TimeTaken,							
+							
+--    --p.Productivity_Date,							
+--    p.CheckIn_date							
+							
+--FROM							
+--(							
+--    SELECT * FROM Prod_Util_Tracker							
+--    UNION ALL							
+--    SELECT * FROM Prod_Util_Tracker_bckp							
+--) p							
+							
+--LEFT JOIN UserProfile u							
+--    ON p.UserId = u.UserId AND u.IsActive = 1							
+							
+--LEFT JOIN TeamAssociation ta							
+--    ON p.UserId = ta.UserId							
+							
+--LEFT JOIN Teams t							
+--    ON ta.TeamId = t.TeamId							
+							
+--LEFT JOIN SkillSet ss							
+--    ON p.SkillSetId = ss.SkillSetId AND ss.IsActive = 1							
+							
+--LEFT JOIN SystemOfRecord sor							
+--    ON p.SystemOfRecordId = sor.SystemOfRecordId AND sor.IsActive = 1							
+							
+--LEFT JOIN ProcessStatus ps							
+--	ON p.SystemOfRecordId = ps.SystemOfRecordId AND p.Status = ps.Id						
+
+
+
+-- insert into BotViews values
+--('System_Pending_Tat','System_Pending_Tat view provides both current and historical status of System Pending TAT configurations for each skillset. It combines skillset scheduling details with TAT enable/disable history. The view includes skillset name, scheduled days, scheduled execution time, current status (Enabled/Disabled), TAT date, and user details for who enabled or disabled the TAT along with timestamps. Each row may represent either a historical action from the TAT history table or the current configuration when no history exists. This view should be used to answer questions related to skillset schedules, which skillsets run on specific days, current TAT status, enable/disable actions.')
+
+--update BotViews_ColumnDetails set Is_Nullable = 0 where id in (29,30)
+
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for each TAT history record representing a specific enable or disable action for a skillset schedule.'  where id = 26
+--UPDATE BotViews_ColumnDetails SET Column_Description='Identifier linking the record to the configured system pending skillset schedule.' where id = 27
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique numeric identifier assigned to a skill set (process) which represents the skillset associated with the system pending TAT configuration.' where id = 28
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the skillset for which the system pending TAT schedule and status are configured.' where id = 29
+--UPDATE BotViews_ColumnDetails SET Column_Description='Days of the week when the system pending TAT process is scheduled to run (example: Mon-Fri, Mon-Sun, Sat, Sun).' where id = 30
+--UPDATE BotViews_ColumnDetails SET Column_Description='Scheduled execution time for the system pending TAT process for the skillset.' where id = 31
+--UPDATE BotViews_ColumnDetails SET Column_Description='Current status flag of the system pending TAT for the skillset where 1 indicates Enabled and 0 indicates Disabled.' where id = 32
+--UPDATE BotViews_ColumnDetails SET Column_Description='Text representation of the TAT status such as Enabled or Disabled for easier interpretation.' where id = 33
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which the TAT status change (enable or disable action) was recorded.' where id = 34
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the user who disabled the system pending TAT for the skillset.' where id = 35
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the user who enabled the system pending TAT for the skillset.' where id = 36
+--UPDATE BotViews_ColumnDetails SET Column_Description='Timestamp when the system pending TAT was disabled for the skillset.' where id = 37
+--UPDATE BotViews_ColumnDetails SET Column_Description='Timestamp when the system pending TAT was enabled for the skillset.' where id = 38
+--UPDATE BotViews_ColumnDetails SET Column_Description='Indicates the type of historical action such as Enabled, Disabled, or No History for the skillset schedule.' where id = 39
+
+-- insert into BotViews values
+--('Completion_Count_AgentAndTeam','Completion_Count_AgentAndTeam is a reporting view that provides order processing information at both agent and team level. Each record represents an order processed by an agent and includes details such as UserName (agent name), TeamName, SkillSetName, SystemOfRecordName, StartDate, EndDate, TimeTaken, and Status. This view can be used to calculate completion counts by filtering on agent, team, skillset, system of record, and date. The StartDate and EndDate columns are stored in UTC. When users provide a date, it is typically in IST (Indian Standard Time), so the date should be converted to the corresponding UTC range before filtering records. Completion counts are usually calculated using COUNT(*) with filters on UserName, TeamName, SkillSetName, SystemOfRecordName, and the appropriate UTC date range derived from the user-provided date. This view supports questions related to agent completion counts, team completion counts, skillset-based completion counts, system-of-record-based completion counts, and performance analysis based on processed orders.')
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for each productivity tracking record representing an order processed by an agent.' WHERE Id = 40;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier of the agent who processed the order.' WHERE Id = 41;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'First name of the agent who processed the order.' WHERE Id = 42;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Last name of the agent who processed the order.' WHERE Id = 43;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Full name of the agent formed by combining first name and last name.' WHERE Id = 44;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier of the team to which the agent currently belongs.' WHERE Id = 45;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the team responsible for processing the order.' WHERE Id = 46;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Processing status identifier of the order.' WHERE Id = 47;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Readable name of the order processing status such as Completed, Pending, or In Progress.' WHERE Id = 48;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for the skillset under which the order was processed.' WHERE Id = 49;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the skillset associated with the processed order.' WHERE Id = 50;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for a parent process that groups multiple skillsets. Used for precise selection and joining with related skillsets and orders.' WHERE Id = 51;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the system of record from which the order originated.' WHERE Id = 52;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC timestamp representing when the agent started processing the order in UTC.' WHERE Id = 53;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC timestamp representing when the agent finished processing the order in UTC.' WHERE Id = 54;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Total time taken by the agent to process and complete the order.' WHERE Id = 55;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Date when the agent checked in for work, used for productivity tracking.' WHERE Id = 56;
+
+
+
+--update BotViews_ColumnDetails set Is_Nullable = 0 where id in (42,43,44,48,50,52)
