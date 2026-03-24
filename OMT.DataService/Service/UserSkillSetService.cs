@@ -569,6 +569,10 @@ namespace OMT.DataService.Service
                 var masterProjects = _oMTDataContext.MasterProjectName
                     .ToList();
 
+                //Fetch all MasterNormalStates
+                var masternormalstates = _oMTDataContext.MasterNormalStates
+                    .ToList();
+
                 foreach (var id in activeUserIds)
                 {
                     List<UserSkillSetDetailsDTO> firstCycleList = new List<UserSkillSetDetailsDTO>();
@@ -584,8 +588,8 @@ namespace OMT.DataService.Service
                     var skillSetsCycle2 = userSkillSetForUser.Where(x => !x.IsCycle1).OrderBy(x => x.PriorityOrder).ToList();
 
 
-                    ProcessSkillSetCycle(skillSetsCycle1, skillSetNames, masterProjects, firstCycleList);
-                    ProcessSkillSetCycle(skillSetsCycle2, skillSetNames, masterProjects, secondCycleList);
+                    ProcessSkillSetCycle(skillSetsCycle1, skillSetNames, masterProjects, masternormalstates, firstCycleList);
+                    ProcessSkillSetCycle(skillSetsCycle2, skillSetNames, masterProjects, masternormalstates, secondCycleList);
 
                     if (!firstCycleList.Any() && !secondCycleList.Any())
                     {
@@ -618,7 +622,7 @@ namespace OMT.DataService.Service
         }
 
 
-        private void ProcessSkillSetCycle(List<UserSkillSet> skillSets, Dictionary<int, string> skillSetNames, List<MasterProjectName> masterProjects, List<UserSkillSetDetailsDTO> cycleList)
+        private void ProcessSkillSetCycle(List<UserSkillSet> skillSets, Dictionary<int, string> skillSetNames, List<MasterProjectName> masterProjects, List<MasterNormalStates> masternormalstates, List<UserSkillSetDetailsDTO> cycleList)
         {
             foreach (var skillSet in skillSets.GroupBy(x => x.SkillSetId))
             {
@@ -636,8 +640,19 @@ namespace OMT.DataService.Service
                     .Where(mp => projectIds.Contains(mp.ProjectId) && mp.SkillSetId == ssid)
                     .Select(mp => new ProjectdetailsDTO
                     {
-                        ProjectId = mp.ProjectId,
+                        ProjectId = mp.ProjectId, 
                         ProjectName = mp.ProjectName
+                    })
+                    .ToList();
+
+                // Process normalstates
+                var normalstatecodes = userSkillSetList.SelectMany(x => x.NormalStateCode.Split(',')).Select(p => p.Trim()).Distinct().ToList();
+                var normalstateslist = masternormalstates
+                    .Where(mn => normalstatecodes.Contains(mn.NormalStateCode) && mn.SkillSetId == ssid)
+                    .Select(mn => new NormalstatedetailsDTO
+                    {
+                        NormalStateCode = mn.NormalStateCode,
+                        NormalStateName = mn.NormalStateName
                     })
                     .ToList();
 
@@ -658,7 +673,8 @@ namespace OMT.DataService.Service
                         Weightage = normalUser?.Percentage ?? 0,
                         IsHardStateUser = true,
                         HardStateDetails = details_hs,
-                        Projectdetails = projectDetailsList
+                        Projectdetails = projectDetailsList,
+                        Normalstatedetails = normalstateslist
                     });
                 }
                 else if (normalUser != null)
@@ -670,7 +686,8 @@ namespace OMT.DataService.Service
                         SkillSetName = skillSetName,
                         Weightage = normalUser.Percentage,
                         IsHardStateUser = false,
-                        Projectdetails = projectDetailsList
+                        Projectdetails = projectDetailsList,
+                        Normalstatedetails = normalstateslist
                     });
                 }
             }
