@@ -434,7 +434,8 @@ namespace OMT.DataService.Service
                                     IsCycle1 = true,
                                     CreatedDate = DateTime.Now,
                                     ProjectId = detail.ProjectId ?? "",
-                                    PriorityOrder = currentPriority
+                                    PriorityOrder = currentPriority,
+                                    NormalStateCode = detail.NormalStateCode ?? ""
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -452,7 +453,8 @@ namespace OMT.DataService.Service
                             IsCycle1 = true,
                             CreatedDate = DateTime.Now,
                             ProjectId = detail.ProjectId ?? "",
-                            PriorityOrder = currentPriority
+                            PriorityOrder = currentPriority,
+                            NormalStateCode = detail.NormalStateCode ?? ""
                         };
                         _oMTDataContext.UserSkillSet.Add(nr_userSkillSet);
                         _oMTDataContext.SaveChanges();
@@ -481,7 +483,8 @@ namespace OMT.DataService.Service
                                     IsCycle1 = false,
                                     CreatedDate = DateTime.Now,
                                     ProjectId = details.ProjectId ?? "",
-                                    PriorityOrder = secondCyclePriority
+                                    PriorityOrder = secondCyclePriority,
+                                    NormalStateCode = details.NormalStateCode ?? ""
                                 };
                                 _oMTDataContext.UserSkillSet.Add(hs_userSkillSet);
                                 _oMTDataContext.SaveChanges();
@@ -499,7 +502,8 @@ namespace OMT.DataService.Service
                             IsCycle1 = false,
                             CreatedDate = DateTime.Now,
                             ProjectId = details.ProjectId ?? "",
-                            PriorityOrder = secondCyclePriority
+                            PriorityOrder = secondCyclePriority,
+                            NormalStateCode = details.NormalStateCode ?? ""
                         };
                         _oMTDataContext.UserSkillSet.Add(userSkillSet2);
                         _oMTDataContext.SaveChanges();
@@ -775,6 +779,7 @@ namespace OMT.DataService.Service
                                     is_hs.HardStateName = h.HardStateName;
                                     is_hs.ProjectId = USS_ss.ProjectId ?? "";
                                     is_hs.PriorityOrder = currentPriority;
+                                    is_hs.NormalStateCode = USS_ss.NormalStateCode ?? "";
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -792,8 +797,9 @@ namespace OMT.DataService.Service
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
                                         ProjectId = USS_ss.ProjectId ?? "",
-                                        PriorityOrder = currentPriority
-                                    };
+                                        PriorityOrder = currentPriority,
+                                        NormalStateCode = USS_ss.NormalStateCode ?? ""
+                                };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
                                 }
@@ -812,6 +818,7 @@ namespace OMT.DataService.Service
                             not_hs.HardStateName = "";
                             not_hs.ProjectId = USS_ss.ProjectId ?? "";
                             not_hs.PriorityOrder = currentPriority;
+                            not_hs.NormalStateCode = USS_ss.NormalStateCode ?? "";
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -830,6 +837,7 @@ namespace OMT.DataService.Service
                                 CreatedDate = DateTime.Now,
                                 ProjectId = USS_ss.ProjectId ?? "",
                                 PriorityOrder = currentPriority,
+                                NormalStateCode = USS_ss.NormalStateCode ?? ""
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();
@@ -860,6 +868,7 @@ namespace OMT.DataService.Service
                                     is_hs.HardStateName = h.HardStateName;
                                     is_hs.ProjectId = Uss_skillset.ProjectId ?? "";
                                     is_hs.PriorityOrder = secondCyclePriority;
+                                    is_hs.NormalStateCode = Uss_skillset.NormalStateCode ?? "";
 
                                     _oMTDataContext.UserSkillSet.Update(is_hs);
                                     _oMTDataContext.SaveChanges();
@@ -877,7 +886,8 @@ namespace OMT.DataService.Service
                                         IsActive = true,
                                         CreatedDate = DateTime.Now,
                                         ProjectId = Uss_skillset.ProjectId ?? "",
-                                        PriorityOrder = secondCyclePriority
+                                        PriorityOrder = secondCyclePriority,
+                                        NormalStateCode = Uss_skillset.NormalStateCode ?? ""
                                     };
                                     _oMTDataContext.UserSkillSet.Add(userSkillSet);
                                     _oMTDataContext.SaveChanges();
@@ -897,6 +907,7 @@ namespace OMT.DataService.Service
                             not_hs.HardStateName = "";
                             not_hs.ProjectId = Uss_skillset.ProjectId ?? "";
                             not_hs.PriorityOrder = secondCyclePriority;
+                            not_hs.NormalStateCode = Uss_skillset.NormalStateCode ?? "";
 
                             _oMTDataContext.UserSkillSet.Update(not_hs);
                             _oMTDataContext.SaveChanges();
@@ -914,7 +925,8 @@ namespace OMT.DataService.Service
                                 IsActive = true,
                                 CreatedDate = DateTime.Now,
                                 ProjectId = Uss_skillset.ProjectId ?? "",
-                                PriorityOrder = secondCyclePriority
+                                PriorityOrder = secondCyclePriority,
+                                NormalStateCode = Uss_skillset.NormalStateCode ?? ""
                             };
                             _oMTDataContext.UserSkillSet.Add(userSkillSet);
                             _oMTDataContext.SaveChanges();

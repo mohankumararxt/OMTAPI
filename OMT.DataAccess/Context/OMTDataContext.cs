@@ -92,6 +92,7 @@ namespace OMT.DataAccess.Context
         public DbSet<Tat_History> Tat_History { get; set; }
         public DbSet<Monthly_Status_Count_SkillSet> Monthly_Status_Count_SkillSet { get; set; }
         public DbSet<Daily_system_pending_Count> Daily_system_pending_Count { get; set; }
+        public DbSet<MasterNormalStates> MasterNormalStates { get; set; }
         public override int SaveChanges()
         {
             return base.SaveChanges();
