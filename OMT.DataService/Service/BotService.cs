@@ -2,11 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
+using OMT.DataService.Settings;
 using OMT.DTO;
 using System;
 using System.Collections;
@@ -14,6 +18,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text;
 
 namespace OMT.DataService.Service
 {
@@ -21,9 +26,14 @@ namespace OMT.DataService.Service
     {
         private readonly OMTDataContext _oMTDataContext;
 
-        public BotService(OMTDataContext oMTDataContext)
+        private readonly IOptions<EmailDetailsSettings> _emailDetailsSettings;
+        private readonly IConfiguration _configuration;
+
+        public BotService(OMTDataContext oMTDataContext, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration)
         {
             _oMTDataContext = oMTDataContext;
+            _emailDetailsSettings = emailDetailsSettings;
+            _configuration = configuration;
         }
 
         public ResultDTO GetSkillSetListBySOR(string sorname)
@@ -201,6 +211,7 @@ namespace OMT.DataService.Service
                 }
                 else
                 {
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
 
                     var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == retrieveSystemPendingOrdersRequsetDTO.SkillSetName && x.IsActive).FirstOrDefault();
                     var statusid = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.Status == "System-Pending" && x.IsActive).Select(x => x.Id).FirstOrDefault();
@@ -236,6 +247,53 @@ namespace OMT.DataService.Service
 
                         resultDTO.Message = "System Pending Orders have been successfully retrieved back to the queue";
                         resultDTO.IsSuccess = true;
+
+                        // send details about retrieved orders via mail
+
+                        DateTime retrieveddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                        //string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                        //string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                        //string username = string.Join(' ', firstname, lastname);
+
+
+                        IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:BotAPI:ToEmailId");
+
+                        List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                  .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                  .Select(c => c.Value)
+                                                                  .ToList();
+
+                        var retreiveddetials = $" {ordercount} orders have been retrieved back to queue from system pending in the skillset {skillset.SkillSetName} at {retrieveddate}";
+
+                        SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                        {
+                            ToEmailIds = toEmailIds1,
+                            Subject = "Orders retrieved from system pending",
+                            Body = retreiveddetials,
+                        };
+                        try
+                        {
+                            using (HttpClient client = new HttpClient())
+                            {
+                                var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                var webApiUrl = new Uri(url);
+                                var response = client.PostAsync(webApiUrl, content).Result;
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                            throw;
+                        }
                     }
                     else
                     {
@@ -244,7 +302,7 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "404";
                     }
 
-                    
+                   
                 }
 
             }
@@ -309,6 +367,8 @@ namespace OMT.DataService.Service
                     string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                     using SqlConnection connection = new(connectionstring);
                     connection.Open();
+
+                    var url = _emailDetailsSettings.Value.SendEmailURL;
 
 
                     var skillsetid = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == updateCheckindateBotRequestDTO.SkillSetName && x.IsActive).FirstOrDefault();
@@ -455,6 +515,52 @@ namespace OMT.DataService.Service
 
                             }
 
+                            // send details about retrieved orders via mail
+
+                            DateTime updateddate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                            //string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                            //string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                            //string username = string.Join(' ', firstname, lastname);
+
+
+                            IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:BotAPI:ToEmailId");
+
+                            List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                      .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                      .Select(c => c.Value)
+                                                                      .ToList();
+
+                            var updateddetails = $" The checkin date of the orderid {updateCheckindateBotRequestDTO.OrderId} from the skillset {updateCheckindateBotRequestDTO.SkillSetName} has been changed from {checkinDate?.ToString("yyyy-MM-dd")} to {updateCheckindateBotRequestDTO.CheckIn_date.ToString("yyyy-MM-dd")} at {updateddate}";
+
+                            SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                            {
+                                ToEmailIds = toEmailIds1,
+                                Subject = "Check in date updated",
+                                Body = updateddetails,
+                            };
+                            try
+                            {
+                                using (HttpClient client = new HttpClient())
+                                {
+                                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                    var webApiUrl = new Uri(url);
+                                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                                throw;
+                            }
                         }
                         else
                         {

@@ -6,14 +6,14 @@ namespace OMT.DataService.Interface
     {
         ResultDTO GetSkillSetList(int? skillsetid);
         ResultDTO GetSkillSetListBySORId(int sorid);
-        ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO,int userid);
-        ResultDTO DeleteSkillSet(int skillsetId,int userid);
-        ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO,int userid); 
+        ResultDTO CreateSkillSet(SkillSetCreateDTO skillSetCreateDTO, int userid);
+        ResultDTO DeleteSkillSet(int skillsetId, int userid);
+        ResultDTO UpdateSkillSet(SkillSetUpdateDTO skillSetUpdateDTO, int userid);
         ResultDTO GetStatenameList(int skillsetid);
-        ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillsettimeLineDTO); 
-        ResultDTO UpdateTimeLine(SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO); 
-        ResultDTO GetSkillSetTimelineList(int? skillsetid); 
+        ResultDTO CreateTimeLine(SkillSetTimeLineDTO skillsettimeLineDTO);
+        ResultDTO UpdateTimeLine(SkillSetUpdateTimeLineDTO skillSetUpdateTimeLineDTO);
+        ResultDTO GetSkillSetTimelineList(int? skillsetid);
         ResultDTO GetProjectNameList(int? skillsetid);
-       
-    } 
+        ResultDTO GetNormalStateNameList(int? skillsetid);
+    }
 }
