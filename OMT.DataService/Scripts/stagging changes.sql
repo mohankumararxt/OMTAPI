@@ -8079,3 +8079,10 @@
 --add NormalStateCode NVARCHAR(200)
 
 --update userskillset set NormalStateCode = '' 
+
+--alter view userskillset_bot
+ --update BotViews set description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate.Normalstatecode identifiers and normalstate names link the assignemnets to the property state from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+
+ --insert into BotViews_ColumnDetails values
+ --(1,'NormalStateCode','nvarchar(200)',1,'Unique identifier(s) for normal states assigned to a user.If a user has normal states assigned, this column will contain values. If no normal states are assigned, this column will be NULL or empty.'),
+ -- (1,'NormalStateNames','nvarchar(4000)',1,'Comma-separated list of normal state names assigned to a user for order processing. These represent the readable state values corresponding to NormalStateCode. If a user has normal states configured, this column will contain values; if not, it will be NULL or empty.')
