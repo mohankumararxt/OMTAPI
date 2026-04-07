@@ -203,7 +203,7 @@ namespace OMT.DataService.Service
 
             try
             {
-                if (!string.Equals(retrieveSystemPendingOrdersRequsetDTO.SystemOfRecordName,"SCI",StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(retrieveSystemPendingOrdersRequsetDTO.SystemOfRecordName, "SCI", StringComparison.OrdinalIgnoreCase))
                 {
                     resultDTO.IsSuccess = false;
                     resultDTO.Message = "Other system of records are not applicable.";
@@ -302,7 +302,7 @@ namespace OMT.DataService.Service
                         resultDTO.StatusCode = "404";
                     }
 
-                   
+
                 }
 
             }
@@ -589,5 +589,45 @@ namespace OMT.DataService.Service
             }
             return resultDTO;
         }
+
+        public ResultDTO GetUnassignedOrderCounts(GetUnassignedOrderCountsDTO getUnassignedOrderCountsDTO)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+                connection.Open();
+
+                var checkquery = $@"SELECT COUNT(*)  FROM {getUnassignedOrderCountsDTO.SkillSetName} WHERE UserId IS NULL AND STATUS IS NULL";
+
+                using SqlCommand chq = connection.CreateCommand();
+                chq.CommandText = checkquery;
+
+                int unassigned_counts = (int)chq.ExecuteScalar();
+
+                if (unassigned_counts > 0)
+                {
+                    resultDTO.Message = "Unassigned orders count has been fetched successfully";
+                    resultDTO.Data = unassigned_counts;
+                }
+                else 
+                {
+                    resultDTO.Message = "There are no Unassigned orders in the selected skillset";
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Data = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
     }
 }

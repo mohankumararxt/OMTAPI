@@ -4,7 +4,7 @@ namespace OMT.DataService.Interface
 {
     public interface IBotService
     {
-       // Task<string> CallCandidateApiAsync(string name);
+        // Task<string> CallCandidateApiAsync(string name);
 
         ResultDTO Update_Checkindate_Bot(UpdateCheckindateBotRequestDTO updateCheckindateBotRequestDTO);
 
@@ -12,5 +12,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetSORList();
         ResultDTO GetSkillSetListBySORId(int sorid);
         ResultDTO GetSkillSetListBySOR(string sorname);
+        ResultDTO GetUnassignedOrderCounts(GetUnassignedOrderCountsDTO getUnassignedOrderCountsDTO);
     }
 }
