@@ -8110,4 +8110,12 @@
 --UPDATE BotViews_ColumnDetails SET column_name = 'Normal_State_Names' ,Column_Description = 'Comma-separated list of normal state names assigned to a user for order processing.It represents readable names of normal states.' where id = 58
 
 
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Descriptive name of the parent process that groups multiple skillsets. Used to select and filter the process when the identifier is not provided.' where id = 52
 
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent started processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 53
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent finished processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 54
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Readable name of the order processing status such as Exception, Pending, or In Progress.' where id = 48
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Days when the process runs (e.g., Mon-Fri, Mon-Sun, Sat, Sun). If a user asks for a specific day (e.g., Monday), include records where that day is part of the range (Mon-Fri includes Monday)' where id = 30
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Total number of orders received for a skillset on a date. This value is repeated across status rows, so use DISTINCT or MAX to avoid duplicate counting.' where id = 69
