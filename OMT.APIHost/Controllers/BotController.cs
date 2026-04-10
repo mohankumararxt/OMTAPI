@@ -63,5 +63,13 @@ namespace OMT.APIHost.Controllers
         {
             return _botService.GetSkillSetListBySOR(sorname);
         }
+
+        [HttpPost]
+        [Route("GetUnassignedOrderCounts")]
+
+        public ResultDTO GetUnassignedOrderCounts(GetUnassignedOrderCountsDTO getUnassignedOrderCountsDTO)
+        {
+            return _botService.GetUnassignedOrderCounts(getUnassignedOrderCountsDTO);
+        }
     }
 }

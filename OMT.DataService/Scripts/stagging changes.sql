@@ -8094,3 +8094,43 @@
 --add NormalStateCode NVARCHAR(200)
 
 --update userskillset set NormalStateCode = '' 
+
+--alter view userskillset_bot
+ --update BotViews set description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate.Normal_States identifiers and Normal_State_Names link the assignemnets to the property state from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+
+ --insert into BotViews_ColumnDetails values
+ --(1,'NormalStateCode','nvarchar(200)',1,'Unique identifier(s) for normal states assigned to a user.If a user has normal states assigned, this column will contain values. If no normal states are assigned, this column will be NULL or empty.'),
+ -- (1,'NormalStateNames','nvarchar(4000)',1,'Comma-separated list of normal state names assigned to a user for order processing. These represent the readable state values corresponding to NormalStateCode. If a user has normal states configured, this column will contain values; if not, it will be NULL or empty.')
+
+
+ --insert into BotViews values
+ --('Order_Counts','Order_Counts is a reporting view that provides details about orders received and processed across skillsets and systems of record. Each record includes SkillSetId, SkillSetName, SystemOfRecordId, SystemOfRecordName, ReceivedDate, ReceivedCount, CompletedDate, Status, StatusName, and StatusCount. ReceivedDate represents when orders were uploaded, and ReceivedCount is the number of orders received for a skillset on that date (unique per date and skillset). CompletedDate represents when orders were processed, and multiple statuses can exist for the same date. Status and StatusName define the processing outcome, while StatusCount represents the number of orders under each status. This view helps track order volume, processing distribution, and performance across skillsets and systems.')
+
+
+-- UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for a skillset (process) under which orders are handled. Used to group and filter order data by specific workflow or processing type.'  where id = 60
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the skillset representing a specific process where users work on orders. Helps in identifying and filtering data by process name.' where id = 61
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for a parent process that groups multiple skillsets. Used for precise selection and joining with related skillsets and orders.' where id = 62
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the system of record that groups related skillsets. Used to categorize and filter orders across systems.' where id = 63
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier representing the processing status of an order (e.g., Completed, Pending, Exception etc). Null indicates received data without status breakdown.' where id = 64
+--UPDATE BotViews_ColumnDetails SET Column_Description='Descriptive name of the order status. Helps interpret how orders are classified during processing.' where id = 65
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which orders were processed and marked with a specific status by users. Used to calculate completion counts.' where id = 66
+--UPDATE BotViews_ColumnDetails SET Column_Description='Number of orders processed under a specific status for a given skillset and date.' where id = 67
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which orders were uploaded/received into the system (OMT). Used to track incoming workload.' where id = 68
+--UPDATE BotViews_ColumnDetails SET Column_Description='Total number of orders received for a skillset on a specific date. This value is unique per skillset, systemofrecord, and date.' where id = 69
+
+--alter userskillset_bot view for columnname chnage
+--update BotViews set description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate.Normal_States identifiers and Normal_State_Names link the assignemnets to the property state from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+
+--UPDATE BotViews_ColumnDetails SET column_name = 'Normal_States' ,Column_Description='Unique IDs for normal states. MUST be used for "normal states" and counts. Return only codes (e.g., AL, AK). Do NOT use names unless "normal state names" is explicitly asked.' where id = 57
+--UPDATE BotViews_ColumnDetails SET column_name = 'Normal_State_Names' ,Column_Description = 'Comma-separated list of normal state names assigned to a user for order processing.It represents readable names of normal states.' where id = 58
+
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Descriptive name of the parent process that groups multiple skillsets. Used to select and filter the process when the identifier is not provided.' where id = 52
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent started processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 53
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent finished processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 54
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Readable name of the order processing status such as Exception, Pending, or In Progress.' where id = 48
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Days when the process runs (e.g., Mon-Fri, Mon-Sun, Sat, Sun). If a user asks for a specific day (e.g., Monday), include records where that day is part of the range (Mon-Fri includes Monday)' where id = 30
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Total number of orders received for a skillset on a date. This value is repeated across status rows, so use DISTINCT or MAX to avoid duplicate counting.' where id = 69
