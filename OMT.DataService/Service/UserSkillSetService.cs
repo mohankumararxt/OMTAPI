@@ -496,7 +496,7 @@ namespace OMT.DataService.Service
                             UserId = multipleUserSkillSetCreateDTO.UserId,
                             SkillSetId = details.SkillSetId,
                             Percentage = details.Weightage ?? 0,
-                            IsHardStateUser = details.IsHardStateUser,
+                            IsHardStateUser = false,
                             HardStateName = "",
                             IsActive = true,
                             IsCycle1 = false,
