@@ -8119,3 +8119,21 @@
 --UPDATE BotViews_ColumnDetails SET Column_Description = 'Days when the process runs (e.g., Mon-Fri, Mon-Sun, Sat, Sun). If a user asks for a specific day (e.g., Monday), include records where that day is part of the range (Mon-Fri includes Monday)' where id = 30
 
 --UPDATE BotViews_ColumnDetails SET Column_Description = 'Total number of orders received for a skillset on a date. This value is repeated across status rows, so use DISTINCT or MAX to avoid duplicate counting.' where id = 69
+
+
+----------------------------------------------------new skillset addition in tat------------------------
+ 
+ 
+--insert into SciPendingStatusSkillsets values 
+--(757,1,'05:00 PM','Sat')
+
+---------------------------------------------------productivity and utilizatin changes 2026-----------------------------
+
+--alter trd invoice sp
+
+
+--ALTER TABLE GetOrderCalculation
+--add Threshold int null
+
+--ALTER TABLE utilization
+--add Threshold int null

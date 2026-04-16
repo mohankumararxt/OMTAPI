@@ -51,13 +51,13 @@ namespace CheckOut
                 {
                     connection.Open();
 
-                    // Update users who checked in but didn’t check out after 12 hours
+                    // Update users who checked in but didn’t check out after 13 hours
                     string updateQuery = @"
                                           UPDATE User_Checkin
                                           SET CheckOut = GETUTCDATE()
                                           WHERE CheckOut IS NULL 
                                           AND CheckIn IS NOT NULL 
-                                          AND DATEADD(HOUR, 12, CheckIn) <= GETUTCDATE();";
+                                          AND DATEADD(HOUR, 13, CheckIn) <= GETUTCDATE();";
 
                     using (SqlCommand cmd = new SqlCommand(updateQuery, connection))
                     {
