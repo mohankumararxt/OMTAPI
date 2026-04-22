@@ -400,17 +400,17 @@ namespace OMT.DataService.Service
 
             try
             {
-                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
+                //DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
+                //DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
 
-                if (DateTime.UtcNow >= endtime)
-                {
-                    resultDTO.Data = null;
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "You can't apply for regularization of non productive hours after 6 PM.";
-                }
-                else
-                {
+                //if (DateTime.UtcNow >= endtime)
+                //{
+                //    resultDTO.Data = null;
+                //    resultDTO.IsSuccess = false;
+                //    resultDTO.Message = "You can't apply for regularization of non productive hours after 6 PM.";
+                //}
+                //else
+                //{
                     var shifroasterdetails = (from sa in _oMTDataContext.ShiftAssociation
                                               join up in _oMTDataContext.UserProfile on sa.AgentEmployeeId equals up.EmployeeId
                                               join up2 in _oMTDataContext.UserProfile on sa.TLEmployeeId equals up2.EmployeeId
@@ -454,7 +454,7 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = true;
                         resultDTO.Message = "Regularization applied successfully";
                     }
-                }
+               // }
             }
             catch (Exception ex)
             {
@@ -650,8 +650,7 @@ namespace OMT.DataService.Service
                                                StatusId = rs.Id,
                                                Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
                                                Tl_Description = npr.TlDescription,
-                                               IsEditable = (npr.NonProductiveHours_Date.Date >= DateTime.Now.Date.AddDays(-1)) ? true : false
-,
+                                               IsEditable =  true,
 
                                            }).ToList();
 
@@ -716,17 +715,17 @@ namespace OMT.DataService.Service
 
             try
             {
-                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
+                //DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
+                //DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
 
-                if (DateTime.UtcNow >= endtime)
-                {
-                    resultDTO.Data = null;
-                    resultDTO.IsSuccess = false;
-                    resultDTO.Message = "You can't update regularization of non productive hours after 6 PM.";
-                }
-                else
-                {
+                //if (DateTime.UtcNow >= endtime)
+                //{
+                //    resultDTO.Data = null;
+                //    resultDTO.IsSuccess = false;
+                //    resultDTO.Message = "You can't update regularization of non productive hours after 6 PM.";
+                //}
+                //else
+                //{
                     var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
 
                     if (reg != null)
@@ -750,7 +749,7 @@ namespace OMT.DataService.Service
                         resultDTO.Message = "Regularization details not found";
                         resultDTO.StatusCode = "404";
                     }
-                }
+                //}
 
 
             }
