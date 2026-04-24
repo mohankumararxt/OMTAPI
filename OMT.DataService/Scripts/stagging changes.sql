@@ -8137,3 +8137,6 @@
 
 --ALTER TABLE utilization
 --add Threshold int null
+
+--update NonProductiveReasons set isactive = 0 where id = 8
+--update NonProductiveReasons set reasons = 'Rework/Exceptions' where id = 4
