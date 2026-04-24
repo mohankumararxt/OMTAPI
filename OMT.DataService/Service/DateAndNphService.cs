@@ -228,142 +228,27 @@ namespace OMT.DataService.Service
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
             {
-                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
-                using SqlConnection connection = new(connectionstring);
-                connection.Open();
+                var uc = _oMTDataContext.User_Checkin.Where(x => x.Id == updateCheckinDetailsDTO.User_CheckinId && x.Prod_Util_Calculated == false && x.UserId == updateCheckinDetailsDTO.UserId).FirstOrDefault();
 
-                DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
-
-                if (DateTime.UtcNow >= endtime)
+                if (uc == null)
                 {
                     resultDTO.Data = null;
+                    resultDTO.StatusCode = "404";
                     resultDTO.IsSuccess = false;
-                    resultDTO.Message = "You can't update the Checkin date after 6 PM.";
+                    resultDTO.Message = "The selected details are not found.";
                 }
                 else
                 {
-                    var uc = _oMTDataContext.User_Checkin.Where(x => x.Id == updateCheckinDetailsDTO.User_CheckinId && x.Prod_Util_Calculated == false && x.UserId == updateCheckinDetailsDTO.UserId).FirstOrDefault();
+                    uc.Checkout = null;
 
-                    if (uc == null)
-                    {
-                        resultDTO.Data = null;
-                        resultDTO.StatusCode = "404";
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "The selected details are not found.";
-                    }
-                    else
-                    {
-                        //update checkin_date in user_checkin table
+                    _oMTDataContext.User_Checkin.Update(uc);
+                    _oMTDataContext.SaveChanges();
 
-                        uc.CheckIn_date = updateCheckinDetailsDTO.CheckIn_date;
-
-                        _oMTDataContext.User_Checkin.Update(uc);
-                        _oMTDataContext.SaveChanges();
-
-                        //update checkin_date in all skillset tables and prod_util_tracker table for the orders which user has worked during this time range
-
-                        List<SkillSet> tablenames = (from us in _oMTDataContext.UserSkillSet
-                                                     join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                                     where us.UserId == updateCheckinDetailsDTO.UserId && ss.IsActive
-                                                     && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
-                                                     orderby us.IsActive descending
-                                                     select new SkillSet
-                                                     {
-                                                         SkillSetName = ss.SkillSetName,
-                                                         SkillSetId = ss.SkillSetId,
-                                                     }).Distinct().ToList();
-
-
-                        var datecheck_ss = uc.Checkout == null ? "Starttime >= @Checkin" : "StartTime >= @Checkin AND EndTime <= @Checkout";
-                        var datecheck_put = uc.Checkout == null ? "StartDate >= @Checkin" : "StartDate >= @Checkin AND EndDate <= @Checkout";
-
-
-                        foreach (SkillSet tablename in tablenames)
-                        {
-                            var orderdetails_sql = $@"SELECT * FROM {tablename.SkillSetName} WHERE UserId = @UserId AND {datecheck_ss}";
-
-                            using SqlCommand orderdetails_cmd = connection.CreateCommand();
-                            orderdetails_cmd.CommandText = orderdetails_sql;
-
-                            orderdetails_cmd.Parameters.AddWithValue("@UserId", updateCheckinDetailsDTO.UserId);
-
-                            if (uc.Checkout == null)
-                            {
-                                orderdetails_cmd.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                            }
-                            else
-                            {
-                                orderdetails_cmd.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                                orderdetails_cmd.Parameters.AddWithValue("@Checkout", uc.Checkout);
-                            }
-
-                            using SqlDataAdapter dataAdapter = new SqlDataAdapter(orderdetails_cmd);
-
-                            DataSet dataset = new DataSet();
-
-                            dataAdapter.Fill(dataset);
-
-                            DataTable datatable = dataset.Tables[0];
-
-                            var orderIds = datatable.AsEnumerable()
-                                                    .Where(row => row["OrderId"] != DBNull.Value)
-                                                    .Select(row => row["OrderId"].ToString())
-                                                    .ToList();
-
-                            string orderIdList = string.Join(",", orderIds.Select(id => $"'{id}'"));
-
-                            if (orderIds.Count > 0)
-                            {
-                                string updateSql1 = $@"UPDATE {tablename.SkillSetName} SET Checkin_date = @CheckinDate WHERE UserId = @UserId AND {datecheck_ss}";
-
-                                using SqlCommand updateCommand1 = new SqlCommand(updateSql1, connection);
-
-
-
-                                string updateSql2 = $@"UPDATE Prod_Util_Tracker SET Checkin_date = @CheckinDate 
-                                                       WHERE UserId = @UserId 
-                                                       AND SkillsetId = @SkillsetId 
-                                                       AND OrderId IN ({orderIdList}) 
-                                                       AND {datecheck_put}";
-
-                                using SqlCommand updateCommand2 = new SqlCommand(updateSql2, connection);
-
-                                updateCommand1.Parameters.AddWithValue("@CheckinDate", updateCheckinDetailsDTO.CheckIn_date);
-                                updateCommand1.Parameters.AddWithValue("@UserId", updateCheckinDetailsDTO.UserId);
-
-                                updateCommand2.Parameters.AddWithValue("@CheckinDate", updateCheckinDetailsDTO.CheckIn_date);
-                                updateCommand2.Parameters.AddWithValue("@UserId", updateCheckinDetailsDTO.UserId);
-                                updateCommand2.Parameters.AddWithValue("@SkillsetId", tablename.SkillSetId);
-
-                                if (uc.Checkout == null)
-                                {
-                                    updateCommand1.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                                    updateCommand2.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                                }
-                                else
-                                {
-                                    updateCommand1.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                                    updateCommand1.Parameters.AddWithValue("@Checkout", uc.Checkout);
-
-                                    updateCommand2.Parameters.AddWithValue("@Checkin", uc.Checkin);
-                                    updateCommand2.Parameters.AddWithValue("@Checkout", uc.Checkout);
-                                }
-
-                                updateCommand1.ExecuteNonQuery();
-                                updateCommand2.ExecuteNonQuery();
-
-                            }
-
-                        }
-
-
-                        resultDTO.StatusCode = "200";
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Checkin date has been successfully changed.";
-                    }
-
+                    resultDTO.StatusCode = "200";
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Checkout has been successfully removed.";
                 }
+
             }
             catch (Exception ex)
             {
@@ -400,61 +285,49 @@ namespace OMT.DataService.Service
 
             try
             {
-                //DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                //DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
+                var shifroasterdetails = (from sa in _oMTDataContext.ShiftAssociation
+                                          join up in _oMTDataContext.UserProfile on sa.AgentEmployeeId equals up.EmployeeId
+                                          join up2 in _oMTDataContext.UserProfile on sa.TLEmployeeId equals up2.EmployeeId
+                                          where up.IsActive && up.UserId == userid && sa.IsActive && sa.ShiftDate == applyNonProductiveHoursDTO.NonProductiveHours_Date
+                                          select new
+                                          {
+                                              tluserid = up2.UserId,
+                                              primary_sorid = sa.PrimarySystemOfRecordId,
+                                          }).FirstOrDefault();
 
-                //if (DateTime.UtcNow >= endtime)
-                //{
-                //    resultDTO.Data = null;
-                //    resultDTO.IsSuccess = false;
-                //    resultDTO.Message = "You can't apply for regularization of non productive hours after 6 PM.";
-                //}
-                //else
-                //{
-                    var shifroasterdetails = (from sa in _oMTDataContext.ShiftAssociation
-                                              join up in _oMTDataContext.UserProfile on sa.AgentEmployeeId equals up.EmployeeId
-                                              join up2 in _oMTDataContext.UserProfile on sa.TLEmployeeId equals up2.EmployeeId
-                                              where up.IsActive && up.UserId == userid && sa.IsActive && sa.ShiftDate == applyNonProductiveHoursDTO.NonProductiveHours_Date
-                                              select new
-                                              {
-                                                  tluserid = up2.UserId,
-                                                  primary_sorid = sa.PrimarySystemOfRecordId,
-                                              }).FirstOrDefault();
-
-                    if (shifroasterdetails == null)
+                if (shifroasterdetails == null)
+                {
+                    resultDTO.Data = null;
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Shift roaster is not uploaded for the applied date,so you can't apply for regularization.";
+                }
+                else
+                {
+                    NonProductiveRegularization nonProductiveRegularization = new NonProductiveRegularization()
                     {
-                        resultDTO.Data = null;
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Shift roaster is not uploaded for the applied date,so you can't apply for regularization.";
-                    }
-                    else
-                    {
-                        NonProductiveRegularization nonProductiveRegularization = new NonProductiveRegularization()
-                        {
-                            UserId = userid,
-                            TlUserId = shifroasterdetails.tluserid,
-                            Primary_SorId = shifroasterdetails.primary_sorid,
-                            Reasons = applyNonProductiveHoursDTO.Reasons,
-                            Remarks = applyNonProductiveHoursDTO.Remarks,
-                            NonProductiveHours_Date = applyNonProductiveHoursDTO.NonProductiveHours_Date,
-                            StartTime = applyNonProductiveHoursDTO.StartTime,
-                            EndTime = applyNonProductiveHoursDTO.EndTime,
-                            Applied_Hours = applyNonProductiveHoursDTO.Applied_Hours,
-                            Regularization_Status = 1,
-                            Applied_Time = DateTime.UtcNow,
-                            UpdatedBy = null,
-                            UpdatedTime = null,
-                            TlDescription = null,
-                        };
+                        UserId = userid,
+                        TlUserId = shifroasterdetails.tluserid,
+                        Primary_SorId = shifroasterdetails.primary_sorid,
+                        Reasons = applyNonProductiveHoursDTO.Reasons,
+                        Remarks = applyNonProductiveHoursDTO.Remarks,
+                        NonProductiveHours_Date = applyNonProductiveHoursDTO.NonProductiveHours_Date,
+                        StartTime = applyNonProductiveHoursDTO.StartTime,
+                        EndTime = applyNonProductiveHoursDTO.EndTime,
+                        Applied_Hours = applyNonProductiveHoursDTO.Applied_Hours,
+                        Regularization_Status = 1,
+                        Applied_Time = DateTime.UtcNow,
+                        UpdatedBy = null,
+                        UpdatedTime = null,
+                        TlDescription = null,
+                    };
 
-                        _oMTDataContext.NonProductiveRegularization.Add(nonProductiveRegularization);
-                        _oMTDataContext.SaveChanges();
+                    _oMTDataContext.NonProductiveRegularization.Add(nonProductiveRegularization);
+                    _oMTDataContext.SaveChanges();
 
 
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Regularization applied successfully";
-                    }
-               // }
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Regularization applied successfully";
+                }
             }
             catch (Exception ex)
             {
@@ -650,7 +523,7 @@ namespace OMT.DataService.Service
                                                StatusId = rs.Id,
                                                Applied_Time = TimeZoneInfo.ConvertTimeFromUtc(npr.Applied_Time, istZone).ToString("dd-MM-yyyy HH:mm"),
                                                Tl_Description = npr.TlDescription,
-                                               IsEditable =  true,
+                                               IsEditable = true,
 
                                            }).ToList();
 
@@ -715,43 +588,30 @@ namespace OMT.DataService.Service
 
             try
             {
-                //DateTime todayUtc = DateTime.UtcNow.Date; // Today at midnight in UTC
-                //DateTime endtime = todayUtc.AddHours(12).AddMinutes(30);
+                var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
 
-                //if (DateTime.UtcNow >= endtime)
-                //{
-                //    resultDTO.Data = null;
-                //    resultDTO.IsSuccess = false;
-                //    resultDTO.Message = "You can't update regularization of non productive hours after 6 PM.";
-                //}
-                //else
-                //{
-                    var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
+                if (reg != null)
+                {
+                    reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
+                    reg.UpdatedBy = userid;
+                    reg.UpdatedTime = DateTime.UtcNow;
+                    reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null : updateRegularizationsDTO.TlDescription;
 
-                    if (reg != null)
-                    {
-                        reg.Regularization_Status = updateRegularizationsDTO.Regularization_Status;
-                        reg.UpdatedBy = userid;
-                        reg.UpdatedTime = DateTime.UtcNow;
-                        reg.TlDescription = updateRegularizationsDTO.TlDescription == null ? null : updateRegularizationsDTO.TlDescription;
-
-                        _oMTDataContext.NonProductiveRegularization.Update(reg);
-                        _oMTDataContext.SaveChanges();
+                    _oMTDataContext.NonProductiveRegularization.Update(reg);
+                    _oMTDataContext.SaveChanges();
 
 
-                        resultDTO.IsSuccess = true;
-                        resultDTO.Message = "Regularization has been approved";
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Regularization has been approved";
 
-                    }
-                    else
-                    {
-                        resultDTO.IsSuccess = false;
-                        resultDTO.Message = "Regularization details not found";
-                        resultDTO.StatusCode = "404";
-                    }
-                //}
-
-
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "Regularization details not found";
+                    resultDTO.StatusCode = "404";
+                }
+                
             }
             catch (Exception ex)
             {
