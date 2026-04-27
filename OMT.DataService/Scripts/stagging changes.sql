@@ -8140,3 +8140,36 @@
 
 --update NonProductiveReasons set isactive = 0 where id = 8
 --update NonProductiveReasons set reasons = 'Rework/Exceptions' where id = 4
+
+--drop table NPH_Productivity
+
+--create table NPH_Productivity
+--(
+--NPH_ProductivityId int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Productivity_Date datetime not null,
+--Applied_Hours  DECIMAL(10,1) NOT NULL,
+--Pending_Orders_Hours DECIMAL(10,1) NOT NULL,
+--Productivity_Percentage  INT NOT NULL,
+--NPH_Productivity_Percentage  INT NOT NULL,
+--Remarks Nvarchar(500) NOT NULL
+--)
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--insert into NPH_Productivity values
+--(400,10,'2026-04-11',1.0,1.0,80,25,'Had training, worked on exceptions'),
+--(400,10,'2026-04-14',1.0,0.5,80,19,'Had training'),
+--(472,59,'2026-04-14',1.0,1.0,80,25,'worked on exceptions'),
+--(472,59,'2026-04-15',1.0,0.5,80,19,'Had meeting')
+
+--alter [dbo].[Calculate_NPH_Productivity] sp

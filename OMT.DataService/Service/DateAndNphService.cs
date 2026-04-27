@@ -661,11 +661,15 @@ namespace OMT.DataService.Service
                                      orderby nph.Productivity_Date
                                      select new
                                      {
+                                         Tl_Name = up2.FirstName + " " + up2.LastName,
                                          Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
                                          Applied_Hours = nph.Applied_Hours,
-                                         Tl_Name = up2.FirstName + " " + up2.LastName,
+                                         Pending_Orders_Hours = nph.Pending_Orders_Hours,
                                          Productivity = nph.Productivity_Percentage,
-                                         Non_Productive_Productivity = nph.NPH_Productivity_Percentage
+                                         Nph_Productivity = nph.NPH_Productivity_Percentage,
+                                         Total = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage,
+                                         Over_Utilization = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage > 100 ? (nph.Productivity_Percentage + nph.NPH_Productivity_Percentage) - 100 : 0,
+                                         Remarks = nph.Remarks
                                      }).ToList();
 
 
@@ -762,12 +766,16 @@ namespace OMT.DataService.Service
                                         orderby up1.FirstName, nph.Productivity_Date
                                         select new
                                         {
-                                            UserName = up1.FirstName + " " + up1.LastName,
                                             Tl_Name = up2.FirstName + " " + up2.LastName,
+                                            UserName = up1.FirstName + " " + up1.LastName,
                                             Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
                                             Applied_Hours = nph.Applied_Hours,
+                                            Pending_Orders_Hours = nph.Pending_Orders_Hours,
                                             Productivity = nph.Productivity_Percentage,
-                                            Non_Productive_Productivity = nph.NPH_Productivity_Percentage
+                                            Nph_Productivity = nph.NPH_Productivity_Percentage,
+                                            Total = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage,
+                                            Over_Utilization = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage > 100 ? (nph.Productivity_Percentage + nph.NPH_Productivity_Percentage) - 100 : 0,
+                                            Remarks = nph.Remarks
                                         }).Distinct().ToList();
 
                     if (team_nphprod.Count > 0)
