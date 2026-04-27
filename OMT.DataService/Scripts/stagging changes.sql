@@ -8149,11 +8149,11 @@
 --UserId INT NOT NULL,
 --TlUserId INT NOT NULL,
 --Productivity_Date datetime not null,
---Applied_Hours  DECIMAL(10,1) NOT NULL,
---Pending_Orders_Hours DECIMAL(10,1) NOT NULL,
---Productivity_Percentage  INT NOT NULL,
---NPH_Productivity_Percentage  INT NOT NULL,
---Remarks Nvarchar(500) NOT NULL
+--Applied_Hours  DECIMAL(10,1),
+--Pending_Orders_Hours DECIMAL(10,1),
+--Productivity_Percentage  INT,
+--NPH_Productivity_Percentage  INT,
+--Remarks Nvarchar(500)
 --)
 
 --alter table NPH_Productivity
