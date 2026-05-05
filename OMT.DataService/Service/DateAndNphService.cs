@@ -586,8 +586,13 @@ namespace OMT.DataService.Service
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
 
+            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+            using SqlConnection connection = new(connectionstring);
+
             try
             {
+                // check if the regularized date is yesterday , then just update it, if any date less than yesterday, call recalculation sp
+
                 var reg = _oMTDataContext.NonProductiveRegularization.Where(x => x.Id == updateRegularizationsDTO.Id).FirstOrDefault();
 
                 if (reg != null)
@@ -600,6 +605,113 @@ namespace OMT.DataService.Service
                     _oMTDataContext.NonProductiveRegularization.Update(reg);
                     _oMTDataContext.SaveChanges();
 
+                    var processDate = reg.NonProductiveHours_Date.Date;
+                    var agentuserid = reg.UserId;
+
+                    var utcNow = DateTime.UtcNow;
+
+                    var todayUtc = utcNow.Date;
+                    var yesterdayUtc = todayUtc.AddDays(-1);
+
+                    // 8 PM IST = 2:30 PM UTC
+                    var isAfter8PM_IST = utcNow.TimeOfDay >= new TimeSpan(14, 30, 0);
+
+                    var shouldRecalculate =
+                    (processDate < yesterdayUtc) || // older dates
+                    (processDate == yesterdayUtc && isAfter8PM_IST); // yesterday after 8PM IST
+
+                    if (shouldRecalculate)
+                    {
+                        using (SqlCommand spCommand = new SqlCommand("Master_Productivity_Percentage_For_User_Date", connection))
+                        {
+                            connection.Open();
+                            spCommand.CommandType = CommandType.StoredProcedure;
+
+                            SqlParameter returnValue = new SqlParameter
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+
+                            spCommand.Parameters.AddWithValue("@UserId", agentuserid);
+                            spCommand.Parameters.AddWithValue("@ProcessDate", processDate);
+
+                            spCommand.Parameters.Add(returnValue);
+                            spCommand.ExecuteNonQuery();
+
+                            int returnCode = (int)spCommand.Parameters["@RETURN_VALUE"].Value;
+
+                            if (returnCode != 1)
+                            {
+                                throw new InvalidOperationException("Stored Procedure call failed.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Productivity_Percentage table updated successfully.");
+                            }
+
+                        }
+
+                        using (SqlCommand spCommand2 = new SqlCommand("Calculate_Prod_Util_For_User_Date", connection))
+                        {
+                            spCommand2.CommandType = CommandType.StoredProcedure;
+
+                            SqlParameter returnValue2 = new SqlParameter
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+
+                            spCommand2.Parameters.AddWithValue("@UserId", agentuserid);
+                            spCommand2.Parameters.AddWithValue("@ProcessDate", processDate);
+
+                            spCommand2.Parameters.Add(returnValue2);
+                            spCommand2.ExecuteNonQuery();
+
+                            int returnCode2 = (int)spCommand2.Parameters["@RETURN_VALUE"].Value;
+
+                            if (returnCode2 != 1)
+                            {
+                                throw new InvalidOperationException("Stored Procedure call failed.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Prod_Util table updated successfully.");
+                            }
+
+                        }
+
+                        //calculate monthly sor utilization
+
+                        using (SqlCommand spCommand3 = new SqlCommand("Update_Monthly_Utilization_SOR_For_User_Date", connection))
+                        {
+                            spCommand3.CommandType = CommandType.StoredProcedure;
+
+                            SqlParameter returnValue2 = new SqlParameter
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+
+                            spCommand3.Parameters.AddWithValue("@ProcessDate", processDate);
+
+                            spCommand3.Parameters.Add(returnValue2);
+                            spCommand3.ExecuteNonQuery();
+
+                            int returnCode2 = (int)spCommand3.Parameters["@RETURN_VALUE"].Value;
+
+                            if (returnCode2 != 1)
+                            {
+                                throw new InvalidOperationException("Stored Procedure call failed.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Monthly_Utilization_SOR table updated successfully.");
+                            }
+
+                        }
+
+                    }
 
                     resultDTO.IsSuccess = true;
                     resultDTO.Message = "Regularization has been approved";
@@ -611,7 +723,7 @@ namespace OMT.DataService.Service
                     resultDTO.Message = "Regularization details not found";
                     resultDTO.StatusCode = "404";
                 }
-                
+
             }
             catch (Exception ex)
             {

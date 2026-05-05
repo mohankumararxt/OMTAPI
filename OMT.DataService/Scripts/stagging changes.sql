@@ -8172,4 +8172,16 @@
 --(472,59,'2026-04-14',1.0,1.0,80,25,'worked on exceptions'),
 --(472,59,'2026-04-15',1.0,0.5,80,19,'Had meeting')
 
---alter [dbo].[Calculate_NPH_Productivity] sp
+--alter table ProcessStatus 
+--add IsInvoiceStatus BIT  
+
+--Update ProcessStatus set IsInvoiceStatus = 1 where id in (1,2,6,10,12,14,18,22)
+--Update ProcessStatus set IsInvoiceStatus = 0  where IsInvoiceStatus is null
+
+--alter [dbo].[Master_Productivity_Percentage] sp
+--alter [dbo].[Calculate_Prod_Util] sp
+
+--create VIEW vw_Prod_Util_Tracker_All
+--create Master_Productivity_Percentage_For_User_Date sp
+--create Calculate_Prod_Util_For_User_Date
+--cretae Update_Monthly_Utilization_SOR_For_User_Date
