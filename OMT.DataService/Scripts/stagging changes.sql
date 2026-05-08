@@ -8185,3 +8185,14 @@
 --create Master_Productivity_Percentage_For_User_Date sp
 --create Calculate_Prod_Util_For_User_Date
 --cretae Update_Monthly_Utilization_SOR_For_User_Date
+
+
+
+--------------------------------sci invoice changes-----------------------
+
+--UPDATE Workflowstatus
+--SET ProcessType = 'LR_BANA_Verification'
+--WHERE SkillSetId = 697
+--AND ProcessType = 'LR_BANA_1st_Key_Verification';
+
+--alter getinvoice_Sci sp
