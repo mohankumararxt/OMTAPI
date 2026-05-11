@@ -8134,3 +8134,80 @@
 --UPDATE BotViews_ColumnDetails SET Column_Description = 'Days when the process runs (e.g., Mon-Fri, Mon-Sun, Sat, Sun). If a user asks for a specific day (e.g., Monday), include records where that day is part of the range (Mon-Fri includes Monday)' where id = 30
 
 --UPDATE BotViews_ColumnDetails SET Column_Description = 'Total number of orders received for a skillset on a date. This value is repeated across status rows, so use DISTINCT or MAX to avoid duplicate counting.' where id = 69
+
+
+----------------------------------------------------new skillset addition in tat------------------------
+ 
+ 
+--insert into SciPendingStatusSkillsets values 
+--(757,1,'05:00 PM','Sat')
+
+---------------------------------------------------productivity and utilizatin changes 2026-----------------------------
+
+--alter trd invoice sp
+
+
+--ALTER TABLE GetOrderCalculation
+--add Threshold int null
+
+--ALTER TABLE utilization
+--add Threshold int null
+
+--update NonProductiveReasons set isactive = 0 where id = 8
+--update NonProductiveReasons set reasons = 'Rework/Exceptions' where id = 4
+
+--drop table NPH_Productivity
+
+--create table NPH_Productivity
+--(
+--NPH_ProductivityId int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Productivity_Date datetime not null,
+--Applied_Hours  DECIMAL(10,1),
+--Pending_Orders_Hours DECIMAL(10,1),
+--Productivity_Percentage  INT,
+--NPH_Productivity_Percentage  INT,
+--Remarks Nvarchar(500)
+--)
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--insert into NPH_Productivity values
+--(400,10,'2026-04-11',1.0,1.0,80,25,'Had training, worked on exceptions'),
+--(400,10,'2026-04-14',1.0,0.5,80,19,'Had training'),
+--(472,59,'2026-04-14',1.0,1.0,80,25,'worked on exceptions'),
+--(472,59,'2026-04-15',1.0,0.5,80,19,'Had meeting')
+
+--alter table ProcessStatus 
+--add IsInvoiceStatus BIT  
+
+--Update ProcessStatus set IsInvoiceStatus = 1 where id in (1,2,6,10,12,14,18,22)
+--Update ProcessStatus set IsInvoiceStatus = 0  where IsInvoiceStatus is null
+
+--alter [dbo].[Master_Productivity_Percentage] sp
+--alter [dbo].[Calculate_Prod_Util] sp
+
+--create VIEW vw_Prod_Util_Tracker_All
+--create Master_Productivity_Percentage_For_User_Date sp
+--create Calculate_Prod_Util_For_User_Date
+--cretae Update_Monthly_Utilization_SOR_For_User_Date
+
+
+
+--------------------------------sci invoice changes-----------------------
+
+--UPDATE Workflowstatus
+--SET ProcessType = 'LR_BANA_Verification'
+--WHERE SkillSetId = 697
+--AND ProcessType = 'LR_BANA_1st_Key_Verification';
+
+--alter getinvoice_Sci sp

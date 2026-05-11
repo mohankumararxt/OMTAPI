@@ -1013,6 +1013,7 @@ namespace OMT.DataService.Service
                                 hs_present.IsHardStateUser = USS_ip.IsHardStateUser;
                                 hs_present.Weightage = item.Weightage;
                                 hs_present.PriorityOrder = currentPriority;
+                                hs_present.Threshold = threshold;
 
                                 if (item.Weightage != ExistingWeightage)
                                 {
@@ -1055,7 +1056,7 @@ namespace OMT.DataService.Service
                                     IsCycle1 = true,
                                     IsHardStateUser = USS_ip.IsHardStateUser,
                                     HardStateUtilized = false,
-
+                                    Threshold = threshold
                                 };
                                 _oMTDataContext.GetOrderCalculation.Add(goc);
                                 _oMTDataContext.SaveChanges();
@@ -1077,6 +1078,7 @@ namespace OMT.DataService.Service
                         ns_present.IsHardStateUser = false;
                         ns_present.Weightage = (int)USS_ip.Weightage;
                         ns_present.PriorityOrder = currentPriority;
+                        ns_present.Threshold = threshold;
 
                         if (USS_ip.Weightage != ExistingWeightage_n)
                         {
@@ -1093,6 +1095,7 @@ namespace OMT.DataService.Service
                             }
 
                             ns_present.TotalOrderstoComplete = roundedtotalorders;
+
                         }
                         _oMTDataContext.GetOrderCalculation.Update(ns_present);
                         _oMTDataContext.SaveChanges();
@@ -1119,6 +1122,7 @@ namespace OMT.DataService.Service
                             IsCycle1 = true,
                             IsHardStateUser = false,
                             HardStateUtilized = false,
+                            Threshold = threshold
 
                         };
                         _oMTDataContext.GetOrderCalculation.Add(goc);
@@ -1153,6 +1157,7 @@ namespace OMT.DataService.Service
                                 hs_present.Weightage = 0; // item.Weightage;
                                 hs_present.PriorityOrder = secondCyclePriority;
                                 hs_present.TotalOrderstoComplete = 0;
+                                hs_present.Threshold = threshold;
 
                                 _oMTDataContext.GetOrderCalculation.Update(hs_present);
                                 _oMTDataContext.SaveChanges();
@@ -1176,6 +1181,7 @@ namespace OMT.DataService.Service
                                     IsCycle1 = false,
                                     IsHardStateUser = USS_ip.IsHardStateUser,
                                     HardStateUtilized = false,
+                                    Threshold = threshold
 
                                 };
                                 _oMTDataContext.GetOrderCalculation.Add(goc);
@@ -1195,6 +1201,7 @@ namespace OMT.DataService.Service
                         ns_present.Weightage = 0;
                         ns_present.PriorityOrder = secondCyclePriority;
                         ns_present.TotalOrderstoComplete = 0;
+                        ns_present.Threshold = threshold;
 
                         _oMTDataContext.GetOrderCalculation.Update(ns_present);
                         _oMTDataContext.SaveChanges();
@@ -1218,6 +1225,7 @@ namespace OMT.DataService.Service
                             IsCycle1 = false,
                             IsHardStateUser = false,
                             HardStateUtilized = false,
+                            Threshold = threshold
 
                         };
                         _oMTDataContext.GetOrderCalculation.Add(goc);

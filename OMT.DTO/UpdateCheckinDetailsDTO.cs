@@ -3,7 +3,8 @@
     public class UpdateCheckinDetailsDTO
     {
         public int UserId { get; set; }
-        public DateTime CheckIn_date { get; set; }
+        // public DateTime CheckIn_date { get; set; }
+        public bool Remove_Checkout { get; set; }
         public int User_CheckinId { get; set; }
     }
 }

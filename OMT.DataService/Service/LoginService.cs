@@ -118,10 +118,15 @@ namespace OMT.DataService.Service
 
             try
             {
+                //get the last checkin entry details of the user
                 User_Checkin user_Checkin = _oMTDataContext.User_Checkin
                                                            .Where(x => x.UserId == checkinRequestDTO.UserId)
                                                            .OrderByDescending(x => x.Id)
                                                            .FirstOrDefault();
+
+                var msg = "";
+                var IsSuccess  = true;
+                var StatusCode = "200";
 
                 if (user_Checkin != null) //existing user
                 {
@@ -130,17 +135,34 @@ namespace OMT.DataService.Service
                     {
                         user_Checkin.Checkout = checkinRequestDTO.DateTime;
                         _oMTDataContext.User_Checkin.Update(user_Checkin);
+
+                        msg = "Checkin / checkout successful";
                     }
                     else if (user_Checkin.Checkin != null && user_Checkin.CheckIn_date != null && user_Checkin.Checkout != null) //checkin
                     {
-                        User_Checkin user_time = new User_Checkin()
-                        {
-                            UserId = checkinRequestDTO.UserId,
-                            Checkin = checkinRequestDTO.DateTime,
-                            CheckIn_date = checkinRequestDTO.CheckIn_date,
-                        };
+                        var timeDiff = checkinRequestDTO.DateTime - user_Checkin.Checkin;
 
-                        _oMTDataContext.User_Checkin.Add(user_time);
+                        if (timeDiff >= TimeSpan.Zero && timeDiff < TimeSpan.FromHours(13))
+                        {
+                            msg = "You have already checked in for today, so please contact your TL to remove the checkout.";
+                            IsSuccess = false;
+                            StatusCode = "400";
+                        }
+
+                        else
+                        {
+                            User_Checkin user_time = new User_Checkin()
+                            {
+                                UserId = checkinRequestDTO.UserId,
+                                Checkin = checkinRequestDTO.DateTime,
+                                CheckIn_date = checkinRequestDTO.CheckIn_date,
+                            };
+
+                            _oMTDataContext.User_Checkin.Add(user_time);
+
+                            msg = "Checkin / checkout successful";
+                        }
+
                     }
 
                 }
@@ -156,6 +178,7 @@ namespace OMT.DataService.Service
 
                     _oMTDataContext.User_Checkin.Add(user_time);
 
+                    msg = "Checkin / checkout successful";
                 }
 
                 _oMTDataContext.SaveChanges();
@@ -166,8 +189,9 @@ namespace OMT.DataService.Service
                 };
 
                 resultDTO.Data = responseDTO;
-                resultDTO.Message = "Checkin / checkout successful";
-                resultDTO.IsSuccess = true;
+                resultDTO.Message = msg;
+                resultDTO.IsSuccess = IsSuccess;
+                resultDTO.StatusCode = StatusCode;
             }
             catch (Exception ex)
             {
@@ -205,7 +229,7 @@ namespace OMT.DataService.Service
 
                     string resetUrl1 = _resetpasswordsettings.Value.ResetPasswordURL;
 
-                    string resetUrl2 = resetUrl1 +  token ;
+                    string resetUrl2 = resetUrl1 + token;
 
                     List<string> toEmailIds1 = new List<string>
                     {
@@ -305,7 +329,7 @@ namespace OMT.DataService.Service
 
                 var userdetails = _oMTDataContext.UserProfile.Where(x => x.Email == resetPasswordDTO.Email && x.IsActive).FirstOrDefault();
 
-                if(userdetails != null)
+                if (userdetails != null)
                 {
                     userdetails.Password = encryptedPassword;
 
@@ -314,7 +338,7 @@ namespace OMT.DataService.Service
 
                     var reset = _oMTDataContext.PasswordResetTokens.Where(x => x.GuId == resetPasswordDTO.GuId && !x.IsUsed).FirstOrDefault();
 
-                    if(reset != null)
+                    if (reset != null)
                     {
                         reset.ResetDate = DateTime.UtcNow;
                         reset.IsUsed = true;

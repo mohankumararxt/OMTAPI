@@ -704,11 +704,26 @@ namespace OMT.DataService.Service
                         }
 
                         uss.TotalOrderstoComplete = roundedtotalorders;
+                        uss.Threshold = threshold;
 
                         _oMTDataContext.GetOrderCalculation.Update(uss);
                         _oMTDataContext.SaveChanges();
                     }
                 }
+
+                    var userwithskillsetincycle2 = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive && !x.IsCycle1).ToList();
+
+                    if(userwithskillsetincycle2.Count > 0)
+                    {
+                        foreach (var uss2 in userwithskillsetincycle2)
+                        {
+                            uss2.Threshold = threshold;
+
+                            _oMTDataContext.GetOrderCalculation.Update(uss2);
+                            _oMTDataContext.SaveChanges();
+                        }
+                    }
+                
             }
             catch (Exception ex)
             {
