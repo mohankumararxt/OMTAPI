@@ -10,8 +10,10 @@ namespace OMT.DataAccess.Entities
         public int TlUserId { get; set; }
         public DateTime Productivity_Date { get; set; }
         public decimal Applied_Hours { get; set; }
+        public decimal Pending_Orders_Hours { get; set; }
         public int Productivity_Percentage { get; set; }
         public int NPH_Productivity_Percentage { get; set; }
+        public string Remarks { get; set; }
     }
 }
     
