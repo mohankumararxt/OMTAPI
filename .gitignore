@@ -126,3 +126,7 @@
 /ProductivityUtilization/ProductivityUtilization.csproj.user
 /PrevDaySystemPendingCalc/bin/Debug/net472
 /CalculationForGOC/bin/Release/net472
+/CreateInvoiceSummary/bin/Debug/net472
+/CreateInvoiceSummary/obj
+/CreateInvoiceSummary/Properties/PublishProfiles
+/packages/Microsoft.Web.WebJobs.Publish.17.1.361
