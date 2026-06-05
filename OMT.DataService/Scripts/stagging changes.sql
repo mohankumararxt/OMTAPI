@@ -6894,3 +6894,1320 @@
 
 
 
+------------------------capture system pending daily counts----------------
+
+-- CREATE TABLE Daily_system_pending_Count (
+--Daily_system_pending_CountId INT PRIMARY KEY IDENTITY(1,1),
+--SystemofRecordId INT NOT NULL,
+--SkillSetId INT NOT NULL,
+--Date DATE NOT NULL,
+--Count INT NOT NULL,
+--Pre_day_count INT NULL,
+--);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--alter table Daily_system_pending_Count
+--ADD CONSTRAINT fk_Daily_system_pending_Count_SystemofRecordId
+--FOREIGN KEY (SystemofRecordId)
+--REFERENCES SystemofRecord(SystemofRecordId);
+
+
+
+
+---------------------------------lr doc prep and lr no verify n submit  changes ----------------------
+
+--insert into templatecolumns values(
+--78,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_Doc_Prep_Verification
+--add Ha_Status int 
+
+--ALTER TABLE LR_Doc_Prep_Verification
+--ADD CONSTRAINT DF_LR_Doc_Prep_Verification_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_Doc_Prep_Verification set ha_status = 0
+
+--insert into templatecolumns values(
+--757,1,'Ha_Status','Ha_Status','int',0,0
+--)
+
+--alter table LR_No_Verification_Verify_And_Submit
+--add Ha_Status int 
+
+--ALTER TABLE LR_No_Verification_Verify_And_Submit
+--ADD CONSTRAINT DF_LR_No_Verification_Verify_And_Submit_Ha_Status DEFAULT 0 FOR Ha_Status;
+
+--update LR_No_Verification_Verify_And_Submit set ha_status = 0
+
+--CREATE TABLE SkillSet_HAStatus
+--(
+--	Id INT PRIMARY KEY IDENTITY(1,1),
+--	SkillSetId INT NOT NULL,
+--    Ha_Status NVARCHAR(50) NOT NULL,
+--    IsActive BIT NOT NULL,
+   
+--);
+
+--alter table SkillSet_HAStatus
+--ADD CONSTRAINT fk_SkillSet_HAStatus_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--INSERT INTO SkillSet_HAStatus 
+--VALUES 
+--(673,'2,3',1),
+--(78,'2,3',1),
+--(757,'2,3',1)
+
+--alter sp getorderbypo_threshold
+--alter sp getorderbyhardstate_threshold
+--alter sp getorderbyweightage_threshold
+
+
+----------------------------------------PREV DAY SYSYTE PEND---------------------
+
+--create sci skillsets syystem pending tables
+
+--alter table LR_1ST_KEY_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_Doc_Prep_Verification_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table LR_No_Verification_Verify_And_Submit_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RIC_Sys_Pen
+--add SystemPending_date DATE
+
+--alter table RICAOM_Sys_Pen
+--add SystemPending_date DATE
+
+--create sp BackupSkillset_SysPen
+--create Calculate_PreDay_SystemPending_Counts sp 
+-- create function GetBusinessDateFromUtc
+
+
+--update SciPendingStatusSkillsets set Scheduled_Time = '04.30 PM' where Scheduled_Time = '12.30 PM'
+
+
+
+
+-------------------------------------BOT QUERIES------------------------------
+
+--CREATE VIEW dbo.UserSkillsets_Bot	
+--AS	
+--SELECT	
+--    sor.SystemOfRecordId,	
+--    sor.SystemOfRecordName,	
+	
+--    up.UserId,	
+--    up.FirstName,	
+-- 	up.LastName,	
+-- 	up.FirstName + ' ' + up.LastName AS UserName,	
+	
+--  	usk.SkillsetId,	
+--  	ss.SkillSetName,	
+	
+--  	usk.Percentage,	
+--  	usk.IsCycle1,	
+--  	usk.PriorityOrder,	
+--  	usk.IsHardStateUser,	
+--  	usk.HardStateName,	
+	
+--  	usk.ProjectId,	
+--    proj.ProjectNames	
+	
+--FROM userprofile up	
+--INNER JOIN userskillset usk	
+--    ON up.UserId = usk.UserId	
+--INNER JOIN SkillSet ss	
+--    ON usk.SkillsetId = ss.SkillsetId	
+--INNER JOIN SystemOfRecord sor	
+--    ON ss.SystemofRecordId = sor.SystemofRecordId	
+	
+--OUTER APPLY (	
+--    SELECT	
+--        STRING_AGG(mp.ProjectName, ', ') AS ProjectNames	
+--    FROM STRING_SPLIT(usk.ProjectId, ',') sp	
+--    LEFT JOIN MasterProjectName mp	
+--        ON mp.ProjectId = LTRIM(RTRIM(sp.value))	
+--    AND mp.SkillsetId = usk.SkillsetId	
+--       AND mp.IsActive   = 1	
+--) proj	
+	
+--WHERE	
+--    up.IsActive = 1	
+--    AND ss.IsActive = 1	
+--    AND sor.IsActive = 1	
+--    AND usk.IsActive = 1	
+	
+	
+--CREATE VIEW dbo.Checkin_Details_Bot		
+--AS		
+		
+--SELECT		
+--	uc.UserId,	
+--	up.FirstName,	
+--	up.LastName,	
+--	up.FirstName + ' ' + up.LastName AS UserName,	
+		
+--	uc.Checkin,	
+--	uc.Checkout,	
+--	uc.CheckIn_date,	
+--	uc.Prod_Util_Calculated,	
+		
+--	tm.TeamName,	
+--	tm.TeamId	
+		
+--FROM User_Checkin uc		
+		
+--INNER JOIN UserProfile  up		
+--	ON uc.UserId = up.UserId  	
+--LEFT JOIN TeamAssociation ta		
+--	ON uc.UserId = ta.UserId  	
+--LEFT JOIN Teams tm		
+--	ON ta.TeamId = tm.TeamId AND tm.IsActive = 1	
+ 		
+--WHERE		
+		
+--	up.IsActive = 1	
+--	AND uc.Prod_Util_Calculated = 0	
+--	AND uc.Checkin IS NOT NULL	
+--	AND uc.Checkout IS NOT NULL	
+--	AND uc.CheckIn_date IN (	
+--    CAST(GETUTCDATE() AS DATE),		
+--    CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE)		
+--)		
+		
+		
+--Create table BotViews
+--(
+--Id int IDENTITY(1,1) primary key,
+--View_Name NVARCHAR(100) not null,
+--Description NVARCHAR(MAX) not null
+--)
+
+
+--insert into BotViews values
+--('UserSkillsets_Bot','Provides a unified view of user skillsets, systems of record, projects, cycles, hard state classifications, and weightage details to determine skillset priority, order assignment logic, and user eligibility across Cycle 1 and Cycle 2.'),
+--('Checkin_Details_Bot','This view combines user profile details, team information, and check-in/check-out timestamps into a single dataset. It is used to compare each user’s check-in date and time against their check-out date and time to determine whether the attendance record is valid or invalid. The view supports queries to identify users with incorrect check-in data and to list such users individually or grouped by team for monitoring and reporting.')
+
+--Create table BotViews_ColumnDetails
+--(
+--Id int IDENTITY(1,1) primary key,
+--View_Id INT not null,
+--Column_Name NVARCHAR(50) not null,
+--Data_Type NVARCHAR(20) not null,
+--Is_Nullable BIT not null,
+--Column_Description NVARCHAR(300) not null
+--)
+
+--ALTER TABLE BotViews_ColumnDetails
+--ADD CONSTRAINT fk_BotViews_ColumnDetails_View_Id
+--FOREIGN KEY (View_Id)
+--REFERENCES BotViews(Id);
+
+--update BotViews_ColumnDetails set Column_Description = 'Unique numeric identifier assigned to each user. This value is system-generated and is used to uniquely identify a user across all tables and processes.' where id in (3,16)
+--update BotViews_ColumnDetails set Column_Description = 'The user’s given name. This represents the first part of the user’s full name and is provided by the user or captured during registration.' where id in( 4,17)
+--update BotViews_ColumnDetails set Column_Description = 'The user’s family name or surname. This represents the second part of the user’s full name and is provided by the user or captured during registration.' where id in (5,18)
+--update BotViews_ColumnDetails set Column_Description = 'The full display name of the user, generated by concatenating FirstName and LastName with a space in between.' where id in (6,19)
+--update BotViews_ColumnDetails set Column_Description = 'Human-readable name of the skill set (process). Each skill set represents a specific type of work or process and belongs to a parent SystemOfRecord.' where id = 8
+--update BotViews_ColumnDetails set Column_Description = 'Defines the proportion of daily orders that should be allocated to the user for a specific skill set. This value controls workload distribution across multiple skill sets assigned to the same user.' where id = 9
+--update BotViews_ColumnDetails set Column_Description = 'Indicates whether the skill set assignment belongs to Cycle 1. Users can have different skill sets assigned across multiple work cycles. Value 1 means the skill set is part of Cycle 1; value 0 means the skill set belongs to cycle 2' where id = 10
+--update BotViews_ColumnDetails set Column_Description = 'Determines the order in which skill sets are considered when assigning orders to the user. Skill sets with a lower priority number are assigned orders first, followed by higher priority numbers.' where id = 11
+--update BotViews_ColumnDetails set Column_Description = 'Indicates whether the user is authorized and experienced to handle hard state orders from the SCI system. Value 1 means the user can work on hard state orders; value 0 means the user cannot work on hard state orders.' where id = 12
+--update BotViews_ColumnDetails set Column_Description = 'Name of the SCI hard state(s) that the user is allowed to work on. This value is applicable only when IsHardStateUser is enabled and restricts the user’s assignment to specific hard state categories.' where id = 13
+--update BotViews_ColumnDetails set Column_Description = 'Represents If the skillset is under cycle 1' where id = 10
+--update BotViews_ColumnDetails set Column_Description = 'Represents rank of skillsets which will determine the order flow' where id = 11
+--update BotViews_ColumnDetails set Column_Description = 'Represents if the user is assigned with hard states' where id = 12
+--update BotViews_ColumnDetails set Column_Description = 'Represents the name of the hardstates' where id = 13
+--update BotViews_ColumnDetails set Column_Description = 'Represents FirstName Of User' where id = 17
+--update BotViews_ColumnDetails set Column_Description = 'Represents LastName Of User' where id = 18
+--update BotViews_ColumnDetails set Column_Description = 'Represents FirstName Of User' where id = 4
+--update BotViews_ColumnDetails set Column_Description = 'Represents the combination of FirstName and Lastname Of User' where id = 19
+--update BotViews_ColumnDetails set Column_Description = 'Represents datetime in which user has checked in' where id = 20
+--update BotViews_ColumnDetails set Column_Description = 'Represents datetime in which user has checked out' where id = 21
+--update BotViews_ColumnDetails set Column_Description = 'Represents checkin date which user selected during check-in' where id = 22
+--update BotViews_ColumnDetails set Column_Description = 'Represents if the orders done in this time frame is acounted for productivity and utilization calculation' where id = 23
+--update BotViews_ColumnDetails set Column_Description = 'Unique numeric identifier assigned to a skill set (process). This value is system-generated and uniquely identifies a specific process across the application. It is used as the primary reference for the skill set in all related tables.' where id in (7)
+--update BotViews_ColumnDetails set Column_Description = 'Unique identifier for a parent process that groups multiple skillsets. Used for precise selection and joining with related skillsets and orders.' where id in (1)
+--update BotViews_ColumnDetails set Column_Description = 'Descriptive name of the parent process that groups multiple skillsets. Used to select and filter the process when the identifier is not provided.' where id in (2)
+--update BotViews_ColumnDetails set Column_Description = 'Stores the date and time when the user starts their session by checking in. Used to track the beginning of user activity.' where id in (20)
+--update BotViews_ColumnDetails set Column_Description = 'Represents the name of a team created in the system. Users are associated with a team for grouping.' where id in (24)
+--update BotViews_ColumnDetails set Column_Description = 'Unique identifier for a team. Used to select, reference, and associate users with a specific team in the system.' where id in (25)
+--update BotViews_ColumnDetails set Column_Description = 'Indicates whether orders completed within a particular time frame was accounted for productivity and utilization calculations or not.' where id in (23)
+--update BotViews_ColumnDetails set Column_Description = 'Unique identifier for a team. Used to select, reference, and associate users with a specific team in the system.' where id in (14)
+--update BotViews_ColumnDetails set Column_Description = 'Indicates whether orders completed within a particular time frame was accounted for productivity and utilization calculations or not.' where id in (15)
+ 
+  --update BotViews set Description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+ --update BotVisds set Description = 'This view combines user profile details, team information, and check-in/check-out timestamps into a single dataset. It is used to compare each user’s check-in date and time against their check-out date and time to determine whether the attendance record is valid or invalid. The view supports queries to identify users with incorrect check-in data and to list such users individually or grouped by team for monitoring and reporting.' where id = 2
+
+
+-- CREATE VIEW dbo.System_Pending_Tat			
+--AS			
+			
+--SELECT			
+--    th.Tat_HistoryId,			
+			
+--    sp.Id AS SciPendingStatusSkillsetsId,			
+--    sp.SkillSetId,			
+--    ss.SkillSetName,			
+			
+--    sp.Scheduled_Days,			
+--    sp.Scheduled_Time,			
+			
+--    sp.IsActive AS CurrentStatus,			
+--    ts.TatStatus_Name,			
+			
+--    th.TatDate,			
+			
+--    up.FirstName + ' ' + up.LastName AS DisabledBy,			
+--    up1.FirstName + ' ' + up1.LastName AS EnabledBy,			
+			
+--    th.DisabledTime,			
+--    th.EnabledTime,			
+			
+--    CASE			
+--        WHEN th.DisabledTime IS NOT NULL AND th.EnabledTime IS NULL THEN 'Disabled'			
+--        WHEN th.EnabledTime IS NOT NULL THEN 'Enabled'			
+--        ELSE 'No History'			
+--    END AS HistoryAction			
+			
+--FROM SciPendingStatusSkillsets sp			
+			
+--LEFT JOIN Tat_History th			
+--    ON sp.Id = th.SciPendingStatusSkillsetsId			
+			
+--LEFT JOIN SkillSet ss			
+--    ON sp.SkillSetId = ss.SkillSetId			
+			
+--LEFT JOIN TatStatus ts			
+--    ON sp.IsActive = ts.TatStatus_Value			
+			
+--LEFT JOIN UserProfile up			
+--    ON th.DisabledBy = up.UserId			
+			
+--LEFT JOIN UserProfile up1			
+--    ON th.EnabledBy = up1.UserId;			
+
+
+
+
+--CREATE VIEW vw_ProdUtilTracker_All
+--AS
+
+--SELECT * 
+--FROM Prod_Util_Tracker
+
+--UNION ALL
+
+--SELECT *
+--FROM Prod_Util_Tracker_bckp;
+
+
+--CREATE VIEW dbo.Completion_Count_AgentAndTeam							
+--AS							
+							
+							
+--SELECT							
+--    p.Prod_Util_Tracker_Id,							
+--    p.UserId,							
+--	u.FirstName,						
+--	u.LastName,						
+--	u.FirstName + ' ' + u.LastName AS UserName,						
+							
+							
+--    ta.TeamId,							
+--    t.TeamName,							
+							
+--    --p.OrderId,							
+--    p.Status,							
+--ps.Status as StatusName,							
+							
+--    p.SkillSetId,							
+--    ss.SkillSetName,							
+							
+--    p.SystemOfRecordId,							
+--    sor.SystemOfRecordName,							
+							
+--    p.StartDate,							
+--    p.EndDate,							
+--    p.TimeTaken,							
+							
+--    --p.Productivity_Date,							
+--    p.CheckIn_date							
+							
+--FROM							
+--(							
+--    SELECT * FROM Prod_Util_Tracker							
+--    UNION ALL							
+--    SELECT * FROM Prod_Util_Tracker_bckp							
+--) p							
+							
+--LEFT JOIN UserProfile u							
+--    ON p.UserId = u.UserId AND u.IsActive = 1							
+							
+--LEFT JOIN TeamAssociation ta							
+--    ON p.UserId = ta.UserId							
+							
+--LEFT JOIN Teams t							
+--    ON ta.TeamId = t.TeamId							
+							
+--LEFT JOIN SkillSet ss							
+--    ON p.SkillSetId = ss.SkillSetId AND ss.IsActive = 1							
+							
+--LEFT JOIN SystemOfRecord sor							
+--    ON p.SystemOfRecordId = sor.SystemOfRecordId AND sor.IsActive = 1							
+							
+--LEFT JOIN ProcessStatus ps							
+--	ON p.SystemOfRecordId = ps.SystemOfRecordId AND p.Status = ps.Id						
+
+
+
+-- insert into BotViews values
+--('System_Pending_Tat','System_Pending_Tat view provides both current and historical status of System Pending TAT configurations for each skillset. It combines skillset scheduling details with TAT enable/disable history. The view includes skillset name, scheduled days, scheduled execution time, current status (Enabled/Disabled), TAT date, and user details for who enabled or disabled the TAT along with timestamps. Each row may represent either a historical action from the TAT history table or the current configuration when no history exists. This view should be used to answer questions related to skillset schedules, which skillsets run on specific days, current TAT status, enable/disable actions.')
+
+--update BotViews_ColumnDetails set Is_Nullable = 0 where id in (29,30)
+
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for each TAT history record representing a specific enable or disable action for a skillset schedule.'  where id = 26
+--UPDATE BotViews_ColumnDetails SET Column_Description='Identifier linking the record to the configured system pending skillset schedule.' where id = 27
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique numeric identifier assigned to a skill set (process) which represents the skillset associated with the system pending TAT configuration.' where id = 28
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the skillset for which the system pending TAT schedule and status are configured.' where id = 29
+--UPDATE BotViews_ColumnDetails SET Column_Description='Days of the week when the system pending TAT process is scheduled to run (example: Mon-Fri, Mon-Sun, Sat, Sun).' where id = 30
+--UPDATE BotViews_ColumnDetails SET Column_Description='Scheduled execution time for the system pending TAT process for the skillset.' where id = 31
+--UPDATE BotViews_ColumnDetails SET Column_Description='Current status flag of the system pending TAT for the skillset where 1 indicates Enabled and 0 indicates Disabled.' where id = 32
+--UPDATE BotViews_ColumnDetails SET Column_Description='Text representation of the TAT status such as Enabled or Disabled for easier interpretation.' where id = 33
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which the TAT status change (enable or disable action) was recorded.' where id = 34
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the user who disabled the system pending TAT for the skillset.' where id = 35
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the user who enabled the system pending TAT for the skillset.' where id = 36
+--UPDATE BotViews_ColumnDetails SET Column_Description='Timestamp when the system pending TAT was disabled for the skillset.' where id = 37
+--UPDATE BotViews_ColumnDetails SET Column_Description='Timestamp when the system pending TAT was enabled for the skillset.' where id = 38
+--UPDATE BotViews_ColumnDetails SET Column_Description='Indicates the type of historical action such as Enabled, Disabled, or No History for the skillset schedule.' where id = 39
+
+-- insert into BotViews values
+--('Completion_Count_AgentAndTeam','Completion_Count_AgentAndTeam is a reporting view that provides order processing information at both agent and team level. Each record represents an order processed by an agent and includes details such as UserName (agent name), TeamName, SkillSetName, SystemOfRecordName, StartDate, EndDate, TimeTaken, and Status. This view can be used to calculate completion counts by filtering on agent, team, skillset, system of record, and date. The StartDate and EndDate columns are stored in UTC. When users provide a date, it is typically in IST (Indian Standard Time), so the date should be converted to the corresponding UTC range before filtering records. Completion counts are usually calculated using COUNT(*) with filters on UserName, TeamName, SkillSetName, SystemOfRecordName, and the appropriate UTC date range derived from the user-provided date. This view supports questions related to agent completion counts, team completion counts, skillset-based completion counts, system-of-record-based completion counts, and performance analysis based on processed orders.')
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for each productivity tracking record representing an order processed by an agent.' WHERE Id = 40;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier of the agent who processed the order.' WHERE Id = 41;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'First name of the agent who processed the order.' WHERE Id = 42;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Last name of the agent who processed the order.' WHERE Id = 43;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Full name of the agent formed by combining first name and last name.' WHERE Id = 44;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier of the team to which the agent currently belongs.' WHERE Id = 45;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the team responsible for processing the order.' WHERE Id = 46;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Processing status identifier of the order.' WHERE Id = 47;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Readable name of the order processing status such as Completed, Pending, or In Progress.' WHERE Id = 48;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for the skillset under which the order was processed.' WHERE Id = 49;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the skillset associated with the processed order.' WHERE Id = 50;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Unique identifier for a parent process that groups multiple skillsets. Used for precise selection and joining with related skillsets and orders.' WHERE Id = 51;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Name of the system of record from which the order originated.' WHERE Id = 52;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC timestamp representing when the agent started processing the order in UTC.' WHERE Id = 53;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC timestamp representing when the agent finished processing the order in UTC.' WHERE Id = 54;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Total time taken by the agent to process and complete the order.' WHERE Id = 55;
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Date when the agent checked in for work, used for productivity tracking.' WHERE Id = 56;
+
+
+
+--update BotViews_ColumnDetails set Is_Nullable = 0 where id in (42,43,44,48,50,52)
+
+-------------------------------------------normalstate changes-----------------------------------
+
+-- CREATE TABLE  MasterNormalStates (
+--MasterNormalStateId INT PRIMARY KEY IDENTITY(1,1),
+--SkillSetId INT NOT NULL,
+--NormalStateCode NVARCHAR(200) NOT NULL,
+--NormalStateName NVARCHAR(200) NOT NULL,
+--IsActive BIT NOT NULL,
+--CreatedDate datetime not null
+--);
+
+
+--ALTER TABLE MasterNormalStates
+--ADD CONSTRAINT fk_MasterNormalStates_SkillSetId
+--FOREIGN KEY (SkillSetId)
+--REFERENCES SkillSet(SkillSetId);
+
+--insert into MasterNormalStates values
+--(1,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(1,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(1,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(1,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(1,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(1,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(1,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(1,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(1,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(1,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(1,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(1,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(1,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(1,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(1,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(1,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(1,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(1,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(1,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(1,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(1,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(1,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(1,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(1,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(1,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(1,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(1,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(1,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(1,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(1,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(1,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(1,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(1,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(1,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(1,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(1,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(1,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(1,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(1,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(1,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(1,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(1,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(1,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(1,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(1,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(1,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(2,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(2,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(2,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(2,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(2,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(2,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(2,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(2,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(2,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(2,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(2,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(2,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(2,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(2,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(2,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(2,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(2,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(2,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(2,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(2,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(2,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(2,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(2,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(2,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(2,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(2,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(2,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(2,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(2,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(2,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(2,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(2,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(2,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(2,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(2,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(2,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(2,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(2,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(2,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(2,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(2,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(2,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(2,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(2,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(2,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(2,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(3,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(3,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(3,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(3,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(3,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(3,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(3,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(3,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(3,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(3,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(3,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(3,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(3,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(3,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(3,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(3,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(3,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(3,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(3,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(3,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(3,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(3,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(3,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(3,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(3,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(3,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(3,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(3,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(3,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(3,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(3,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(3,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(3,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(3,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(3,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(3,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(3,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(3,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(3,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(3,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(3,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(3,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(3,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(3,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(3,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(3,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(4,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(4,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(4,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(4,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(4,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(4,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(4,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(4,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(4,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(4,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(4,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(4,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(4,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(4,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(4,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(4,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(4,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(4,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(4,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(4,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(4,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(4,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(4,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(4,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(4,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(4,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(4,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(4,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(4,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(4,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(4,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(4,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(4,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(4,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(4,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(4,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(4,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(4,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(4,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(4,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(4,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(4,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(4,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(4,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(4,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(4,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(77,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(77,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(77,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(77,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(77,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(77,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(77,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(77,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(77,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(77,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(77,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(77,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(77,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(77,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(77,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(77,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(77,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(77,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(77,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(77,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(77,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(77,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(77,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(77,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(77,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(77,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(77,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(77,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(77,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(77,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(77,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(77,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(77,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(77,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(77,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(77,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(77,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(77,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(77,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(77,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(77,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(77,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(77,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(77,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(77,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(77,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(78,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(78,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(78,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(78,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(78,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(78,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(78,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(78,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(78,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(78,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(78,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(78,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(78,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(78,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(78,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(78,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(78,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(78,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(78,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(78,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(78,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(78,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(78,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(78,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(78,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(78,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(78,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(78,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(78,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(78,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(78,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(78,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(78,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(78,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(78,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(78,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(78,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(78,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(78,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(78,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(78,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(78,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(78,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(78,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(78,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(78,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(673,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(673,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(673,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(673,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(673,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(673,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(673,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(673,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(673,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(673,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(673,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(673,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(673,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(673,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(673,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(673,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(673,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(673,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(673,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(673,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(673,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(673,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(673,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(673,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(673,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(673,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(673,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(673,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(673,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(673,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(673,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(673,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(673,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(673,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(673,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(673,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(673,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(673,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(673,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(673,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(673,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(673,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(673,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(673,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(673,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(673,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(674,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(674,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(674,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(674,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(674,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(674,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(674,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(674,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(674,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(674,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(674,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(674,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(674,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(674,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(674,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(674,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(674,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(674,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(674,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(674,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(674,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(674,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(674,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(674,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(674,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(674,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(674,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(674,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(674,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(674,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(674,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(674,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(674,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(674,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(674,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(674,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(674,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(674,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(674,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(674,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(674,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(674,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(674,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(674,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(674,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(674,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(692,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(692,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(692,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(692,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(692,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(692,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(692,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(692,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(692,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(692,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(692,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(692,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(692,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(692,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(692,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(692,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(692,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(692,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(692,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(692,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(692,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(692,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(692,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(692,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(692,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(692,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(692,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(692,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(692,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(692,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(692,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(692,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(692,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(692,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(692,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(692,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(692,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(692,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(692,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(692,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(692,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(692,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(692,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(692,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(692,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(692,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(694,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(694,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(694,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(694,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(694,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(694,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(694,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(694,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(694,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(694,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(694,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(694,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(694,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(694,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(694,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(694,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(694,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(694,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(694,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(694,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(694,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(694,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(694,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(694,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(694,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(694,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(694,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(694,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(694,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(694,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(694,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(694,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(694,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(694,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(694,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(694,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(694,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(694,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(694,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(694,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(694,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(694,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(694,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(694,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(694,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(694,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(695,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(695,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(695,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(695,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(695,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(695,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(695,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(695,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(695,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(695,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(695,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(695,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(695,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(695,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(695,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(695,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(695,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(695,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(695,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(695,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(695,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(695,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(695,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(695,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(695,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(695,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(695,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(695,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(695,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(695,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(695,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(695,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(695,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(695,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(695,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(695,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(695,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(695,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(695,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(695,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(695,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(695,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(695,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(695,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(695,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(695,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(696,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(696,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(696,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(696,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(696,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(696,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(696,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(696,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(696,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(696,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(696,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(696,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(696,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(696,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(696,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(696,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(696,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(696,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(696,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(696,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(696,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(696,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(696,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(696,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(696,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(696,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(696,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(696,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(696,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(696,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(696,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(696,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(696,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(696,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(696,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(696,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(696,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(696,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(696,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(696,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(696,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(696,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(696,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(696,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(696,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(696,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(697,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(697,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(697,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(697,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(697,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(697,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(697,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(697,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(697,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(697,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(697,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(697,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(697,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(697,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(697,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(697,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(697,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(697,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(697,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(697,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(697,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(697,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(697,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(697,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(697,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(697,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(697,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(697,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(697,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(697,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(697,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(697,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(697,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(697,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(697,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(697,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(697,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(697,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(697,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(697,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(697,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(697,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(697,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(697,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(697,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(697,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(757,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(757,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(757,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(757,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(757,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(757,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(757,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(757,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(757,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(757,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(757,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(757,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(757,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(757,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(757,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(757,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(757,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(757,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(757,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(757,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(757,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(757,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(757,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(757,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(757,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(757,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(757,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(757,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(757,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(757,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(757,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(757,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(757,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(757,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(757,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(757,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(757,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(757,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(757,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(757,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(757,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(757,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(757,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(757,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(757,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(757,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(758,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(758,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(758,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(758,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(758,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(758,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(758,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(758,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(758,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(758,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(758,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(758,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(758,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(758,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(758,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(758,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(758,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(758,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(758,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(758,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(758,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(758,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(758,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(758,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(758,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(758,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(758,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(758,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(758,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(758,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(758,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(758,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(758,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(758,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(758,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(758,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(758,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(758,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(758,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(758,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(758,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(758,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(758,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(758,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(758,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(758,'WY','Wyoming',1,'2026-03-23 07:10:00.000'),
+
+--(693,'AL','Alabama',1,'2026-03-23 07:10:00.000'),
+--(693,'AK','Alaska',1,'2026-03-23 07:10:00.000'),
+--(693,'AZ','Arizona',1,'2026-03-23 07:10:00.000'),
+--(693,'AR','Arkansas',1,'2026-03-23 07:10:00.000'),
+--(693,'CA','California',1,'2026-03-23 07:10:00.000'),
+--(693,'CT','Connecticut',1,'2026-03-23 07:10:00.000'),
+--(693,'DE','Delaware',1,'2026-03-23 07:10:00.000'),
+--(693,'FL','Florida',1,'2026-03-23 07:10:00.000'),
+--(693,'GA','Georgia',1,'2026-03-23 07:10:00.000'),
+--(693,'HI','Hawaii',1,'2026-03-23 07:10:00.000'),
+--(693,'ID','Idaho',1,'2026-03-23 07:10:00.000'),
+--(693,'IL','Illinois',1,'2026-03-23 07:10:00.000'),
+--(693,'IN','Indiana',1,'2026-03-23 07:10:00.000'),
+--(693,'IA','Iowa',1,'2026-03-23 07:10:00.000'),
+--(693,'KS','Kansas',1,'2026-03-23 07:10:00.000'),
+--(693,'KY','Kentucky',1,'2026-03-23 07:10:00.000'),
+--(693,'LA','Louisiana',1,'2026-03-23 07:10:00.000'),
+--(693,'ME','Maine',1,'2026-03-23 07:10:00.000'),
+--(693,'MD','Maryland',1,'2026-03-23 07:10:00.000'),
+--(693,'MA','Massachusetts',1,'2026-03-23 07:10:00.000'),
+--(693,'MN','Minnesota',1,'2026-03-23 07:10:00.000'),
+--(693,'MS','Mississippi',1,'2026-03-23 07:10:00.000'),
+--(693,'MO','Missouri',1,'2026-03-23 07:10:00.000'),
+--(693,'MT','Montana',1,'2026-03-23 07:10:00.000'),
+--(693,'NE','Nebraska',1,'2026-03-23 07:10:00.000'),
+--(693,'NV','Nevada',1,'2026-03-23 07:10:00.000'),
+--(693,'NH','New Hampshire',1,'2026-03-23 07:10:00.000'),
+--(693,'NJ','New Jersey',1,'2026-03-23 07:10:00.000'),
+--(693,'NM','New Mexico',1,'2026-03-23 07:10:00.000'),
+--(693,'NC','North Carolina',1,'2026-03-23 07:10:00.000'),
+--(693,'ND','North Dakota',1,'2026-03-23 07:10:00.000'),
+--(693,'OH','Ohio',1,'2026-03-23 07:10:00.000'),
+--(693,'OK','Oklahoma',1,'2026-03-23 07:10:00.000'),
+--(693,'OR','Oregon',1,'2026-03-23 07:10:00.000'),
+--(693,'RI','Rhode Island',1,'2026-03-23 07:10:00.000'),
+--(693,'SC','South Carolina',1,'2026-03-23 07:10:00.000'),
+--(693,'SD','South Dakota',1,'2026-03-23 07:10:00.000'),
+--(693,'TN','Tennessee',1,'2026-03-23 07:10:00.000'),
+--(693,'TX','Texas',1,'2026-03-23 07:10:00.000'),
+--(693,'UT','Utah',1,'2026-03-23 07:10:00.000'),
+--(693,'VT','Vermont',1,'2026-03-23 07:10:00.000'),
+--(693,'VA','Virginia',1,'2026-03-23 07:10:00.000'),
+--(693,'WA','Washington',1,'2026-03-23 07:10:00.000'),
+--(693,'WV','West Virginia',1,'2026-03-23 07:10:00.000'),
+--(693,'WI','Wisconsin',1,'2026-03-23 07:10:00.000'),
+--(693,'WY','Wyoming',1,'2026-03-23 07:10:00.000')
+
+
+
+--alter table userskillset
+--add NormalStateCode NVARCHAR(200)
+
+--update userskillset set NormalStateCode = '' 
+
+--alter view userskillset_bot
+ --update BotViews set description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate.Normal_States identifiers and Normal_State_Names link the assignemnets to the property state from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+
+ --insert into BotViews_ColumnDetails values
+ --(1,'NormalStateCode','nvarchar(200)',1,'Unique identifier(s) for normal states assigned to a user.If a user has normal states assigned, this column will contain values. If no normal states are assigned, this column will be NULL or empty.'),
+ -- (1,'NormalStateNames','nvarchar(4000)',1,'Comma-separated list of normal state names assigned to a user for order processing. These represent the readable state values corresponding to NormalStateCode. If a user has normal states configured, this column will contain values; if not, it will be NULL or empty.')
+
+
+ --insert into BotViews values
+ --('Order_Counts','Order_Counts is a reporting view that provides details about orders received and processed across skillsets and systems of record. Each record includes SkillSetId, SkillSetName, SystemOfRecordId, SystemOfRecordName, ReceivedDate, ReceivedCount, CompletedDate, Status, StatusName, and StatusCount. ReceivedDate represents when orders were uploaded, and ReceivedCount is the number of orders received for a skillset on that date (unique per date and skillset). CompletedDate represents when orders were processed, and multiple statuses can exist for the same date. Status and StatusName define the processing outcome, while StatusCount represents the number of orders under each status. This view helps track order volume, processing distribution, and performance across skillsets and systems.')
+
+
+-- UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for a skillset (process) under which orders are handled. Used to group and filter order data by specific workflow or processing type.'  where id = 60
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the skillset representing a specific process where users work on orders. Helps in identifying and filtering data by process name.' where id = 61
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier for a parent process that groups multiple skillsets. Used for precise selection and joining with related skillsets and orders.' where id = 62
+--UPDATE BotViews_ColumnDetails SET Column_Description='Name of the system of record that groups related skillsets. Used to categorize and filter orders across systems.' where id = 63
+--UPDATE BotViews_ColumnDetails SET Column_Description='Unique identifier representing the processing status of an order (e.g., Completed, Pending, Exception etc). Null indicates received data without status breakdown.' where id = 64
+--UPDATE BotViews_ColumnDetails SET Column_Description='Descriptive name of the order status. Helps interpret how orders are classified during processing.' where id = 65
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which orders were processed and marked with a specific status by users. Used to calculate completion counts.' where id = 66
+--UPDATE BotViews_ColumnDetails SET Column_Description='Number of orders processed under a specific status for a given skillset and date.' where id = 67
+--UPDATE BotViews_ColumnDetails SET Column_Description='Date on which orders were uploaded/received into the system (OMT). Used to track incoming workload.' where id = 68
+--UPDATE BotViews_ColumnDetails SET Column_Description='Total number of orders received for a skillset on a specific date. This value is unique per skillset, systemofrecord, and date.' where id = 69
+
+--alter userskillset_bot view for columnname chnage
+--update BotViews set description = 'This view represents the relationship between users, systems of record, skill sets, and projects. Each row shows which user is assigned to which skill set under a specific system of record. It includes user identity details, skill set configuration, workload allocation percentage, priority order, and cycle information used for order assignment logic. The view also indicates whether a user is authorized to handle hard state orders and specifies the allowed hard state categories. Project identifiers and project names link the assignments to the projects from which orders originate.Normal_States identifiers and Normal_State_Names link the assignemnets to the property state from which orders originate. This view is used by automation and decision logic to determine user eligibility, priority, and capacity when assigning and routing orders.' where id = 1
+
+--UPDATE BotViews_ColumnDetails SET column_name = 'Normal_States' ,Column_Description='Unique IDs for normal states. MUST be used for "normal states" and counts. Return only codes (e.g., AL, AK). Do NOT use names unless "normal state names" is explicitly asked.' where id = 57
+--UPDATE BotViews_ColumnDetails SET column_name = 'Normal_State_Names' ,Column_Description = 'Comma-separated list of normal state names assigned to a user for order processing.It represents readable names of normal states.' where id = 58
+
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Descriptive name of the parent process that groups multiple skillsets. Used to select and filter the process when the identifier is not provided.' where id = 52
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent started processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 53
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'UTC datetime representing when the agent finished processing the order. For user queries using an IST date, convert the date to UTC (subtract 5 hours 30 minutes) before filtering.' where id = 54
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Readable name of the order processing status such as Exception, Pending, or In Progress.' where id = 48
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Days when the process runs (e.g., Mon-Fri, Mon-Sun, Sat, Sun). If a user asks for a specific day (e.g., Monday), include records where that day is part of the range (Mon-Fri includes Monday)' where id = 30
+
+--UPDATE BotViews_ColumnDetails SET Column_Description = 'Total number of orders received for a skillset on a date. This value is repeated across status rows, so use DISTINCT or MAX to avoid duplicate counting.' where id = 69
+
+
+----------------------------------------------------new skillset addition in tat------------------------
+ 
+ 
+--insert into SciPendingStatusSkillsets values 
+--(757,1,'05:00 PM','Sat')
+
+---------------------------------------------------productivity and utilizatin changes 2026-----------------------------
+
+--alter trd invoice sp
+
+
+--ALTER TABLE GetOrderCalculation
+--add Threshold int null
+
+--ALTER TABLE utilization
+--add Threshold int null
+
+--update NonProductiveReasons set isactive = 0 where id = 8
+--update NonProductiveReasons set reasons = 'Rework/Exceptions' where id = 4
+
+--drop table NPH_Productivity
+
+--create table NPH_Productivity
+--(
+--NPH_ProductivityId int IDENTITY(1,1) primary key,
+--UserId INT NOT NULL,
+--TlUserId INT NOT NULL,
+--Productivity_Date datetime not null,
+--Applied_Hours  DECIMAL(10,1),
+--Pending_Orders_Hours DECIMAL(10,1),
+--Productivity_Percentage  INT,
+--NPH_Productivity_Percentage  INT,
+--Remarks Nvarchar(500)
+--)
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_UserId
+--FOREIGN KEY (UserId)
+--REFERENCES userprofile(UserId);
+
+--alter table NPH_Productivity
+--ADD CONSTRAINT fk_NPH_Productivity_TlUserId
+--FOREIGN KEY (TlUserId)
+--REFERENCES userprofile(UserId);
+
+--insert into NPH_Productivity values
+--(400,10,'2026-04-11',1.0,1.0,80,25,'Had training, worked on exceptions'),
+--(400,10,'2026-04-14',1.0,0.5,80,19,'Had training'),
+--(472,59,'2026-04-14',1.0,1.0,80,25,'worked on exceptions'),
+--(472,59,'2026-04-15',1.0,0.5,80,19,'Had meeting')
+
+--alter table ProcessStatus 
+--add IsInvoiceStatus BIT  
+
+--Update ProcessStatus set IsInvoiceStatus = 1 where id in (1,2,6,10,12,14,18,22)
+--Update ProcessStatus set IsInvoiceStatus = 0  where IsInvoiceStatus is null
+
+--alter [dbo].[Master_Productivity_Percentage] sp
+--alter [dbo].[Calculate_Prod_Util] sp
+
+--create VIEW vw_Prod_Util_Tracker_All
+--create Master_Productivity_Percentage_For_User_Date sp
+--create Calculate_Prod_Util_For_User_Date
+--cretae Update_Monthly_Utilization_SOR_For_User_Date
+
+
+
+--------------------------------sci invoice changes-----------------------
+
+--UPDATE Workflowstatus
+--SET ProcessType = 'LR_BANA_Verification'
+--WHERE SkillSetId = 697
+--AND ProcessType = 'LR_BANA_1st_Key_Verification';
+
+--alter getinvoice_Sci sp

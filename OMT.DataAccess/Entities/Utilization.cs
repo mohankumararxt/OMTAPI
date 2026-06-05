@@ -19,5 +19,6 @@ namespace OMT.DataAccess.Entities
         public bool IsCycle1 { get; set; }
         public bool IsHardStateUser { get; set; }
         public bool HardStateUtilized { get; set; }
+        public int? Threshold { get; set; }
     }
 }

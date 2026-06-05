@@ -116,5 +116,19 @@ namespace OMT.APIHost.Controllers
         {
             return _skillsetService.GetProjectNameList(skillsetid);
         }
+
+        //[HttpGet]
+        //[Route("GetNormalStateNameList/{skillsetid:int?}")]
+        //public ResultDTO GetNormalStateNameList(int? skillsetid)
+        //{
+        //    return _skillsetService.GetNormalStateNameList(skillsetid);
+        //}
+
+        [HttpGet]
+        [Route("GetNormalStateNameList")]
+        public ResultDTO GetNormalStateNameList([FromQuery] int? skillsetid)
+        {
+            return _skillsetService.GetNormalStateNameList(skillsetid);
+        }
     }
 }

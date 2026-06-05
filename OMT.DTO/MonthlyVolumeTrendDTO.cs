@@ -10,6 +10,7 @@
     {
         public List<int>? SystemOfRecordId { get; set; }
         public List<int>? SkillsetId { get; set; }
+        public List<int>? StatusId { get; set; }
     }
     public class MonthlyVolumeTrendResponseDTO
     {
@@ -24,6 +25,15 @@
         public int SkillsetId { get; set; }
         public string SkillsetName { get; set; }
         public dynamic MonthlyCount { get; set; }
+
+    }
+
+    public class MonthlyVolumeTrendSkillsetStatusResponseDTO
+    {
+        public int SkillsetId { get; set; }
+        public string SkillsetName { get; set; }
+        public dynamic MonthlyCount { get; set; }
+        public dynamic StatusWiseCounts { get; set; }
 
     }
     public class MonthCountDTO

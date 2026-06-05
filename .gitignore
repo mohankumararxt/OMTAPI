@@ -114,6 +114,8 @@
 /DailyStatusCountCalc/Properties/PublishProfiles
 /ProductivityUtilization/bin/Release/net472
 /ProductivityUtilization/Properties/PublishProfiles/FolderProfile.pubxml
+/PrevDaySystemPendingCalc/obj
+/CalculationForGOC/bin/Release/net472
 /Automatic_Checkout_1.30pm/bin/Release/net472
 /Automatic_Checkout_1.30pm/Properties/PublishProfiles
 /Automatic_Checkout_1.30pm/Automatic_Checkout_1.30pm.csproj.user
@@ -123,10 +125,4 @@
 /ProductivityUtilization/bin/Release/net472
 /ProductivityUtilization/Properties/PublishProfiles
 /ProductivityUtilization/ProductivityUtilization.csproj.user
-/CalculationForGOC/bin/Release/net472
-/CheckOut/bin/Release/net472
-/CreateInvoiceSummary/obj
-/PendingSciOrders/bin/Release/net472
-/PendingSciOrders_5pm/bin/Release/net472
-/PrevDaySystemPendingCalc/bin/Release/net472
-/PrevDaySystemPendingCalc/obj
+/PrevDaySystemPendingCalc/bin/Debug/net472

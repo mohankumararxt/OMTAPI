@@ -15,5 +15,6 @@ namespace OMT.DataService.Interface
         ResultDTO GetWeeklyCompletion(WeeklyCompletionDTO weeklyCompletionDTO);
         ResultDTO GetMonthlyVolumeTrend(MonthlyVolumeTrendDTO monthlyVolumeTrendDTO);
         ResultDTO GetMonthlyUtilization(MonthlyUtilizationSorDTO monthlyUtilizationSorDTO);
+        ResultDTO GetCompletedVsReceived(WeeklyCompletionDTO weeklyCompletionDTO);
     }
 }

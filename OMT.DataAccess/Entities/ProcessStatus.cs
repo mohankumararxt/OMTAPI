@@ -9,5 +9,6 @@ namespace OMT.DataAccess.Entities
         public int SystemOfRecordId { get; set; }
         public string Status { get; set; }
         public bool IsActive { get; set; }
+        public bool IsInvoiceStatus { get; set; }
     }
 }

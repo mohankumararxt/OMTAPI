@@ -46,6 +46,7 @@ namespace OMT.DataService.Utility
                                                          IsCycle1 = x.IsCycle1,
                                                          IsHardStateUser = x.IsHardStateUser,
                                                          HardStateUtilized = x.HardStateUtilized,
+                                                         Threshold = x.Threshold,
                                                      }).ToList();
 
                 if (existingdetails.Count > 0)
@@ -80,7 +81,7 @@ namespace OMT.DataService.Utility
 
         public void InsertGetOrderCalculation(ResultDTO resultDTO, int userid)
         {
-            string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
             using SqlConnection connection = new(connectionstring);
             connection.Open();
 
@@ -182,6 +183,7 @@ namespace OMT.DataService.Utility
                             IsHardStateUser = userSkillset.IsHardStateUser,
                             Utilized = userSkillset.IsCycle1 == false ? false : roundedtotalorders == 0 ? true : false,
                             HardStateUtilized = false,
+                            Threshold = skillset.Threshold,
                         };
 
                         _oMTDataContext.GetOrderCalculation.Add(getOrderCalculation);

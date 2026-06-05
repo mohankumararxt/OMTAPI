@@ -40,7 +40,7 @@ namespace OMT.DataService.Service
         private readonly IConfiguration _configuration;
         private readonly IOptions<MoveToSecondKeySettings> _moveToSecondKeySettings;
         private readonly IOptions<Create_batchesSettings> _create_batchesSettings;
-        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings,IOptions<MoveToSecondKeySettings> moveToSecondKeySettings, IOptions<Create_batchesSettings> create_batchesSettings)
+        public TemplateService(OMTDataContext oMTDataContext, IOptions<TrdStatusSettings> authSettings, IOptions<EmailDetailsSettings> emailDetailsSettings, IConfiguration configuration, IOptions<HastatusSettings> hastatusSettings, IOptions<MoveToSecondKeySettings> moveToSecondKeySettings, IOptions<Create_batchesSettings> create_batchesSettings)
         {
             _oMTDataContext = oMTDataContext;
             _authSettings = authSettings;
@@ -474,8 +474,21 @@ namespace OMT.DataService.Service
 
                         if (skillSet.SystemofRecordId == 1 && skillSet.SkillSetId == _create_batchesSettings.Value.RicSkillsetId)
                         {
-                            
+
                             CreateBatchesApiAsync(skillSet.SkillSetName);
+                        }
+
+                        //call create_batches_docprep method
+
+                        IConfigurationSection docprepssid = _configuration.GetSection("Create_batches:DocPrepSkillsetIds");
+
+                        List<int> docprepssid1 = docprepssid.AsEnumerable().Where(c => !string.IsNullOrWhiteSpace(c.Value)).Select(c => int.Parse(c.Value)).ToList();
+
+
+                        if (skillSet.SystemofRecordId == 1 && docprepssid1.Contains(skillSet.SkillSetId))
+                        {
+
+                            CreateBatchesDocPrepApiAsync("docprep");
                         }
 
                         // send mail to map product descriptions
@@ -670,6 +683,39 @@ namespace OMT.DataService.Service
                 throw;
             }
         }
+
+        private void CreateBatchesDocPrepApiAsync(string skillsetname)
+        {
+            var url = _create_batchesSettings.Value.DocPrepTriggerURL;
+
+            url = url.Replace("skillsetname", skillsetname.ToLower().Trim());
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    //client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+                    //var json = Newtonsoft.Json.JsonConvert.SerializeObject();
+                    //var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(url);
+                    var response = client.PostAsync(webApiUrl, null).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
 
         public void CallAsyncHaStatusAPI(HaStatusDTO haStatusDTO)
         {
@@ -1555,6 +1601,8 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (agentCompletedOrdersDTO.SystemOfRecordId == null && agentCompletedOrdersDTO.SkillSetId == null)
@@ -1659,8 +1707,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1809,8 +1865,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
                         dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -1968,8 +2032,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
                             dateFilterCondition = agentCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
@@ -2085,6 +2157,8 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 if (teamCompletedOrdersDTO.SystemOfRecordId == null && teamCompletedOrdersDTO.SkillSetId == null)
@@ -2189,8 +2263,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2337,8 +2419,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
                         dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                  ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2492,8 +2582,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
                             dateFilterCondition = teamCompletedOrdersDTO.DateFilter == Dateoption.FilterBasedOnCompletiontime
                                                                                      ? $"AND t.CompletionDate BETWEEN @FromDate AND @ToDate"
@@ -2727,11 +2825,11 @@ namespace OMT.DataService.Service
                                         t1.StartTime
                                     FROM 
                                         [{tablename}] AS t1
-                                    LEFT JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
-                                    LEFT JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
+                                    INNER JOIN SkillSet AS t2 ON t1.SkillSetId = t2.SkillSetId
+                                    INNER JOIN SystemOfRecord AS t3 ON t1.SystemofRecordId = t3.SystemOfRecordId
                                     WHERE 
                                         UserId = @UserId 
-                                        AND (Status IS NULL OR Status = '')
+                                        AND Status IS NULL 
                                     ORDER BY 
 	                                     t1.ispriority DESC,t1.StartTime ASC;";
 
@@ -4605,6 +4703,9 @@ namespace OMT.DataService.Service
                 using SqlConnection connection = new(connectionstring);
                 connection.Open();
 
+                TimeZoneInfo pacificZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
+
                 List<Dictionary<string, object>> allCompletedRecords = new List<Dictionary<string, object>>();
 
                 List<string> reportcol = new List<string>();
@@ -4728,8 +4829,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
 
@@ -4917,8 +5026,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
 
@@ -5108,8 +5225,16 @@ namespace OMT.DataService.Service
                             }
                             else
                             {
-                                fromDate = fromDate.AddHours(8);
-                                toDate = toDate.AddDays(1).AddHours(8);
+                                //fromDate = fromDate.AddHours(8);
+                                //toDate = toDate.AddDays(1).AddHours(8);
+
+                                // User sends date in PST/PDT
+                                DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                                DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                                // Convert PST/PDT → UTC
+                                fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                                toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                             }
 
 
@@ -5276,8 +5401,16 @@ namespace OMT.DataService.Service
                         }
                         else
                         {
-                            fromDate = fromDate.AddHours(8);
-                            toDate = toDate.AddDays(1).AddHours(8);
+                            //fromDate = fromDate.AddHours(8);
+                            //toDate = toDate.AddDays(1).AddHours(8);
+
+                            // User sends date in PST/PDT
+                            DateTime pstFrom = DateTime.SpecifyKind(fromDate, DateTimeKind.Unspecified);
+                            DateTime pstTo = DateTime.SpecifyKind(toDate.AddDays(1), DateTimeKind.Unspecified);
+
+                            // Convert PST/PDT → UTC
+                            fromDate = TimeZoneInfo.ConvertTimeToUtc(pstFrom, pacificZone);
+                            toDate = TimeZoneInfo.ConvertTimeToUtc(pstTo, pacificZone);
                         }
 
 

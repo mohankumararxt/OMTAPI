@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CheckOut
+namespace PrevDaySystemPendingCalc
 {
     // To learn more about Microsoft Azure WebJobs SDK, please see https://go.microsoft.com/fwlink/?LinkID=320976
     internal class Program
@@ -25,10 +25,9 @@ namespace CheckOut
                 config.UseDevelopmentSettings();
             }
 
-            // call method to checkout all users if not checked out
-            CheckOut_users();
+            //call method to calculate prod and util
+            PrevDaySystemPendingCalc();
         }
-
         public class EmailDetails
         {
             public List<string> ToEmailIds { get; set; }
@@ -36,10 +35,11 @@ namespace CheckOut
             public string Body { get; set; }
         }
 
-        public static void CheckOut_users()
+        public static void PrevDaySystemPendingCalc()
         {
             string EmailUrl = "";
             EmailUrl = ConfigurationManager.AppSettings["SendEmailUrl"];
+
 
             try
             {
@@ -49,20 +49,31 @@ namespace CheckOut
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-
-                    // Update users who checked in but didn’t check out after 13 hours
-                    string updateQuery = @"
-                                          UPDATE User_Checkin
-                                          SET CheckOut = GETUTCDATE()
-                                          WHERE CheckOut IS NULL 
-                                          AND CheckIn IS NOT NULL 
-                                          AND DATEADD(HOUR, 13, CheckIn) <= GETUTCDATE();";
-
-                    using (SqlCommand cmd = new SqlCommand(updateQuery, connection))
+                    using (SqlCommand spCommand = new SqlCommand("Calculate_PreDay_SystemPending_Counts", connection))
                     {
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        Console.WriteLine($"{rowsAffected} user(s) auto-checked out at {DateTime.Now}");
+                        connection.Open();
+                        spCommand.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter returnValue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        spCommand.Parameters.Add(returnValue);
+                        spCommand.ExecuteNonQuery();
+
+                        int returnCode = (int)spCommand.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Daily_system_pending_Count table updated with previous day system pending counts successfully.");
+                        }
+
                     }
 
                 }
@@ -74,8 +85,8 @@ namespace CheckOut
                 EmailDetails sendEmail = new EmailDetails
                 {
                     ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
-                    Subject = "Auto check out of users.",
-                    Body = $"CheckOut webjob failed with the following exception:  {ex.Message}",
+                    Subject = "Daily update of previous day system pending counts.",
+                    Body = $"PrevDaySystemPendingCalc webjob failed with the following exception:  {ex.Message}",
                 };
 
                 using (HttpClient client = new HttpClient())

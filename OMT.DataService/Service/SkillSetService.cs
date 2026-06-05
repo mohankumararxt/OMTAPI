@@ -70,6 +70,8 @@ namespace OMT.DataService.Service
                         }
                     }
 
+                    resultDTO.Message = "SkillSet created successfully";
+                    resultDTO.IsSuccess = true;
 
                     // send details via mail
                     var url = _emailDetailsSettings.Value.SendEmailURL;
@@ -702,11 +704,26 @@ namespace OMT.DataService.Service
                         }
 
                         uss.TotalOrderstoComplete = roundedtotalorders;
+                        uss.Threshold = threshold;
 
                         _oMTDataContext.GetOrderCalculation.Update(uss);
                         _oMTDataContext.SaveChanges();
                     }
                 }
+
+                    var userwithskillsetincycle2 = _oMTDataContext.GetOrderCalculation.Where(x => x.SkillSetId == skillsetid && x.IsActive && !x.IsCycle1).ToList();
+
+                    if(userwithskillsetincycle2.Count > 0)
+                    {
+                        foreach (var uss2 in userwithskillsetincycle2)
+                        {
+                            uss2.Threshold = threshold;
+
+                            _oMTDataContext.GetOrderCalculation.Update(uss2);
+                            _oMTDataContext.SaveChanges();
+                        }
+                    }
+                
             }
             catch (Exception ex)
             {
@@ -948,6 +965,63 @@ namespace OMT.DataService.Service
                 resultDTO.Data = groupedProjectnames;
                 resultDTO.IsSuccess = true;
                 resultDTO.Message = "List of Project Name Details";
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO GetNormalStateNameList(int? skillsetid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                var NormalStateNameList = (from mns in _oMTDataContext.MasterNormalStates
+                                           join ss in _oMTDataContext.SkillSet on mns.SkillSetId equals ss.SkillSetId
+                                           where ss.IsActive && mns.IsActive
+                                           orderby ss.SystemofRecordId, ss.SkillSetName, mns.NormalStateName
+                                           select new
+                                           {
+                                              // mns.MasterNormalStateId,
+                                               mns.SkillSetId,
+                                               ss.SkillSetName,
+                                               mns.NormalStateCode,
+                                               mns.NormalStateName
+                                           }).ToList();
+
+                if (skillsetid != null)
+                {
+                    NormalStateNameList = NormalStateNameList.Where(t => t.SkillSetId == skillsetid.Value).ToList();
+                }
+
+                var groupedNormalStateNames = NormalStateNameList.GroupBy(t => new { t.SkillSetId, t.SkillSetName })
+                                                         .Select(g => new GetNormalStateNameListDTO
+                                                         {
+                                                             //MasterNormalStateId = g.Select(t => t.MasterNormalStateId).FirstOrDefault(),
+                                                             SkillSetId = g.Key.SkillSetId,
+                                                             SkillSetName = g.Key.SkillSetName,
+                                                             NormalStateNames = g.Select(t => new NormalStateNameDTO
+                                                             {
+                                                                 NormalStateCode = t.NormalStateCode,
+                                                                 NormalStateName = t.NormalStateName,
+                                                             }).ToList()
+
+                                                         }).ToList();
+
+                if (!groupedNormalStateNames.Any())
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "No Normal State Name details found for this Skillsetid";
+                    return resultDTO;
+                }
+
+                resultDTO.Data = groupedNormalStateNames;
+                resultDTO.IsSuccess = true;
+                resultDTO.Message = "List of Normal State Name Details";
             }
             catch (Exception ex)
             {
