@@ -470,26 +470,26 @@ namespace OMT.DataService.Service
                             _oMTDataContext.SaveChanges();
                         }
 
-                        //call create_batches api
+                        ////call create_batches api
 
-                        if (skillSet.SystemofRecordId == 1 && skillSet.SkillSetId == _create_batchesSettings.Value.RicSkillsetId)
-                        {
+                        //if (skillSet.SystemofRecordId == 1 && skillSet.SkillSetId == _create_batchesSettings.Value.RicSkillsetId)
+                        //{
 
-                            CreateBatchesApiAsync(skillSet.SkillSetName);
-                        }
+                        //    CreateBatchesApiAsync(skillSet.SkillSetName);
+                        //}
 
-                        //call create_batches_docprep method
+                        ////call create_batches_docprep method
 
-                        IConfigurationSection docprepssid = _configuration.GetSection("Create_batches:DocPrepSkillsetIds");
+                        //IConfigurationSection docprepssid = _configuration.GetSection("Create_batches:DocPrepSkillsetIds");
 
-                        List<int> docprepssid1 = docprepssid.AsEnumerable().Where(c => !string.IsNullOrWhiteSpace(c.Value)).Select(c => int.Parse(c.Value)).ToList();
+                        //List<int> docprepssid1 = docprepssid.AsEnumerable().Where(c => !string.IsNullOrWhiteSpace(c.Value)).Select(c => int.Parse(c.Value)).ToList();
 
 
-                        if (skillSet.SystemofRecordId == 1 && docprepssid1.Contains(skillSet.SkillSetId))
-                        {
+                        //if (skillSet.SystemofRecordId == 1 && docprepssid1.Contains(skillSet.SkillSetId))
+                        //{
 
-                            CreateBatchesDocPrepApiAsync("docprep");
-                        }
+                        //    CreateBatchesDocPrepApiAsync("docprep");
+                        //}
 
                         // send mail to map product descriptions
 
