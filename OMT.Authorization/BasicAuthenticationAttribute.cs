@@ -20,9 +20,8 @@ namespace OMT.Authorization
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             System.Text.Encodings.Web.UrlEncoder encoder,
-            ISystemClock clock,
             IConfiguration configuration)
-            : base(options, logger, encoder, clock)
+            : base(options, logger, encoder)
         {
             _basicAuthCredential = basicAuthCredential;
             _configuration = configuration;

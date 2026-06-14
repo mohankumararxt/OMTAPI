@@ -4,7 +4,7 @@ using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
 using OMT.DTO;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace OMT.DataService.Service
 {
