@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,12 +22,6 @@ namespace TrdIntegrator
         // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
-            var config = new JobHostConfiguration();
-
-            if (config.IsDevelopment)
-            {
-                config.UseDevelopmentSettings();
-            }
 
             // var host = new JobHost(config);
             // The following code ensures that the WebJob will be running continuously

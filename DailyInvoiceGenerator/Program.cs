@@ -1,12 +1,10 @@
-﻿using Microsoft.Azure.WebJobs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Policy;
 using System.Text;
 
 
@@ -19,12 +17,6 @@ namespace DailyInvoiceGenerator
         // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
-            var config = new JobHostConfiguration();
-
-            if (config.IsDevelopment)
-            {
-                config.UseDevelopmentSettings();
-            }
 
             //call method to exceute invoice storeprocedure
             callInvoiceSp();

@@ -1,7 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;

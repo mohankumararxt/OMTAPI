@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
@@ -8,7 +7,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,12 +19,6 @@ namespace PendingSciOrders_5pm
         // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
-            var config = new JobHostConfiguration();
-
-            if (config.IsDevelopment)
-            {
-                config.UseDevelopmentSettings();
-            }
 
             //var host = new JobHost(config);
             //// The following code ensures that the WebJob will be running continuously

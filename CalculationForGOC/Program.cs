@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -17,12 +16,6 @@ namespace CalculationForGOC
         // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
-            var config = new JobHostConfiguration();
-
-            if (config.IsDevelopment)
-            {
-                config.UseDevelopmentSettings();
-            }
 
             //call method to update goc table
             DailyCalculation_Threshold();

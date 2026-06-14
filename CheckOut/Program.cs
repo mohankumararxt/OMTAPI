@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -18,12 +17,6 @@ namespace CheckOut
         // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
-            var config = new JobHostConfiguration();
-
-            if (config.IsDevelopment)
-            {
-                config.UseDevelopmentSettings();
-            }
 
             // call method to checkout all users if not checked out
             CheckOut_users();
