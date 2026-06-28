@@ -17,6 +17,7 @@ namespace CreateInvoiceSummary
         static void Main(string[] args)
         {
             callInvoiceSummarySp();
+            callInvoiceSummarySp_RIC();
         }
 
         public static void callInvoiceSummarySp()
@@ -31,6 +32,54 @@ namespace CreateInvoiceSummary
                     connection.Open();
 
                     using (SqlCommand spCommand = new SqlCommand("GenerateInvoiceSummary", connection))
+                    {
+                        spCommand.CommandType = CommandType.StoredProcedure;
+
+                        spCommand.CommandTimeout = 300;
+
+                        SqlParameter returnValue = new SqlParameter
+                        {
+                            ParameterName = "@RETURN_VALUE",
+                            Direction = ParameterDirection.ReturnValue
+                        };
+
+                        spCommand.Parameters.Add(returnValue);
+                        spCommand.ExecuteNonQuery();
+
+                        int returnCode = (int)spCommand.Parameters["@RETURN_VALUE"].Value;
+
+                        if (returnCode != 1)
+                        {
+                            throw new InvalidOperationException("Stored Procedure call failed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Invoice summary details uploaded successfully.");
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+
+        }
+
+        public static void callInvoiceSummarySp_RIC()
+        {
+
+            try
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    using (SqlCommand spCommand = new SqlCommand("GenerateInvoiceSummary_RIC", connection))
                     {
                         spCommand.CommandType = CommandType.StoredProcedure;
 
