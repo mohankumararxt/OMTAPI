@@ -1,20 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OMT.DataAccess.Context;
 using OMT.DataAccess.Entities;
 using OMT.DataService.Interface;
-using OMT.DataService.Settings;
 using OMT.DTO;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System.Text.Json;
 
 namespace OMT.DataService.Service
 {
@@ -512,36 +503,77 @@ namespace OMT.DataService.Service
                 string? connectionstring = _oMTDataContext.Database.GetConnectionString();
                 using SqlConnection connection = new(connectionstring);
 
-                using SqlCommand command = new()
+                string AgentId = string.Empty;
+
+                // Parse inner JSON
+                using var innerDoc = JsonDocument.Parse(uploadShiftAssociationDetailsDTO.JsonData);
+                for(int i=0; i< innerDoc.RootElement.GetProperty("Records").GetArrayLength(); i++ )
                 {
-                    Connection = connection,
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = "UploadShiftDetails"
-                };
+                    var record = innerDoc.RootElement.GetProperty("Records")[i];
 
-                command.Parameters.AddWithValue("@jsonData", uploadShiftAssociationDetailsDTO.JsonData);
-                command.Parameters.AddWithValue("@UserId", userid);
+                    // Extract fixed fields
+                    string agentId = record.GetProperty("AgentEmployeeId").GetString() ?? "";
+                    string tlId = record.GetProperty("TLEmployeeId").GetString() ?? "";
+                    string primarySystem = record.GetProperty("PrimarySystemOfRecordId").GetString() ?? "";
 
-                SqlParameter returnValue = new()
-                {
-                    ParameterName = "@RETURN_VALUE",
-                    Direction = ParameterDirection.ReturnValue
-                };
-                command.Parameters.Add(returnValue);
+                    Console.WriteLine($"Agent: {agentId}, TL: {tlId}, System: {primarySystem}");
 
-                connection.Open();
-                command.ExecuteNonQuery();
-
-                int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
-
-                if (returnCode != 1)
-                {
-                    throw new InvalidOperationException("Something went wrong while uploading the shift association details,please check the shift details.");
+                    // Extract dynamic date-based columns
+                    var dateColumns = new Dictionary<string, string>();
+                    foreach (var property in record.EnumerateObject())
+                    {
+                        if (DateTime.TryParse(property.Name, out _)) // check if property name is a date
+                        {
+                            var shiftassexitrecord = _oMTDataContext.ShiftAssociation.Where(x => x.AgentEmployeeId == agentId && x.ShiftDate == Convert.ToDateTime(property.Name)).FirstOrDefault();
+                            if (shiftassexitrecord != null)
+                            {
+                                AgentId = AgentId + (AgentId.Length >0 ? "," + agentId : agentId) ;
+                                break;
+                            }
+                        }
+                    }
                 }
 
-                resultDTO.IsSuccess = true;
-                resultDTO.Message = "Shift association details uploaded successfully";
-                resultDTO.StatusCode = "200";
+                if (AgentId.Length == 0)
+                {
+
+                    using SqlCommand command = new()
+                    {
+                        Connection = connection,
+                        CommandType = CommandType.StoredProcedure,
+                        CommandText = "UploadShiftDetails"
+                    };
+
+                    command.Parameters.AddWithValue("@jsonData", uploadShiftAssociationDetailsDTO.JsonData);
+                    command.Parameters.AddWithValue("@UserId", userid);
+
+                    SqlParameter returnValue = new()
+                    {
+                        ParameterName = "@RETURN_VALUE",
+                        Direction = ParameterDirection.ReturnValue
+                    };
+                    command.Parameters.Add(returnValue);
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+
+                    int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                    if (returnCode != 1)
+                    {
+                        throw new InvalidOperationException("Something went wrong while uploading the shift association details,please check the shift details.");
+                    }
+
+                    resultDTO.IsSuccess = true;
+                    resultDTO.Message = "Shift association details uploaded successfully";
+                    resultDTO.StatusCode = "200";
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.Message = "The following Agent(s) association details already exists : " + AgentId;
+                    resultDTO.StatusCode = "500";
+                }
             }
             catch (Exception ex)
             {

@@ -114,3 +114,6 @@
 /PendingSciOrders_4.30pm/bin/Release/net472
 /PendingSciOrders_5pm/bin/Release/net472
 /PrevDaySystemPendingCalc/bin/Release/net472
+/PrevDaySystemPendingCalc/bin/Debug/net472
+/PendingSciOrders_4.30pm/bin/Debug/net8.0
+/CreateInvoiceSummary/bin/Release/net472
