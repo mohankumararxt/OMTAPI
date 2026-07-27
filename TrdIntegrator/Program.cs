@@ -39,6 +39,9 @@ namespace TrdIntegrator
             int pendingTRDidno = GetLastPendingTrdOrdersId();
             GetTrdPendingOrders(pendingTRDidno);
 
+            int normalTRD_HA3_idno = GetLastNormalTrd_HA3_OrdersId();
+            GetTrd_HA3_Orders(normalTRD_HA3_idno);
+
         }
 
         public class EmailDetails
@@ -151,6 +154,109 @@ namespace TrdIntegrator
             }
         }
 
+        public static void GetTrd_HA3_Orders(int normalTRD_HA3_idno)
+        {
+            string Url = "";
+
+            try
+            {
+                Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+                string connectionString = ConfigurationManager.ConnectionStrings["TRDNewDbConnectionString"].ConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.doctype as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"",0 as ""IsPending""
+                                 from omt_orders oo
+                                 inner join tbl_doctypes dc on dc.id = oo.doctypeid 
+                                 where oo.id > @idno Order By oo.id ASC;";
+
+                    SqlCommand command = new SqlCommand(query, connection);
+                    command.Parameters.AddWithValue("idno", normalTRD_HA3_idno);
+
+                    SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                    DataSet dataset = new DataSet();
+
+                    dataAdapter.Fill(dataset);
+
+                    DataTable datatable = dataset.Tables[0];
+
+                    var distinctProjectIDs = datatable.AsEnumerable()
+                                                          .Select(row => row.Field<string>("ProjectId"))
+                                                          .Distinct()
+                                                          .ToList();
+
+                    List<DataRow> TRDorderstoupload = new List<DataRow>();
+
+                    foreach (string projid in distinctProjectIDs)
+                    {
+                        var doctypeids = datatable.AsEnumerable()
+                                         .Where(row => row.Field<string>("ProjectId") == projid)
+                                         .Select(row => row.Field<int>("doctypeid"))
+                                         .Distinct().ToList();
+
+
+                        foreach (var docid in doctypeids)
+                        {
+                            TRDorderstoupload = datatable.AsEnumerable()
+                                                     .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
+                                                     .ToList();
+
+                            var docname = datatable.AsEnumerable()
+                                                    .Where(row => row.Field<int>("doctypeid") == docid)
+                                                    .Select(row => row.Field<string>("DocType"))
+                                                    .FirstOrDefault();
+
+                            if (TRDorderstoupload.Any())
+                            {
+                                InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
+
+                            }
+                        }
+
+                    }
+
+                    int idValue = normalTRD_HA3_idno;
+                    if (datatable.Rows.Count > 0)
+                    {
+                        DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+                        idValue = (int)lastRow["id"];
+                    }
+
+                    // call method to update the last id of trd order uploaded in trdtrack table
+
+                    UpdateNormalTrd_HA3_OrdersId(idValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+
+                EmailDetails sendEmail = new EmailDetails
+                {
+                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+                    Subject = "Trd Orders - Fetching normal trd orders from SQL Server",
+                    Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
+                };
+
+                using (HttpClient client = new HttpClient())
+                {
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var webApiUrl = new Uri(Url);
+                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                    }
+                }
+                throw;
+            }
+        }
         public static void InsertIntoSqlServer(DataTable TRDorderstoupload, string projid, int docid, string docname)
         {
             try
@@ -222,7 +328,7 @@ namespace TrdIntegrator
 
                     if (skillsetid <= 0 && string.IsNullOrEmpty(SkillSetName))
                     {
-                        string modifiedDocname = Regex.Replace(docname, @"[^a-zA-Z0-9_]", "_");
+                        string modifiedDocname = Regex.Replace(DocumentName, @"[^a-zA-Z0-9_]", "_");
                         SkillSetName = projid + "_" + modifiedDocname;
 
                         SqlCommand CreateTrdDetails = new SqlCommand("CreateTrdDetails", connection);
@@ -764,6 +870,34 @@ namespace TrdIntegrator
                 throw;
             }
         }
+
+        public static int GetLastNormalTrd_HA3_OrdersId()
+        {
+            try
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string sql = $"SELECT TrackTrdId FROM TrackTrdOrders WHERE Id = 3 AND IsActive = 1 AND TrdOrderType = 'TRDNew'";
+
+                    SqlCommand cmd = new SqlCommand(sql, connection);
+
+                    connection.Open();
+
+                    object result = cmd.ExecuteScalar();
+
+                    int trackTrdId = Convert.ToInt32(result);
+
+                    return trackTrdId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetLastNormalTrd_HA3_OrdersId method: {ex.Message}");
+                throw;
+            }
+        }
         public static void UpdateNormalTrdOrdersId(int idValue)
         {
             try
@@ -793,6 +927,34 @@ namespace TrdIntegrator
             }
         }
 
+        public static void UpdateNormalTrd_HA3_OrdersId(int idValue)
+        {
+            try
+            {
+                string connectionString = ConfigurationManager.ConnectionStrings["DbConnectionString"].ConnectionString;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    DateTime dateTime = DateTime.Now;
+
+                    string sql = $"UPDATE TrackTrdOrders SET TrackTrdId = @idValue,CreatedDate = @dateTime,IsActive = 1 WHERE Id = 3";
+
+                    SqlCommand cmd = new SqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@idValue", idValue);
+                    cmd.Parameters.AddWithValue("@dateTime", dateTime);
+
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateNormalTrd_HA3_OrdersId method: {ex.Message}");
+                throw;
+            }
+        }
         public static int GetLastPendingTrdOrdersId()
         {
             try
