@@ -33,7 +33,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DailyStatusCountCalc", "Dai
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatic_Checkout_1.30pm", "Automatic_Checkout_1.30pm\Automatic_Checkout_1.30pm.csproj", "{F0F39F25-F7B2-4DE5-8A24-17DA15DC6470}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrevDaySystemPendingCalc", "PrevDaySystemPendingCalc\PrevDaySystemPendingCalc.csproj", "{AC49DE05-B3BC-4780-90F1-1B15E1497894}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrevDaySystemPendingCalc", "PrevDaySystemPendingCalc\PrevDaySystemPendingCalc.csproj", "{AC49DE05-B3BC-4780-90F1-1B15E1497894}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataArchive", "DataArchive\DataArchive.csproj", "{DD2EE601-C406-43B5-9655-4DEBFE2A3ADC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +107,10 @@ Global
 		{AC49DE05-B3BC-4780-90F1-1B15E1497894}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC49DE05-B3BC-4780-90F1-1B15E1497894}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC49DE05-B3BC-4780-90F1-1B15E1497894}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD2EE601-C406-43B5-9655-4DEBFE2A3ADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD2EE601-C406-43B5-9655-4DEBFE2A3ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD2EE601-C406-43B5-9655-4DEBFE2A3ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD2EE601-C406-43B5-9655-4DEBFE2A3ADC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
