@@ -128,6 +128,22 @@ namespace OMT.DataService.Service
                 var IsSuccess  = true;
                 var StatusCode = "200";
 
+                
+                // Request from Brahma, Scenario, Night shift checkin, if user checks in between 12AM IST to 2 AM IST, then the checkin date should be considered as previous day.
+                // The below concluation based on UTC because we are using UTC for Check in.
+                TimeSpan starttime = new TimeSpan(18, 30, 0); // 18:30
+                TimeSpan endtime = new TimeSpan(20, 30, 0); // 20:30
+
+                // Get the time part of the datetime
+                TimeSpan current = checkinRequestDTO.DateTime.TimeOfDay;
+
+                // Check if current time is within the range
+                if (current >= starttime && current <= endtime)
+                {
+                    checkinRequestDTO.CheckIn_date.AddDays(-1);
+                }
+
+
                 if (user_Checkin != null) //existing user
                 {
 
