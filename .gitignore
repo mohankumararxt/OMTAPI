@@ -141,3 +141,6 @@
 /CreateInvoiceSummary/Properties/PublishProfiles
 /packages/Microsoft.Web.WebJobs.Publish.17.1.361
 /CreateInvoiceSummary/bin/Release/net472
+/DataArchive/bin/Debug/net8.0
+/DataArchive/obj/Debug/net8.0
+/DataArchive/obj
