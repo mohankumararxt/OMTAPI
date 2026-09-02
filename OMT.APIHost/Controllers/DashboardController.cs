@@ -8,7 +8,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
+   // [Authorize(AuthenticationSchemes = "Bearer")]
     public class DashboardController : BaseController
 
     {
@@ -34,6 +34,14 @@ namespace OMT.APIHost.Controllers
         {
             var userid = UserId;
             return _dashboardService.AgentCompletionCount(agentDashDTO,userid);
+        }
+
+        [HttpPost]
+        [Route("AgenticDashboard")]
+
+        public ResultDTO AgenticDashboard()
+        {
+            return _dashboardService.GetAgenticDashboardData();
         }
     }
 }

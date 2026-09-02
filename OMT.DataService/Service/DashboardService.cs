@@ -138,7 +138,8 @@ namespace OMT.DataService
                                                              .Select(row => datatable.Columns.Cast<DataColumn>()
                                                                  .ToDictionary(
                                                                      column => column.ColumnName,
-                                                                     column => {
+                                                                     column =>
+                                                                     {
                                                                          var value = row[column];
                                                                          if (value == DBNull.Value)
                                                                          {
@@ -279,7 +280,7 @@ namespace OMT.DataService
             return resultDTO;
         }
 
-        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO,int userid)
+        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -291,7 +292,7 @@ namespace OMT.DataService
 
                 List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                            join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid 
+                                           where us.UserId == userid
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).Distinct().ToList();
 
@@ -299,7 +300,7 @@ namespace OMT.DataService
 
                 foreach (string tableName in tablenames)
                 {
-                    var skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetName == tableName && x.IsActive).FirstOrDefault();
+                    var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tableName && x.IsActive).FirstOrDefault();
 
                     var statusnames = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.IsActive).Select(_ => _.Status).ToList();
 
@@ -379,7 +380,7 @@ namespace OMT.DataService
                                             // Set all other status columns to null, except for SystemOfRecord and SkillSet
                                             return (column.ColumnName == "SystemOfRecord" || column.ColumnName == "SkillSet")
                                                 ? row[column] // Retain these columns
-                                                : "";       
+                                                : "";
                                         }
                                     });
                         }
@@ -426,6 +427,23 @@ namespace OMT.DataService
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
             }
+
+            return resultDTO;
+        }
+
+        public ResultDTO GetAgenticDashboardData()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            AgenticDashboardDTO agenticDashboardDTO = new AgenticDashboardDTO();
+
+            // Order Completetion count
+
+            agenticDashboardDTO.totalOrderCompletion.YesterdayOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date.AddDays(-1)).Sum(_ => _.Count); 
+            agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date).Sum(_ => _.Count);
+            agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCompletedCount = _oMTDataContext.Prod_Util_Tracker.Where(x => x.CheckIn_date == DateTime.UtcNow.Date).Count();
+
+            resultDTO.Data = agenticDashboardDTO;
 
             return resultDTO;
         }

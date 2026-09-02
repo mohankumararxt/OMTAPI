@@ -6,5 +6,6 @@ namespace OMT.DataService.Interface
     {
         ResultDTO LiveStatusReport(LiveStatusReportDTO liveStatusReportDTO);
         ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO,int userid);
+        ResultDTO GetAgenticDashboardData();
     }
 }
