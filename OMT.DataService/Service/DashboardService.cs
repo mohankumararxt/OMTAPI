@@ -9,6 +9,7 @@ using OMT.DTO;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -439,10 +440,67 @@ namespace OMT.DataService
 
             // Order Completetion count
 
-            agenticDashboardDTO.totalOrderCompletion.YesterdayOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date.AddDays(-1)).Sum(_ => _.Count); 
+            agenticDashboardDTO.totalOrderCompletion.YesterdayOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date.AddDays(-1)).Sum(_ => _.Count);
             agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date).Sum(_ => _.Count);
             agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCompletedCount = _oMTDataContext.Prod_Util_Tracker.Where(x => x.CheckIn_date == DateTime.UtcNow.Date).Count();
 
+            // SOR Wise Todays Order complete.
+
+            agenticDashboardDTO.SORWiseOrderCompletion = (from pu in _oMTDataContext.Prod_Util_Tracker.Where(x => x.CheckIn_date == DateTime.UtcNow.Date)
+                                                          join sor in _oMTDataContext.SystemofRecord.AsEnumerable() on pu.SystemofRecordId equals sor.SystemofRecordId
+                                                          group pu by sor.SystemofRecordName into g
+                                                          select new SORWiseOrderCompletionDTO
+                                                          {
+                                                              SORName = g.Key,
+                                                              CompletedToday = g.Count()
+                                                          }).ToList();
+
+            // Liver User vs Total User
+
+            agenticDashboardDTO.liveUsers.TotalUsers = _oMTDataContext.UserProfile.Where(_ => _.IsActive == true).Count();
+            agenticDashboardDTO.liveUsers.LoggedInUsers = _oMTDataContext.User_Checkin.Where(x => x.CheckIn_date == DateTime.UtcNow.Date && x.Checkout == null).Count();
+
+            //Invoice Last Month vs current Month
+
+            DateTime lastmonthdate = DateTime.UtcNow.AddMonths(-1);
+            DateTime currnetmonthdate = DateTime.UtcNow;
+
+            int currentMonth = lastmonthdate.Month;
+            int currentYear = lastmonthdate.Year;
+
+            agenticDashboardDTO.invoiceForecastDTO.Year = currnetmonthdate.Year;
+            agenticDashboardDTO.invoiceForecastDTO.PreviousMonthCount = _oMTDataContext.InvoiceDump.Count(r => r.CompletionDate.Month == currentMonth
+                                         && r.CompletionDate.Year == currentYear);
+
+            agenticDashboardDTO.invoiceForecastDTO.CurrentMonthCount = _oMTDataContext.InvoiceDump.Count(r => r.CompletionDate.Month == currnetmonthdate.Month
+                                         && r.CompletionDate.Year == currnetmonthdate.Year);
+            agenticDashboardDTO.invoiceForecastDTO.currentMonthIndex = currnetmonthdate.Month;
+
+            int daysinMonth = DateTime.DaysInMonth(currnetmonthdate.Year, currnetmonthdate.Month);
+
+            agenticDashboardDTO.invoiceForecastDTO.ElapsedDays = daysinMonth - DateTime.Today.Day;
+
+
+            // Rush Order difference
+            var rushOrderYesterday = _oMTDataContext.SORWisePriorityOrderCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date.AddDays(-1)).ToList();
+
+            var rushOrderToday = _oMTDataContext.SORWisePriorityOrderCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).ToList();
+
+            var combinedRushOrder = (from y in rushOrderYesterday
+                                     join t in rushOrderToday on y.Sor_Id equals t.Sor_Id
+                                     select new SORWiseRushOrderCompletionDTO
+                                     {
+                                         SORName = y.Sor_Name,
+                                         YesterdaysCount = y.TotalCount,
+                                         TodaysCount = t.TotalCount
+                                     }).ToList();
+
+            agenticDashboardDTO.SORWiseRushOrderCompletion = combinedRushOrder;
+
+            // HardStateOrder
+
+            agenticDashboardDTO.hardStateDTO.YesterdayCount = _oMTDataContext.DailyHardStateCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).Sum(y => y.TotalCount);
+            agenticDashboardDTO.hardStateDTO.TodaysCount = _oMTDataContext.DailyHardStateCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).Sum(y => y.TotalCount);
             resultDTO.Data = agenticDashboardDTO;
 
             return resultDTO;

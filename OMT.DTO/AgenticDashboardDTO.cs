@@ -11,13 +11,17 @@ namespace OMT.DTO
         public OrderCompletionDTO totalOrderCompletion { get; set; }
         public List<SORWiseOrderCompletionDTO> SORWiseOrderCompletion { get; set; }
         public List<SORWiseRushOrderCompletionDTO> SORWiseRushOrderCompletion { get; set; }
-        public LiverUserSDTO LiverUsers { get; set; }
+        public LiveUserSDTO liveUsers { get; set; }
+        public InvoiceForecastDTO invoiceForecastDTO { get; set; }
+        public HardStateDTO hardStateDTO { get; set; }
         public AgenticDashboardDTO()
         {
             totalOrderCompletion = new OrderCompletionDTO();
             SORWiseOrderCompletion=new List<SORWiseOrderCompletionDTO>();
             SORWiseRushOrderCompletion = new List<SORWiseRushOrderCompletionDTO>();
-            LiverUsers = new LiverUserSDTO();
+            liveUsers = new LiveUserSDTO();
+            invoiceForecastDTO = new InvoiceForecastDTO();
+            hardStateDTO=new HardStateDTO();
         }
     }
 
@@ -42,12 +46,12 @@ namespace OMT.DTO
         public int TodaysCount { get; set; }
         public int YesterdaysCount { get; set; }
     }
-    public class LiverUserSDTO
+    public class LiveUserSDTO
     {
         public int TotalUsers { get; set; }
         public int LoggedInUsers { get; set; }
     }
-    public class invoiceForecastDTO
+    public class InvoiceForecastDTO
     {
         public int Year { get; set; }
         public int currentMonthIndex { get; set; }
