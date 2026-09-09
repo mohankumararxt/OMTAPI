@@ -34,10 +34,10 @@ namespace TrdIntegrator
             // The following code ensures that the WebJob will be running continuously
             //host.RunAndBlock();
 
-            int normalTRDidno = GetLastNormalTrdOrdersId();
-            GetTrdOrders(normalTRDidno);
-            int pendingTRDidno = GetLastPendingTrdOrdersId();
-            GetTrdPendingOrders(pendingTRDidno);
+            //int normalTRDidno = GetLastNormalTrdOrdersId();
+            //GetTrdOrders(normalTRDidno);
+            //int pendingTRDidno = GetLastPendingTrdOrdersId();
+            //GetTrdPendingOrders(pendingTRDidno);
 
             int normalTRD_HA3_idno = GetLastNormalTrd_HA3_OrdersId();
             GetTrd_HA3_Orders(normalTRD_HA3_idno);
@@ -50,109 +50,109 @@ namespace TrdIntegrator
             public string Subject { get; set; }
             public string Body { get; set; }
         }
-        public static void GetTrdOrders(int normalTRDidno)
-        {
-            string Url = "";
+        //public static void GetTrdOrders(int normalTRDidno)
+        //{
+        //    string Url = "";
 
-            try
-            {
-                Url = ConfigurationManager.AppSettings["SendEmailUrl"];
-                string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
+        //    try
+        //    {
+        //        Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+        //        string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
 
-                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
-                {
-                    connection.Open();
+        //        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        //        {
+        //            connection.Open();
 
-                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"",0 as ""IsPending""
-                                 from public.tbl_omt_orders oo
-                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
-                                 where oo.id > @idno Order By oo.id ASC;";
+        //            string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"",0 as ""IsPending""
+        //                         from public.tbl_omt_orders oo
+        //                         inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
+        //                         where oo.id > @idno Order By oo.id ASC;";
 
-                    NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                    command.Parameters.AddWithValue("idno", normalTRDidno);
+        //            NpgsqlCommand command = new NpgsqlCommand(query, connection);
+        //            command.Parameters.AddWithValue("idno", normalTRDidno);
 
-                    NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
-                    DataSet dataset = new DataSet();
+        //            NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
+        //            DataSet dataset = new DataSet();
 
-                    dataAdapter.Fill(dataset);
+        //            dataAdapter.Fill(dataset);
 
-                    DataTable datatable = dataset.Tables[0];
+        //            DataTable datatable = dataset.Tables[0];
 
-                    var distinctProjectIDs = datatable.AsEnumerable()
-                                                          .Select(row => row.Field<string>("ProjectId"))
-                                                          .Distinct()
-                                                          .ToList();
+        //            var distinctProjectIDs = datatable.AsEnumerable()
+        //                                                  .Select(row => row.Field<string>("ProjectId"))
+        //                                                  .Distinct()
+        //                                                  .ToList();
 
-                    List<DataRow> TRDorderstoupload = new List<DataRow>();
+        //            List<DataRow> TRDorderstoupload = new List<DataRow>();
 
-                    foreach (string projid in distinctProjectIDs)
-                    {
-                        var doctypeids = datatable.AsEnumerable()
-                                         .Where(row => row.Field<string>("ProjectId") == projid)
-                                         .Select(row => row.Field<int>("doctypeid"))
-                                         .Distinct().ToList();
+        //            foreach (string projid in distinctProjectIDs)
+        //            {
+        //                var doctypeids = datatable.AsEnumerable()
+        //                                 .Where(row => row.Field<string>("ProjectId") == projid)
+        //                                 .Select(row => row.Field<int>("doctypeid"))
+        //                                 .Distinct().ToList();
 
 
-                        foreach (var docid in doctypeids)
-                        {
-                            TRDorderstoupload = datatable.AsEnumerable()
-                                                     .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
-                                                     .ToList();
+        //                foreach (var docid in doctypeids)
+        //                {
+        //                    TRDorderstoupload = datatable.AsEnumerable()
+        //                                             .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
+        //                                             .ToList();
 
-                            var docname = datatable.AsEnumerable()
-                                                    .Where(row => row.Field<int>("doctypeid") == docid)
-                                                    .Select(row => row.Field<string>("DocType"))
-                                                    .FirstOrDefault();
+        //                    var docname = datatable.AsEnumerable()
+        //                                            .Where(row => row.Field<int>("doctypeid") == docid)
+        //                                            .Select(row => row.Field<string>("DocType"))
+        //                                            .FirstOrDefault();
 
-                            if (TRDorderstoupload.Any())
-                            {
-                                InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
+        //                    if (TRDorderstoupload.Any())
+        //                    {
+        //                        InsertIntoSqlServer(TRDorderstoupload.CopyToDataTable(), projid, docid, docname);
 
-                            }
-                        }
+        //                    }
+        //                }
 
-                    }
+        //            }
 
-                    int idValue = normalTRDidno;
-                    if (datatable.Rows.Count > 0)
-                    {
-                        DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
-                        idValue = (int)lastRow["id"];
-                    }
+        //            int idValue = normalTRDidno;
+        //            if (datatable.Rows.Count > 0)
+        //            {
+        //                DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+        //                idValue = (int)lastRow["id"];
+        //            }
 
-                    // call method to update the last id of trd order uploaded in trdtrack table
+        //            // call method to update the last id of trd order uploaded in trdtrack table
 
-                    UpdateNormalTrdOrdersId(idValue);
-                }
-            }
-            catch (Exception ex)
-            {
-                string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+        //            UpdateNormalTrdOrdersId(idValue);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
 
-                EmailDetails sendEmail = new EmailDetails
-                {
-                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
-                    Subject = "Trd Orders - Fetching normal trd orders from postgres",
-                    Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
-                };
+        //        EmailDetails sendEmail = new EmailDetails
+        //        {
+        //            ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+        //            Subject = "Trd Orders - Fetching normal trd orders from postgres",
+        //            Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
+        //        };
 
-                using (HttpClient client = new HttpClient())
-                {
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+        //        using (HttpClient client = new HttpClient())
+        //        {
+        //            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+        //            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                    var webApiUrl = new Uri(Url);
-                    var response = client.PostAsync(webApiUrl, content).Result;
+        //            var webApiUrl = new Uri(Url);
+        //            var response = client.PostAsync(webApiUrl, content).Result;
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseData = response.Content.ReadAsStringAsync().Result;
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                var responseData = response.Content.ReadAsStringAsync().Result;
 
-                    }
-                }
-                throw;
-            }
-        }
+        //            }
+        //        }
+        //        throw;
+        //    }
+        //}
 
         public static void GetTrd_HA3_Orders(int normalTRD_HA3_idno)
         {
@@ -400,33 +400,33 @@ namespace TrdIntegrator
 
                     // duplicate check
 
-                    string duplchckquery = $"SELECT * FROM {SkillSetName} WHERE ";
+                    //string duplchckquery = $"SELECT * FROM {SkillSetName} WHERE ";
 
-                    foreach (JObject TRDrecords in TRDrecordsarray)
-                    {
-                        string duplchck = "(";
-                        foreach (string DuplicateColumnname in duplicatecolumnsList)
-                        {
-                            string columndata = TRDrecords.Value<string>(DuplicateColumnname);
+                    //foreach (JObject TRDrecords in TRDrecordsarray)
+                    //{
+                    //    string duplchck = "(";
+                    //    foreach (string DuplicateColumnname in duplicatecolumnsList)
+                    //    {
+                    //        string columndata = TRDrecords.Value<string>(DuplicateColumnname);
 
-                            duplchck += $"[{DuplicateColumnname}] = '{columndata}' AND ";
-                        }
+                    //        duplchck += $"[{DuplicateColumnname}] = '{columndata}' AND ";
+                    //    }
 
-                        duplchck = duplchck.Substring(0, duplchck.Length - 5);
-                        duplchck += ") OR ";
+                    //    duplchck = duplchck.Substring(0, duplchck.Length - 5);
+                    //    duplchck += ") OR ";
 
-                        duplchckquery += duplchck;
-                    }
+                    //    duplchckquery += duplchck;
+                    //}
 
-                    duplchckquery = duplchckquery.Substring(0, duplchckquery.Length - 4);
+                    //duplchckquery = duplchckquery.Substring(0, duplchckquery.Length - 4);
 
-                    SqlDataAdapter DuplicatecheckdataAdapter = new SqlDataAdapter(duplchckquery, connection);
+                    //SqlDataAdapter DuplicatecheckdataAdapter = new SqlDataAdapter(duplchckquery, connection);
 
-                    DataSet DuplicatecheckDS = new DataSet();
+                    //DataSet DuplicatecheckDS = new DataSet();
 
-                    DuplicatecheckdataAdapter.Fill(DuplicatecheckDS);
+                    //DuplicatecheckdataAdapter.Fill(DuplicatecheckDS);
 
-                    DataTable DuplicatecheckDT = DuplicatecheckDS.Tables[0];
+                    //DataTable DuplicatecheckDT = DuplicatecheckDS.Tables[0];
 
                     //var duplicateorders = new HashSet<string>(
                     //                         DuplicatecheckDT.AsEnumerable()
@@ -435,35 +435,37 @@ namespace TrdIntegrator
                     //var filteredOrders = TRDorderstoupload.AsEnumerable()
                     //                  .Where(row => !duplicateorders.Contains(row.Field<string>("OrderId")));
 
-                    var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
-                                          DuplicatecheckDT.AsEnumerable()
-                                          .Select(row => (
-                                              row.Field<string>("OrderId"),
-                                              row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
-                                          )));
+                    //var duplicateorders = new HashSet<(string OrderId, DateTime DocImageDate)>(
+                    //                      DuplicatecheckDT.AsEnumerable()
+                    //                      .Select(row => (
+                    //                          row.Field<string>("OrderId"),
+                    //                          row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                    //                      )));
 
                     IEnumerable<DataRow> filteredOrders;
                     IEnumerable<DataRow> orderstoreplace;
 
-                    if (duplicateorders.Count > 0)
-                    {
-                        filteredOrders = TRDorderstoupload.AsEnumerable()
-                                      .Where(row => !duplicateorders.Contains((
-                                          row.Field<string>("OrderId"),
-                                          row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
-                                      )));
+                    //if (duplicateorders.Count > 0)
+                    //{
+                    //    filteredOrders = TRDorderstoupload.AsEnumerable()
+                    //                  .Where(row => !duplicateorders.Contains((
+                    //                      row.Field<string>("OrderId"),
+                    //                      row.Field<DateTime>("DocImageDate").Date // Extract only the Date part
+                    //                  )));
 
-                        orderstoreplace = filteredOrders.Where(row => duplicateorders.Any(dup =>
-                                          dup.OrderId == row.Field<string>("OrderId") &&    // Match on OrderId
-                                          dup.DocImageDate != row.Field<DateTime>("DocImageDate").Date // Ensure DocImageDate is different
-                                          ));
-                    }
-                    else
-                    {
-                        filteredOrders = TRDorderstoupload.AsEnumerable();
-                        orderstoreplace = Enumerable.Empty<DataRow>();
-                    }
+                    //    orderstoreplace = filteredOrders.Where(row => duplicateorders.Any(dup =>
+                    //                      dup.OrderId == row.Field<string>("OrderId") &&    // Match on OrderId
+                    //                      dup.DocImageDate != row.Field<DateTime>("DocImageDate").Date // Ensure DocImageDate is different
+                    //                      ));
+                    //}
+                    //else
+                    //{
+                    //    filteredOrders = TRDorderstoupload.AsEnumerable();
+                    //    orderstoreplace = Enumerable.Empty<DataRow>();
+                    //}
 
+                    filteredOrders = TRDorderstoupload.AsEnumerable();
+                    orderstoreplace = Enumerable.Empty<DataRow>();
 
                     if (orderstoreplace.Any())
                     {
@@ -604,104 +606,104 @@ namespace TrdIntegrator
             }
         }
 
-        public static void GetTrdPendingOrders(int pendingTRDidno)
-        {
-            string Url = "";
+        //public static void GetTrdPendingOrders(int pendingTRDidno)
+        //{
+        //    string Url = "";
 
-            try
-            {
-                Url = ConfigurationManager.AppSettings["SendEmailUrl"];
-                string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
+        //    try
+        //    {
+        //        Url = ConfigurationManager.AppSettings["SendEmailUrl"];
+        //        string connectionString = ConfigurationManager.ConnectionStrings["PostgressSqlConnection"].ConnectionString;
 
-                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
-                {
-                    connection.Open();
+        //        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        //        {
+        //            connection.Open();
 
-                    string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"", 1 as ""IsPending""
-                                 from public.tbl_omt_orders_pending oo
-                                 inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
-                                 where oo.id > @idno Order By oo.id ASC;";
+        //            string query = $@"Select oo.id,oo.referenceid as ""OrderId"",oo.projectid as ""ProjectId"",oo.docimagedate as ""DocImageDate"",dc.documentname as ""DocType"",oo.doctypeid,oo.status as ""HaStatus"", 'Trailing_Doc_Review' as ""WorkflowStatus"", 0 as ""IsPriority"", 1 as ""IsPending""
+        //                         from public.tbl_omt_orders_pending oo
+        //                         inner join public.tbl_doctypes dc on dc.id = oo.doctypeid 
+        //                         where oo.id > @idno Order By oo.id ASC;";
 
-                    NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                    command.Parameters.AddWithValue("idno", pendingTRDidno);
+        //            NpgsqlCommand command = new NpgsqlCommand(query, connection);
+        //            command.Parameters.AddWithValue("idno", pendingTRDidno);
 
-                    NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
-                    DataSet dataset = new DataSet();
+        //            NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(command);
+        //            DataSet dataset = new DataSet();
 
-                    dataAdapter.Fill(dataset);
+        //            dataAdapter.Fill(dataset);
 
-                    DataTable datatable = dataset.Tables[0];
+        //            DataTable datatable = dataset.Tables[0];
 
-                    var distinctProjectIDs = datatable.AsEnumerable()
-                                                          .Select(row => row.Field<string>("ProjectId"))
-                                                          .Distinct()
-                                                          .ToList();
+        //            var distinctProjectIDs = datatable.AsEnumerable()
+        //                                                  .Select(row => row.Field<string>("ProjectId"))
+        //                                                  .Distinct()
+        //                                                  .ToList();
 
-                    List<DataRow> TrdPendingorderstoupload = new List<DataRow>();
+        //            List<DataRow> TrdPendingorderstoupload = new List<DataRow>();
 
-                    foreach (string projid in distinctProjectIDs)
-                    {
-                        var doctypeids = datatable.AsEnumerable()
-                                         .Where(row => row.Field<string>("ProjectId") == projid)
-                                         .Select(row => row.Field<int>("doctypeid"))
-                                         .Distinct().ToList();
+        //            foreach (string projid in distinctProjectIDs)
+        //            {
+        //                var doctypeids = datatable.AsEnumerable()
+        //                                 .Where(row => row.Field<string>("ProjectId") == projid)
+        //                                 .Select(row => row.Field<int>("doctypeid"))
+        //                                 .Distinct().ToList();
 
 
-                        foreach (var docid in doctypeids)
-                        {
-                            TrdPendingorderstoupload = datatable.AsEnumerable()
-                                                     .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
-                                                     .ToList();
+        //                foreach (var docid in doctypeids)
+        //                {
+        //                    TrdPendingorderstoupload = datatable.AsEnumerable()
+        //                                             .Where(row => row.Field<string>("ProjectId") == projid && row.Field<int>("doctypeid") == docid)
+        //                                             .ToList();
 
-                            if (TrdPendingorderstoupload.Any())
-                            {
-                                InsertPendingOrdersIntoSqlServer(TrdPendingorderstoupload.CopyToDataTable(), projid, docid);
+        //                    if (TrdPendingorderstoupload.Any())
+        //                    {
+        //                        InsertPendingOrdersIntoSqlServer(TrdPendingorderstoupload.CopyToDataTable(), projid, docid);
 
-                            }
-                        }
+        //                    }
+        //                }
 
-                    }
+        //            }
 
-                    int idValue = pendingTRDidno;
-                    if (datatable.Rows.Count > 0)
-                    {
-                        DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
-                        idValue = (int)lastRow["id"];
-                    }
+        //            int idValue = pendingTRDidno;
+        //            if (datatable.Rows.Count > 0)
+        //            {
+        //                DataRow lastRow = datatable.Rows[datatable.Rows.Count - 1];
+        //                idValue = (int)lastRow["id"];
+        //            }
 
-                    // call method to update the last id of trd order uploaded in trdtrack table
+        //            // call method to update the last id of trd order uploaded in trdtrack table
 
-                    UpdatePendingTrdOrdersId(idValue);
-                }
-            }
-            catch (Exception ex)
-            {
-                string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
+        //            UpdatePendingTrdOrdersId(idValue);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string toEmailIds = ConfigurationManager.AppSettings["ToEmailIds"];
 
-                EmailDetails sendEmail = new EmailDetails
-                {
-                    ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
-                    Subject = "Trd Orders - Fetching pending trd orders from postgres",
-                    Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
-                };
+        //        EmailDetails sendEmail = new EmailDetails
+        //        {
+        //            ToEmailIds = toEmailIds?.Split(',').Select(email => email.Trim()).ToList() ?? new List<string>(),
+        //            Subject = "Trd Orders - Fetching pending trd orders from postgres",
+        //            Body = $"TrdIntegrator webjob failed with the following exception:  {ex.Message}",
+        //        };
 
-                using (HttpClient client = new HttpClient())
-                {
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+        //        using (HttpClient client = new HttpClient())
+        //        {
+        //            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmail);
+        //            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                    var webApiUrl = new Uri(Url);
-                    var response = client.PostAsync(webApiUrl, content).Result;
+        //            var webApiUrl = new Uri(Url);
+        //            var response = client.PostAsync(webApiUrl, content).Result;
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseData = response.Content.ReadAsStringAsync().Result;
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                var responseData = response.Content.ReadAsStringAsync().Result;
 
-                    }
-                }
-                throw;
-            }
-        }
+        //            }
+        //        }
+        //        throw;
+        //    }
+        //}
 
         public static void InsertPendingOrdersIntoSqlServer(DataTable TrdPendingorderstoupload, string projid, int docid)
         {
