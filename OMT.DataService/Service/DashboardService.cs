@@ -478,7 +478,7 @@ namespace OMT.DataService
 
             int daysinMonth = DateTime.DaysInMonth(currnetmonthdate.Year, currnetmonthdate.Month);
 
-            agenticDashboardDTO.invoiceForecastDTO.ElapsedDays = daysinMonth - DateTime.Today.Day;
+            agenticDashboardDTO.invoiceForecastDTO.ElapsedDays = DateTime.Today.Day;
 
 
             // Rush Order difference
