@@ -1545,7 +1545,7 @@ namespace OMT.DataService.Service
                             };
 
                             // Call the REST API
-                            CallRestApiAsync(trdStatusDTO1);
+                            //CallRestApiAsync(trdStatusDTO1);
                         }
                     }
                 }
@@ -1559,36 +1559,36 @@ namespace OMT.DataService.Service
             return resultDTO;
         }
 
-        private void CallRestApiAsync(TrdStatusDTO trdStatusDTO)
-        {
-            var url = _authSettings.Value.TrdURL;
+        //private void CallRestApiAsync(TrdStatusDTO trdStatusDTO)
+        //{
+        //    var url = _authSettings.Value.TrdURL;
 
-            // Serialize the DTO to JSON
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    //client.DefaultRequestHeaders.Add("Accept", "application/json");
+        //    // Serialize the DTO to JSON
+        //    try
+        //    {
+        //        using (HttpClient client = new HttpClient())
+        //        {
+        //            //client.DefaultRequestHeaders.Add("Accept", "application/json");
 
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+        //            var json = Newtonsoft.Json.JsonConvert.SerializeObject(trdStatusDTO);
+        //            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                    var webApiUrl = new Uri(url);
-                    var response = client.PutAsync(webApiUrl, content).Result;
+        //            var webApiUrl = new Uri(url);
+        //            var response = client.PutAsync(webApiUrl, content).Result;
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseData = response.Content.ReadAsStringAsync().Result;
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                var responseData = response.Content.ReadAsStringAsync().Result;
 
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
 
-                throw;
-            }
-        }
+        //        throw;
+        //    }
+        //}
         public ResultDTO AgentCompletedOrders(AgentCompletedOrdersDTO agentCompletedOrdersDTO)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
