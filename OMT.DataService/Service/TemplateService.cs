@@ -25,6 +25,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
+using Azure.Storage.Sas;
 
 
 namespace OMT.DataService.Service
@@ -634,6 +635,439 @@ namespace OMT.DataService.Service
                         resultDTO.IsSuccess = false;
                         resultDTO.StatusCode = "404";
                         resultDTO.Message = "Template doesnt exist for the given skillsetid,please create one to upload";
+                    }
+                }
+                else
+                {
+                    resultDTO.IsSuccess = false;
+                    resultDTO.StatusCode = "404";
+                    resultDTO.Message = "Skillset does not exist.";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultDTO.IsSuccess = false;
+                resultDTO.StatusCode = "500";
+                resultDTO.Message = ex.Message;
+            }
+            return resultDTO;
+        }
+
+        public ResultDTO UploadPriorityOrders(UploadTemplateDTO uploadTemplateDTO, int userid)
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+            try
+            {
+                string? connectionstring = _oMTDataContext.Database.GetConnectionString();
+                using SqlConnection connection = new(connectionstring);
+
+                var url = _emailDetailsSettings.Value.SendEmailURL;
+
+                var insertedJsonobject = JsonConvert.DeserializeObject<Dictionary<string, List<dynamic>>>(uploadTemplateDTO.JsonData);
+                var records = insertedJsonobject["Records"];
+
+                string uploadedDate = DateTime.UtcNow.ToString("MM-dd-yyyy HH:mm:ss");
+                string OrdersIds = string.Empty;
+                string ExistingOrdersIds = string.Empty;
+
+                for (int i = 0; i < records.Count; i++)
+                {
+                    // Cast each item to JObject so we can add new properties
+                    var item = records[i] as JObject;
+                    if (item != null)
+                    {
+                        item["UploadedBy"] = userid;
+                        item["UploadedDate"] = uploadedDate;
+                        if (OrdersIds.Length > 0)
+                            OrdersIds = OrdersIds + "," + Convert.ToString(item["OrderId"]);
+                        else
+                            OrdersIds = Convert.ToString(item["OrderId"]);
+                    }
+                }
+
+
+
+                SkillSet skillSet = _oMTDataContext.SkillSet.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId && x.IsActive).FirstOrDefault();
+                if (skillSet != null)
+                {
+
+                    string query = $@"
+                                    SELECT 
+                                        OrderId
+                                    FROM 
+                                        [{skillSet.SkillSetName}] 
+                                    WHERE 
+                                        OrderId in((SELECT TRIM(value) FROM STRING_SPLIT(@OrderId, ',')))
+                                        AND (CAST(CompletionDate AS DATE) = CAST(@CompletionDate AS DATE) OR (CompletionDate IS NULL AND UserId IS NULL));";
+
+
+                    using SqlDataAdapter dataAdapter = new SqlDataAdapter(query, connection);
+                    dataAdapter.SelectCommand.Parameters.Add("@OrderId", SqlDbType.NVarChar).Value = OrdersIds;
+                    dataAdapter.SelectCommand.Parameters.Add("@CompletionDate", SqlDbType.Date).Value = DateTime.UtcNow;
+                    DataSet orderdataset = new DataSet();
+                    connection.Open();
+
+                    dataAdapter.Fill(orderdataset);
+
+                    foreach (DataRow dr in orderdataset.Tables[0].Rows)
+                    {
+                        JToken itemToRemove = records.FirstOrDefault(x => x["OrderId"] == dr["OrderId"]);
+                        if (itemToRemove != null)
+                        {
+                            records.Remove(itemToRemove);
+                            if (ExistingOrdersIds.Length > 0)
+                                ExistingOrdersIds = ExistingOrdersIds + "," + Convert.ToString(dr["OrderId"]);
+                            else
+                                ExistingOrdersIds = Convert.ToString(dr["OrderId"]);
+                        }
+                    }
+                    resultDTO.Message ="The following orders already exist in the system and will not be uploaded: " + ExistingOrdersIds;
+                    var NoOfOrders = records.Count;
+
+                    if (NoOfOrders > 0)
+                    {
+                        string updatedJsonData = JsonConvert.SerializeObject(insertedJsonobject);
+
+                        TemplateColumns template = _oMTDataContext.TemplateColumns.Where(x => x.SkillSetId == uploadTemplateDTO.SkillsetId).FirstOrDefault();
+                        if (template != null)
+                        {
+                            using SqlCommand command = new()
+                            {
+                                Connection = connection,
+                                CommandType = CommandType.StoredProcedure,
+                                CommandText = "InsertData"
+                            };
+                            command.Parameters.AddWithValue("@SkillSetId", uploadTemplateDTO.SkillsetId);
+                            command.Parameters.AddWithValue("@jsonData", updatedJsonData);
+
+                            SqlParameter returnValue = new()
+                            {
+                                ParameterName = "@RETURN_VALUE",
+                                Direction = ParameterDirection.ReturnValue
+                            };
+                            command.Parameters.Add(returnValue);
+
+                            if (connection.State != ConnectionState.Open)
+                                connection.Open();
+
+                            command.ExecuteNonQuery();
+
+                            int returnCode = (int)command.Parameters["@RETURN_VALUE"].Value;
+
+                            if (returnCode != 1)
+                            {
+                                throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
+                            }
+
+                            // send details about uploaded orders via mail
+
+                            DateTime uploadedate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                            string firstname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.FirstName).FirstOrDefault();
+                            string lastname = _oMTDataContext.UserProfile.Where(x => x.UserId == userid).Select(x => x.LastName).FirstOrDefault();
+                            string username = string.Join(' ', firstname, lastname);
+
+
+                            IConfigurationSection toEmailId = _configuration.GetSection("EmailConfig:UploadorderAPIdetails:ToEmailId");
+
+                            List<string> toEmailIds1 = toEmailId.AsEnumerable()
+                                                                      .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                      .Select(c => c.Value)
+                                                                      .ToList();
+
+                            var uploaddetails = $"{username} has uploaded {NoOfOrders} orders in {skillSet.SkillSetName} at {uploadedate}";
+
+                            SendEmailDTO sendEmailDTO1 = new SendEmailDTO
+                            {
+                                ToEmailIds = toEmailIds1,
+                                Subject = "Orders uploaded",
+                                Body = uploaddetails,
+                            };
+                            try
+                            {
+                                using (HttpClient client = new HttpClient())
+                                {
+                                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO1);
+                                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                    var webApiUrl = new Uri(url);
+                                    var response = client.PostAsync(webApiUrl, content).Result;
+
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                                throw;
+                            }
+
+                            // capture count of uploaded orders 
+
+                            DateTime update_date = DateTime.Now.Date;
+                            DateTime uploading_time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
+
+                            Daywise_Cutoff_Timing cutoff_time = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).FirstOrDefault();
+                            // TimeSpan cutoff_endtime = _oMTDataContext.Daywise_Cutoff_Timing.Where(x => x.SystemOfRecordId == skillSet.SystemofRecordId && x.IsActive).Select(x => x.EndTime).FirstOrDefault();
+
+
+                            DateTime yesterday_dt = uploading_time.Date.AddDays(-1);
+                            DateTime cutoff_start_dt = yesterday_dt + cutoff_time.StartTime;
+                            DateTime cutoff_end_dt = uploading_time.Date + cutoff_time.EndTime;
+
+
+                            if (uploading_time >= cutoff_start_dt && uploading_time <= cutoff_end_dt)
+                            {
+                                update_date = uploading_time.Date.AddDays(-1);
+                            }
+
+                            else if (uploading_time > cutoff_end_dt)
+                            {
+                                update_date = uploading_time.Date;
+                            }
+
+                            var existing_ss_record = _oMTDataContext.DailyCount_SkillSet.Where(x => x.Date == update_date && x.SkillSetId == skillSet.SkillSetId && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                            if (existing_ss_record == null)
+                            {
+                                DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                                {
+                                    SystemofRecordId = skillSet.SystemofRecordId,
+                                    SkillSetId = skillSet.SkillSetId,
+                                    Date = update_date,
+                                    Count = NoOfOrders
+                                };
+
+                                _oMTDataContext.DailyCount_SkillSet.Add(dailyCount_SkillSet);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            else if (existing_ss_record != null)
+                            {
+                                //DailyCount_SkillSet dailyCount_SkillSet = new DailyCount_SkillSet
+                                //{
+                                //    Count =+ NoOfOrders
+                                //};
+
+                                existing_ss_record.Count = existing_ss_record.Count + NoOfOrders;
+
+                                _oMTDataContext.DailyCount_SkillSet.Update(existing_ss_record);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            var existing_sor_record = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == update_date && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                            if (existing_sor_record == null)
+                            {
+                                DailyCount_SOR dailyCount_Sor = new DailyCount_SOR
+                                {
+                                    SystemofRecordId = skillSet.SystemofRecordId,
+                                    Date = update_date,
+                                    Count = NoOfOrders
+                                };
+
+                                _oMTDataContext.DailyCount_SOR.Add(dailyCount_Sor);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            else if (existing_sor_record != null)
+                            {
+                                existing_sor_record.Count = existing_sor_record.Count + NoOfOrders;
+
+                                _oMTDataContext.DailyCount_SOR.Update(existing_sor_record);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            // capture order count in monthly tables
+
+                            var existing_skillset_monthly = _oMTDataContext.MonthlyCount_SkillSet.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId && x.SkillSetId == skillSet.SkillSetId).FirstOrDefault();
+
+                            if (existing_skillset_monthly == null)
+                            {
+                                MonthlyCount_SkillSet monthlyCount_SkillSet = new MonthlyCount_SkillSet
+                                {
+                                    SystemofRecordId = skillSet.SystemofRecordId,
+                                    SkillSetId = skillSet.SkillSetId,
+                                    Year = update_date.Year,
+                                    Month = update_date.Month,
+                                    Count = NoOfOrders
+                                };
+
+                                _oMTDataContext.MonthlyCount_SkillSet.Add(monthlyCount_SkillSet);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            else if (existing_skillset_monthly != null)
+                            {
+                                existing_skillset_monthly.Count = existing_skillset_monthly.Count + NoOfOrders;
+
+                                _oMTDataContext.MonthlyCount_SkillSet.Update(existing_skillset_monthly);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            var existing_sor_monthly = _oMTDataContext.MonthlyCount_SOR.Where(x => x.Year == update_date.Year && x.Month == update_date.Month && x.SystemofRecordId == skillSet.SystemofRecordId).FirstOrDefault();
+
+                            if (existing_sor_monthly == null)
+                            {
+                                MonthlyCount_SOR monthlyCount_sor = new MonthlyCount_SOR
+                                {
+                                    SystemofRecordId = skillSet.SystemofRecordId,
+                                    Year = update_date.Year,
+                                    Month = update_date.Month,
+                                    Count = NoOfOrders
+                                };
+
+                                _oMTDataContext.MonthlyCount_SOR.Add(monthlyCount_sor);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+                            else if (existing_sor_monthly != null)
+                            {
+                                existing_sor_monthly.Count = existing_sor_monthly.Count + NoOfOrders;
+
+                                _oMTDataContext.MonthlyCount_SOR.Update(existing_sor_monthly);
+                                _oMTDataContext.SaveChanges();
+                            }
+
+
+                            // send mail to map product descriptions
+
+                            if (skillSet.SystemofRecordId == 2 || skillSet.SystemofRecordId == 4)
+                            {
+                                var message = "";
+                                List<int> ExistingResWareProductDescriptionIds = new List<int>();
+                                List<string> ExistingResWareProductDescriptionName = new List<string>();
+
+                                var distinctResWareProductDescriptions = records.Select(r => (string)r.ResWareProductDescriptions).Distinct().ToList();
+
+                                var NewResWareProductDescriptions = distinctResWareProductDescriptions.Where(rpd => !_oMTDataContext.ResWareProductDescriptions
+                                                                                                      .Any(t1 => t1.ResWareProductDescriptionName == rpd)).ToList();
+
+                                foreach (var kvp in distinctResWareProductDescriptions)
+                                {
+                                    var rpdid = _oMTDataContext.ResWareProductDescriptions.Where(x => x.ResWareProductDescriptionName == kvp).FirstOrDefault();
+
+                                    if (rpdid != null)
+                                    {
+                                        ExistingResWareProductDescriptionIds.Add(rpdid.ResWareProductDescriptionId);
+                                        ExistingResWareProductDescriptionName.Add(rpdid.ResWareProductDescriptionName);
+                                    }
+                                }
+
+                                var NotMappedToSkillset = (from erpd in ExistingResWareProductDescriptionName
+                                                           join rpd in _oMTDataContext.ResWareProductDescriptions on erpd equals rpd.ResWareProductDescriptionName
+                                                           where !_oMTDataContext.ResWareProductDescriptionMap
+                                                               .Any(rpdm => rpdm.ResWareProductDescriptionId == rpd.ResWareProductDescriptionId
+                                                                            && rpdm.SkillSetId == skillSet.SkillSetId)
+                                                           select erpd).Distinct().ToList();
+
+
+
+                                if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count == 0)
+                                {
+                                    if (skillSet.SystemofRecordId == 2)
+                                    {
+                                        message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                    }
+
+                                    else if (skillSet.SystemofRecordId == 4)
+                                    {
+                                        message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map them to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                    }
+                                }
+
+                                else if (NewResWareProductDescriptions.Count == 0 && NotMappedToSkillset.Count > 0)
+                                {
+                                    if (skillSet.SystemofRecordId == 2)
+                                    {
+                                        message = $"Please map the following ResWare Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                    }
+                                    else if (skillSet.SystemofRecordId == 4)
+                                    {
+                                        message = $"Please map the following Tiqe Product Descriptions: {string.Join(", ", NotMappedToSkillset)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+
+                                    }
+                                }
+
+                                else if (NewResWareProductDescriptions.Count > 0 && NotMappedToSkillset.Count > 0)
+                                {
+                                    if (skillSet.SystemofRecordId == 2)
+                                    {
+                                        message = $"Please add the following new ResWare Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                    }
+
+                                    else if (skillSet.SystemofRecordId == 4)
+                                    {
+                                        message = $"Please add the following new Tiqe Product Descriptions: {string.Join(", ", NewResWareProductDescriptions)}, and map the following: {string.Join(", ", NotMappedToSkillset)}, {string.Join(", ", NewResWareProductDescriptions)} to the skillset \"{skillSet.SkillSetName}\" in OMT.";
+                                    }
+                                }
+
+                                if (!string.IsNullOrEmpty(message))
+                                {
+                                    string subject = "";
+
+                                    if (skillSet.SystemofRecordId == 2)
+                                    {
+                                        subject = "Invoice - resware product description";
+                                    }
+                                    else if (skillSet.SystemofRecordId == 4)
+                                    {
+                                        subject = "Invoice - tiqe product description";
+                                    }
+                                    //  var url = _emailDetailsSettings.Value.SendEmailURL;
+                                    IConfigurationSection toEmailIdSection = _configuration.GetSection("EmailConfig:UploadorderAPI:ToEmailId");
+
+                                    List<string> toEmailIds = toEmailIdSection.AsEnumerable()
+                                                                              .Where(c => !string.IsNullOrEmpty(c.Value))
+                                                                              .Select(c => c.Value)
+                                                                              .ToList();
+
+
+                                    SendEmailDTO sendEmailDTO = new SendEmailDTO
+                                    {
+                                        ToEmailIds = toEmailIds,
+                                        Subject = subject,
+                                        Body = message,
+                                    };
+
+                                    try
+                                    {
+                                        using (HttpClient client = new HttpClient())
+                                        {
+                                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(sendEmailDTO);
+                                            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                            var webApiUrl = new Uri(url);
+                                            var response = client.PostAsync(webApiUrl, content).Result;
+
+                                            if (response.IsSuccessStatusCode)
+                                            {
+                                                var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                        throw;
+                                    }
+                                }
+                            }
+
+                            resultDTO.IsSuccess = true;
+                            resultDTO.Message = "Order uploaded successfully";
+                        }
+                        else
+                        {
+                            resultDTO.IsSuccess = false;
+                            resultDTO.StatusCode = "404";
+                            resultDTO.Message = "Template doesnt exist for the given skillsetid,please create one to upload";
+                        }
                     }
                 }
                 else

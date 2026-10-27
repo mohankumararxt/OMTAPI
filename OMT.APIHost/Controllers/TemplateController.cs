@@ -41,6 +41,14 @@ namespace OMT.APIHost.Controllers
         }
 
         [HttpPost]
+        [Route("UploadPriorityOrders")]
+        public ResultDTO UploadPriorityOrders([FromBody] UploadTemplateDTO uploadTemplateDTO)
+        {
+            var userid = UserId;
+            return _templateService.UploadPriorityOrders(uploadTemplateDTO, userid);
+        }
+
+        [HttpPost]
         [Route("validateOrders")]
         public ResultDTO ValidateOrders([FromBody] ValidateOrderDTO validateorderDTO)
         {
