@@ -721,7 +721,7 @@ namespace OMT.DataService.Service
                                 ExistingOrdersIds = Convert.ToString(dr["OrderId"]);
                         }
                     }
-                    resultDTO.Message ="The following orders already exist in the system and will not be uploaded: " + ExistingOrdersIds;
+                    resultDTO.Message = "The following orders already exist in the system and will not be uploaded: " + ExistingOrdersIds;
                     var NoOfOrders = records.Count;
 
                     if (NoOfOrders > 0)
@@ -759,7 +759,51 @@ namespace OMT.DataService.Service
                                 throw new InvalidOperationException("Something went wrong while uploading the orders,please check the order details.");
                             }
 
+                            var PriorityOrderList = new
+                            {
+                                orders = insertedJsonobject["Records"]
+                               .Select(x => new
+                               {
+                                   referenceid = (string)x["OrderId"],
+                                   projectid = (string)x["ProjectId"],
+                                   doctype = (string)x["DocType"],
+                                   //docimagedate = (string)x["DocImageDate"],
+                                   docimagedate = DateTime.Parse(x.Value<string>("DocImageDate")).ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                                   batch = "",
+                                   documentid = ""
+                               })
+                               .ToList()
+                            };
+
+                            string PriorityOrderListForHaTool = JsonConvert.SerializeObject(PriorityOrderList);
+
+
+                            try
+                            {
+                                using (HttpClient client = new HttpClient())
+                                {
+                                    var content = new StringContent(PriorityOrderListForHaTool, Encoding.UTF8, "application/json");
+
+                                    var Trdurl = _authSettings.Value.TrdURL;
+                                    var response = client.PostAsync(Trdurl, content).Result;
+
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                                throw;
+                            }
+
                             // send details about uploaded orders via mail
+
+                            //var employees = insertedJsonobject .Employees.Select(x => new{x.Id,x.Name}).ToList();
+
 
                             DateTime uploadedate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
 
