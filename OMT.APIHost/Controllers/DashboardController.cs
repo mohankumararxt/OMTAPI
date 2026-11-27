@@ -35,5 +35,13 @@ namespace OMT.APIHost.Controllers
             var userid = UserId;
             return _dashboardService.AgentCompletionCount(agentDashDTO,userid);
         }
+
+        [HttpPost]
+        [Route("AgenticDashboard")]
+
+        public ResultDTO AgenticDashboard()
+        {
+            return _dashboardService.GetAgenticDashboardData();
+        }
     }
 }

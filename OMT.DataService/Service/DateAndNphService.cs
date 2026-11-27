@@ -766,24 +766,38 @@ namespace OMT.DataService.Service
                 var agent_nphprod = (from nph in _oMTDataContext.NPH_Productivity
                                      join up1 in _oMTDataContext.UserProfile on nph.UserId equals up1.UserId
                                      join up2 in _oMTDataContext.UserProfile on nph.TlUserId equals up2.UserId
+                                     join pu in _oMTDataContext.Prod_Util
+                                      on new
+                                      {
+                                          AgentUserId = nph.UserId,
+                                          TL_UserId = nph.TlUserId,
+                                          ProductivityDate = nph.Productivity_Date.Date
+                                      }
+                                      equals new
+                                      {
+                                          AgentUserId = pu.AgentUserId,
+                                          TL_UserId = pu.TL_Userid,
+                                          ProductivityDate = pu.Createddate.Date
+                                      }
                                      where up1.IsActive && up2.IsActive
                                      && nph.Productivity_Date >= getAgentNphProductivityDTO.FromDate
                                      && nph.Productivity_Date <= getAgentNphProductivityDTO.ToDate
                                      && up1.UserId == getAgentNphProductivityDTO.UserId
                                      orderby nph.Productivity_Date
-                                     select new
-                                     {
-                                         Tl_Name = up2.FirstName + " " + up2.LastName,
-                                         Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
-                                         Applied_Hours = nph.Applied_Hours,
-                                         Pending_Orders_Hours = nph.Pending_Orders_Hours,
-                                         Productivity = nph.Productivity_Percentage,
-                                         Nph_Productivity = nph.NPH_Productivity_Percentage,
-                                         Total = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage,
-                                         Over_Utilization = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage > 100 ? (nph.Productivity_Percentage + nph.NPH_Productivity_Percentage) - 100 : 0,
-                                         Remarks = nph.Remarks
-                                     }).ToList();
-
+                                    select new
+                                    {
+                                        Tl_Name = up2.FirstName + " " + up2.LastName,
+                                        Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
+                                        Applied_Hours = nph.Applied_Hours,
+                                        Pending_Orders_Hours = nph.Pending_Orders_Hours,
+                                        // Productivity from Prod_Util table
+                                        Productivity_Hours = pu.Productive_Hours,
+                                        Productivity = nph.Productivity_Percentage,
+                                        Nph_Utilization = (pu.Cross_Utilized_Hours / 8) * 100,
+                                        Total = (pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8) * 100,
+                                        Over_Utilization = ((pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8) * 100) > 100 ? ((pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8) * 100) - 100 : 0,
+                                        Remarks = nph.Remarks
+                                    }).Distinct().ToList();
 
                 if (agent_nphprod.Count > 0)
                 {
@@ -871,6 +885,19 @@ namespace OMT.DataService.Service
                                         join up1 in _oMTDataContext.UserProfile on nph.UserId equals up1.UserId
                                         join up2 in _oMTDataContext.UserProfile on nph.TlUserId equals up2.UserId
                                         join t in _oMTDataContext.Teams on nph.TlUserId equals t.TL_Userid
+                                        join pu in _oMTDataContext.Prod_Util
+                                          on new
+                                          {
+                                              AgentUserId = nph.UserId,
+                                              TL_UserId = nph.TlUserId,
+                                              ProductivityDate = nph.Productivity_Date.Date
+                                          }
+                                          equals new
+                                          {
+                                              AgentUserId = pu.AgentUserId,
+                                              TL_UserId = pu.TL_Userid,
+                                              ProductivityDate = pu.Createddate.Date
+                                          }
                                         where up1.IsActive && up2.IsActive
                                         && nph.Productivity_Date >= getTeamNphProductivityDTO.FromDate
                                         && nph.Productivity_Date <= getTeamNphProductivityDTO.ToDate
@@ -883,10 +910,12 @@ namespace OMT.DataService.Service
                                             Productivity_Date = nph.Productivity_Date.ToString("dd-MM-yyyy"),
                                             Applied_Hours = nph.Applied_Hours,
                                             Pending_Orders_Hours = nph.Pending_Orders_Hours,
-                                            Productivity = nph.Productivity_Percentage,
-                                            Nph_Productivity = nph.NPH_Productivity_Percentage,
-                                            Total = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage,
-                                            Over_Utilization = nph.Productivity_Percentage + nph.NPH_Productivity_Percentage > 100 ? (nph.Productivity_Percentage + nph.NPH_Productivity_Percentage) - 100 : 0,
+                                            // Productivity from Prod_Util table
+                                            Productivity_Hours = pu.Productive_Hours,
+                                            Productivity= nph.Productivity_Percentage,
+                                            Nph_Utilization = (pu.Cross_Utilized_Hours /8)*100,
+                                            Total = (pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8)*100,
+                                            Over_Utilization = ((pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8) * 100) > 100 ? ((pu.Productive_Hours / 8) * 100 + (pu.Cross_Utilized_Hours / 8) * 100) - 100 : 0,
                                             Remarks = nph.Remarks
                                         }).Distinct().ToList();
 

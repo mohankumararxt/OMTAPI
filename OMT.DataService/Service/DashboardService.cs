@@ -9,6 +9,7 @@ using OMT.DTO;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -138,7 +139,8 @@ namespace OMT.DataService
                                                              .Select(row => datatable.Columns.Cast<DataColumn>()
                                                                  .ToDictionary(
                                                                      column => column.ColumnName,
-                                                                     column => {
+                                                                     column =>
+                                                                     {
                                                                          var value = row[column];
                                                                          if (value == DBNull.Value)
                                                                          {
@@ -279,7 +281,7 @@ namespace OMT.DataService
             return resultDTO;
         }
 
-        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO,int userid)
+        public ResultDTO AgentCompletionCount(AgentDashDTO agentDashDTO, int userid)
         {
             ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
             try
@@ -291,7 +293,7 @@ namespace OMT.DataService
 
                 List<string> tablenames = (from us in _oMTDataContext.UserSkillSet
                                            join ss in _oMTDataContext.SkillSet on us.SkillSetId equals ss.SkillSetId
-                                           where us.UserId == userid 
+                                           where us.UserId == userid
                                            && _oMTDataContext.TemplateColumns.Any(temp => temp.SkillSetId == ss.SkillSetId)
                                            select ss.SkillSetName).Distinct().ToList();
 
@@ -299,7 +301,7 @@ namespace OMT.DataService
 
                 foreach (string tableName in tablenames)
                 {
-                    var skillset = _oMTDataContext.SkillSet.Where(x =>x.SkillSetName == tableName && x.IsActive).FirstOrDefault();
+                    var skillset = _oMTDataContext.SkillSet.Where(x => x.SkillSetName == tableName && x.IsActive).FirstOrDefault();
 
                     var statusnames = _oMTDataContext.ProcessStatus.Where(x => x.SystemOfRecordId == skillset.SystemofRecordId && x.IsActive).Select(_ => _.Status).ToList();
 
@@ -379,7 +381,7 @@ namespace OMT.DataService
                                             // Set all other status columns to null, except for SystemOfRecord and SkillSet
                                             return (column.ColumnName == "SystemOfRecord" || column.ColumnName == "SkillSet")
                                                 ? row[column] // Retain these columns
-                                                : "";       
+                                                : "";
                                         }
                                     });
                         }
@@ -426,6 +428,80 @@ namespace OMT.DataService
                 resultDTO.StatusCode = "500";
                 resultDTO.Message = ex.Message;
             }
+
+            return resultDTO;
+        }
+
+        public ResultDTO GetAgenticDashboardData()
+        {
+            ResultDTO resultDTO = new ResultDTO() { IsSuccess = true, StatusCode = "200" };
+
+            AgenticDashboardDTO agenticDashboardDTO = new AgenticDashboardDTO();
+
+            // Order Completetion count
+
+            agenticDashboardDTO.totalOrderCompletion.YesterdayOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date.AddDays(-1)).Sum(_ => _.Count);
+            agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCount = _oMTDataContext.DailyCount_SOR.Where(x => x.Date == DateTime.UtcNow.Date).Sum(_ => _.Count);
+            agenticDashboardDTO.totalOrderCompletion.TodaysOrdersCompletedCount = _oMTDataContext.Prod_Util_Tracker.Where(x => x.CheckIn_date == DateTime.UtcNow.Date).Count();
+
+            // SOR Wise Todays Order complete.
+
+            agenticDashboardDTO.SORWiseOrderCompletion = (from pu in _oMTDataContext.Prod_Util_Tracker.Where(x => x.CheckIn_date == DateTime.UtcNow.Date)
+                                                          join sor in _oMTDataContext.SystemofRecord.AsEnumerable() on pu.SystemofRecordId equals sor.SystemofRecordId
+                                                          group pu by sor.SystemofRecordName into g
+                                                          select new SORWiseOrderCompletionDTO
+                                                          {
+                                                              SORName = g.Key,
+                                                              CompletedToday = g.Count()
+                                                          }).ToList();
+
+            // Liver User vs Total User
+
+            agenticDashboardDTO.liveUsers.TotalUsers = _oMTDataContext.UserProfile.Where(_ => _.IsActive == true).Count();
+            agenticDashboardDTO.liveUsers.LoggedInUsers = _oMTDataContext.User_Checkin.Where(x => x.CheckIn_date == DateTime.UtcNow.Date && x.Checkout == null).Count();
+
+            //Invoice Last Month vs current Month
+
+            DateTime lastmonthdate = DateTime.UtcNow.AddMonths(-1);
+            DateTime currnetmonthdate = DateTime.UtcNow;
+
+            int currentMonth = lastmonthdate.Month;
+            int currentYear = lastmonthdate.Year;
+
+            agenticDashboardDTO.invoiceForecastDTO.Year = currnetmonthdate.Year;
+            agenticDashboardDTO.invoiceForecastDTO.PreviousMonthCount = _oMTDataContext.InvoiceDump.Count(r => r.CompletionDate.Month == currentMonth
+                                         && r.CompletionDate.Year == currentYear);
+
+            agenticDashboardDTO.invoiceForecastDTO.CurrentMonthCount = _oMTDataContext.InvoiceDump.Count(r => r.CompletionDate.Month == currnetmonthdate.Month
+                                         && r.CompletionDate.Year == currnetmonthdate.Year);
+            agenticDashboardDTO.invoiceForecastDTO.currentMonthIndex = currnetmonthdate.Month;
+
+            int daysinMonth = DateTime.DaysInMonth(currnetmonthdate.Year, currnetmonthdate.Month);
+
+            agenticDashboardDTO.invoiceForecastDTO.ElapsedDays = DateTime.Today.Day;
+
+
+            // Rush Order difference
+            var rushOrderYesterday = _oMTDataContext.SORWisePriorityOrderCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date.AddDays(-1)).ToList();
+
+            var rushOrderToday = _oMTDataContext.SORWisePriorityOrderCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).ToList();
+
+            var combinedRushOrder = (from y in rushOrderYesterday
+                                     join t in rushOrderToday on y.Sor_Id equals t.Sor_Id
+                                     select new SORWiseRushOrderCompletionDTO
+                                     {
+                                         SORName = y.Sor_Name,
+                                         YesterdaysCount = y.TotalCount,
+                                         TodaysCount = t.TotalCount
+                                     }).ToList();
+
+            agenticDashboardDTO.SORWiseRushOrderCompletion = combinedRushOrder;
+
+            // HardStateOrder
+
+            agenticDashboardDTO.hardStateDTO.YesterdayCount = _oMTDataContext.DailyHardStateCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).Sum(y => y.TotalCount);
+            agenticDashboardDTO.hardStateDTO.TodaysCount = _oMTDataContext.DailyHardStateCount.Where(_ => _.AllocationDate == DateTime.UtcNow.Date).Sum(y => y.TotalCount);
+            resultDTO.Data = agenticDashboardDTO;
 
             return resultDTO;
         }
