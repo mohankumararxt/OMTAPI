@@ -1965,67 +1965,67 @@ namespace OMT.DataService.Service
                         resultDTO.Data = pendingOrdersResponseDTO;
                     }
 
-                    if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
-                    {
-                        string manualstatus = string.Empty;
-                        int statusid = 0;
+                    //if (table.SystemofRecordId == 3 && (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID || updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID || (!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual"))))
+                    //{
+                    //    string manualstatus = string.Empty;
+                    //    int statusid = 0;
 
-                        if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
-                        {
-                            manualstatus = $@"SELECT ir.*, dt.DocTypeID 
-                                             FROM {exist.SkillSetName} ir
-                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
-                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
+                    //    if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDcompletedManualStatusID)
+                    //    {
+                    //        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                    //                         FROM {exist.SkillSetName} ir
+                    //                         INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                    //                         WHERE ir.Id = @Id AND ir.Status = @statusid";
 
-                            statusid = 2;
-                        }
-                        else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
-                        {
-                            manualstatus = $@"SELECT ir.*, dt.DocTypeID
-                                             FROM {exist.SkillSetName} ir
-                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
-                                             WHERE ir.Id = @Id AND ir.Status = @statusid";
+                    //        statusid = 2;
+                    //    }
+                    //    else if (updateOrderStatusDTO.StatusId == _authSettings.Value.TRDpendingStatusID)
+                    //    {
+                    //        manualstatus = $@"SELECT ir.*, dt.DocTypeID
+                    //                         FROM {exist.SkillSetName} ir
+                    //                         INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                    //                         WHERE ir.Id = @Id AND ir.Status = @statusid";
 
-                            statusid = 1;
-                        }
-                        else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
-                        {
-                            manualstatus = $@"SELECT ir.*, dt.DocTypeID 
-                                             FROM {exist.SkillSetName} ir
-                                             INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
-                                             WHERE ir.Id = @Id AND ir.HaStatus = 'Manual'";
+                    //        statusid = 1;
+                    //    }
+                    //    else if ((!string.IsNullOrEmpty(updateOrderStatusDTO.TrdStatus) && (updateOrderStatusDTO.TrdStatus.ToString().ToLower().Trim() == "manual")))
+                    //    {
+                    //        manualstatus = $@"SELECT ir.*, dt.DocTypeID 
+                    //                         FROM {exist.SkillSetName} ir
+                    //                         INNER JOIN DocType dt ON ir.DocType = dt.DocumentName
+                    //                         WHERE ir.Id = @Id AND ir.HaStatus = 'Manual'";
 
-                            statusid = 2;
-                        }
+                    //        statusid = 2;
+                    //    }
 
 
-                        using SqlCommand command = connection.CreateCommand();
-                        command.CommandText = manualstatus;
-                        command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
-                        command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
-                        command.ExecuteNonQuery();
+                    //    using SqlCommand command = connection.CreateCommand();
+                    //    command.CommandText = manualstatus;
+                    //    command.Parameters.AddWithValue("@Id", updateOrderStatusDTO.Id);
+                    //    command.Parameters.AddWithValue("@statusid", updateOrderStatusDTO.StatusId);
+                    //    command.ExecuteNonQuery();
 
-                        using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
-                        DataSet dataset = new DataSet();
-                        dataAdapter.Fill(dataset);
-                        DataTable ms = dataset.Tables[0];
+                    //    using SqlDataAdapter dataAdapter = new SqlDataAdapter(command);
+                    //    DataSet dataset = new DataSet();
+                    //    dataAdapter.Fill(dataset);
+                    //    DataTable ms = dataset.Tables[0];
 
-                        if (ms.Rows.Count > 0)
-                        {
-                            DataRow row = ms.Rows[0];
-                            TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
-                            {
-                                processid = row.Field<int>("SystemOfRecordId"),
-                                projectid = row.Field<string>("ProjectID"),
-                                referenceid = row.Field<string>("OrderID"),
-                                doctypeid = row.Field<int>("DocTypeID"),
-                                value = statusid
-                            };
+                    //    if (ms.Rows.Count > 0)
+                    //    {
+                    //        DataRow row = ms.Rows[0];
+                    //        TrdStatusDTO trdStatusDTO1 = new TrdStatusDTO()
+                    //        {
+                    //            processid = row.Field<int>("SystemOfRecordId"),
+                    //            projectid = row.Field<string>("ProjectID"),
+                    //            referenceid = row.Field<string>("OrderID"),
+                    //            doctypeid = row.Field<int>("DocTypeID"),
+                    //            value = statusid
+                    //        };
 
-                            // Call the REST API
-                            CallRestApiAsync(trdStatusDTO1);
-                        }
-                    }
+                    //        // Call the REST API
+                    //        CallRestApiAsync(trdStatusDTO1);
+                    //    }
+                    //}
                 }
             }
             catch (Exception ex)
