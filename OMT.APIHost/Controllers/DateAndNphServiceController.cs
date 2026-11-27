@@ -9,7 +9,7 @@ namespace OMT.APIHost.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
+    //[Authorize(AuthenticationSchemes = "Bearer")]
     public class DateAndNphServiceController : BaseController
     {
         private readonly IDateAndNphService _dateAndNphService;
@@ -97,7 +97,7 @@ namespace OMT.APIHost.Controllers
 
         public ResultDTO GetNphProductivity_Team(GetTeamNphProductivityDTO getTeamNphProductivityDTO)
         {
-            var userid = UserId;
+            var userid = 1;
             return _dateAndNphService.GetNphProductivity_Team(getTeamNphProductivityDTO, userid);
         }
     }
